@@ -2,6 +2,7 @@
 target/
 runtime/storage/
 runtime/postgres-data/
+runtime/logs/
 runtime/*.log
 /migration/
 *.pid

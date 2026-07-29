@@ -111,9 +111,9 @@ async function checkStatus() {
   try {
     await api("/api/clinical/status");
     status.className = "service ready";
-    status.innerHTML = `<i data-lucide="database"></i><span>Base clínica lira_hdd disponible</span>`;
+    status.innerHTML = `<i data-lucide="database"></i><span>Base clínica PostgreSQL disponible</span>`;
   }
-  catch { status.className = "service error"; status.innerHTML = `<i data-lucide="database-zap"></i><span>No se pudo abrir lira_hdd</span>`; }
+  catch { status.className = "service error"; status.innerHTML = `<i data-lucide="database-zap"></i><span>No se pudo abrir PostgreSQL</span>`; }
   icons(status);
 }
 

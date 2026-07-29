@@ -1,5 +1,5 @@
 {
-  "name": "Herramientas clínicas Uro Neuratale",
+  "name": "Herramientas clínicas HCOP",
   "version": "7.1",
   "entrypoint": "/herramientas/index.html",
   "layout": "single-page-console",

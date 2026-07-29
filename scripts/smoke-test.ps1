@@ -17,4 +17,22 @@ $status = Invoke-RestMethod -Uri "$baseUrl/api/clinical/status" -Method Get -Web
 if (-not $status.ok) {
   throw "El nucleo clinico no respondio."
 }
-Write-Host "HCOP JP operativo: salud, autenticacion y nucleo clinico verificados."
+
+$pages = @(
+  @{ Path = "/configuration/"; Marker = "Centro de configuracion"; Name = "Centro de configuracion" },
+  @{ Path = "/protocol-admin/"; Marker = "Administrador de protocolos"; Name = "Administrador de protocolos" },
+  @{ Path = "/herramientas/"; Marker = "tool-list"; Name = "Herramientas clinicas" }
+)
+foreach ($page in $pages) {
+  $response = Invoke-WebRequest -UseBasicParsing -Uri "$baseUrl$($page.Path)" -Method Get -WebSession $session
+  if ($response.StatusCode -ne 200 -or $response.Content -notmatch $page.Marker) {
+    throw "$($page.Name) no esta disponible."
+  }
+}
+
+$openApi = Invoke-RestMethod -Uri "$baseUrl/v3/api-docs" -Method Get -WebSession $session
+if ([string]::IsNullOrWhiteSpace([string]$openApi.openapi) -or $null -eq $openApi.paths) {
+  throw "La documentacion OpenAPI no esta disponible."
+}
+
+Write-Host "HCOP JP operativo: salud, autenticacion, nucleo clinico, configuracion y OpenAPI verificados."
