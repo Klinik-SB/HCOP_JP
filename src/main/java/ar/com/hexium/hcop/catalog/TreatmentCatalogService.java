@@ -41,7 +41,6 @@ public class TreatmentCatalogService {
     for (Scheme scheme : current.schemes()) {
       if (!normalized.isBlank() && !normalize(scheme.name()).contains(normalized)) continue;
       result.add(scheme.view());
-      if (result.size() >= 200) break;
     }
     return result;
   }

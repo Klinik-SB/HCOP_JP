@@ -27,6 +27,17 @@ $protocols = Invoke-RestMethod -Uri "$baseUrl/api/clinical/protocols?includeArch
 if (-not $protocols.ok -or $protocols.catalogCount -lt 1 -or $protocols.total -lt $protocols.catalogCount) {
   throw "El catalogo de protocolos no esta disponible."
 }
+$prescriptionSchemes = Invoke-RestMethod -Uri "$baseUrl/api/clinical/schemes" -Method Get -WebSession $session
+$breastPrescriptionSchemes = @($prescriptionSchemes.schemes |
+    Where-Object { [string]$_.nombre -match "(?i)mama|breast" })
+$breastConfigurationProtocols = @($protocols.protocols |
+    Where-Object { [string]$_.name -match "(?i)mama|breast" })
+if (-not $prescriptionSchemes.ok -or
+    $prescriptionSchemes.total -le 200 -or
+    $breastPrescriptionSchemes.Count -lt 1 -or
+    $breastConfigurationProtocols.Count -lt 1) {
+  throw "El catalogo se trunco o no publica protocolos de mama en Prescripcion y Configuracion."
+}
 
 $dayHospital = Invoke-RestMethod -Uri "$baseUrl/api/clinical/configuration/day-hospital-settings" -Method Get -WebSession $session
 $slotMinutes = [int]$dayHospital.items[0].definition.slotMinutes

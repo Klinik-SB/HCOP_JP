@@ -19,6 +19,12 @@ diagnóstico, no a un texto suelto.
 - peso y talla en centímetros;
 - requisitos particulares del esquema.
 
+El selector usa el catálogo clínico completo, sin recortar los primeros
+resultados. La misma fuente alimenta **Configuración → Protocolos**, por lo que
+los esquemas por sitio —incluidos Mama y las categorías alfabéticamente
+posteriores— deben aparecer en ambas pantallas. Los protocolos personalizados
+activos se integran al catálogo inmediatamente.
+
 Al confirmar se crean, en una sola transacción:
 
 - el tratamiento;
