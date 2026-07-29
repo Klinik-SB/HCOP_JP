@@ -81,6 +81,7 @@ function repairText(value) { const text = String(value || ""); if (!/[ÃÂâ]/.t
 function formatBytes(value) { const bytes = Number(value) || 0; return bytes > 1048576 ? `${(bytes / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`; }
 function commaList(value) { return String(value || "").split(",").map((item) => item.trim()).filter(Boolean); }
 function notifyConfigurationUpdated() { localStorage.setItem("hcop-configuration-updated", String(Date.now())); }
+function isPersistedConfigurationItem(item) { return Boolean(String(item?.id ?? "").trim()); }
 function toast(message, type = "success") { const node = document.createElement("div"); node.className = `toast${type === "error" ? " error" : ""}`; node.innerHTML = `<i data-lucide="${type === "error" ? "triangle-alert" : "circle-check"}"></i><span>${escapeHtml(message)}</span>`; $("#toastRegion").append(node); icons(node); setTimeout(() => node.remove(), 4200); }
 
 function handleConfigurationAuthenticationFailure() {
@@ -217,7 +218,8 @@ function safeStudyTemplateAssetUrl(value) {
   if (!source) return "";
   if (source.startsWith("blob:")) return source;
   try {
-    const parsed = new URL(source, location.origin);
+    const normalized = source.startsWith("assets/") ? `/${source}` : source;
+    const parsed = new URL(normalized, location.origin);
     if (parsed.origin !== location.origin || !["http:", "https:"].includes(parsed.protocol)) return "";
     return parsed.href;
   } catch {
@@ -294,8 +296,15 @@ function renderStudyTemplateAdminList() {
       tags.slice(0, 2).join(", "),
       studyTemplateAvailabilityLabel(item)
     ].filter(Boolean).join(" · ");
-    return `<div role="listitem"><button class="study-template-admin-item${selected ? " active" : ""}${item.active === false ? " inactive" : ""}${unavailable ? " is-unavailable" : ""}" type="button" data-study-template-id="${escapeHtml(item.id)}" aria-pressed="${selected ? "true" : "false"}"><span class="study-template-admin-thumb">${thumbnail && !unavailable ? `<img src="${escapeHtml(thumbnail)}" alt="" loading="lazy">` : `<i data-lucide="${unavailable ? "image-off" : "image"}"></i>`}</span><span class="study-template-admin-copy"><strong>${escapeHtml(title)}</strong><small>${escapeHtml(detail)}</small></span><em>${unavailable ? "Revisar" : item.active === false ? "Inactiva" : "Activa"}</em></button></div>`;
-  }).join("") || `<div class="catalog-empty">${state.studyTemplates.length ? "No hay plantillas que coincidan." : "Todavía no hay plantillas propias."}</div>`;
+    const stateLabel = item.origin === "bundled"
+      ? "Incluida"
+      : unavailable
+        ? "Revisar"
+        : item.active === false
+          ? "Inactiva"
+          : "Propia";
+    return `<div role="listitem"><button class="study-template-admin-item${selected ? " active" : ""}${item.active === false ? " inactive" : ""}${unavailable ? " is-unavailable" : ""}" type="button" data-study-template-id="${escapeHtml(item.id)}" aria-pressed="${selected ? "true" : "false"}"><span class="study-template-admin-thumb">${thumbnail && !unavailable ? `<img src="${escapeHtml(thumbnail)}" alt="" loading="lazy">` : `<i data-lucide="${unavailable ? "image-off" : "image"}"></i>`}</span><span class="study-template-admin-copy"><strong>${escapeHtml(title)}</strong><small>${escapeHtml(detail)}</small></span><em>${stateLabel}</em></button></div>`;
+  }).join("") || `<div class="catalog-empty">${state.studyTemplates.length ? "No hay plantillas que coincidan." : "No hay plantillas disponibles."}</div>`;
   icons(list);
 }
 
@@ -353,6 +362,7 @@ function beginStudyTemplateUpload(file) {
   renderStudyTemplateAdminList();
 
   const form = $("#studyTemplateAdminForm");
+  setStudyTemplateEditorReadOnly(false);
   form.reset();
   form.hidden = false;
   $("#studyTemplateAdminEmpty").hidden = true;
@@ -368,9 +378,17 @@ function beginStudyTemplateUpload(file) {
   $("#studyTemplatePreviewTitle").textContent = file.name;
   $("#cancelStudyTemplateUploadBtn").hidden = false;
   $("#archiveStudyTemplateBtn").hidden = true;
+  $("#saveStudyTemplateBtn").hidden = false;
   $("#saveStudyTemplateBtn span").textContent = "Agregar plantilla";
   showStudyTemplatePreview(studyTemplatePreviewObjectUrl, plainName);
   requestAnimationFrame(() => $("#studyTemplateAdminTitle").focus());
+}
+
+function setStudyTemplateEditorReadOnly(readOnly) {
+  const form = $("#studyTemplateAdminForm");
+  $$("input:not([type='hidden']), select, textarea", form).forEach((control) => {
+    control.disabled = readOnly;
+  });
 }
 
 function editStudyTemplate(template) {
@@ -380,6 +398,8 @@ function editStudyTemplate(template) {
   renderStudyTemplateAdminList();
 
   const form = $("#studyTemplateAdminForm");
+  const bundled = template.origin === "bundled";
+  setStudyTemplateEditorReadOnly(false);
   const definition = template.definition || {};
   const title = studyTemplateField(template, "title", "Plantilla anatómica");
   const originalFileName = studyTemplateField(template, "originalFileName", definition.fileName || "");
@@ -399,11 +419,12 @@ function editStudyTemplate(template) {
   $("#studyTemplateAdminLicense").value = studyTemplateField(template, "license");
   $("#studyTemplateAdminLicenseUrl").value = studyTemplateField(template, "licenseUrl");
   $("#studyTemplateAdminDescription").value = studyTemplateField(template, "description");
-  $("#studyTemplateAdminRightsConfirmed").checked = Boolean(studyTemplateField(template, "rightsConfirmed", false));
+  $("#studyTemplateAdminRightsConfirmed").checked = bundled || Boolean(studyTemplateField(template, "rightsConfirmed", false));
   $("#studyTemplateAdminActive").checked = template.active !== false;
   $("#studyTemplateAdminActive").disabled = false;
-  $("#studyTemplateAdminEditorTitle").textContent = title;
+  $("#studyTemplateAdminEditorTitle").textContent = bundled ? `${title} · incluida` : title;
   $("#studyTemplateAdminFileMeta").textContent = [
+    bundled ? "Biblioteca anatómica incluida con HCOP" : "",
     originalFileName,
     bytes ? formatBytes(bytes) : "",
     mime,
@@ -415,10 +436,12 @@ function editStudyTemplate(template) {
   $("#studyTemplatePreviewTitle").textContent = title;
   const archive = $("#archiveStudyTemplateBtn");
   $("#cancelStudyTemplateUploadBtn").hidden = true;
-  archive.hidden = false;
+  archive.hidden = bundled;
+  $("#saveStudyTemplateBtn").hidden = bundled;
   archive.innerHTML = `<i data-lucide="${template.active === false ? "rotate-ccw" : "archive"}"></i>${template.active === false ? "Reactivar" : "Desactivar"}`;
   $("#saveStudyTemplateBtn span").textContent = "Guardar cambios";
   showStudyTemplatePreview(studyTemplateImageUrl(template), title);
+  setStudyTemplateEditorReadOnly(bundled);
   icons(form);
 }
 
@@ -427,7 +450,7 @@ async function loadStudyTemplateAdmin(selectIdentifier = "") {
   list.setAttribute("aria-busy", "true");
   loading(list);
   try {
-    const payload = await api(`/api/study-templates?scope=custom&includeInactive=1&t=${Date.now()}`);
+    const payload = await api(`/api/study-templates?scope=all&includeInactive=1&t=${Date.now()}`);
     state.studyTemplates = Array.isArray(payload.templates) ? payload.templates : [];
     renderStudyTemplateCategoryFilter();
     renderStudyTemplateAdminList();
@@ -1055,8 +1078,9 @@ async function saveBuiltInTools() {
   try {
     const disabledBuiltInKeys = [...state.disabledBuiltInKeys];
     const draft = { key: "tools-main", name: "Herramientas incluidas", active: true, expectedRevision: state.toolSettingsItem?.revision, definition: { disabledBuiltInKeys } };
-    const path = state.toolSettingsItem ? `/api/clinical/configuration/tool-settings/${state.toolSettingsItem.id}` : "/api/clinical/configuration/tool-settings";
-    const payload = await api(path, { method: state.toolSettingsItem ? "PUT" : "POST", body: JSON.stringify(draft) });
+    const exists = isPersistedConfigurationItem(state.toolSettingsItem);
+    const path = exists ? `/api/clinical/configuration/tool-settings/${state.toolSettingsItem.id}` : "/api/clinical/configuration/tool-settings";
+    const payload = await api(path, { method: exists ? "PUT" : "POST", body: JSON.stringify(draft) });
     state.toolSettingsItem = payload.item; state.disabledBuiltInKeys = disabledBuiltInKeys;
     localStorage.setItem("hcop-configuration-updated", String(Date.now())); renderBuiltInTools(); toast("Herramientas actualizadas");
   } catch (error) { toast(error.message, "error"); }
@@ -1108,8 +1132,9 @@ async function saveDayHospitalSettings(event) {
   event.preventDefault();
   try {
     const draft = dayHospitalDraft();
-    const path = state.dayHospitalSettingsItem ? `/api/clinical/configuration/day-hospital-settings/${state.dayHospitalSettingsItem.id}` : "/api/clinical/configuration/day-hospital-settings";
-    const payload = await api(path, { method: state.dayHospitalSettingsItem ? "PUT" : "POST", body: JSON.stringify(draft) });
+    const exists = isPersistedConfigurationItem(state.dayHospitalSettingsItem);
+    const path = exists ? `/api/clinical/configuration/day-hospital-settings/${state.dayHospitalSettingsItem.id}` : "/api/clinical/configuration/day-hospital-settings";
+    const payload = await api(path, { method: exists ? "PUT" : "POST", body: JSON.stringify(draft) });
     state.dayHospitalSettingsItem = payload.item; localStorage.setItem("hcop-configuration-updated", String(Date.now()));
     renderDayHospitalPreview(); toast("Agenda de Hospital de dia actualizada");
   } catch (error) { toast(error.message, "error"); }

@@ -74,10 +74,13 @@ async function loadCatalog({ keepSelection = true } = {}) {
     ]);
     state.protocols = protocolPayload.protocols || [];
     state.coirCatalog = coirPayload.catalog || [];
-    $("#protocolCount").textContent = `${protocolPayload.currentCount || 0} protocolos`;
+    const customCount = Number(protocolPayload.currentCount) || 0;
+    const catalogCount = state.protocols.filter((item) => item.catalogOnly).length;
+    const totalCount = customCount + catalogCount;
+    $("#protocolCount").textContent = `${totalCount} disponibles`;
     populateCoirOptions();
     renderProtocolList();
-    setServiceStatus(`${protocolPayload.currentCount || 0} protocolos · base local sincronizada`);
+    setServiceStatus(`${customCount} propios · ${catalogCount} COIR disponibles`);
     if (keepSelection && state.selectedId && state.protocols.some((item) => item.id === state.selectedId)) {
       await openProtocol(state.selectedId, { scroll: false });
     }

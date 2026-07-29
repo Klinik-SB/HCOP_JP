@@ -1411,6 +1411,12 @@ function wireEvents() {
       const frame = $("#clinicalCalculatorFrame");
       if (frame) frame.src = `/herramientas/index.html?embedded=1&v=${Date.now()}`;
       void loadDiagnosticDisplaySettings({ force: true });
+      if (
+        $("#careTreatmentManagerModal")?.classList.contains("open")
+        && (careScheduleMode === "chairs" || careScheduleMode === "pharmacy")
+      ) {
+        void loadCareSchedule();
+      }
     }
   });
   $$('[data-tool-tab]').forEach((button)=>button.addEventListener('click',()=>setToolTab(button.dataset.toolTab)));
@@ -3314,14 +3320,14 @@ function shiftCareScheduleChairViewport(direction) {
 
 function zoomCareScheduleChairViewport(direction) {
   const viewport = careScheduleChairViewport();
+  const step = viewport.total >= 6 ? 2 : 1;
   const nextVisible = Math.min(
     viewport.total,
-    Math.max(viewport.minimumVisible, viewport.visible + Math.sign(Number(direction) || 0))
+    Math.max(viewport.minimumVisible, viewport.visible + Math.sign(Number(direction) || 0) * step)
   );
   if (nextVisible === viewport.visible) return;
-  const centerChair = (viewport.first + viewport.last) / 2;
   careScheduleVisibleChairCount = nextVisible;
-  careScheduleChairOffset = Math.round(centerChair - (nextVisible + 1) / 2);
+  careScheduleChairOffset = Math.min(viewport.offset, Math.max(0, viewport.total - nextVisible));
   careScheduleChairViewport();
   renderCareSchedule();
 }

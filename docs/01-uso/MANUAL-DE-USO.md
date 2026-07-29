@@ -44,9 +44,23 @@ automáticas e inmutables.
 - **Farmacia**: registra prescripción y disponibilidad de medicación e imprime
   el QR.
 - **Sillones**: agenda ciclos pendientes por duración y evita superposiciones.
+  La lupa `+` muestra menos sillones con más ancho y la lupa `-` vuelve a
+  mostrar más. Las flechas recorren los sillones que quedan fuera de la vista.
 - **Tratamientos**: abre detalle longitudinal, ciclos, aplicaciones y
   documentos.
 - **Escanear QR**: identifica el ciclo a administrar y deja trazabilidad.
+
+## Configuración clínica
+
+- **Protocolos** combina los protocolos propios con el catálogo COIR pendiente
+  de completar. El contador superior informa ambos orígenes; al convertir un
+  registro COIR se completan drogas, preparación, ciclo y duración.
+- **Plantillas anatómicas** muestra la biblioteca incluida con sus miniaturas,
+  licencia y atribución en modo de consulta. Las plantillas propias pueden
+  agregarse, editarse o desactivarse.
+- **Hospital de día** define sillones, jornada e intervalo de 5, 10, 15, 20 o
+  30 minutos. Al guardar, la agenda abierta se recalcula sin perder los turnos
+  ya registrados; al volver a entrar conserva el valor en PostgreSQL.
 
 ## Estudios
 

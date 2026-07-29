@@ -18,6 +18,22 @@ if (-not $status.ok) {
   throw "El nucleo clinico no respondio."
 }
 
+$templates = Invoke-RestMethod -Uri "$baseUrl/api/study-templates?scope=all&includeInactive=1" -Method Get -WebSession $session
+if (-not $templates.ok -or $templates.bundledCount -lt 1 -or $templates.total -lt $templates.bundledCount) {
+  throw "La biblioteca de plantillas anatomicas no esta disponible."
+}
+
+$protocols = Invoke-RestMethod -Uri "$baseUrl/api/clinical/protocols?includeArchived=1&includeCatalog=1" -Method Get -WebSession $session
+if (-not $protocols.ok -or $protocols.catalogCount -lt 1 -or $protocols.total -lt $protocols.catalogCount) {
+  throw "El catalogo de protocolos no esta disponible."
+}
+
+$dayHospital = Invoke-RestMethod -Uri "$baseUrl/api/clinical/configuration/day-hospital-settings" -Method Get -WebSession $session
+$slotMinutes = [int]$dayHospital.items[0].definition.slotMinutes
+if ($slotMinutes -notin @(5, 10, 15, 20, 30)) {
+  throw "El intervalo del turnero de Hospital de dia no es valido."
+}
+
 $pages = @(
   @{ Path = "/configuration/"; Marker = "Centro de configuracion"; Name = "Centro de configuracion" },
   @{ Path = "/protocol-admin/"; Marker = "Administrador de protocolos"; Name = "Administrador de protocolos" },
