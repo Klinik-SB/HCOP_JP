@@ -3,6 +3,10 @@
 PostgreSQL es la única base operacional. Flyway crea el esquema de forma
 reproducible al primer inicio.
 
+La definición exacta está en `src/main/resources/db/migration`. El
+[diccionario de datos](DICCIONARIO-DE-DATOS.md) explica las 28 tablas y sus
+relaciones sin reemplazar esas migraciones.
+
 ## Identidad y acceso
 
 - `local_users`
@@ -41,16 +45,22 @@ críticos también se guardan en tablas relacionales.
 - `clinical_configuration_versions`;
 - `scheme_duration_estimates`;
 - `system_settings`;
-- `reference_records`.
+- `reference_records`;
+- `local_reference_record_overlays`.
 
 ## Archivos y auditoría
 
 - `clinical_files`: metadatos y hash; el binario está en el volumen;
-- `clinical_file_session_grants`: eliminación temporal de una carga;
+- `clinical_files.upload_session_hash` y `deletable_until`: autorización
+  temporal para eliminar una carga de la misma sesión;
 - `unified_clinical_audit`: antes/después, actor, entidad y motivo.
 
 ## Concurrencia
 
 Las tablas mutables incluyen `revision`. Los `UPDATE` escriben solamente si la
-revisión esperada coincide. Para el turnero existe además una exclusión de
-intervalos y un bloqueo transaccional por sillón/fecha.
+revisión esperada coincide.
+
+La protección del turnero está implementada en PostgreSQL mediante
+`prevent_infusion_overlap()` y el trigger `trg_prevent_infusion_overlap`.
+Serializa reservas del mismo sillón y rechaza cualquier intersección incluso si
+dos equipos intentan reservar a la vez.

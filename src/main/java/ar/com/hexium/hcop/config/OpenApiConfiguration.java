@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.info.License;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.servers.Server;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -16,6 +17,10 @@ import org.springdoc.core.customizers.OperationCustomizer;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.method.HandlerMethod;
 
 @Configuration
@@ -136,7 +141,113 @@ public class OpenApiConfiguration {
       doc("StatusController.clinical", "Estado clínico", "Comprueba PostgreSQL y confirma que el sistema es local, unificado e independiente."),
       doc("StatusController.liraCompatibility", "Compatibilidad Lira", "Informa que las rutas históricas operan sobre HCOP JP local."),
       doc("StatusController.runtime", "Estado de ejecución", "Expone versión y motor para diagnóstico y automatización."),
-      doc("StatusController.stop", "Instrucciones de detención", "Indica el mecanismo seguro de parada del contenedor.")
+      doc("StatusController.stop", "Instrucciones de detención", "Indica el mecanismo seguro de parada del contenedor."),
+      doc("AjccCatalogController.list", "Listar sitios AJCC 8", "Devuelve los sitios tumorales y variables de estadificación disponibles en el catálogo local."),
+      doc("AjccCatalogController.detail", "Abrir definición AJCC 8", "Devuelve TNM, factores específicos y reglas del sitio AJCC seleccionado."),
+      doc("AjccCatalogController.stage", "Calcular estadio AJCC 8", "Calcula el grupo de estadio de forma determinística a partir del sitio y los valores TNM/factores."),
+      doc("DiagnosisCatalogController.search", "Buscar SNOMED CT o CIE-10", "Filtra el catálogo diagnóstico local por sistema, texto y límite de resultados."),
+      doc("GuideCatalogController.list", "Listar guías clínicas", "Lista las guías locales activas y, con permiso administrativo, también las archivadas."),
+      doc("GuideCatalogController.file", "Abrir guía clínica", "Entrega el PDF local solicitado con nombre y tipo de contenido seguros."),
+      doc("GuideCatalogController.upload", "Importar guía clínica", "Guarda un PDF institucional y actualiza el catálogo de guías."),
+      doc("LegacyCatalogController.protocols", "Listar protocolos compatibles", "Mantiene el contrato histórico de la interfaz y responde desde los catálogos locales."),
+      doc("LegacyCatalogController.protocolDetail", "Abrir protocolo compatible", "Devuelve el detalle local de un protocolo COIR o personalizado usando el contrato histórico."),
+      doc("LegacyCatalogController.medicationSearch", "Buscar medicamentos", "Busca por genérico, marca o presentación en el catálogo local de drogas."),
+      doc("LegacyCatalogController.status", "Consultar catálogos locales", "Informa disponibilidad y cantidad de protocolos y esquemas TNM locales."),
+      doc("LegacyCatalogController.update", "Releer catálogos locales", "Confirma que los catálogos empaquetados ya están disponibles y versionados."),
+      doc("PatientWorkspaceController.activate", "Activar paciente y abrir espacio clínico", "Asocia el paciente a la sesión y devuelve identidad, historia, tratamientos, turnos y conteos en una respuesta."),
+      doc("PatientWorkspaceController.workspace", "Abrir espacio clínico del paciente", "Devuelve el agregado de trabajo del paciente sin cambiar otra sesión."),
+      doc("SeerTnmCatalogController.list", "Listar esquemas TNM", "Devuelve el catálogo SEER/TNM local disponible para las herramientas de estadificación."),
+      doc("SeerTnmCatalogController.detail", "Abrir esquema TNM", "Devuelve campos, opciones y reglas del esquema TNM seleccionado."),
+      doc("SystemicFormController.forms", "Listar formularios sistémicos", "Devuelve los formularios institucionales y sus campos para prescripción y documentación.")
+  );
+
+  private static final Map<String, String> PERMISSIONS = Map.ofEntries(
+      permission("AdminController.users", "admin.manage-users"),
+      permission("AdminController.createUser", "admin.manage-users"),
+      permission("AdminController.updateUser", "admin.manage-users"),
+      permission("AdminController.roles", "admin.manage-roles"),
+      permission("AdminController.createRole", "admin.manage-roles"),
+      permission("AdminController.updateRole", "admin.manage-roles"),
+      permission("AdminController.security", "admin.manage-security"),
+      permission("AdminController.updateSecurity", "admin.manage-security"),
+      permission("ClinicalDocumentController.put", "section.history.edit"),
+      permission("ConfigurationController.list", "section.configuration.view"),
+      permission("ConfigurationController.create", "section.configuration.manage"),
+      permission("ConfigurationController.update", "section.configuration.manage"),
+      permission("ConfigurationController.archive", "section.configuration.manage"),
+      permission("ConfigurationController.versions", "section.configuration.view"),
+      permission("ConfigurationController.version", "section.configuration.view"),
+      permission("DiagnosisController.list", "section.history.view"),
+      permission("DiagnosisController.link", "section.history.edit"),
+      permission("GuideCatalogController.list", "section.tools.view"),
+      permission("GuideCatalogController.file", "section.tools.view"),
+      permission("GuideCatalogController.upload", "section.configuration.manage"),
+      permission("InfusionController.list", "section.day-hospital.view"),
+      permission("InfusionController.create", "section.day-hospital.edit"),
+      permission("InfusionController.update", "section.day-hospital.edit"),
+      permission("InfusionController.candidates", "section.day-hospital.view"),
+      permission("InfusionController.logistics", "section.day-hospital.edit"),
+      permission("InfusionController.finalizeInfusion", "section.day-hospital.edit"),
+      permission("LlmController.config", "section.configuration.view"),
+      permission("LlmController.updateConfig", "section.configuration.manage"),
+      permission("LlmController.status", "section.agent.view"),
+      permission("LlmController.test", "section.configuration.manage"),
+      permission("LlmController.timeline", "section.timeline.view"),
+      permission("LlmController.summarize", "section.timeline.view"),
+      permission("LlmController.agent", "section.agent.view"),
+      permission("LlmController.fillSystemic", "section.prescriptions.edit"),
+      permission("ClinicalFileController.uploadStudy", "section.studies.edit"),
+      permission("ClinicalFileController.study", "section.studies.view"),
+      permission("ClinicalFileController.deleteStudy", "section.studies.edit"),
+      permission("ClinicalFileController.uploadImage", "section.studies.edit"),
+      permission("ClinicalFileController.image", "section.studies.view"),
+      permission("PatientController.search", "section.history.view"),
+      permission("PatientController.create", "section.history.edit"),
+      permission("PatientController.preview", "section.history.view"),
+      permission("PatientController.importPatient", "section.history.view"),
+      permission("PatientWorkspaceController.activate", "section.history.view"),
+      permission("PatientWorkspaceController.workspace", "section.history.view"),
+      permission("ProtocolController.list", "section.protocols.view"),
+      permission("ProtocolController.get", "section.protocols.view"),
+      permission("ProtocolController.create", "section.protocols.edit"),
+      permission("ProtocolController.update", "section.protocols.edit"),
+      permission("ProtocolController.archive", "section.protocols.edit"),
+      permission("ProtocolController.coir", "section.protocols.view"),
+      permission("ProtocolController.drugs", "section.protocols.view"),
+      permission("QrWorkflowController.document", "section.day-hospital.view"),
+      permission("QrWorkflowController.scan", "section.day-hospital.edit"),
+      permission("StudyTemplateController.list", "section.studies.view"),
+      permission("StudyTemplateController.create", "section.configuration.manage"),
+      permission("SystemicFormController.forms", "section.prescriptions.view"),
+      permission("TreatmentController.list", "section.prescriptions.view"),
+      permission("TreatmentController.create", "section.prescriptions.edit"),
+      permission("TreatmentController.options", "section.prescriptions.view"),
+      permission("TreatmentController.requirements", "section.prescriptions.view"),
+      permission("TreatmentController.detail", "section.prescriptions.view"),
+      permission("TreatmentController.schemes", "section.protocols.view"),
+      permission("TreatmentController.duration", "section.protocols.view"),
+      permission("TreatmentDocumentController.consent", "section.prescriptions.view"),
+      permission("TreatmentDocumentController.treatmentSheet", "section.prescriptions.view"),
+      permission("TreatmentDocumentController.prescription", "section.prescriptions.view"),
+      permission("TreatmentWorkflowController.suspend", "workflow.suspend"),
+      permission("TreatmentWorkflowController.resume", "workflow.resume"),
+      permission("TreatmentWorkflowController.create", "workflow.request-prescription | workflow.request-continuity"),
+      permission("TreatmentWorkflowController.resolve", "workflow.resolve-prescription | workflow.resolve-continuity"),
+      permission("StatusController.stop", "admin.manage-security")
+  );
+
+  private static final Map<String, String> PARAMETER_DESCRIPTIONS = Map.ofEntries(
+      Map.entry("patientId", "Identificador local inmutable del paciente."),
+      Map.entry("treatmentId", "Identificador local o importado del tratamiento."),
+      Map.entry("cycleNumber", "Número de ciclo, comenzando en 1."),
+      Map.entry("cycle", "Número de ciclo, comenzando en 1."),
+      Map.entry("id", "Identificador del recurso solicitado."),
+      Map.entry("revision", "Revisión histórica exacta del recurso."),
+      Map.entry("kind", "Tipo de configuración permitido por el servicio."),
+      Map.entry("name", "Nombre seguro del archivo o recurso."),
+      Map.entry("q", "Texto de búsqueda; admite coincidencia parcial."),
+      Map.entry("query", "Texto de búsqueda; admite coincidencia parcial."),
+      Map.entry("limit", "Cantidad máxima de resultados devueltos.")
   );
 
   @Bean
@@ -184,12 +295,68 @@ public class OpenApiConfiguration {
       }
       operation.addTagsItem(tag(controller));
       operation.addExtension("x-hcop-controller", controller);
-      if (requiresSession(controller, method.getName())) {
+      String key = controller + "." + method.getName();
+      boolean secured = requiresSession(controller, method.getName());
+      if (secured) {
         operation.addSecurityItem(new SecurityRequirement().addList("sessionCookie"));
         operation.addExtension("x-hcop-authentication", "cookie HttpOnly y permiso por rol");
+        operation.addExtension("x-hcop-permission", PERMISSIONS.getOrDefault(key, "authenticated"));
+      } else {
+        operation.addExtension("x-hcop-authentication", "public");
+        operation.addExtension("x-hcop-permission", "public");
       }
+      describeParameters(operation);
+      describeResponses(operation, controller, secured, isWrite(method));
       return operation;
     };
+  }
+
+  private static void describeParameters(io.swagger.v3.oas.models.Operation operation) {
+    if (operation.getParameters() != null) {
+      operation.getParameters().forEach(parameter -> {
+        if (parameter.getDescription() == null || parameter.getDescription().isBlank()) {
+          String description = PARAMETER_DESCRIPTIONS.get(parameter.getName());
+          if (description != null) parameter.setDescription(description);
+        }
+      });
+    }
+    if (operation.getRequestBody() != null &&
+        (operation.getRequestBody().getDescription() == null ||
+            operation.getRequestBody().getDescription().isBlank())) {
+      operation.getRequestBody().setDescription(
+          "Datos validados por el controlador y las reglas clínicas del servicio.");
+    }
+  }
+
+  private static void describeResponses(
+      io.swagger.v3.oas.models.Operation operation,
+      String controller,
+      boolean secured,
+      boolean write) {
+    var responses = operation.getResponses();
+    if (responses == null) return;
+    if (secured) {
+      responses.putIfAbsent("401", new ApiResponse().description("Sesión ausente, vencida o revocada."));
+      responses.putIfAbsent("403", new ApiResponse().description("El usuario no posee el permiso requerido."));
+    }
+    responses.putIfAbsent("400", new ApiResponse().description("Parámetros o cuerpo de solicitud inválidos."));
+    if (secured) {
+      responses.putIfAbsent("404", new ApiResponse().description(
+          "Paciente, tratamiento, archivo o recurso inexistente."));
+    }
+    if (write && !"AuthController".equals(controller)) {
+      responses.putIfAbsent("409", new ApiResponse().description(
+          "Conflicto de revisión, estado, superposición o integridad."));
+    }
+    responses.putIfAbsent("500", new ApiResponse().description(
+        "Error interno sin exposición de detalles sensibles."));
+  }
+
+  private static boolean isWrite(Method method) {
+    return method.isAnnotationPresent(PostMapping.class)
+        || method.isAnnotationPresent(PutMapping.class)
+        || method.isAnnotationPresent(PatchMapping.class)
+        || method.isAnnotationPresent(DeleteMapping.class);
   }
 
   private static boolean requiresSession(String controller, String method) {
@@ -214,6 +381,10 @@ public class OpenApiConfiguration {
 
   private static Map.Entry<String, Documentation> doc(String key, String summary, String description) {
     return Map.entry(key, new Documentation(summary, description));
+  }
+
+  private static Map.Entry<String, String> permission(String key, String value) {
+    return Map.entry(key, value);
   }
 
   private record Documentation(String summary, String description) {

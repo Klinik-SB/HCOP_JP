@@ -1,7 +1,24 @@
-# Documentación de HCOP JP
+# Documentación completa de HCOP JP
 
-Este índice separa la información por destinatario. No es necesario conocer
-Docker ni Java para usar el sistema.
+Este es el índice maestro del producto. La documentación se mantiene junto al
+código y describe la aplicación, la API, PostgreSQL, Docker, seguridad,
+operación y mantenimiento. No es necesario conocer Docker ni Java para usar el
+sistema.
+
+## Elegir un recorrido
+
+| Necesidad | Empezar por |
+|---|---|
+| Usar HCOP JP en atención clínica | [Manual de uso](01-uso/MANUAL-DE-USO.md) |
+| Instalarlo en una PC | [Instalación desde GitHub](00-inicio/INSTALACION-DESDE-GITHUB.md) |
+| Entender el circuito de tratamiento | [Flujo de tratamiento](01-uso/FLUJO-TRATAMIENTO.md) |
+| Integrarse con la API | [Swagger / OpenAPI](02-arquitectura/SWAGGER-OPENAPI.md) y [endpoints](02-arquitectura/ENDPOINTS.md) |
+| Mantener el código | [Arquitectura MVC](02-arquitectura/MVC.md) y [mapa funcional](07-referencia/MAPA-FUNCIONAL.md) |
+| Entender o respaldar PostgreSQL | [Modelo](03-base-de-datos/MODELO-DE-DATOS.md) y [diccionario](03-base-de-datos/DICCIONARIO-DE-DATOS.md) |
+| Configurar un servidor | [Variables de entorno](05-operacion/VARIABLES-DE-ENTORNO.md) y [seguridad](05-operacion/SEGURIDAD.md) |
+
+Con el sistema iniciado también existe una versión navegable en
+`http://localhost:5180/docs/`.
 
 ## 00 · Empezar
 
@@ -17,11 +34,14 @@ Docker ni Java para usar el sistema.
 
 - [MVC y módulos](02-arquitectura/MVC.md)
 - [Swagger / OpenAPI](02-arquitectura/SWAGGER-OPENAPI.md)
+- [Catálogo completo de endpoints](02-arquitectura/ENDPOINTS.md)
+- [Contratos y convenciones de API](04-desarrollo/CONTRATOS-DE-API.md)
 - [Interoperabilidad](02-arquitectura/INTEROPERABILIDAD.md)
 
 ## 03 · Base de datos
 
 - [Modelo de datos](03-base-de-datos/MODELO-DE-DATOS.md)
+- [Diccionario de las 28 tablas](03-base-de-datos/DICCIONARIO-DE-DATOS.md)
 - [Origen y recuperación de campos](03-base-de-datos/CAMPOS-Y-RELACIONES.md)
 
 ## 04 · Desarrollo
@@ -29,6 +49,7 @@ Docker ni Java para usar el sistema.
 - [Crear desde cero](04-desarrollo/CREAR-DESDE-CERO.md)
 - [Entorno local](04-desarrollo/ENTORNO-LOCAL.md)
 - [Pruebas](04-desarrollo/PRUEBAS.md)
+- [Contratos y convenciones de API](04-desarrollo/CONTRATOS-DE-API.md)
 
 ## 05 · Operación
 
@@ -37,7 +58,25 @@ Docker ni Java para usar el sistema.
 - [Backup y restauración](05-operacion/BACKUP-Y-RESTAURACION.md)
 - [Acceso por red](05-operacion/ACCESO-POR-RED.md)
 - [Seguridad](05-operacion/SEGURIDAD.md)
+- [Variables de entorno](05-operacion/VARIABLES-DE-ENTORNO.md)
 
 ## 06 · Migración
 
 - [Decisiones y migración del sistema anterior](06-migracion/DESDE-HCOP-LIRA.md)
+
+## 07 · Referencia cruzada
+
+- [Mapa funcional: pantalla → API → Java → PostgreSQL](07-referencia/MAPA-FUNCIONAL.md)
+- [Glosario técnico y clínico-operativo](07-referencia/GLOSARIO.md)
+
+## Fuentes de verdad
+
+Cuando dos documentos difieran, prevalecen en este orden:
+
+1. migraciones Flyway para estructura y restricciones de PostgreSQL;
+2. OpenAPI generado por el servidor para el contrato HTTP;
+3. permisos verificados por los controladores y servicios;
+4. estos documentos explicativos.
+
+`scripts/generate-api-docs.ps1` reconstruye el catálogo de endpoints desde el
+OpenAPI real y el CI impide publicar ese catálogo desactualizado.

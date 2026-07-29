@@ -32,6 +32,12 @@ jobs:
         run: docker compose up --build --wait
       - name: Verificar salud
         run: curl --fail --silent --show-error http://127.0.0.1:5180/actuator/health
+      - name: Verificar catálogo OpenAPI documentado
+        shell: pwsh
+        run: ./scripts/generate-api-docs.ps1 -Check
+      - name: Verificar documentación y enlaces
+        shell: pwsh
+        run: ./scripts/verify-documentation.ps1
       - name: Recorrer el flujo clínico integral
         shell: pwsh
         run: ./scripts/integration-test.ps1
