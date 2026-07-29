@@ -4,7 +4,7 @@ cd /d "%~dp0"
 where docker >nul 2>nul
 if errorlevel 1 (
   echo Docker Desktop no esta instalado o no esta iniciado.
-  echo Consulte docs\inicio\WINDOWS.md
+  echo Consulte docs\00-inicio\INSTALACION-DESDE-GITHUB.md
   pause
   exit /b 1
 )
@@ -19,7 +19,7 @@ if errorlevel 1 (
   exit /b 1
 )
 echo.
-echo HCOP JP esta iniciando. Abra http://localhost:5180
+echo HCOP JP esta funcionando. Abra http://localhost:5180
 echo Usuario inicial: marcolyto
 echo Swagger: http://localhost:5180/swagger-ui.html
 start "" "http://localhost:5180"
