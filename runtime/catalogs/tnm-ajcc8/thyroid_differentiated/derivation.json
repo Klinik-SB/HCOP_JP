@@ -1,0 +1,106 @@
+{
+  "$schema_version": 1,
+  "organ": "thyroid_differentiated",
+  "edition": "AJCC 8",
+  "source": "pdfsource/thyroidv8.pdf",
+  "observables": {
+    "tumor_size_cm": {
+      "type": "number",
+      "unit": "cm",
+      "description": "Greatest dimension of primary tumor.",
+      "display": {"label": "Greatest tumor dimension (cm)"}
+    },
+    "extrathyroidal_extension": {
+      "type": "enum",
+      "default": "none",
+      "values": ["none", "strap_muscles", "soft_tissue_or_larynx_trachea_esophagus_recurrent_nerve", "prevertebral_or_carotid_mediastinum"],
+      "description": "Pattern of extrathyroidal extension. 'none' = tumor confined to thyroid; 'strap_muscles' = invading only strap muscles (T3b); 'soft_tissue_or_larynx_trachea_esophagus_recurrent_nerve' = T4a invasion; 'prevertebral_or_carotid_mediastinum' = T4b invasion.",
+      "display": {
+        "label": "Pattern of extrathyroidal extension",
+        "choices": {
+          "none": "None / confined to thyroid",
+          "strap_muscles": "Strap muscles only (sternohyoid, sternothyroid, thyrohyoid, omohyoid) -- T3b",
+          "soft_tissue_or_larynx_trachea_esophagus_recurrent_nerve": "Subcutaneous soft tissues, larynx, trachea, esophagus, or recurrent laryngeal nerve -- T4a",
+          "prevertebral_or_carotid_mediastinum": "Prevertebral fascia or carotid/mediastinal vessels -- T4b"
+        }
+      }
+    },
+    "positive_node_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of regional lymph nodes confirmed positive for metastasis.",
+      "display": {"label": "Positive regional lymph nodes (count)"}
+    },
+    "node_region": {
+      "type": "enum",
+      "default": "none",
+      "values": ["none", "central_VI_VII", "lateral_I_II_III_IV_V_or_retropharyngeal"],
+      "description": "Anatomic region of positive nodes when present.",
+      "display": {
+        "label": "Region of positive regional lymph nodes",
+        "choices": {
+          "none": "No positive nodes",
+          "central_VI_VII": "Central compartment: level VI or VII (pretracheal, paratracheal, prelaryngeal/Delphian, upper mediastinal) -- N1a",
+          "lateral_I_II_III_IV_V_or_retropharyngeal": "Lateral neck (levels I-V) or retropharyngeal -- N1b"
+        }
+      }
+    },
+    "node_cytology_benign": {
+      "type": "bool",
+      "default": false,
+      "description": "Cytologic / histologic confirmation of one or more BENIGN regional lymph nodes (drives N0a).",
+      "display": {"label": "Cytology-confirmed benign regional node(s)"}
+    },
+    "node_assessment_done": {
+      "type": "bool",
+      "default": false,
+      "description": "Whether locoregional nodal status has been clinically or radiologically assessed (drives N0b when no evidence found).",
+      "display": {"label": "Locoregional nodal status was explicitly assessed"}
+    },
+    "distant_mets": {
+      "type": "bool",
+      "default": false,
+      "description": "Any distant metastasis (M1).",
+      "display": {"label": "Distant metastasis (M1)"}
+    },
+    "age_at_diagnosis_years": {
+      "type": "number",
+      "unit": "years",
+      "description": "Patient age at the time of diagnosis. Differentiated thyroid AJCC 8 stage grouping is dichotomized at 55 years.",
+      "display": {"label": "Age at diagnosis (years)"}
+    }
+  },
+  "axes": {
+    "T": [
+      {"label": "T4b: prevertebral fascia / carotid / mediastinal vessels", "when": {"extrathyroidal_extension": {"eq": "prevertebral_or_carotid_mediastinum"}}, "then": "T4b"},
+      {"label": "T4a: soft tissue / larynx / trachea / esophagus / recurrent laryngeal nerve", "when": {"extrathyroidal_extension": {"eq": "soft_tissue_or_larynx_trachea_esophagus_recurrent_nerve"}}, "then": "T4a"},
+      {"label": "T3b: gross extension into strap muscles only (any size)", "when": {"extrathyroidal_extension": {"eq": "strap_muscles"}}, "then": "T3b"},
+      {"label": "T3a: > 4 cm, confined to thyroid", "when": {"extrathyroidal_extension": {"eq": "none"}, "tumor_size_cm": {"gt": 4}}, "then": "T3a"},
+      {"label": "T2: > 2 cm and <= 4 cm, confined", "when": {"extrathyroidal_extension": {"eq": "none"}, "tumor_size_cm": {"gt": 2, "lte": 4}}, "then": "T2"},
+      {"label": "T1a: <= 1 cm, confined", "when": {"extrathyroidal_extension": {"eq": "none"}, "tumor_size_cm": {"gt": 0, "lte": 1}}, "then": "T1a"},
+      {"label": "T1b: > 1 cm and <= 2 cm, confined", "when": {"extrathyroidal_extension": {"eq": "none"}, "tumor_size_cm": {"gt": 1, "lte": 2}}, "then": "T1b"}
+    ],
+    "N": [
+      {"label": "N1b: lateral neck or retropharyngeal nodes positive", "when": {"positive_node_count": {"gte": 1}, "node_region": {"eq": "lateral_I_II_III_IV_V_or_retropharyngeal"}}, "then": "N1b"},
+      {"label": "N1a: central compartment (level VI/VII) nodes positive", "when": {"positive_node_count": {"gte": 1}, "node_region": {"eq": "central_VI_VII"}}, "then": "N1a"},
+      {"label": "N0a: cytologically/histologically confirmed benign nodes", "when": {"node_cytology_benign": {"eq": true}}, "then": "N0a"},
+      {"label": "N0b: no radiologic or clinical evidence of locoregional metastasis (explicit assessment)", "when": {"positive_node_count": {"eq": 0}, "node_region": {"eq": "none"}, "node_assessment_done": {"eq": true}}, "then": "N0b"},
+      {"label": "N0: no positive nodes (default no-evidence)", "when": {"positive_node_count": {"eq": 0}, "node_region": {"eq": "none"}}, "then": "N0"}
+    ],
+    "M": [
+      {"label": "M0: no distant metastasis", "when": {"distant_mets": {"eq": false}}, "then": "M0"},
+      {"label": "M1: distant metastasis", "when": {"distant_mets": {"eq": true}}, "then": "M1"}
+    ],
+    "Age": [
+      {"label": "<55: age at diagnosis less than 55 years", "when": {"age_at_diagnosis_years": {"lt": 55}}, "then": "<55"},
+      {"label": ">=55: age at diagnosis 55 years or older", "when": {"age_at_diagnosis_years": {"gte": 55}}, "then": ">=55"}
+    ]
+  },
+  "examples": [
+    {"label": "no observations -> TX, N0, M0", "observations": {}, "expect": {"T": "TX", "N": "N0", "M": "M0"}},
+    {"label": "1.5 cm confined, age 40 -> T1b", "observations": {"tumor_size_cm": 1.5, "extrathyroidal_extension": "none", "age_at_diagnosis_years": 40}, "expect": {"T": "T1b"}},
+    {"label": "3 cm confined, 2 central nodes positive, age 60 -> T2, N1a", "observations": {"tumor_size_cm": 3.0, "extrathyroidal_extension": "none", "positive_node_count": 2, "node_region": "central_VI_VII", "age_at_diagnosis_years": 60}, "expect": {"T": "T2", "N": "N1a", "M": "M0"}},
+    {"label": "5 cm confined, lateral neck positive, distant mets, age 70 -> T3a, N1b, M1", "observations": {"tumor_size_cm": 5.0, "extrathyroidal_extension": "none", "positive_node_count": 4, "node_region": "lateral_I_II_III_IV_V_or_retropharyngeal", "distant_mets": true, "age_at_diagnosis_years": 70}, "expect": {"T": "T3a", "N": "N1b", "M": "M1"}},
+    {"label": "any size with prevertebral invasion, age 65 -> T4b", "observations": {"tumor_size_cm": 2.0, "extrathyroidal_extension": "prevertebral_or_carotid_mediastinum", "age_at_diagnosis_years": 65}, "expect": {"T": "T4b"}}
+  ]
+}

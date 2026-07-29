@@ -1,0 +1,119 @@
+{
+  "$schema_version": 1,
+  "organ": "breast",
+  "edition": "AJCC 8",
+  "source": "pdfsource/breast.pdf",
+  "observables": {
+    "size_cm": {
+      "type": "number",
+      "unit": "cm",
+      "description": "Greatest dimension of the invasive component in centimeters. No default.",
+      "display": {"label": "Invasive component, greatest dimension (cm)"}
+    },
+    "histology": {
+      "type": "enum",
+      "default": "invasive",
+      "values": ["in_situ", "invasive", "unknown"],
+      "description": "'in_situ' yields Tis regardless of size.",
+      "display": {
+        "label": "Histologic class",
+        "choices": {"in_situ": "Carcinoma in situ (DCIS)", "invasive": "Invasive carcinoma", "unknown": "Unknown"}
+      }
+    },
+    "inflammatory_carcinoma": {
+      "type": "bool",
+      "default": false,
+      "description": "Inflammatory carcinoma -- a clinical entity defined by skin findings; classified as T4d.",
+      "display": {"label": "Inflammatory carcinoma (T4d)"}
+    },
+    "chest_wall_invasion": {
+      "type": "bool",
+      "default": false,
+      "description": "Chest wall invasion (not including pectoralis adhesion). T4a feature.",
+      "display": {"label": "Chest wall invasion (not pectoralis adhesion) (T4a)"}
+    },
+    "skin_ulceration_or_satellites": {
+      "type": "bool",
+      "default": false,
+      "description": "Skin ulceration, ipsilateral satellite nodules, or skin edema not meeting inflammatory criteria. T4b feature.",
+      "display": {"label": "Skin ulceration, satellite nodules, or non-inflammatory edema (T4b)"}
+    },
+    "nodes_pattern": {
+      "type": "enum",
+      "default": "none",
+      "values": [
+        "none", "micrometastasis",
+        "axillary_1_to_3", "internal_mammary_sln", "axillary_1_to_3_and_internal_mammary_sln",
+        "axillary_4_to_9", "internal_mammary_clinical_without_axillary",
+        "axillary_10_or_more_or_infraclavicular",
+        "internal_mammary_plus_axillary",
+        "supraclavicular"
+      ],
+      "description": "Pattern of regional lymph node involvement combining axillary count, internal mammary involvement, and infra/supraclavicular spread.",
+      "display": {
+        "label": "Regional lymph node involvement",
+        "choices": {
+          "none": "No regional node involvement (N0)",
+          "micrometastasis": "Micrometastasis (> 0.2 mm and/or > 200 cells, ≤ 2 mm) (N1mi)",
+          "axillary_1_to_3": "1–3 ipsilateral axillary nodes (N1a)",
+          "internal_mammary_sln": "Internal mammary SLN only (N1b)",
+          "axillary_1_to_3_and_internal_mammary_sln": "1–3 axillary + internal mammary SLN (N1c)",
+          "axillary_4_to_9": "4–9 ipsilateral axillary nodes (N2a)",
+          "internal_mammary_clinical_without_axillary": "Clinical internal mammary without axillary (N2b)",
+          "axillary_10_or_more_or_infraclavicular": "≥ 10 axillary or infraclavicular nodes (N3a)",
+          "internal_mammary_plus_axillary": "Internal mammary + axillary nodes (N3b)",
+          "supraclavicular": "Supraclavicular nodes (N3c)"
+        }
+      }
+    },
+    "distant_mets": {
+      "type": "bool",
+      "default": false,
+      "description": "Any distant metastasis (M1).",
+      "display": {"label": "Distant metastasis (M1)"}
+    }
+  },
+  "axes": {
+    "T": [
+      {"label": "Tis: in situ", "when": {"histology": {"eq": "in_situ"}}, "then": "Tis"},
+      {"label": "T4d: inflammatory carcinoma", "when": {"inflammatory_carcinoma": {"eq": true}}, "then": "T4d"},
+      {"label": "T4c: chest wall + skin", "when": {"chest_wall_invasion": {"eq": true}, "skin_ulceration_or_satellites": {"eq": true}}, "then": "T4c"},
+      {"label": "T4a: chest wall invasion", "when": {"chest_wall_invasion": {"eq": true}}, "then": "T4a"},
+      {"label": "T4b: skin involvement", "when": {"skin_ulceration_or_satellites": {"eq": true}}, "then": "T4b"},
+      {"label": "T3: > 5 cm", "when": {"size_cm": {"gt": 5}}, "then": "T3"},
+      {"label": "T2: > 2 cm and <= 5 cm", "when": {"size_cm": {"gt": 2, "lte": 5}}, "then": "T2"},
+      {"label": "T1c: > 1 cm and <= 2 cm", "when": {"size_cm": {"gt": 1, "lte": 2}}, "then": "T1c"},
+      {"label": "T1b: > 0.5 cm and <= 1 cm", "when": {"size_cm": {"gt": 0.5, "lte": 1}}, "then": "T1b"},
+      {"label": "T1a: > 0.1 cm and <= 0.5 cm", "when": {"size_cm": {"gt": 0.1, "lte": 0.5}}, "then": "T1a"},
+      {"label": "T1mi: <= 0.1 cm (1 mm)", "when": {"size_cm": {"lte": 0.1}}, "then": "T1mi"}
+    ],
+    "N": [
+      {"label": "N0: no nodes", "when": {"nodes_pattern": {"eq": "none"}}, "then": "N0"},
+      {"label": "N1mi: micrometastasis", "when": {"nodes_pattern": {"eq": "micrometastasis"}}, "then": "N1mi"},
+      {"label": "N1a: 1-3 axillary", "when": {"nodes_pattern": {"eq": "axillary_1_to_3"}}, "then": "N1a"},
+      {"label": "N1b: internal mammary SLN only", "when": {"nodes_pattern": {"eq": "internal_mammary_sln"}}, "then": "N1b"},
+      {"label": "N1c: 1-3 axillary + internal mammary SLN", "when": {"nodes_pattern": {"eq": "axillary_1_to_3_and_internal_mammary_sln"}}, "then": "N1c"},
+      {"label": "N2a: 4-9 axillary", "when": {"nodes_pattern": {"eq": "axillary_4_to_9"}}, "then": "N2a"},
+      {"label": "N2b: clinical internal mammary without axillary", "when": {"nodes_pattern": {"eq": "internal_mammary_clinical_without_axillary"}}, "then": "N2b"},
+      {"label": "N3a: 10+ axillary or infraclavicular", "when": {"nodes_pattern": {"eq": "axillary_10_or_more_or_infraclavicular"}}, "then": "N3a"},
+      {"label": "N3b: internal mammary + axillary", "when": {"nodes_pattern": {"eq": "internal_mammary_plus_axillary"}}, "then": "N3b"},
+      {"label": "N3c: supraclavicular", "when": {"nodes_pattern": {"eq": "supraclavicular"}}, "then": "N3c"}
+    ],
+    "M": [
+      {"label": "M0: no distant mets", "when": {"distant_mets": {"eq": false}}, "then": "M0"},
+      {"label": "M1: distant mets", "when": {"distant_mets": {"eq": true}}, "then": "M1"}
+    ]
+  },
+  "examples": [
+    {"label": "in situ -> Tis", "observations": {"histology": "in_situ"}, "expect": {"T": "Tis"}},
+    {"label": "0.05 cm invasive -> T1mi", "observations": {"size_cm": 0.05}, "expect": {"T": "T1mi"}},
+    {"label": "0.3 cm -> T1a", "observations": {"size_cm": 0.3}, "expect": {"T": "T1a"}},
+    {"label": "1.5 cm -> T1c", "observations": {"size_cm": 1.5}, "expect": {"T": "T1c"}},
+    {"label": "3 cm -> T2", "observations": {"size_cm": 3.0}, "expect": {"T": "T2"}},
+    {"label": "6 cm -> T3", "observations": {"size_cm": 6.0}, "expect": {"T": "T3"}},
+    {"label": "any size + inflammatory carcinoma -> T4d", "observations": {"size_cm": 2.5, "inflammatory_carcinoma": true}, "expect": {"T": "T4d"}},
+    {"label": "1.5 cm + 2 axillary nodes -> T1c, N1a", "observations": {"size_cm": 1.5, "nodes_pattern": "axillary_1_to_3"}, "expect": {"T": "T1c", "N": "N1a"}},
+    {"label": "3 cm + 12 axillary nodes + M1 -> T2, N3a, M1", "observations": {"size_cm": 3.0, "nodes_pattern": "axillary_10_or_more_or_infraclavicular", "distant_mets": true}, "expect": {"T": "T2", "N": "N3a", "M": "M1"}},
+    {"label": "no observations -> TX, N0, M0", "observations": {}, "expect": {"T": "TX", "N": "N0", "M": "M0"}}
+  ]
+}

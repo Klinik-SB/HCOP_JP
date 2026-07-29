@@ -1,0 +1,70 @@
+{
+  "$schema_version": 1,
+  "organ": "kidney",
+  "edition": "AJCC 8",
+  "source": "pdfsource/kidneyv8.pdf",
+  "observables": {
+    "tumor_size_cm": {
+      "type": "number",
+      "unit": "cm",
+      "description": "Greatest tumor dimension in centimeters. Used for T1/T2 subdivisions when the tumor is limited to the kidney.",
+      "display": {"label": "Greatest tumor dimension (cm)"}
+    },
+    "extension": {
+      "type": "enum",
+      "default": "unknown",
+      "values": ["unknown", "limited_to_kidney", "renal_vein_or_perirenal_fat", "vena_cava_below_diaphragm", "vena_cava_above_diaphragm_or_wall", "beyond_gerotas_or_adrenal"],
+      "description": "Anatomic extent of tumor beyond the kidney parenchyma.",
+      "display": {
+        "label": "Extent of tumor invasion",
+        "choices": {
+          "unknown": "Unknown / not assessable",
+          "limited_to_kidney": "Limited to the kidney (use size for T1/T2)",
+          "renal_vein_or_perirenal_fat": "Renal vein / branches, pelvicalyceal system, or perirenal / renal sinus fat (T3a)",
+          "vena_cava_below_diaphragm": "Vena cava below the diaphragm (T3b)",
+          "vena_cava_above_diaphragm_or_wall": "Vena cava above the diaphragm or invades wall of vena cava (T3c)",
+          "beyond_gerotas_or_adrenal": "Beyond Gerota's fascia, incl. contiguous ipsilateral adrenal (T4)"
+        }
+      }
+    },
+    "positive_node_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of regional lymph nodes with metastasis.",
+      "display": {"label": "Positive regional lymph nodes (count)"}
+    },
+    "distant_mets": {
+      "type": "bool",
+      "default": false,
+      "description": "Any distant metastasis.",
+      "display": {"label": "Distant metastasis (M1)"}
+    }
+  },
+  "axes": {
+    "T": [
+      {"label": "T4: beyond Gerota's fascia (incl. ipsilateral adrenal)", "when": {"extension": {"eq": "beyond_gerotas_or_adrenal"}}, "then": "T4"},
+      {"label": "T3c: vena cava above diaphragm or wall", "when": {"extension": {"eq": "vena_cava_above_diaphragm_or_wall"}}, "then": "T3c"},
+      {"label": "T3b: vena cava below diaphragm", "when": {"extension": {"eq": "vena_cava_below_diaphragm"}}, "then": "T3b"},
+      {"label": "T3a: renal vein / pelvicalyceal / perirenal fat", "when": {"extension": {"eq": "renal_vein_or_perirenal_fat"}}, "then": "T3a"},
+      {"label": "T1a: <= 4 cm, limited to kidney", "when": {"extension": {"eq": "limited_to_kidney"}, "tumor_size_cm": {"gt": 0, "lte": 4}}, "then": "T1a"},
+      {"label": "T1b: > 4 cm and <= 7 cm, limited to kidney", "when": {"extension": {"eq": "limited_to_kidney"}, "tumor_size_cm": {"gt": 4, "lte": 7}}, "then": "T1b"},
+      {"label": "T2a: > 7 cm and <= 10 cm, limited to kidney", "when": {"extension": {"eq": "limited_to_kidney"}, "tumor_size_cm": {"gt": 7, "lte": 10}}, "then": "T2a"},
+      {"label": "T2b: > 10 cm, limited to kidney", "when": {"extension": {"eq": "limited_to_kidney"}, "tumor_size_cm": {"gt": 10}}, "then": "T2b"}
+    ],
+    "N": [
+      {"label": "N0: no positive nodes", "when": {"positive_node_count": {"eq": 0}}, "then": "N0"},
+      {"label": "N1: 1+ positive regional nodes", "when": {"positive_node_count": {"gte": 1}}, "then": "N1"}
+    ],
+    "M": [
+      {"label": "M0: no distant mets", "when": {"distant_mets": {"eq": false}}, "then": "M0"},
+      {"label": "M1: distant mets", "when": {"distant_mets": {"eq": true}}, "then": "M1"}
+    ]
+  },
+  "examples": [
+    {"label": "3 cm limited to kidney -> T1a N0 M0", "observations": {"extension": "limited_to_kidney", "tumor_size_cm": 3}, "expect": {"T": "T1a", "N": "N0", "M": "M0"}},
+    {"label": "8 cm limited to kidney + 2 positive nodes -> T2a N1", "observations": {"extension": "limited_to_kidney", "tumor_size_cm": 8, "positive_node_count": 2}, "expect": {"T": "T2a", "N": "N1"}},
+    {"label": "renal vein involvement -> T3a", "observations": {"extension": "renal_vein_or_perirenal_fat"}, "expect": {"T": "T3a", "N": "N0", "M": "M0"}},
+    {"label": "beyond Gerota's + M1 -> T4 N0 M1", "observations": {"extension": "beyond_gerotas_or_adrenal", "distant_mets": true}, "expect": {"T": "T4", "N": "N0", "M": "M1"}},
+    {"label": "no observations -> TX, N0, M0", "observations": {}, "expect": {"T": "TX", "N": "N0", "M": "M0"}}
+  ]
+}

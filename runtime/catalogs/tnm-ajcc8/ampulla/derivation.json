@@ -1,0 +1,55 @@
+{
+  "$schema_version": 1,
+  "organ": "ampulla",
+  "edition": "AJCC 8",
+  "source": "pdfsource/ampulla.pdf",
+  "observables": {
+    "depth_of_invasion": {
+      "type": "enum",
+      "default": "unknown",
+      "values": ["unknown", "in_situ", "ampulla_or_sphincter_of_oddi", "duodenal_wall", "muscularis_propria", "pancreas_le_0_5_cm", "pancreas_gt_0_5_cm_or_serosa", "celiac_axis_or_sma_or_chl"],
+      "description": "Depth/extent of tumor invasion through ampullary structures.",
+      "display": {
+        "label": "Depth / extent of tumor invasion",
+        "choices": {
+          "unknown": "Unknown / not assessable",
+          "in_situ": "Carcinoma in situ (Tis)",
+          "ampulla_or_sphincter_of_oddi": "Ampulla or sphincter of Oddi (T1a)",
+          "duodenal_wall": "Duodenal wall beyond sphincter (T1b)",
+          "muscularis_propria": "Muscularis propria of duodenum (T2)",
+          "pancreas_le_0_5_cm": "Invades pancreas ≤ 0.5 cm (T3a)",
+          "pancreas_gt_0_5_cm_or_serosa": "Invades pancreas > 0.5 cm OR peripancreatic / duodenal serosa (T3b)",
+          "celiac_axis_or_sma_or_chl": "Invades celiac axis / SMA / common hepatic artery (T4)"
+        }
+      }
+    },
+    "positive_node_count": {"type": "number", "default": 0, "description": "Regional lymph node count.", "display": {"label": "Positive regional lymph nodes (count)"}},
+    "distant_mets": {"type": "bool", "default": false, "display": {"label": "Distant metastasis (M1)"}}
+  },
+  "axes": {
+    "T": [
+      {"label": "Tis: in situ", "when": {"depth_of_invasion": {"eq": "in_situ"}}, "then": "Tis"},
+      {"label": "T1a: ampulla or sphincter of Oddi", "when": {"depth_of_invasion": {"eq": "ampulla_or_sphincter_of_oddi"}}, "then": "T1a"},
+      {"label": "T1b: duodenal wall beyond sphincter", "when": {"depth_of_invasion": {"eq": "duodenal_wall"}}, "then": "T1b"},
+      {"label": "T2: muscularis propria of duodenum", "when": {"depth_of_invasion": {"eq": "muscularis_propria"}}, "then": "T2"},
+      {"label": "T3a: pancreas <= 0.5 cm", "when": {"depth_of_invasion": {"eq": "pancreas_le_0_5_cm"}}, "then": "T3a"},
+      {"label": "T3b: pancreas > 0.5 cm or peripancreatic/duodenal serosa", "when": {"depth_of_invasion": {"eq": "pancreas_gt_0_5_cm_or_serosa"}}, "then": "T3b"},
+      {"label": "T4: vascular invasion (celiac/SMA/CHA)", "when": {"depth_of_invasion": {"eq": "celiac_axis_or_sma_or_chl"}}, "then": "T4"}
+    ],
+    "N": [
+      {"label": "N0", "when": {"positive_node_count": {"eq": 0}}, "then": "N0"},
+      {"label": "N1: 1-3", "when": {"positive_node_count": {"gte": 1, "lte": 3}}, "then": "N1"},
+      {"label": "N2: 4+", "when": {"positive_node_count": {"gte": 4}}, "then": "N2"}
+    ],
+    "M": [
+      {"label": "M0", "when": {"distant_mets": {"eq": false}}, "then": "M0"},
+      {"label": "M1", "when": {"distant_mets": {"eq": true}}, "then": "M1"}
+    ]
+  },
+  "examples": [
+    {"label": "T1a N0 M0", "observations": {"depth_of_invasion": "ampulla_or_sphincter_of_oddi"}, "expect": {"T": "T1a"}},
+    {"label": "T3a N1 M0", "observations": {"depth_of_invasion": "pancreas_le_0_5_cm", "positive_node_count": 2}, "expect": {"T": "T3a", "N": "N1"}},
+    {"label": "T4 N2 M1", "observations": {"depth_of_invasion": "celiac_axis_or_sma_or_chl", "positive_node_count": 5, "distant_mets": true}, "expect": {"T": "T4", "N": "N2", "M": "M1"}},
+    {"label": "no observations -> TX, N0, M0", "observations": {}, "expect": {"T": "TX", "N": "N0", "M": "M0"}}
+  ]
+}

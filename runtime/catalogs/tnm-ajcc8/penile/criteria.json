@@ -1,0 +1,185 @@
+{
+  "$schema_version": 1,
+  "organ": "penile",
+  "edition": "AJCC 8",
+  "source": "20250317/penile_blocks.pdf, pagina 29, tabla AJCC reproducida con permiso",
+  "sourceDocument": "penile_blocks.pdf",
+  "sourcePage": 29,
+  "guideVersion": "NCCN 2.2025",
+  "axes": {
+    "T": {
+      "label": "Tumor primario",
+      "categories": [
+        {
+          "code": "TX",
+          "description": "No evaluable.",
+          "notes": []
+        },
+        {
+          "code": "T0",
+          "description": "Sin evidencia de tumor.",
+          "notes": []
+        },
+        {
+          "code": "Tis",
+          "description": "Carcinoma in situ.",
+          "notes": []
+        },
+        {
+          "code": "Ta",
+          "description": "Carcinoma escamoso localizado no invasivo.",
+          "notes": []
+        },
+        {
+          "code": "T1",
+          "description": "Invade tejido conectivo subepitelial.",
+          "notes": []
+        },
+        {
+          "code": "T1a",
+          "description": "Sin invasion linfovascular/perineural y no alto grado.",
+          "notes": []
+        },
+        {
+          "code": "T1b",
+          "description": "Con invasion linfovascular/perineural o alto grado.",
+          "notes": []
+        },
+        {
+          "code": "T2",
+          "description": "Invade cuerpo esponjoso con o sin uretra.",
+          "notes": []
+        },
+        {
+          "code": "T3",
+          "description": "Invade cuerpos cavernosos con o sin uretra.",
+          "notes": []
+        },
+        {
+          "code": "T4",
+          "description": "Invade estructuras adyacentes.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "N": {
+      "label": "Ganglios regionales",
+      "categories": [
+        {
+          "code": "NX",
+          "description": "Los ganglios regionales no pueden evaluarse.",
+          "notes": []
+        },
+        {
+          "code": "N0",
+          "description": "Sin metastasis ganglionares regionales.",
+          "notes": []
+        },
+        {
+          "code": "N1",
+          "description": "Compromiso inguinal limitado.",
+          "notes": []
+        },
+        {
+          "code": "N2",
+          "description": "Multiples ganglios inguinales unilaterales o bilaterales.",
+          "notes": []
+        },
+        {
+          "code": "N3",
+          "description": "Extension extranodal o ganglios pelvicos.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "M": {
+      "label": "Metastasis a distancia",
+      "categories": [
+        {
+          "code": "M0",
+          "description": "Sin metastasis a distancia.",
+          "notes": []
+        },
+        {
+          "code": "M1",
+          "description": "Metastasis a distancia presente.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Clasificacion",
+      "categories": [
+        {
+          "code": "c",
+          "description": "Clasificacion clinica.",
+          "notes": []
+        },
+        {
+          "code": "p",
+          "description": "Clasificacion patologica.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor y",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Posterior a tratamiento neoadyuvante.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor y.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor r",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Enfermedad recurrente.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor r.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor m",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Tumores primarios multiples.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor m.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    }
+  }
+}

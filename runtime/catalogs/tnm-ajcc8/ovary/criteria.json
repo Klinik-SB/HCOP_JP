@@ -1,0 +1,94 @@
+{
+  "$schema_version": 1,
+  "organ": "ovary",
+  "edition": "AJCC 8",
+  "source": "pdfsource/ovary.pdf",
+  "axes": {
+    "T": {
+      "label": "Primary Tumor (Ovary / Fallopian Tube / Primary Peritoneal, with FIGO equivalents)",
+      "categories": [
+        {"code": "TX",   "description": "Primary tumor cannot be assessed", "notes": []},
+        {"code": "T0",   "description": "No evidence of primary tumor", "notes": []},
+        {"code": "T1",   "description": "Tumor limited to ovaries (one or both) or fallopian tube(s) (FIGO I)", "notes": []},
+        {"code": "T1a",  "description": "Tumor limited to one ovary (capsule intact) or fallopian tube; no tumor on ovarian or fallopian tube surface; no malignant cells in ascites or peritoneal washings (FIGO IA)", "notes": []},
+        {"code": "T1b",  "description": "Tumor limited to both ovaries (capsules intact) or fallopian tubes; no tumor on surface; no malignant cells in ascites or peritoneal washings (FIGO IB)", "notes": []},
+        {"code": "T1c",  "description": "Tumor limited to one or both ovaries or fallopian tubes, with any of: surgical spill; capsule rupture before surgery or surface tumor; malignant ascites/washings (FIGO IC)", "notes": []},
+        {"code": "T1c1", "description": "Surgical spill (FIGO IC1)", "notes": []},
+        {"code": "T1c2", "description": "Capsule ruptured before surgery or tumor on ovarian or fallopian tube surface (FIGO IC2)", "notes": []},
+        {"code": "T1c3", "description": "Malignant cells in ascites or peritoneal washings (FIGO IC3)", "notes": []},
+        {"code": "T2",   "description": "Tumor involves one or both ovaries or fallopian tubes with pelvic extension below pelvic brim, or primary peritoneal cancer (FIGO II)", "notes": []},
+        {"code": "T2a",  "description": "Extension and/or implants on uterus and/or fallopian tube(s) and/or ovaries (FIGO IIA)", "notes": []},
+        {"code": "T2b",  "description": "Extension to and/or implants on other pelvic tissues (FIGO IIB)", "notes": []},
+        {"code": "T3",   "description": "Tumor involves one or both ovaries or fallopian tubes, or primary peritoneal cancer, with microscopically confirmed peritoneal metastasis outside pelvis and/or retroperitoneal (pelvic/para-aortic) lymph node metastasis (FIGO III)", "notes": []},
+        {"code": "T3a",  "description": "Microscopic extrapelvic (above pelvic brim) peritoneal involvement with or without positive retroperitoneal lymph nodes (FIGO IIIA2)", "notes": []},
+        {"code": "T3b",  "description": "Macroscopic peritoneal metastasis beyond pelvis ≤ 2 cm in greatest dimension with or without retroperitoneal lymph node metastasis (FIGO IIIB)", "notes": []},
+        {"code": "T3c",  "description": "Macroscopic peritoneal metastasis beyond pelvis > 2 cm in greatest dimension with or without retroperitoneal lymph node metastasis (includes extension of tumor to capsule of liver and spleen without parenchymal involvement) (FIGO IIIC)", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": [{"token": "(m)", "description": "Multiple synchronous primary tumors"}]
+    },
+    "N": {
+      "label": "Regional Lymph Node (with FIGO equivalents)",
+      "categories": [
+        {"code": "NX",     "description": "Regional lymph nodes cannot be assessed", "notes": []},
+        {"code": "N0",     "description": "No regional lymph node metastasis", "notes": []},
+        {"code": "N0(i+)", "description": "Isolated tumor cells in regional lymph node(s) ≤ 0.2 mm", "notes": []},
+        {"code": "N1",     "description": "Positive retroperitoneal lymph nodes only (histologically confirmed) (FIGO IIIA1)", "notes": []},
+        {"code": "N1a",    "description": "Metastasis ≤ 10 mm in greatest dimension (FIGO IIIA1i)", "notes": []},
+        {"code": "N1b",    "description": "Metastasis > 10 mm in greatest dimension (FIGO IIIA1ii)", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": [
+        {"token": "(sn)", "description": "Sentinel node procedure"},
+        {"token": "(f)",  "description": "FNA or core needle biopsy"}
+      ]
+    },
+    "M": {
+      "label": "Distant Metastasis",
+      "categories": [
+        {"code": "M0",  "description": "No distant metastasis", "notes": []},
+        {"code": "M1",  "description": "Distant metastasis (parent for M1a/M1b)", "notes": []},
+        {"code": "M1a", "description": "Pleural effusion with positive cytology (FIGO IVA)", "notes": []},
+        {"code": "M1b", "description": "Liver or splenic parenchymal metastases; extra-abdominal metastases (including inguinal lymph nodes and lymph nodes outside abdominal cavity); transmural involvement of intestine (FIGO IVB)", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Staging Classification",
+      "categories": [
+        {"code": "c", "description": "Clinical classification.", "notes": []},
+        {"code": "p", "description": "Pathological classification.", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor: y (post-neoadjuvant)",
+      "categories": [
+        {"code": "Yes", "description": "Post-neoadjuvant.", "notes": []},
+        {"code": "No",  "description": "No neoadjuvant therapy.", "notes": []}
+      ],
+      "notes": {"matching": "Single stage table; DescY does not affect outcome."},
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor: r (recurrent)",
+      "categories": [
+        {"code": "Yes", "description": "Recurrent.", "notes": []},
+        {"code": "No",  "description": "Not recurrent.", "notes": []}
+      ],
+      "notes": {"matching": "DescR is recorded for context and ignored by the rule lookup."},
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor: m (multiple synchronous primaries)",
+      "categories": [
+        {"code": "Yes", "description": "Multiple synchronous primaries.", "notes": []},
+        {"code": "No",  "description": "Single primary tumor.", "notes": []}
+      ],
+      "notes": {"matching": "DescM is recorded for context and ignored by the rule lookup."},
+      "suffixes": []
+    }
+  }
+}

@@ -1,0 +1,14 @@
+[
+  {"generic":"Ondansetron","brand":"","presentation":"8 mg x 20 comprimidos","form":"Comprimidos","laboratory":"Generico"},
+  {"generic":"Ondansetron","brand":"","presentation":"8 mg/4 ml x 5 ampollas","form":"Solucion inyectable","laboratory":"Generico"},
+  {"generic":"Paracetamol","brand":"","presentation":"500 mg x 20 comprimidos","form":"Comprimidos","laboratory":"Generico"},
+  {"generic":"Paracetamol","brand":"","presentation":"1 g x 20 comprimidos","form":"Comprimidos","laboratory":"Generico"},
+  {"generic":"Omeprazol","brand":"","presentation":"20 mg x 30 capsulas","form":"Capsulas","laboratory":"Generico"},
+  {"generic":"Dexametasona","brand":"","presentation":"4 mg x 20 comprimidos","form":"Comprimidos","laboratory":"Generico"},
+  {"generic":"Dexametasona","brand":"","presentation":"8 mg/2 ml x 5 ampollas","form":"Solucion inyectable","laboratory":"Generico"},
+  {"generic":"Metoclopramida","brand":"","presentation":"10 mg x 20 comprimidos","form":"Comprimidos","laboratory":"Generico"},
+  {"generic":"Tramadol","brand":"","presentation":"50 mg x 20 capsulas","form":"Capsulas","laboratory":"Generico"},
+  {"generic":"Morfina sulfato","brand":"","presentation":"10 mg x 20 comprimidos","form":"Comprimidos","laboratory":"Generico"},
+  {"generic":"Enoxaparina","brand":"","presentation":"40 mg/0,4 ml x 10 jeringas","form":"Jeringa prellenada","laboratory":"Generico"},
+  {"generic":"Filgrastim","brand":"","presentation":"300 mcg/0,5 ml x 5 jeringas","form":"Jeringa prellenada","laboratory":"Generico"}
+]

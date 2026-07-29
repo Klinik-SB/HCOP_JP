@@ -1,0 +1,60 @@
+package ar.com.hexium.hcop.catalog;
+
+import java.util.Map;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class LegacyCatalogController {
+  private final LegacyProtocolCatalogService protocols;
+  private final SeerTnmCatalogService tnm;
+  private final DrugCatalogService drugs;
+
+  public LegacyCatalogController(
+      LegacyProtocolCatalogService protocols,
+      SeerTnmCatalogService tnm,
+      DrugCatalogService drugs) {
+    this.protocols = protocols;
+    this.tnm = tnm;
+    this.drugs = drugs;
+  }
+
+  @GetMapping("/api/protocols")
+  Map<String, Object> protocols(@RequestParam(defaultValue = "coir") String source) {
+    return protocols.list(source);
+  }
+
+  @GetMapping("/api/protocols/detail")
+  Map<String, Object> protocolDetail(
+      @RequestParam String id,
+      @RequestParam(defaultValue = "coir") String source) {
+    return protocols.detail(id, source);
+  }
+
+  @GetMapping("/api/medications/search")
+  Map<String, Object> medicationSearch(@RequestParam(defaultValue = "") String q) {
+    var results = drugs.search(q).stream().map(item -> Map.<String, Object>of(
+        "id", item.getOrDefault("id", ""),
+        "generic", item.getOrDefault("genericName", item.getOrDefault("name", "")),
+        "brand", item.getOrDefault("brand", ""),
+        "presentation", item.getOrDefault("presentation", ""),
+        "form", item.getOrDefault("form", ""),
+        "laboratory", item.getOrDefault("laboratory", ""))).toList();
+    return Map.of("ok", true, "results", results, "count", results.size());
+  }
+
+  @GetMapping("/api/catalogs/status")
+  Map<String, Object> status() {
+    return protocols.status(tnm.list().size());
+  }
+
+  @PostMapping("/api/catalogs/update")
+  Map<String, Object> update(@RequestBody(required = false) Map<String, Object> ignored) {
+    Map<String, Object> status = new java.util.LinkedHashMap<>(protocols.status(tnm.list().size()));
+    status.put("message", "Los catálogos locales ya están disponibles y versionados.");
+    return status;
+  }
+}

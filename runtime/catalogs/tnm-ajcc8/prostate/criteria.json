@@ -1,0 +1,124 @@
+{
+  "$schema_version": 1,
+  "organ": "prostate",
+  "edition": "AJCC 8",
+  "source": "pdfsource/prostate.pdf",
+  "axes": {
+    "T": {
+      "label": "Primary Tumor (combined clinical + pathological; prefix encodes which)",
+      "categories": [
+        {"code": "cTX",  "description": "Clinical: primary tumor cannot be assessed", "notes": []},
+        {"code": "cT0",  "description": "Clinical: no evidence of primary tumor", "notes": []},
+        {"code": "cT1",  "description": "Clinical: clinically inapparent tumor that is not palpable (parent for cT1a/b/c)", "notes": []},
+        {"code": "cT1a", "description": "Clinical: tumor incidental histologic finding in 5% or less of tissue resected", "notes": []},
+        {"code": "cT1b", "description": "Clinical: tumor incidental histologic finding in more than 5% of tissue resected", "notes": []},
+        {"code": "cT1c", "description": "Clinical: tumor identified by needle biopsy in one or both sides, but not palpable", "notes": []},
+        {"code": "cT2",  "description": "Clinical: tumor palpable and confined within prostate (parent for cT2a/b/c)", "notes": []},
+        {"code": "cT2a", "description": "Clinical: tumor involves one-half of one side or less", "notes": []},
+        {"code": "cT2b", "description": "Clinical: tumor involves more than one-half of one side but not both sides", "notes": []},
+        {"code": "cT2c", "description": "Clinical: tumor involves both sides", "notes": []},
+        {"code": "cT3",  "description": "Clinical: extraprostatic tumor that is not fixed or does not invade adjacent structures (parent for cT3a/b)", "notes": []},
+        {"code": "cT3a", "description": "Clinical: extraprostatic extension (unilateral or bilateral)", "notes": []},
+        {"code": "cT3b", "description": "Clinical: tumor invades seminal vesicle(s)", "notes": []},
+        {"code": "cT4",  "description": "Clinical: tumor is fixed or invades adjacent structures other than seminal vesicles (external sphincter, rectum, bladder, levator muscles, pelvic wall)", "notes": []},
+        {"code": "pT2",  "description": "Pathological: organ confined (NOTE: there is no pT1)", "notes": ["no_pt1"]},
+        {"code": "pT3",  "description": "Pathological: extraprostatic extension (parent for pT3a/b)", "notes": []},
+        {"code": "pT3a", "description": "Pathological: extraprostatic extension (unilateral or bilateral) or microscopic invasion of bladder neck", "notes": []},
+        {"code": "pT3b", "description": "Pathological: tumor invades seminal vesicle(s)", "notes": []},
+        {"code": "pT4",  "description": "Pathological: tumor is fixed or invades adjacent structures other than seminal vesicles", "notes": ["r1"]}
+      ],
+      "notes": {
+        "no_pt1": "There is no pathological T1 classification.",
+        "r1": "Positive surgical margin should be indicated by an R1 descriptor (residual microscopic disease)."
+      },
+      "suffixes": [{"token": "(m)", "description": "Multiple synchronous primary tumors"}]
+    },
+    "N": {
+      "label": "Regional Lymph Node",
+      "categories": [
+        {"code": "NX", "description": "Regional lymph nodes cannot be assessed", "notes": []},
+        {"code": "N0", "description": "No positive regional nodes", "notes": []},
+        {"code": "N1", "description": "Metastases in regional node(s)", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": [
+        {"token": "(sn)", "description": "Sentinel node procedure"},
+        {"token": "(f)",  "description": "FNA or core needle biopsy"}
+      ]
+    },
+    "M": {
+      "label": "Distant Metastasis",
+      "categories": [
+        {"code": "M0",  "description": "No distant metastasis", "notes": []},
+        {"code": "M1",  "description": "Distant metastasis present (parent)", "notes": ["most_advanced"]},
+        {"code": "M1a", "description": "Nonregional lymph node(s)", "notes": []},
+        {"code": "M1b", "description": "Bone(s)", "notes": []},
+        {"code": "M1c", "description": "Other site(s) with or without bone disease", "notes": ["most_advanced"]}
+      ],
+      "notes": {
+        "most_advanced": "When more than one site of metastasis is present, the most advanced category is used. M1c is most advanced."
+      },
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Staging Classification",
+      "categories": [
+        {"code": "c", "description": "Clinical classification (use cT codes for the T value).", "notes": []},
+        {"code": "p", "description": "Pathological classification (use pT codes for the T value).", "notes": []}
+      ],
+      "notes": {"matching": "Prostate AJCC 8 encodes classification in the T-value prefix (cT/pT); this Classification axis is kept for parity with other organ models and is not used by the rule lookup."},
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor: y (post-neoadjuvant)",
+      "categories": [
+        {"code": "Yes", "description": "Post-neoadjuvant.", "notes": []},
+        {"code": "No",  "description": "No neoadjuvant therapy.", "notes": []}
+      ],
+      "notes": {"matching": "Not used by the rule lookup."},
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor: r (recurrent)",
+      "categories": [
+        {"code": "Yes", "description": "Recurrent.", "notes": []},
+        {"code": "No",  "description": "Not recurrent.", "notes": []}
+      ],
+      "notes": {"matching": "Not used by the rule lookup."},
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor: m (multiple synchronous primaries)",
+      "categories": [
+        {"code": "Yes", "description": "Multiple synchronous primaries.", "notes": []},
+        {"code": "No",  "description": "Single primary tumor.", "notes": []}
+      ],
+      "notes": {"matching": "Not used by the rule lookup."},
+      "suffixes": []
+    },
+    "PSA": {
+      "label": "Prostate Specific Antigen (ng/mL)",
+      "categories": [
+        {"code": "<10",     "description": "PSA less than 10 ng/mL", "notes": []},
+        {"code": "10-<20",  "description": "PSA 10 to less than 20 ng/mL", "notes": []},
+        {"code": ">=20",    "description": "PSA 20 ng/mL or greater", "notes": []}
+      ],
+      "notes": {
+        "missing": "When either PSA or Grade Group is unavailable, grouping should be determined by T category and/or whichever of PSA/GG is available. Source does not define a discrete 'unknown PSA' band."
+      },
+      "suffixes": []
+    },
+    "GradeGroup": {
+      "label": "Grade Group (Gleason)",
+      "categories": [
+        {"code": "1", "description": "Gleason score ≤ 6 (Gleason pattern ≤ 3+3)", "notes": []},
+        {"code": "2", "description": "Gleason 7 (3+4)", "notes": []},
+        {"code": "3", "description": "Gleason 7 (4+3)", "notes": []},
+        {"code": "4", "description": "Gleason 8 (4+4, 3+5, 5+3)", "notes": []},
+        {"code": "5", "description": "Gleason 9 or 10 (4+5, 5+4, or 5+5)", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    }
+  }
+}

@@ -1,0 +1,379 @@
+{
+  "$schema_version": 1,
+  "organ": "larynx_subglottis",
+  "edition": "AJCC 8",
+  "source": "pdfsource/larynx.pdf",
+  "observables": {
+    "histology": {
+      "type": "enum",
+      "default": "invasive",
+      "values": [
+        "in_situ",
+        "invasive",
+        "unknown"
+      ],
+      "display": {
+        "label": "Histologic class",
+        "choices": {
+          "in_situ": "Carcinoma in situ",
+          "invasive": "Invasive carcinoma",
+          "unknown": "Unknown"
+        }
+      }
+    },
+    "extent": {
+      "type": "enum",
+      "default": "unknown",
+      "values": [
+        "unknown",
+        "limited_to_subglottis",
+        "extends_to_vocal_cord_normal_mobility",
+        "vocal_cord_fixation",
+        "moderately_advanced_local",
+        "very_advanced_local"
+      ],
+      "display": {
+        "label": "Subglottic T extent",
+        "choices": {
+          "unknown": "Unknown / not assessable",
+          "limited_to_subglottis": "Limited to subglottis (T1)",
+          "extends_to_vocal_cord_normal_mobility": "Extends to vocal cord, normal mobility (T2)",
+          "vocal_cord_fixation": "Vocal cord fixation (T3)",
+          "moderately_advanced_local": "Moderately advanced local disease (T4a)",
+          "very_advanced_local": "Very advanced local disease (T4b)"
+        }
+      }
+    },
+    "distant_mets": {
+      "type": "bool",
+      "default": false,
+      "display": {
+        "label": "Distant metastasis (M1)"
+      }
+    },
+    "positive_node_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of regional lymph nodes with metastatic involvement. 0 means N0.",
+      "display": {
+        "label": "Number of positive regional lymph nodes"
+      }
+    },
+    "largest_positive_node_cm": {
+      "type": "number",
+      "unit": "cm",
+      "description": "Greatest dimension of the largest positive regional lymph node, in centimeters. Ignored when positive_node_count is 0.",
+      "display": {
+        "label": "Largest positive node (cm)"
+      }
+    },
+    "node_laterality": {
+      "type": "enum",
+      "default": "ipsilateral",
+      "values": [
+        "ipsilateral",
+        "contralateral",
+        "bilateral"
+      ],
+      "description": "Laterality of positive regional lymph nodes relative to the primary tumor. Midline nodes are considered ipsilateral.",
+      "display": {
+        "label": "Node laterality",
+        "choices": {
+          "ipsilateral": "Ipsilateral only",
+          "contralateral": "Contralateral only",
+          "bilateral": "Bilateral"
+        }
+      }
+    },
+    "ene": {
+      "type": "enum",
+      "default": "negative",
+      "values": [
+        "negative",
+        "positive"
+      ],
+      "description": "Extranodal extension status (ENE). For cN, clinical ENE; for pN, pathological ENE.",
+      "display": {
+        "label": "Extranodal extension (ENE)",
+        "choices": {
+          "negative": "ENE(-)",
+          "positive": "ENE(+)"
+        }
+      }
+    }
+  },
+  "axes": {
+    "T": [
+      {
+        "label": "Tis",
+        "when": {
+          "histology": {
+            "eq": "in_situ"
+          }
+        },
+        "then": "Tis"
+      },
+      {
+        "label": "T4b",
+        "when": {
+          "extent": {
+            "eq": "very_advanced_local"
+          }
+        },
+        "then": "T4b"
+      },
+      {
+        "label": "T4a",
+        "when": {
+          "extent": {
+            "eq": "moderately_advanced_local"
+          }
+        },
+        "then": "T4a"
+      },
+      {
+        "label": "T3",
+        "when": {
+          "extent": {
+            "eq": "vocal_cord_fixation"
+          }
+        },
+        "then": "T3"
+      },
+      {
+        "label": "T2",
+        "when": {
+          "extent": {
+            "eq": "extends_to_vocal_cord_normal_mobility"
+          }
+        },
+        "then": "T2"
+      },
+      {
+        "label": "T1",
+        "when": {
+          "extent": {
+            "eq": "limited_to_subglottis"
+          }
+        },
+        "then": "T1"
+      }
+    ],
+    "N": [
+      {
+        "label": "N0: no positive regional nodes",
+        "when": {
+          "positive_node_count": {
+            "eq": 0
+          }
+        },
+        "then": "N0"
+      },
+      {
+        "label": "N3b: any positive node with ENE+ (multi-node, or single ipsi > 3 cm, or contralateral)",
+        "when": {
+          "any_of": [
+            {
+              "positive_node_count": {
+                "gte": 2
+              },
+              "ene": {
+                "eq": "positive"
+              }
+            },
+            {
+              "positive_node_count": {
+                "eq": 1
+              },
+              "largest_positive_node_cm": {
+                "gt": 3
+              },
+              "ene": {
+                "eq": "positive"
+              },
+              "node_laterality": {
+                "eq": "ipsilateral"
+              }
+            },
+            {
+              "positive_node_count": {
+                "eq": 1
+              },
+              "ene": {
+                "eq": "positive"
+              },
+              "node_laterality": {
+                "eq": "contralateral"
+              }
+            }
+          ]
+        },
+        "then": "N3b"
+      },
+      {
+        "label": "N3a: any node > 6 cm, ENE-",
+        "when": {
+          "largest_positive_node_cm": {
+            "gt": 6
+          },
+          "ene": {
+            "eq": "negative"
+          }
+        },
+        "then": "N3a"
+      },
+      {
+        "label": "N2c: bilateral or contralateral, all <= 6 cm, ENE-",
+        "when": {
+          "positive_node_count": {
+            "gte": 1
+          },
+          "largest_positive_node_cm": {
+            "lte": 6
+          },
+          "ene": {
+            "eq": "negative"
+          },
+          "node_laterality": {
+            "in": [
+              "bilateral",
+              "contralateral"
+            ]
+          }
+        },
+        "then": "N2c"
+      },
+      {
+        "label": "N2b: multiple ipsilateral, all <= 6 cm, ENE-",
+        "when": {
+          "positive_node_count": {
+            "gte": 2
+          },
+          "largest_positive_node_cm": {
+            "lte": 6
+          },
+          "ene": {
+            "eq": "negative"
+          },
+          "node_laterality": {
+            "eq": "ipsilateral"
+          }
+        },
+        "then": "N2b"
+      },
+      {
+        "label": "N2a: single ipsi <= 3 cm, ENE+ (mucosal-specific)",
+        "when": {
+          "positive_node_count": {
+            "eq": 1
+          },
+          "largest_positive_node_cm": {
+            "lte": 3
+          },
+          "ene": {
+            "eq": "positive"
+          },
+          "node_laterality": {
+            "eq": "ipsilateral"
+          }
+        },
+        "then": "N2a"
+      },
+      {
+        "label": "N2a: single ipsi > 3 cm and <= 6 cm, ENE-",
+        "when": {
+          "positive_node_count": {
+            "eq": 1
+          },
+          "largest_positive_node_cm": {
+            "gt": 3,
+            "lte": 6
+          },
+          "ene": {
+            "eq": "negative"
+          },
+          "node_laterality": {
+            "eq": "ipsilateral"
+          }
+        },
+        "then": "N2a"
+      },
+      {
+        "label": "N1: single ipsilateral <= 3 cm, ENE-",
+        "when": {
+          "positive_node_count": {
+            "eq": 1
+          },
+          "largest_positive_node_cm": {
+            "lte": 3
+          },
+          "ene": {
+            "eq": "negative"
+          },
+          "node_laterality": {
+            "eq": "ipsilateral"
+          }
+        },
+        "then": "N1"
+      }
+    ],
+    "M": [
+      {
+        "label": "M0",
+        "when": {
+          "distant_mets": {
+            "eq": false
+          }
+        },
+        "then": "M0"
+      },
+      {
+        "label": "M1",
+        "when": {
+          "distant_mets": {
+            "eq": true
+          }
+        },
+        "then": "M1"
+      }
+    ]
+  },
+  "examples": [
+    {
+      "label": "limited to subglottis -> T1",
+      "observations": {
+        "extent": "limited_to_subglottis"
+      },
+      "expect": {
+        "T": "T1"
+      }
+    },
+    {
+      "label": "extends to vocal cord -> T2",
+      "observations": {
+        "extent": "extends_to_vocal_cord_normal_mobility"
+      },
+      "expect": {
+        "T": "T2"
+      }
+    },
+    {
+      "label": "vocal cord fixation -> T3",
+      "observations": {
+        "extent": "vocal_cord_fixation"
+      },
+      "expect": {
+        "T": "T3"
+      }
+    },
+    {
+      "label": "no observations -> TX, N0, M0",
+      "observations": {},
+      "expect": {
+        "T": "TX",
+        "N": "N0",
+        "M": "M0"
+      }
+    }
+  ]
+}

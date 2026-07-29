@@ -1,0 +1,275 @@
+{
+  "$schema_version": 1,
+  "organ": "melanoma_cutaneous",
+  "edition": "AJCC 8",
+  "source": "20250317/cutaneous_melanoma_blocks.pdf, pagina 107, tabla AJCC reproducida con permiso",
+  "sourceDocument": "cutaneous_melanoma_blocks.pdf",
+  "sourcePage": 107,
+  "guideVersion": "NCCN 2.2025",
+  "axes": {
+    "T": {
+      "label": "Tumor primario",
+      "categories": [
+        {
+          "code": "TX",
+          "description": "No puede evaluarse el espesor.",
+          "notes": []
+        },
+        {
+          "code": "T0",
+          "description": "Sin evidencia de tumor primario.",
+          "notes": []
+        },
+        {
+          "code": "Tis",
+          "description": "Melanoma in situ.",
+          "notes": []
+        },
+        {
+          "code": "T1",
+          "description": "Espesor de 1 mm o menos.",
+          "notes": []
+        },
+        {
+          "code": "T1a",
+          "description": "Menor de 0,8 mm sin ulceracion.",
+          "notes": []
+        },
+        {
+          "code": "T1b",
+          "description": "Menor de 0,8 mm ulcerado o de 0,8 a 1 mm con o sin ulceracion.",
+          "notes": []
+        },
+        {
+          "code": "T2",
+          "description": "Mayor de 1 y hasta 2 mm.",
+          "notes": []
+        },
+        {
+          "code": "T2a",
+          "description": "Mayor de 1 y hasta 2 mm sin ulceracion.",
+          "notes": []
+        },
+        {
+          "code": "T2b",
+          "description": "Mayor de 1 y hasta 2 mm con ulceracion.",
+          "notes": []
+        },
+        {
+          "code": "T3",
+          "description": "Mayor de 2 y hasta 4 mm.",
+          "notes": []
+        },
+        {
+          "code": "T3a",
+          "description": "Mayor de 2 y hasta 4 mm sin ulceracion.",
+          "notes": []
+        },
+        {
+          "code": "T3b",
+          "description": "Mayor de 2 y hasta 4 mm con ulceracion.",
+          "notes": []
+        },
+        {
+          "code": "T4",
+          "description": "Mayor de 4 mm.",
+          "notes": []
+        },
+        {
+          "code": "T4a",
+          "description": "Mayor de 4 mm sin ulceracion.",
+          "notes": []
+        },
+        {
+          "code": "T4b",
+          "description": "Mayor de 4 mm con ulceracion.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "N": {
+      "label": "Ganglios regionales",
+      "categories": [
+        {
+          "code": "NX",
+          "description": "Los ganglios regionales no pueden evaluarse.",
+          "notes": []
+        },
+        {
+          "code": "N0",
+          "description": "Sin metastasis ganglionares regionales.",
+          "notes": []
+        },
+        {
+          "code": "N1",
+          "description": "Un ganglio comprometido o metastasis en transito/satelite sin ganglio positivo.",
+          "notes": []
+        },
+        {
+          "code": "N1a",
+          "description": "Un ganglio clinicamente oculto.",
+          "notes": []
+        },
+        {
+          "code": "N1b",
+          "description": "Un ganglio clinicamente detectable.",
+          "notes": []
+        },
+        {
+          "code": "N1c",
+          "description": "Sin ganglio positivo, con metastasis en transito/satelite.",
+          "notes": []
+        },
+        {
+          "code": "N2",
+          "description": "Dos o tres ganglios o metastasis en transito con un ganglio.",
+          "notes": []
+        },
+        {
+          "code": "N2a",
+          "description": "Dos o tres ganglios ocultos.",
+          "notes": []
+        },
+        {
+          "code": "N2b",
+          "description": "Dos o tres ganglios, al menos uno detectable.",
+          "notes": []
+        },
+        {
+          "code": "N2c",
+          "description": "Un ganglio con metastasis en transito/satelite.",
+          "notes": []
+        },
+        {
+          "code": "N3",
+          "description": "Cuatro o mas ganglios, ganglios conglomerados o enfermedad en transito avanzada.",
+          "notes": []
+        },
+        {
+          "code": "N3a",
+          "description": "Cuatro o mas ganglios ocultos.",
+          "notes": []
+        },
+        {
+          "code": "N3b",
+          "description": "Cuatro o mas ganglios con alguno detectable o ganglios conglomerados.",
+          "notes": []
+        },
+        {
+          "code": "N3c",
+          "description": "Dos o mas ganglios con metastasis en transito/satelite.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "M": {
+      "label": "Metastasis a distancia",
+      "categories": [
+        {
+          "code": "M0",
+          "description": "Sin metastasis a distancia.",
+          "notes": []
+        },
+        {
+          "code": "M1",
+          "description": "Metastasis a distancia.",
+          "notes": []
+        },
+        {
+          "code": "M1a",
+          "description": "Piel, tejido blando o ganglios no regionales.",
+          "notes": []
+        },
+        {
+          "code": "M1b",
+          "description": "Pulmon, con o sin sitios M1a.",
+          "notes": []
+        },
+        {
+          "code": "M1c",
+          "description": "Visceras no SNC, con o sin M1a/M1b.",
+          "notes": []
+        },
+        {
+          "code": "M1d",
+          "description": "Sistema nervioso central, con o sin otros sitios.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Clasificacion",
+      "categories": [
+        {
+          "code": "c",
+          "description": "Clasificacion clinica.",
+          "notes": []
+        },
+        {
+          "code": "p",
+          "description": "Clasificacion patologica.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor y",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Posterior a tratamiento neoadyuvante.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor y.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor r",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Enfermedad recurrente.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor r.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor m",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Tumores primarios multiples.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor m.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    }
+  }
+}

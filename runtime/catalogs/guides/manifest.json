@@ -1,0 +1,28 @@
+{
+  "guides": [
+    {
+      "file": "nccn-breast-invasive-patient.pdf",
+      "title": "Cancer de mama invasivo",
+      "site": "Mama",
+      "audience": "Pacientes",
+      "source": "NCCN",
+      "url": "https://www.nccn.org/patients/guidelines/content/PDF/breast-invasive-patient.pdf"
+    },
+    {
+      "file": "nccn-prostate-advanced-patient.pdf",
+      "title": "Cancer de prostata avanzado",
+      "site": "Prostata",
+      "audience": "Pacientes",
+      "source": "NCCN",
+      "url": "https://www.nccn.org/patients/guidelines/content/PDF/prostate-advanced-patient.pdf"
+    },
+    {
+      "file": "nccn-lung-metastatic-patient.pdf",
+      "title": "Cancer de pulmon metastasico",
+      "site": "Pulmon",
+      "audience": "Pacientes",
+      "source": "NCCN",
+      "url": "https://www.nccn.org/patients/guidelines/content/PDF/lung-metastatic-patient.pdf"
+    }
+  ]
+}

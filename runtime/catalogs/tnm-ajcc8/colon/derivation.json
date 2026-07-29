@@ -1,0 +1,82 @@
+{
+  "$schema_version": 1,
+  "organ": "colon",
+  "edition": "AJCC 8",
+  "source": "pdfsource/colon.pdf",
+  "observables": {
+    "depth_of_invasion": {
+      "type": "enum",
+      "default": "unknown",
+      "values": ["unknown", "in_situ", "submucosa", "muscularis_propria", "pericolorectal_tissues", "visceral_peritoneum", "adjacent_organs"],
+      "description": "Greatest depth of tumor invasion through the colorectal wall.",
+      "display": {
+        "label": "Greatest depth of tumor invasion",
+        "choices": {
+          "unknown": "Unknown / not assessable",
+          "in_situ": "Carcinoma in situ (Tis)",
+          "submucosa": "Submucosa (T1)",
+          "muscularis_propria": "Muscularis propria (T2)",
+          "pericolorectal_tissues": "Pericolorectal tissues (T3)",
+          "visceral_peritoneum": "Visceral peritoneum (T4a)",
+          "adjacent_organs": "Adjacent organs (T4b)"
+        }
+      }
+    },
+    "positive_node_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of regional lymph nodes with metastasis. AJCC 8 colon N1c is independent: tumor deposit(s) without positive nodes -- supply via has_tumor_deposit and 0 positive_node_count.",
+      "display": {"label": "Positive regional lymph nodes (count)"}
+    },
+    "has_tumor_deposit": {
+      "type": "bool",
+      "default": false,
+      "description": "Tumor deposit(s) in subserosa/mesentery/pericolic without positive regional node. With positive_node_count=0 this yields N1c.",
+      "display": {"label": "Tumor deposit(s) without positive regional node (drives N1c)"}
+    },
+    "distant_mets_pattern": {
+      "type": "enum",
+      "default": "none",
+      "values": ["none", "single_site", "multiple_sites_or_peritoneum"],
+      "description": "Pattern of distant metastasis. 'single_site' -> M1a. 'multiple_sites_or_peritoneum' -> M1b/M1c distinction further reserved; this DSL collapses to M1 family for simplicity.",
+      "display": {
+        "label": "Distant metastasis pattern",
+        "choices": {
+          "none": "No distant metastasis (M0)",
+          "single_site": "Single distant site (M1a)",
+          "multiple_sites_or_peritoneum": "Multiple sites or peritoneal surface (M1b)"
+        }
+      }
+    }
+  },
+  "axes": {
+    "T": [
+      {"label": "Tis: in situ", "when": {"depth_of_invasion": {"eq": "in_situ"}}, "then": "Tis"},
+      {"label": "T1: submucosa", "when": {"depth_of_invasion": {"eq": "submucosa"}}, "then": "T1"},
+      {"label": "T2: muscularis propria", "when": {"depth_of_invasion": {"eq": "muscularis_propria"}}, "then": "T2"},
+      {"label": "T3: pericolorectal tissues", "when": {"depth_of_invasion": {"eq": "pericolorectal_tissues"}}, "then": "T3"},
+      {"label": "T4a: visceral peritoneum", "when": {"depth_of_invasion": {"eq": "visceral_peritoneum"}}, "then": "T4a"},
+      {"label": "T4b: invades adjacent organs", "when": {"depth_of_invasion": {"eq": "adjacent_organs"}}, "then": "T4b"}
+    ],
+    "N": [
+      {"label": "N1c: tumor deposit without positive node", "when": {"positive_node_count": {"eq": 0}, "has_tumor_deposit": {"eq": true}}, "then": "N1c"},
+      {"label": "N0: no positive nodes, no tumor deposit", "when": {"positive_node_count": {"eq": 0}}, "then": "N0"},
+      {"label": "N1a: 1 positive node", "when": {"positive_node_count": {"eq": 1}}, "then": "N1a"},
+      {"label": "N1b: 2-3 positive nodes", "when": {"positive_node_count": {"gte": 2, "lte": 3}}, "then": "N1b"},
+      {"label": "N2a: 4-6 positive nodes", "when": {"positive_node_count": {"gte": 4, "lte": 6}}, "then": "N2a"},
+      {"label": "N2b: 7+ positive nodes", "when": {"positive_node_count": {"gte": 7}}, "then": "N2b"}
+    ],
+    "M": [
+      {"label": "M0: no distant mets", "when": {"distant_mets_pattern": {"eq": "none"}}, "then": "M0"},
+      {"label": "M1a: single site", "when": {"distant_mets_pattern": {"eq": "single_site"}}, "then": "M1a"},
+      {"label": "M1b: multiple sites or peritoneum", "when": {"distant_mets_pattern": {"eq": "multiple_sites_or_peritoneum"}}, "then": "M1b"}
+    ]
+  },
+  "examples": [
+    {"label": "T1 N0 M0", "observations": {"depth_of_invasion": "submucosa"}, "expect": {"T": "T1", "N": "N0", "M": "M0"}},
+    {"label": "T3 N1a M0", "observations": {"depth_of_invasion": "pericolorectal_tissues", "positive_node_count": 1}, "expect": {"T": "T3", "N": "N1a", "M": "M0"}},
+    {"label": "T3 N1c M0 (tumor deposit, no positive nodes)", "observations": {"depth_of_invasion": "pericolorectal_tissues", "has_tumor_deposit": true}, "expect": {"T": "T3", "N": "N1c", "M": "M0"}},
+    {"label": "T4a N2b M1a", "observations": {"depth_of_invasion": "visceral_peritoneum", "positive_node_count": 8, "distant_mets_pattern": "single_site"}, "expect": {"T": "T4a", "N": "N2b", "M": "M1a"}},
+    {"label": "no observations -> TX, N0, M0", "observations": {}, "expect": {"T": "TX", "N": "N0", "M": "M0"}}
+  ]
+}

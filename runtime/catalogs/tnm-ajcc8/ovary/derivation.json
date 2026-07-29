@@ -1,0 +1,120 @@
+{
+  "$schema_version": 1,
+  "organ": "ovary",
+  "edition": "AJCC 8",
+  "source": "pdfsource/ovary.pdf",
+  "observables": {
+    "ovaries_involved": {
+      "type": "enum",
+      "default": "none",
+      "values": ["none", "one", "both"],
+      "display": {
+        "label": "Ovaries involved",
+        "choices": {"none": "Neither ovary", "one": "One ovary (T1a candidate)", "both": "Both ovaries (T1b candidate)"}
+      }
+    },
+    "capsule_intact_and_surface_negative_and_ascites_negative": {"type": "bool", "default": true, "description": "True only if capsule fully intact, no surface tumor, and no malignant cells in ascites/washings. Drives T1a vs T1c subdivisions.", "display": {"label": "Capsule intact AND no surface tumor AND no malignant cells in ascites"}},
+    "t1c_subcategory": {
+      "type": "enum",
+      "default": "not_t1c",
+      "values": ["not_t1c", "surgical_spill", "capsule_rupture_before_surgery_or_surface", "malignant_cells_in_ascites_or_washings"],
+      "display": {
+        "label": "T1c trigger (capsule/surface/ascites finding)",
+        "choices": {
+          "not_t1c": "None of the T1c triggers",
+          "surgical_spill": "Surgical spill (T1c1)",
+          "capsule_rupture_before_surgery_or_surface": "Pre-op capsule rupture or surface tumor (T1c2)",
+          "malignant_cells_in_ascites_or_washings": "Malignant cells in ascites or washings (T1c3)"
+        }
+      }
+    },
+    "pelvic_extension": {
+      "type": "enum",
+      "default": "none",
+      "values": ["none", "uterus_or_tubes", "other_pelvic_intraperitoneal"],
+      "display": {
+        "label": "Pelvic extension",
+        "choices": {
+          "none": "No pelvic extension",
+          "uterus_or_tubes": "Extension to uterus or fallopian tubes (T2a)",
+          "other_pelvic_intraperitoneal": "Other pelvic intraperitoneal tissue (T2b)"
+        }
+      }
+    },
+    "peritoneal_outside_pelvis": {
+      "type": "enum",
+      "default": "none",
+      "values": ["none", "microscopic", "macroscopic_le2cm", "macroscopic_gt2cm_or_capsule_liver_spleen"],
+      "display": {
+        "label": "Peritoneal metastasis outside pelvis",
+        "choices": {
+          "none": "None outside pelvis",
+          "microscopic": "Microscopic peritoneal metastasis (T3a)",
+          "macroscopic_le2cm": "Macroscopic peritoneal mets ≤ 2 cm (T3b)",
+          "macroscopic_gt2cm_or_capsule_liver_spleen": "Macroscopic mets > 2 cm OR liver/spleen capsule (T3c)"
+        }
+      }
+    },
+    "nodes_pattern": {
+      "type": "enum",
+      "default": "none",
+      "values": ["none", "isolated_tumor_cells_only", "retroperitoneal_le10mm", "retroperitoneal_gt10mm"],
+      "display": {
+        "label": "Regional lymph node involvement",
+        "choices": {
+          "none": "No regional node involvement (N0)",
+          "isolated_tumor_cells_only": "Isolated tumor cells only (N0(i+))",
+          "retroperitoneal_le10mm": "Retroperitoneal nodes ≤ 10 mm (N1a)",
+          "retroperitoneal_gt10mm": "Retroperitoneal nodes > 10 mm (N1b)"
+        }
+      }
+    },
+    "distant_mets_pattern": {
+      "type": "enum",
+      "default": "none",
+      "values": ["none", "pleural_effusion_positive", "parenchymal_or_extraabdominal"],
+      "display": {
+        "label": "Distant metastasis pattern",
+        "choices": {
+          "none": "No distant metastasis (M0)",
+          "pleural_effusion_positive": "Cytology-positive pleural effusion (M1a)",
+          "parenchymal_or_extraabdominal": "Parenchymal or extra-abdominal metastasis (M1b)"
+        }
+      }
+    }
+  },
+  "axes": {
+    "T": [
+      {"label": "T3c: macroscopic > 2 cm or liver/spleen capsule", "when": {"peritoneal_outside_pelvis": {"eq": "macroscopic_gt2cm_or_capsule_liver_spleen"}}, "then": "T3c"},
+      {"label": "T3b: macroscopic <= 2 cm", "when": {"peritoneal_outside_pelvis": {"eq": "macroscopic_le2cm"}}, "then": "T3b"},
+      {"label": "T3a: microscopic peritoneal mets", "when": {"peritoneal_outside_pelvis": {"eq": "microscopic"}}, "then": "T3a"},
+      {"label": "T2b: other pelvic intraperitoneal", "when": {"pelvic_extension": {"eq": "other_pelvic_intraperitoneal"}}, "then": "T2b"},
+      {"label": "T2a: uterus or tubes", "when": {"pelvic_extension": {"eq": "uterus_or_tubes"}}, "then": "T2a"},
+      {"label": "T1c3: malignant cells in ascites", "when": {"t1c_subcategory": {"eq": "malignant_cells_in_ascites_or_washings"}}, "then": "T1c3"},
+      {"label": "T1c2: pre-op rupture or surface", "when": {"t1c_subcategory": {"eq": "capsule_rupture_before_surgery_or_surface"}}, "then": "T1c2"},
+      {"label": "T1c1: surgical spill", "when": {"t1c_subcategory": {"eq": "surgical_spill"}}, "then": "T1c1"},
+      {"label": "T1b: both ovaries intact", "when": {"ovaries_involved": {"eq": "both"}, "capsule_intact_and_surface_negative_and_ascites_negative": {"eq": true}}, "then": "T1b"},
+      {"label": "T1a: one ovary intact", "when": {"ovaries_involved": {"eq": "one"}, "capsule_intact_and_surface_negative_and_ascites_negative": {"eq": true}}, "then": "T1a"}
+    ],
+    "N": [
+      {"label": "N0", "when": {"nodes_pattern": {"eq": "none"}}, "then": "N0"},
+      {"label": "N0(i+)", "when": {"nodes_pattern": {"eq": "isolated_tumor_cells_only"}}, "then": "N0(i+)"},
+      {"label": "N1a", "when": {"nodes_pattern": {"eq": "retroperitoneal_le10mm"}}, "then": "N1a"},
+      {"label": "N1b", "when": {"nodes_pattern": {"eq": "retroperitoneal_gt10mm"}}, "then": "N1b"}
+    ],
+    "M": [
+      {"label": "M0", "when": {"distant_mets_pattern": {"eq": "none"}}, "then": "M0"},
+      {"label": "M1a", "when": {"distant_mets_pattern": {"eq": "pleural_effusion_positive"}}, "then": "M1a"},
+      {"label": "M1b", "when": {"distant_mets_pattern": {"eq": "parenchymal_or_extraabdominal"}}, "then": "M1b"}
+    ]
+  },
+  "examples": [
+    {"label": "T1a", "observations": {"ovaries_involved": "one"}, "expect": {"T": "T1a"}},
+    {"label": "T1b", "observations": {"ovaries_involved": "both"}, "expect": {"T": "T1b"}},
+    {"label": "T1c2 surface tumor", "observations": {"ovaries_involved": "one", "t1c_subcategory": "capsule_rupture_before_surgery_or_surface"}, "expect": {"T": "T1c2"}},
+    {"label": "T2a uterus extension", "observations": {"ovaries_involved": "one", "pelvic_extension": "uterus_or_tubes"}, "expect": {"T": "T2a"}},
+    {"label": "T3b macroscopic <=2 cm", "observations": {"ovaries_involved": "one", "peritoneal_outside_pelvis": "macroscopic_le2cm"}, "expect": {"T": "T3b"}},
+    {"label": "T1a + N1a + M1a", "observations": {"ovaries_involved": "one", "nodes_pattern": "retroperitoneal_le10mm", "distant_mets_pattern": "pleural_effusion_positive"}, "expect": {"T": "T1a", "N": "N1a", "M": "M1a"}},
+    {"label": "no observations -> TX, N0, M0", "observations": {}, "expect": {"T": "TX", "N": "N0", "M": "M0"}}
+  ]
+}

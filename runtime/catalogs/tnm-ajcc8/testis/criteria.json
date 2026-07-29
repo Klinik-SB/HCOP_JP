@@ -1,0 +1,105 @@
+{
+  "$schema_version": 1,
+  "organ": "testis",
+  "edition": "AJCC 8",
+  "source": "pdfsource/_pages_testisv8/",
+  "axes": {
+    "T": {
+      "label": "Primary Tumor (pathological pT family; T1-T3 cannot be assigned clinically)",
+      "categories": [
+        {"code": "pTX",  "description": "Pathological: primary tumor cannot be assessed", "notes": []},
+        {"code": "pT0",  "description": "Pathological: no evidence of primary tumor", "notes": []},
+        {"code": "pTis", "description": "Pathological: germ cell neoplasia in situ", "notes": []},
+        {"code": "pT1",  "description": "Pathological: tumor limited to testis (including rete testis invasion) without lymphovascular invasion (parent for pT1a/pT1b)", "notes": ["pt1_seminoma_only"]},
+        {"code": "pT1a", "description": "Pathological: tumor smaller than 3 cm in size (pure seminoma only)", "notes": ["pt1_seminoma_only"]},
+        {"code": "pT1b", "description": "Pathological: tumor 3 cm or larger in size (pure seminoma only)", "notes": ["pt1_seminoma_only"]},
+        {"code": "pT2",  "description": "Pathological: tumor limited to testis (including rete testis invasion) with lymphovascular invasion OR tumor invading hilar soft tissue or epididymis or penetrating visceral mesothelial layer covering the external surface of tunica albuginea with or without lymphovascular invasion", "notes": []},
+        {"code": "pT3",  "description": "Pathological: tumor directly invades spermatic cord soft tissue with or without lymphovascular invasion", "notes": []},
+        {"code": "pT4",  "description": "Pathological: tumor invades scrotum with or without lymphovascular invasion", "notes": []}
+      ],
+      "notes": {
+        "pt1_seminoma_only": "Subclassification of pT1 (pT1a/pT1b) applies only to pure seminoma.",
+        "clinical_t": "Clinical T is restricted to cTX (cannot be assessed), cT0 (no evidence), cTis (germ cell neoplasia in situ), and cT4 (tumor invades scrotum with or without vascular/lymphatic invasion). T1-T3 require radical orchiectomy. Except for Tis confirmed by biopsy and T4, the extent of the primary tumor is classified by radical orchiectomy; TX may be used for other categories for clinical staging."
+      },
+      "suffixes": [{"token": "(m)", "description": "Multiple synchronous primary tumors"}]
+    },
+    "N": {
+      "label": "Regional Lymph Node (pathological pN family)",
+      "categories": [
+        {"code": "NX", "description": "Regional lymph nodes cannot be assessed", "notes": []},
+        {"code": "N0", "description": "No regional lymph node metastasis", "notes": []},
+        {"code": "N1", "description": "Metastasis with a lymph node mass 2 cm or smaller in greatest dimension and less than or equal to five nodes positive, none larger than 2 cm in greatest dimension", "notes": []},
+        {"code": "N2", "description": "Metastasis with a lymph node mass larger than 2 cm but not larger than 5 cm in greatest dimension; or more than five nodes positive, none larger than 5 cm; or evidence of extranodal extension of tumor", "notes": []},
+        {"code": "N3", "description": "Metastasis with a lymph node mass larger than 5 cm in greatest dimension", "notes": []}
+      ],
+      "notes": {
+        "clinical_n": "Clinical cN uses the same size thresholds but counts mass (no node count requirement): cN1 lymph node mass 2 cm or smaller OR multiple lymph nodes, none > 2 cm; cN2 mass > 2 cm but not > 5 cm OR multiple nodes, any mass > 2 cm but none > 5 cm; cN3 mass > 5 cm."
+      },
+      "suffixes": [
+        {"token": "(sn)", "description": "Sentinel node procedure"},
+        {"token": "(f)",  "description": "FNA or core needle biopsy"}
+      ]
+    },
+    "M": {
+      "label": "Distant Metastasis",
+      "categories": [
+        {"code": "M0",  "description": "No distant metastasis", "notes": []},
+        {"code": "M1",  "description": "Distant metastasis present (parent for M1a/M1b)", "notes": []},
+        {"code": "M1a", "description": "Non-retroperitoneal nodal or pulmonary metastases", "notes": []},
+        {"code": "M1b", "description": "Non-pulmonary visceral metastases", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "S": {
+      "label": "Serum Tumor Markers",
+      "categories": [
+        {"code": "SX", "description": "Marker studies not available or not performed", "notes": []},
+        {"code": "S0", "description": "Marker study levels within normal limits", "notes": []},
+        {"code": "S1", "description": "LDH less than 1.5 x N AND hCG (mIU/mL) less than 5,000 AND AFP (ng/mL) less than 1,000", "notes": ["n_is_upper_limit"]},
+        {"code": "S2", "description": "LDH 1.5-10 x N OR hCG (mIU/mL) 5,000-50,000 OR AFP (ng/mL) 1,000-10,000", "notes": ["n_is_upper_limit"]},
+        {"code": "S3", "description": "LDH greater than 10 x N OR hCG (mIU/mL) greater than 50,000 OR AFP (ng/mL) greater than 10,000", "notes": ["n_is_upper_limit"]}
+      ],
+      "notes": {
+        "n_is_upper_limit": "N indicates the upper limit of normal for the LDH assay."
+      },
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Staging Classification",
+      "categories": [
+        {"code": "c", "description": "Clinical classification (cTNM). For testis, cT is limited to cTX/cT0/cTis/cT4; T1-T3 require pathological staging.", "notes": []},
+        {"code": "p", "description": "Pathological classification (pTNM). Required for definitive T1-T4 staging following radical orchiectomy.", "notes": []}
+      ],
+      "notes": {"matching": "AJCC 8 testis has both a clinical (cTNM) and a pathological (pTNM) stage group table. This model uses pT-prefixed T values; the Classification axis is kept for parity with other organ models and is not used by the rule lookup."},
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor: y (post-neoadjuvant)",
+      "categories": [
+        {"code": "Yes", "description": "Post-neoadjuvant.", "notes": []},
+        {"code": "No",  "description": "No neoadjuvant therapy.", "notes": []}
+      ],
+      "notes": {"matching": "DescY is recorded for context and ignored by the rule lookup."},
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor: r (recurrent)",
+      "categories": [
+        {"code": "Yes", "description": "Recurrent.", "notes": []},
+        {"code": "No",  "description": "Not recurrent.", "notes": []}
+      ],
+      "notes": {"matching": "DescR is recorded for context and ignored by the rule lookup."},
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor: m (multiple synchronous primaries)",
+      "categories": [
+        {"code": "Yes", "description": "Multiple synchronous primaries.", "notes": []},
+        {"code": "No",  "description": "Single primary tumor.", "notes": []}
+      ],
+      "notes": {"matching": "DescM is recorded for context and ignored by the rule lookup."},
+      "suffixes": []
+    }
+  }
+}

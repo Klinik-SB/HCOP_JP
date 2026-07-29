@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Documentación · HCOP JP</title>
+  <meta name="description" content="Índice funcional y técnico de HCOP JP, sistema integrado de oncología y Hospital de Día.">
+  <link rel="stylesheet" href="./documentacion.css">
+</head>
+<body>
+  <header class="doc-topbar">
+    <a class="doc-brand" href="./index.html">
+      <span class="doc-brand-mark">HC</span>
+      <div><strong>HCOP JP</strong><small>Documentación del producto integrado</small></div>
+    </a>
+    <div class="doc-top-actions">
+      <a class="doc-button" href="../">Volver al sistema</a>
+      <a class="doc-button primary" href="./manual-usuario.html">Abrir manual</a>
+    </div>
+  </header>
+
+  <main class="doc-main" style="max-width:1280px;margin:0 auto;min-height:calc(100vh - 64px)">
+    <section class="doc-hero">
+      <span class="doc-kicker">Edición Java/PostgreSQL · julio 2026</span>
+      <h1>Un sistema, una base clínica y una entrada</h1>
+      <p>HCOP JP integra historia clínica oncológica, diagnósticos, estudios,
+      prescripciones, protocolos, farmacia, Hospital de Día, turnero por sillón,
+      administración, investigación, configuración, usuarios y auditoría.</p>
+      <div class="doc-meta">
+        <span class="doc-tag">Java 21 + Spring MVC</span>
+        <span class="doc-tag">PostgreSQL</span>
+        <span class="doc-tag">Docker</span>
+        <span class="doc-tag">Swagger / OpenAPI</span>
+        <span class="doc-tag">Sin dependencia de Lira</span>
+      </div>
+    </section>
+
+    <section class="doc-index-cards" aria-label="Documentos disponibles">
+      <a class="doc-index-link" href="./manual-usuario.html">
+        <div><small>Para usuarios</small><h2>Manual de uso</h2><p>Ingreso, pacientes, historia, diagnóstico, tratamiento, farmacia, turnos, administración, estudios, herramientas y configuración.</p></div>
+        <strong>Entrar al manual →</strong>
+      </a>
+      <a class="doc-index-link" href="./referencia-tecnica.html">
+        <div><small>Para desarrollo</small><h2>Referencia técnica y de datos</h2><p>Arquitectura MVC, módulos, API, tablas, campos, relaciones, archivos, seguridad, concurrencia y extensión.</p></div>
+        <strong>Abrir referencia →</strong>
+      </a>
+      <a class="doc-index-link" href="./consolidacion-lira-hdd.html">
+        <div><small>Para operación</small><h2>Migración y consolidación</h2><p>Qué se preservó de HCOP/Lira, qué cambió y cómo funciona el producto independiente sobre PostgreSQL.</p></div>
+        <strong>Abrir guía →</strong>
+      </a>
+      <a class="doc-index-link" href="../swagger-ui.html">
+        <div><small>API ejecutable</small><h2>Swagger</h2><p>Contrato navegable y documentado de las rutas clínicas, administrativas y de configuración.</p></div>
+        <strong>Abrir Swagger →</strong>
+      </a>
+    </section>
+
+    <section class="doc-section" id="producto">
+      <h2>Qué contiene el producto</h2>
+      <div class="doc-grid">
+        <article class="doc-card"><h3>Historia clínica</h3><p>Hoja clínica, evoluciones inmutables, diagnósticos SNOMED/CIE-10/AJCC/TNM, estudios y archivos.</p></article>
+        <article class="doc-card"><h3>Tratamientos</h3><p>Protocolos, drogas, preparación, duración, ciclos, consentimiento, receta y hoja de tratamiento.</p></article>
+        <article class="doc-card"><h3>Hospital de Día</h3><p>Farmacia, QR firmado, sillones, prevención de superposición, administración, suspensión y continuidad.</p></article>
+        <article class="doc-card"><h3>Configuración</h3><p>Protocolos, guías, calculadoras, formularios, plantillas, diagnósticos, LLM, usuarios, roles y permisos.</p></article>
+      </div>
+    </section>
+
+    <section class="doc-section" id="arquitectura">
+      <h2>Recorrido de un dato</h2>
+      <div class="doc-flow" aria-label="Flujo general">
+        <div class="doc-flow-box"><strong>Navegador</strong><span>Interfaz HCOP/Lira preservada</span></div>
+        <div class="doc-flow-box"><strong>Controller</strong><span>HTTP, sesión y permisos</span></div>
+        <div class="doc-flow-box"><strong>Service</strong><span>Reglas y transacciones clínicas</span></div>
+        <div class="doc-flow-box"><strong>Repository</strong><span>SQL parametrizado</span></div>
+        <div class="doc-flow-box"><strong>PostgreSQL</strong><span>Fuente clínica canónica</span></div>
+        <div class="doc-flow-box"><strong>Storage</strong><span>Archivos privados referenciados</span></div>
+      </div>
+      <div class="doc-callout"><strong>Regla central:</strong> el navegador no se conecta a la base. Toda modificación clínica pasa por la API Java, valida permisos, aplica reglas y registra auditoría.</div>
+    </section>
+
+    <section class="doc-section" id="acceso">
+      <h2>Accesos</h2>
+      <dl class="doc-definition">
+        <dt>Sistema</dt><dd><a href="../">http://localhost:5180/</a></dd>
+        <dt>Documentación</dt><dd><a href="./index.html">http://localhost:5180/docs/</a></dd>
+        <dt>Swagger</dt><dd><a href="../swagger-ui.html">http://localhost:5180/swagger-ui.html</a></dd>
+        <dt>Salud</dt><dd><a href="../actuator/health">http://localhost:5180/actuator/health</a></dd>
+        <dt>Instalación</dt><dd>Docker Compose levanta la aplicación y PostgreSQL. Flyway crea o actualiza la estructura automáticamente.</dd>
+        <dt>Datos</dt><dd>Los pacientes y adjuntos se guardan en volúmenes locales; no forman parte de GitHub ni de la imagen Docker.</dd>
+      </dl>
+      <div class="doc-callout warning"><strong>Seguridad:</strong> el ingreso es obligatorio. Para acceso fuera de la red local use VPN o HTTPS con proxy inverso; no exponga PostgreSQL.</div>
+    </section>
+  </main>
+  <script src="./documentacion.js"></script>
+</body>
+</html>

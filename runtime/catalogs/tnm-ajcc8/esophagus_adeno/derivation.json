@@ -1,0 +1,89 @@
+{
+  "$schema_version": 1,
+  "organ": "esophagus_adeno",
+  "edition": "AJCC 8",
+  "source": "pdfsource/esophagus.pdf",
+  "observables": {
+    "depth_of_invasion": {
+      "type": "enum",
+      "default": "unknown",
+      "values": ["unknown", "in_situ", "lamina_propria_or_muscularis_mucosae", "submucosa", "muscularis_propria", "adventitia", "pleura_pericardium_azygos_diaphragm_peritoneum", "aorta_vertebra_trachea"],
+      "description": "Greatest depth of tumor invasion through the esophageal wall.",
+      "display": {
+        "label": "Greatest depth of tumor invasion",
+        "choices": {
+          "unknown": "Unknown / not assessable",
+          "in_situ": "Carcinoma in situ (Tis)",
+          "lamina_propria_or_muscularis_mucosae": "Lamina propria or muscularis mucosae (T1a)",
+          "submucosa": "Submucosa (T1b)",
+          "muscularis_propria": "Muscularis propria (T2)",
+          "adventitia": "Adventitia (T3)",
+          "pleura_pericardium_azygos_diaphragm_peritoneum": "Pleura, pericardium, azygos vein, diaphragm, or peritoneum (T4a)",
+          "aorta_vertebra_trachea": "Aorta, vertebral body, or trachea (T4b)"
+        }
+      }
+    },
+    "positive_node_count": {"type": "number", "default": 0, "display": {"label": "Positive regional lymph nodes (count)"}},
+    "distant_mets": {"type": "bool", "default": false, "display": {"label": "Distant metastasis (M1)"}},
+    "no_evidence_of_primary": {
+      "type": "bool",
+      "default": false,
+      "description": "No evidence of primary tumor on resected specimen after neoadjuvant therapy. Valid as T0 ONLY in the ypTNM table (Classification=p AND DescY=Yes).",
+      "display": {"label": "No evidence of primary tumor (post-neoadjuvant ypTNM only)"}
+    }
+  },
+  "axes": {
+    "T": [
+      {
+        "label": "T0: no residual primary (ypTNM only)",
+        "when": {"all": {
+          "no_evidence_of_primary": {"eq": true},
+          "$Classification": {"eq": "p"},
+          "$DescY": {"eq": "Yes"}
+        }},
+        "then": "T0"
+      },
+      {"label": "Tis", "when": {"depth_of_invasion": {"eq": "in_situ"}}, "then": "Tis"},
+      {"label": "T1a", "when": {"depth_of_invasion": {"eq": "lamina_propria_or_muscularis_mucosae"}}, "then": "T1a"},
+      {"label": "T1b", "when": {"depth_of_invasion": {"eq": "submucosa"}}, "then": "T1b"},
+      {"label": "T2", "when": {"depth_of_invasion": {"eq": "muscularis_propria"}}, "then": "T2"},
+      {"label": "T3", "when": {"depth_of_invasion": {"eq": "adventitia"}}, "then": "T3"},
+      {"label": "T4a", "when": {"depth_of_invasion": {"eq": "pleura_pericardium_azygos_diaphragm_peritoneum"}}, "then": "T4a"},
+      {"label": "T4b", "when": {"depth_of_invasion": {"eq": "aorta_vertebra_trachea"}}, "then": "T4b"}
+    ],
+    "N": [
+      {"label": "N0", "when": {"positive_node_count": {"eq": 0}}, "then": "N0"},
+      {"label": "N1: 1-2", "when": {"positive_node_count": {"gte": 1, "lte": 2}}, "then": "N1"},
+      {"label": "N2: 3-6", "when": {"positive_node_count": {"gte": 3, "lte": 6}}, "then": "N2"},
+      {"label": "N3: 7+", "when": {"positive_node_count": {"gte": 7}}, "then": "N3"}
+    ],
+    "M": [
+      {"label": "M0", "when": {"distant_mets": {"eq": false}}, "then": "M0"},
+      {"label": "M1", "when": {"distant_mets": {"eq": true}}, "then": "M1"}
+    ]
+  },
+  "examples": [
+    {"label": "T1a N0 M0", "observations": {"depth_of_invasion": "lamina_propria_or_muscularis_mucosae"}, "expect": {"T": "T1a"}},
+    {"label": "T3 N1 M0", "observations": {"depth_of_invasion": "adventitia", "positive_node_count": 1}, "expect": {"T": "T3", "N": "N1"}},
+    {"label": "T4b N3 M1", "observations": {"depth_of_invasion": "aorta_vertebra_trachea", "positive_node_count": 8, "distant_mets": true}, "expect": {"T": "T4b", "N": "N3", "M": "M1"}},
+    {"label": "no observations -> TX, N0, M0", "observations": {}, "expect": {"T": "TX", "N": "N0", "M": "M0"}},
+    {
+      "label": "T0 only fires under ypTNM (Classification=p AND DescY=Yes)",
+      "observations": {"no_evidence_of_primary": true},
+      "pass_through": {"Classification": "p", "DescY": "Yes"},
+      "expect": {"T": "T0"}
+    },
+    {
+      "label": "no_evidence_of_primary WITHOUT ypTNM -> falls through to TX",
+      "observations": {"no_evidence_of_primary": true},
+      "pass_through": {"Classification": "p", "DescY": "No"},
+      "expect": {"T": "TX"}
+    },
+    {
+      "label": "no_evidence_of_primary on cTNM also falls through to TX",
+      "observations": {"no_evidence_of_primary": true},
+      "pass_through": {"Classification": "c", "DescY": "No"},
+      "expect": {"T": "TX"}
+    }
+  ]
+}

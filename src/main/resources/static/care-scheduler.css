@@ -1,0 +1,317 @@
+.care-schedule-view{height:100%;min-height:0;overflow:hidden;background:#fff}.care-schedule-header{display:flex;align-items:center;justify-content:space-between;gap:14px}.care-schedule-toolbar{display:flex;align-items:center;gap:12px;border-bottom:1px solid #dfe5e9;background:#fafcfd;padding:8px 12px}.care-schedule-date-nav{display:flex;align-items:center;gap:5px}.care-schedule-date-nav input{height:32px;border:1px solid #cbd5dc;background:#fff;padding:0 8px;color:#34495a}.care-schedule-legend{display:flex;align-items:center;gap:12px;margin-left:auto;color:#627484;font-size:10px}.care-schedule-legend span{display:flex;align-items:center;gap:5px}.care-schedule-legend i{display:block;width:14px;height:10px;border:1px solid #cbd2d7;background:#edf0f2}.care-schedule-legend i.is-occupied-pending{border-color:#176f9f;background:#258cc5}.care-schedule-legend i.is-occupied{border-color:#b94350;background:#cf4f5b}.care-schedule-legend i.is-target{border-color:#369862;background:#56b881}.care-schedule-layout{display:grid;grid-template-columns:230px minmax(0,1fr);height:calc(100% - 111px);min-height:0}.care-schedule-candidates{display:flex;min-height:0;flex-direction:column;border-right:1px solid #dfe5e9;background:#f7f9fa}.care-schedule-candidates>header{border-bottom:1px solid #dfe5e9;background:#fff;padding:10px 11px}.care-schedule-candidates>header div{display:grid;gap:2px}.care-schedule-candidates>header strong{font-size:12px}.care-schedule-candidates>header small{color:#738494;font-size:9px}.care-schedule-candidates>label{display:flex;align-items:center;gap:6px;margin:8px;border:1px solid #ccd7de;background:#fff;padding:0 7px}.care-schedule-candidates>label svg{width:15px;color:#81909b}.care-schedule-candidates>label input{min-width:0;width:100%;height:31px;border:0;outline:0;font-size:10px}.care-schedule-candidate-list{min-height:0;overflow:auto;padding:0 8px 12px;scrollbar-gutter:stable}.care-schedule-candidate{display:grid;gap:7px;margin-bottom:7px;border:1px solid #d6e0e6;border-left:3px solid #0e9aef;background:#fff;padding:9px;cursor:grab}.care-schedule-candidate:active,.care-schedule-appointment:active{cursor:grabbing}.care-schedule-candidate>div{display:grid;gap:2px}.care-schedule-candidate strong{font-size:11px}.care-schedule-candidate span{color:#607384;font-size:9px;line-height:1.35}.care-schedule-candidate footer{display:flex;align-items:center;justify-content:space-between;gap:8px}.care-schedule-candidate footer b{color:#087fc4;font-size:10px}.care-schedule-board-panel{display:flex;min-width:0;min-height:0;flex-direction:column;background:#fff}.care-schedule-board-panel>p{min-height:30px;margin:0;border-bottom:1px solid #e2e7ea;padding:7px 10px;color:#617383;font-size:10px}.care-schedule-board-scroll{min-width:0;min-height:0;flex:1;overflow:auto;scrollbar-gutter:stable}.care-schedule-grid{position:relative;display:grid;min-width:max-content;align-content:start;background:#fff}.care-schedule-corner,.care-schedule-chair{position:sticky;top:0;z-index:8;display:grid;place-items:center;border-right:1px solid #d5dde2;border-bottom:1px solid #becbd3;background:#edf3f6;color:#405568;font-size:10px;font-weight:800}.care-schedule-corner{left:0;z-index:10}.care-schedule-time{position:sticky;left:0;z-index:6;display:flex;align-items:flex-start;justify-content:center;border-right:1px solid #c8d3d9;border-bottom:1px solid #dde3e7;background:#f8fafb;padding-top:2px;color:#6b7b87;font-size:9px}.care-schedule-slot{border-right:1px solid #d8dee2;border-bottom:1px solid #dfe4e7;background:#edf0f2;transition:background .08s,border-color .08s}.care-schedule-slot:nth-child(even){background:#e9edef}.care-schedule-slot.is-drag-target{border-color:#369862;background:#56b881}.care-schedule-slot.is-drag-invalid{border-color:#a93440;background:repeating-linear-gradient(135deg,#cf4f5b,#cf4f5b 5px,#b9414d 5px,#b9414d 10px)}.care-schedule-appointment{z-index:4;display:grid;align-content:center;gap:2px;overflow:hidden;border:1px solid #ae3543;border-left:4px solid #8f2230;background:#cf4f5b;padding:4px 6px;color:#fff;cursor:grab;box-shadow:0 1px 3px #5f17232e}.care-schedule-appointment strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}.care-schedule-appointment span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff;font-size:8px}.care-schedule-view .care-empty-state{padding:18px}.care-schedule-candidate-list .care-empty-state{background:transparent}@media(max-width:1050px){.care-schedule-layout{grid-template-columns:190px minmax(0,1fr)}.care-schedule-legend{display:none}}
+
+.care-schedule-view{display:flex;flex:1 1 auto;height:auto;flex-direction:column}.care-schedule-toolbar{flex:0 0 auto;min-height:36px}.care-schedule-toolbar>span{color:#637786;font-size:10px}.care-schedule-layout{flex:1 1 auto;height:auto;grid-template-columns:260px minmax(0,1fr)}.care-schedule-candidates>label{height:34px;min-height:34px;flex:0 0 34px}.care-schedule-candidate span{font-size:10px}.care-schedule-appointment{align-content:start;grid-template-rows:auto auto auto;gap:3px;padding:4px 6px}.care-schedule-appointment header,.care-schedule-appointment footer{display:flex;min-width:0;align-items:center;justify-content:space-between;gap:5px}.care-schedule-appointment header strong{min-width:0;flex:1}.care-schedule-appointment header button{display:grid;width:20px;height:20px;flex:0 0 auto;place-items:center;border:0;background:#ffffff24;color:#fff;cursor:pointer}.care-schedule-appointment header button:hover{background:#fff;color:#a82938}.care-schedule-appointment header button svg{width:13px;height:13px}.care-schedule-appointment .care-schedule-appointment-scheme{display:-webkit-box;overflow:hidden;white-space:normal;font-size:9px;line-height:1.2;-webkit-box-orient:vertical;-webkit-line-clamp:2}.care-schedule-appointment footer b{font-size:10px}.care-schedule-appointment footer small{font-size:8px}.care-schedule-board-scroll{overscroll-behavior:contain}.care-schedule-candidate-list{overscroll-behavior:contain}@media(max-width:1050px){.care-schedule-layout{grid-template-columns:210px minmax(0,1fr)}}
+
+.care-schedule-toolbar{min-height:30px;padding:5px 9px}.care-schedule-layout{grid-template-columns:220px minmax(0,1fr)}.care-schedule-candidates>header{padding:7px 9px}.care-schedule-candidates>label{height:30px;min-height:30px;flex-basis:30px;margin:5px}.care-schedule-candidates>label input{height:27px}.care-schedule-candidate-list{padding:0 5px 7px}.care-schedule-candidate{gap:3px;margin-bottom:4px;padding:6px}.care-schedule-candidate strong{font-size:10px}.care-schedule-candidate span{font-size:8px}.care-schedule-candidate footer b{font-size:9px}.care-schedule-board-panel>p{min-height:23px;padding:4px 8px;font-size:9px}.care-schedule-board-scroll{overflow:hidden;scrollbar-gutter:auto}.care-schedule-grid{width:100%;min-width:0;height:100%;align-content:stretch}.care-schedule-corner,.care-schedule-chair{font-size:9px}.care-schedule-time{align-items:flex-start;padding:0;font-size:7px;line-height:1}.care-schedule-time.has-label{color:#536b7b;font-weight:700}.care-schedule-slot{min-width:0}.care-schedule-appointment{gap:1px;border-left-width:3px;padding:2px 4px;box-shadow:none}.care-schedule-appointment header{gap:2px}.care-schedule-appointment strong{font-size:8px;line-height:1.1}.care-schedule-appointment header button{width:15px;height:15px}.care-schedule-appointment header button svg{width:10px;height:10px}.care-schedule-appointment .care-schedule-appointment-scheme{font-size:7px;line-height:1.05;-webkit-line-clamp:1}.care-schedule-appointment footer b{font-size:8px;line-height:1}.care-schedule-appointment footer small{font-size:7px;line-height:1}@media(max-width:1050px){.care-schedule-layout{grid-template-columns:185px minmax(0,1fr)}}
+
+.care-schedule-appointment.is-saving{border-color:#7f2c36;background:#bd5c67;cursor:wait;outline:1px solid #ffffff80;outline-offset:-2px}
+
+.care-schedule-appointment:not(.is-saving){cursor:default}.care-schedule-appointment .care-schedule-appointment-actions{display:flex;flex:0 0 auto;align-items:center;gap:2px}.care-schedule-appointment header .care-schedule-move-handle{cursor:grab}.care-schedule-appointment header .care-schedule-move-handle:active{cursor:grabbing}.care-schedule-appointment header .care-schedule-move-handle:hover{background:#fff;color:#1676a8}
+
+.care-schedule-candidate.is-selected{border-color:#62b9e8;border-left-color:#087fc4;background:#e8f6fd;box-shadow:inset 0 0 0 1px #8fcfee}.care-schedule-slot.is-candidate-fit:not(.is-drag-target):not(.is-drag-invalid){border-color:#79c5e9;background:#bfe8fb;box-shadow:inset 0 0 0 1px #8bd0ef}.care-schedule-legend i.is-fit{border-color:#79c5e9;background:#bfe8fb}
+
+.care-schedule-grid{isolation:isolate}.care-schedule-chair{position:sticky;top:0;z-index:10;border-right:1px solid #c6d1d8;border-bottom:1px solid #b8c7d0;background:#edf3f6}.care-schedule-slot{position:relative;display:flex;min-width:0;align-items:flex-start;overflow:hidden;border-right:1px solid #d5dde2;border-bottom:1px solid #dce3e7;padding:1px 2px;background:#f1f3f4}.care-schedule-slot:nth-child(even){background:#edf0f2}.care-schedule-slot.is-hour-start{border-top:1px solid #b8c7d0}.care-schedule-slot.is-chair-start{border-left:1px solid #c6d1d8}.care-schedule-slot.is-chair-end{border-right-color:#b8c7d0}.care-schedule-slot-time{position:relative;z-index:1;overflow:hidden;color:#8b989f;font-size:7px;font-weight:500;line-height:1;white-space:nowrap;pointer-events:none}.care-schedule-appointment-fragment{z-index:4;min-width:0;overflow:hidden;border:1px solid #ae3543;background:#cf4f5b;box-shadow:0 1px 2px #5f172322}.care-schedule-appointment-fragment.is-saving{border-color:#7f2c36;background:#bd5c67}.care-schedule-appointment{z-index:5;min-width:0;height:100%;align-content:start;overflow:hidden}.care-schedule-appointment.is-fragmented{padding:1px 2px}.care-schedule-appointment.is-fragmented .care-schedule-appointment-scheme,.care-schedule-appointment.is-fragmented footer{display:none}
+
+/* La agenda separa visualmente cada sillón y mantiene los turnos como bloques continuos. */
+.care-schedule-chair.has-chair-gap{border-left:6px solid #fff}
+.care-schedule-slot.is-chair-start:not([data-chair="1"]){border-left:6px solid #fff}
+.care-schedule-slot-time{color:#536875;font-size:9px;font-weight:750;line-height:1.05;letter-spacing:-.15px}
+.care-schedule-appointment,.care-schedule-appointment-fragment{border-top-color:transparent;border-bottom-color:transparent;border-radius:0;background-clip:border-box;box-shadow:none}
+.care-schedule-appointment.is-appointment-start,.care-schedule-appointment-fragment.is-appointment-start{border-top-color:#ae3543}
+.care-schedule-appointment.is-appointment-end,.care-schedule-appointment-fragment.is-appointment-end{border-bottom-color:#ae3543}
+.care-schedule-appointment.has-convex-top-left,.care-schedule-appointment-fragment.has-convex-top-left{border-top-left-radius:6px}.care-schedule-appointment.has-convex-top-right,.care-schedule-appointment-fragment.has-convex-top-right{border-top-right-radius:6px}.care-schedule-appointment.has-convex-bottom-left,.care-schedule-appointment-fragment.has-convex-bottom-left{border-bottom-left-radius:6px}.care-schedule-appointment.has-convex-bottom-right,.care-schedule-appointment-fragment.has-convex-bottom-right{border-bottom-right-radius:6px}
+.care-schedule-appointment.has-chair-gap,.care-schedule-appointment-fragment.has-chair-gap{margin-left:6px}
+.care-schedule-slot-time{color:#687278;font-size:9.5px;font-weight:700;letter-spacing:-.2px}.care-schedule-appointment strong{font-size:10.5px;line-height:1.15}.care-schedule-appointment .care-schedule-appointment-scheme{font-size:9px;line-height:1.15}.care-schedule-appointment footer b{font-size:9.5px}.care-schedule-appointment footer small{font-size:8.5px}.care-schedule-appointment.is-dragging,.care-schedule-appointment-fragment.is-dragging{opacity:.12;pointer-events:none}.care-schedule-slot.is-drag-target{position:relative;z-index:7;box-shadow:inset 0 0 0 1px #208650}
+.care-schedule-candidate>div>small{overflow:hidden;color:#526b7b;font-size:9px;font-weight:700;text-overflow:ellipsis;white-space:nowrap}.care-schedule-appointment:not(.is-saving){cursor:pointer}.care-schedule-appointment-identity{display:grid;min-width:0;flex:1;gap:1px}.care-schedule-appointment-identity strong,.care-schedule-appointment-identity small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.care-schedule-appointment-identity small{color:#fff;font-size:8.5px;font-weight:650;line-height:1}.care-schedule-appointment header .care-schedule-appointment-actions button{width:19px;height:19px}.care-schedule-appointment header .care-schedule-appointment-actions button svg{width:13px;height:13px}.care-schedule-appointment header .care-schedule-detail-button{background:#fffffff0;color:#31566c}.care-schedule-appointment header .care-schedule-detail-button:hover{background:#fff;color:#087fc4}
+.care-schedule-appointment.is-appointment-pending,.care-schedule-appointment-fragment.is-appointment-pending{border-top-color:transparent;border-right-color:#176f9f;border-bottom-color:transparent;border-left-color:#176f9f;background:#258cc5}.care-schedule-appointment.is-appointment-pending.is-appointment-start,.care-schedule-appointment-fragment.is-appointment-pending.is-appointment-start{border-top-color:#176f9f}.care-schedule-appointment.is-appointment-pending.is-appointment-end,.care-schedule-appointment-fragment.is-appointment-pending.is-appointment-end{border-bottom-color:#176f9f}.care-schedule-appointment.is-appointment-confirmed,.care-schedule-appointment-fragment.is-appointment-confirmed{background:#cf4f5b}
+.care-schedule-candidate.is-medication-received{border-left-color:#258cc5}.care-schedule-candidate.is-medication-pending{border-left-color:#cf4f5b}
+.care-schedule-appointment header{position:relative;padding-bottom:10px}.care-schedule-appointment-range{position:absolute;right:0;bottom:0;left:0;display:block;overflow:hidden;color:#fff;font-size:8.5px;font-weight:800;line-height:1.05;text-overflow:ellipsis;white-space:nowrap}
+.care-schedule-candidates>header div{grid-template-columns:minmax(0,1fr);align-items:center;gap:3px}.care-schedule-candidates>header select{box-sizing:border-box;min-width:0;width:100%;height:30px;border:1px solid #cbd6dd;background:#fff;padding:0 24px 0 7px;color:#334d5e;font-size:10px;font-weight:750;outline:0}.care-schedule-candidates>header select:focus{border-color:#2b94ca;box-shadow:0 0 0 2px #2b94ca22}.care-schedule-candidates>header small{justify-self:start}.care-schedule-candidates>.care-schedule-search{box-sizing:border-box;height:32px;min-height:32px;flex-basis:32px;flex-direction:row;margin:5px;padding:0 8px}.care-schedule-candidates>.care-schedule-search input{box-sizing:border-box;height:30px;min-height:0;padding:0;border:0;background:transparent;line-height:30px}.care-schedule-appointment.is-search-muted,.care-schedule-appointment-fragment.is-search-muted{opacity:.24;filter:saturate(.55)}.care-schedule-appointment.is-search-match{z-index:9;outline:2px solid #ffd24a;outline-offset:1px;filter:brightness(1.12) saturate(1.08)}.care-schedule-appointment-fragment.is-search-match{z-index:8;filter:brightness(1.12) saturate(1.08)}
+.care-schedule-appointment{border-left-width:1px}.care-schedule-appointment.is-appointment-confirmed{border-left-color:#ae3543}
+.care-schedule-concave-corner{z-index:7;width:6px;height:6px;align-self:start;justify-self:start;pointer-events:none;--care-corner-fill:#cf4f5b}.care-schedule-concave-corner.is-appointment-pending{--care-corner-fill:#258cc5}.care-schedule-concave-corner.is-saving{--care-corner-fill:#bd5c67}.care-schedule-concave-corner.has-concave-top-left{align-self:start;justify-self:start;transform:translateX(-100%);background:radial-gradient(circle at left bottom,transparent 0 5.5px,var(--care-corner-fill) 6px)}.care-schedule-concave-corner.has-concave-top-right{align-self:start;justify-self:end;transform:translateX(100%);background:radial-gradient(circle at right bottom,transparent 0 5.5px,var(--care-corner-fill) 6px)}.care-schedule-concave-corner.has-concave-bottom-left{align-self:end;justify-self:start;transform:translateX(-100%);background:radial-gradient(circle at left top,transparent 0 5.5px,var(--care-corner-fill) 6px)}.care-schedule-concave-corner.has-concave-bottom-right{align-self:end;justify-self:end;transform:translateX(100%);background:radial-gradient(circle at right top,transparent 0 5.5px,var(--care-corner-fill) 6px)}.care-schedule-concave-corner.has-chair-gap:is(.has-concave-top-left,.has-concave-bottom-left){transform:translateX(calc(-100% + 6px))}
+
+/* Los casilleros libres se leen como unidades independientes sin fragmentar los turnos. */
+.care-schedule-slot{box-sizing:border-box;margin:1px;align-items:center;justify-content:center;border:0;border-radius:3px;background:#f2f4f5}
+.care-schedule-slot:nth-child(even){background:#eef1f3}
+.care-schedule-slot.is-hour-start,.care-schedule-slot.is-chair-end{border:0}
+.care-schedule-slot.is-chair-start{border-left:0}
+.care-schedule-slot.is-chair-start:not([data-chair="1"]){margin-left:6px}
+.care-schedule-slot-time{color:#a3adb3;font-size:10.5px;font-weight:600;letter-spacing:-.1px;text-align:center}
+
+.care-schedule-hover-card{position:fixed;z-index:120;display:grid;width:min(380px,calc(100vw - 16px));max-height:calc(100dvh - 16px);gap:9px;overflow:auto;border:1px solid #b9c9d3;border-radius:5px;background:#fff;padding:12px;color:#29404f;box-shadow:0 12px 30px #1d344552;pointer-events:none}
+.care-schedule-hover-card[hidden]{display:none}
+.care-schedule-hover-card header{display:grid;gap:2px;border-bottom:1px solid #dce5ea;padding-bottom:8px}
+.care-schedule-hover-card header strong{font-size:14px;line-height:1.2}
+.care-schedule-hover-card header small{color:#607482;font-size:11px;font-weight:700}
+.care-schedule-hover-card dl{display:grid;gap:7px;margin:0}
+.care-schedule-hover-card dl>div{display:grid;grid-template-columns:92px minmax(0,1fr);gap:8px}
+.care-schedule-hover-card dt{color:#6b7e8b;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.care-schedule-hover-card dd{margin:0;font-size:11px;font-weight:650;line-height:1.3}
+.care-schedule-hover-card footer{display:flex;flex-wrap:wrap;gap:5px;border-top:1px solid #dce5ea;padding-top:8px}
+.care-schedule-hover-card footer span{display:flex;align-items:center;gap:4px;border:1px solid currentColor;border-radius:3px;padding:4px 6px;font-size:9px}
+.care-schedule-hover-card footer i{width:6px;height:6px;border-radius:50%;background:currentColor}
+.care-schedule-hover-card footer .is-confirmed{background:#fff1f2;color:#b92d3b}
+.care-schedule-hover-card footer .is-pending{background:#edf7fd;color:#087fc4}
+.care-schedule-candidate.is-medication-with-patient{border-left-color:#258cc5}
+.care-schedule-candidate-custody{display:flex;width:max-content;align-items:center;gap:4px;border:1px solid #8cc9e8;border-radius:3px;background:#eaf7fd;padding:2px 5px;color:#087fc4;font-size:8px;font-style:normal;font-weight:800;line-height:1}
+.care-schedule-candidate-custody svg{width:10px;height:10px}
+
+.care-schedule-board-head{display:flex;min-height:30px;flex:0 0 auto;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid #e2e7ea;background:#fff;padding:3px 7px}
+.care-schedule-board-head>p{min-width:0;flex:1;margin:0;overflow:hidden;color:#617383;font-size:9px;text-overflow:ellipsis;white-space:nowrap}
+.care-schedule-chair-viewport-controls{display:flex;flex:0 0 auto;align-items:center;gap:3px}
+.care-schedule-chair-viewport-controls button{display:grid;width:24px;height:24px;place-items:center;border:1px solid #c9d5dc;border-radius:3px;background:#fff;color:#247fae;cursor:pointer}
+.care-schedule-chair-viewport-controls button:hover:not(:disabled){border-color:#7fb9d8;background:#edf8fd}
+.care-schedule-chair-viewport-controls button:disabled{opacity:.35;cursor:default}
+.care-schedule-chair-viewport-controls button svg{width:14px;height:14px}
+.care-schedule-chair-viewport-controls strong{min-width:112px;color:#415968;font-size:9px;text-align:center}
+.care-schedule-chair-viewport-controls>span{width:1px;height:17px;margin:0 2px;background:#d7e0e5}
+.care-schedule-slot.is-chair-start.is-viewport-start{margin-left:1px;border-left-color:#d8dee2}
+
+/* Farmacia y sillones comparten los mismos ciclos pendientes dentro del turnero. */
+.care-schedule-mode-tabs{display:flex;min-height:38px;flex:0 0 auto;align-items:end;gap:2px;border-bottom:1px solid #ccd8df;background:#f3f6f8;padding:5px 10px 0}
+.care-schedule-mode-tabs button{display:flex;height:33px;align-items:center;gap:6px;border:1px solid transparent;border-bottom:0;background:transparent;padding:0 15px;color:#617582;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer}
+.care-schedule-mode-tabs button svg{width:15px;height:15px}
+.care-schedule-mode-tabs button:hover{background:#e8f3f9;color:#087fc4}
+.care-schedule-mode-tabs button.active{position:relative;bottom:-1px;border-color:#ccd8df;background:#fff;color:#087fc4}
+.care-schedule-mode-panel{display:none;min-height:0;flex:1 1 auto}
+.care-schedule-mode-panel.active{display:flex;flex-direction:column}
+.care-pharmacy-panel{overflow:hidden;background:#fff}
+.care-pharmacy-toolbar{display:grid;min-height:52px;flex:0 0 auto;grid-template-columns:minmax(230px,1fr) minmax(300px,520px) auto;align-items:center;gap:14px;border-bottom:1px solid #dce5ea;padding:7px 12px}
+.care-pharmacy-toolbar>div{display:grid;gap:2px}
+.care-pharmacy-toolbar>div strong{color:#294252;font-size:12px}
+.care-pharmacy-toolbar>div span{color:#667b89;font-size:10px}
+.care-pharmacy-toolbar label{display:flex;height:34px;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:7px;border:1px solid #c7d5dd;background:#fff;padding:0 9px}
+.care-pharmacy-toolbar label:focus-within{border-color:#3095c9;box-shadow:0 0 0 2px #3095c91f}
+.care-pharmacy-toolbar label svg{width:15px;height:15px;color:#738895}
+.care-pharmacy-toolbar input{box-sizing:border-box;min-width:0;width:100%;height:32px;min-height:0;margin:0;border:0;border-radius:0;outline:0;background:transparent;padding:0;box-shadow:none;color:#294252;font:inherit;font-size:11px;line-height:32px}
+.care-pharmacy-toolbar>span{color:#627786;font-size:10px;font-weight:750;white-space:nowrap}
+.care-pharmacy-table-shell{min-height:0;flex:1 1 auto;overflow:auto;scrollbar-gutter:stable}
+.care-pharmacy-table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;color:#2c4352}
+.care-pharmacy-table th{position:sticky;top:0;z-index:2;border-bottom:1px solid #cbd7de;background:#edf3f6;padding:8px 9px;color:#516a79;font-size:9px;letter-spacing:.04em;text-align:left;text-transform:uppercase}
+.care-pharmacy-table th:nth-child(1){width:19%}.care-pharmacy-table th:nth-child(2){width:10%}.care-pharmacy-table th:nth-child(3){width:7%}.care-pharmacy-table th:nth-child(4){width:23%}.care-pharmacy-table th:nth-child(5){width:8%}.care-pharmacy-table th:nth-child(6){width:27%}.care-pharmacy-table th:nth-child(7){width:6%;text-align:center}
+.care-pharmacy-table td{height:58px;border-bottom:1px solid #e1e7eb;padding:7px 9px;vertical-align:middle}
+.care-pharmacy-table tbody tr:hover{background:#f7fbfd}
+.care-pharmacy-table td>strong,.care-pharmacy-table td>time{display:block;overflow:hidden;color:#294252;font-size:11px;font-weight:800;line-height:1.3;text-overflow:ellipsis}
+.care-pharmacy-table td>small{display:block;overflow:hidden;margin-top:3px;color:#667b89;font-size:9px;line-height:1.25;text-overflow:ellipsis}
+.care-pharmacy-state{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px}
+.care-pharmacy-state button{display:flex;min-width:0;height:32px;align-items:center;justify-content:center;gap:4px;border:1px solid #ccd8df;background:#fff;padding:0 5px;color:#6b7e8a;font-family:inherit;font-size:8px;font-weight:800;cursor:pointer}
+.care-pharmacy-state button svg{width:13px;height:13px;flex:0 0 auto}
+.care-pharmacy-state button:hover{border-color:#84bddb;background:#eef8fd;color:#087fc4}
+.care-pharmacy-state button.active[data-care-pharmacy-state="pending"]{border-color:#d59da3;background:#fff1f2;color:#b62f3c}
+.care-pharmacy-state button.active[data-care-pharmacy-state="received"]{border-color:#76badf;background:#e9f6fc;color:#087fc4}
+.care-pharmacy-state button.active[data-care-pharmacy-state="patient"]{border-color:#6faace;background:#e7f3fa;color:#176f9f}
+.care-pharmacy-qr{display:flex;width:58px;height:32px;align-items:center;justify-content:center;gap:3px;margin:auto;border:1px solid #9cc9e1;background:#edf8fd;color:#087fc4;font-family:inherit;font-size:8px;font-weight:800;text-decoration:none;cursor:pointer}
+.care-pharmacy-qr svg{width:14px;height:14px}
+.care-pharmacy-qr:disabled{border-color:#d7dfe4;background:#f4f6f7;color:#a5b0b7;cursor:not-allowed}
+.care-pharmacy-table .care-empty-state{min-height:260px}
+@media(max-width:1100px){.care-pharmacy-toolbar{grid-template-columns:1fr minmax(280px,1fr)}.care-pharmacy-toolbar>span{display:none}.care-pharmacy-state button span{display:none}.care-pharmacy-table th:nth-child(6){width:18%}.care-pharmacy-table th:nth-child(4){width:30%}}
+
+/* Cola por ciclo: vencimiento y faltantes operativos */
+.care-schedule-candidate.is-due-later,
+.care-schedule-candidate.is-date-unknown{background:#f0f2f3}
+.care-schedule-candidate.is-due-soon,
+.care-schedule-candidate.is-overdue{background:#fff}
+.care-schedule-candidate.is-selected{background:#e8f6fd}
+.care-schedule-candidate-main{display:grid!important;grid-template-columns:minmax(0,1fr) 54px;align-items:start;gap:6px!important}
+.care-schedule-candidate-copy{display:grid;min-width:0;gap:2px}
+.care-schedule-candidate-copy>strong,
+.care-schedule-candidate-copy>small,
+.care-schedule-candidate-copy>span{overflow:hidden;text-overflow:ellipsis}
+.care-schedule-candidate-copy>strong,
+.care-schedule-candidate-copy>small{white-space:nowrap}
+.care-schedule-candidate-copy>span{display:-webkit-box;line-height:1.28;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+.care-schedule-candidate-countdown{display:grid;min-width:0;align-content:start;justify-items:center;border-left:1px solid #d7dee2;padding-left:5px;color:#42596a;text-align:center}
+.care-schedule-candidate-countdown b{font-size:20px;line-height:.95;font-weight:850;letter-spacing:-.5px}
+.care-schedule-candidate-countdown small{margin-top:3px;color:#647785;font-size:7px;font-weight:850;line-height:1.05;text-transform:uppercase}
+.care-schedule-candidate-countdown time{margin-top:4px;color:#4c6373;font-size:8px;font-weight:750;white-space:nowrap}
+.care-schedule-candidate-countdown.is-overdue b,
+.care-schedule-candidate-countdown.is-overdue small{color:#b32e3c}
+.care-schedule-candidate-alerts{display:flex!important;flex-wrap:wrap;gap:3px!important}
+.care-schedule-candidate .care-schedule-candidate-alert{display:inline-flex;width:max-content;max-width:100%;align-items:center;gap:3px;border:1px solid #d7838c;background:#fff0f1;padding:2px 4px;color:#ae2634;font-size:7.5px;font-weight:900;line-height:1;text-transform:uppercase}
+.care-schedule-candidate-alert svg{width:10px;height:10px;flex:0 0 auto}
+.care-schedule-candidate footer{border-top:1px solid #dce2e5;padding-top:4px}
+.care-schedule-candidate footer span{font-size:8.5px;font-weight:800}
+.care-schedule-load-more{display:grid;width:100%;min-height:44px;place-items:center;gap:2px;border:1px solid #bfd4df;background:#f6fbfd;padding:7px 8px;color:#176f9f;font-family:inherit;cursor:pointer}
+.care-schedule-load-more:hover{border-color:#6fb5da;background:#eaf7fd;color:#087fc4}
+.care-schedule-load-more strong{font-size:9px;font-weight:850}
+.care-schedule-load-more small{color:#617886;font-size:7.5px;font-weight:650;text-align:center}
+.care-pharmacy-load-more-row td{padding:8px!important;background:#fff}
+.care-pharmacy-load-more-row .care-schedule-load-more{max-width:480px;margin:auto}
+@media(max-width:1050px){
+  .care-schedule-candidate-main{grid-template-columns:minmax(0,1fr) 46px}
+  .care-schedule-candidate-countdown b{font-size:18px}
+  .care-schedule-candidate .care-schedule-candidate-alert{font-size:7px}
+}
+
+/* El turno quieto se lee como una sola pieza: el color ocupa sus casilleros y el contenido no se trunca. */
+.care-schedule-appointment-fragment{cursor:pointer}
+.care-schedule-appointment-bridge{
+  z-index:3;
+  height:8px;
+  min-height:8px;
+  align-self:start;
+  margin:0 4px;
+  transform:translateY(-50%);
+  border:0!important;
+  border-radius:4px!important;
+  box-shadow:none!important;
+  pointer-events:none
+}
+.care-schedule-appointment-bridge.has-chair-gap{margin-left:10px}
+.care-schedule-appointment.care-schedule-appointment-content{
+  z-index:9;
+  box-sizing:border-box;
+  width:auto;
+  min-width:0;
+  height:100%;
+  min-height:0;
+  align-self:stretch;
+  align-content:start;
+  gap:2px;
+  overflow:visible;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  padding:3px 5px;
+  box-shadow:none!important;
+  pointer-events:none;
+  text-shadow:0 1px 1px #17334666
+}
+.care-schedule-appointment-content.has-chair-gap{margin-left:6px}
+.care-schedule-appointment-content header{
+  display:grid;
+  position:static;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:start;
+  gap:4px;
+  overflow:visible;
+  padding-bottom:0
+}
+.care-schedule-appointment-content .care-schedule-appointment-identity{
+  display:grid;
+  min-width:0;
+  gap:1px;
+  overflow:visible
+}
+.care-schedule-appointment-content .care-schedule-appointment-identity strong,
+.care-schedule-appointment-content .care-schedule-appointment-identity small,
+.care-schedule-appointment-content .care-schedule-appointment-range,
+.care-schedule-appointment-content .care-schedule-appointment-scheme{
+  display:block;
+  overflow:visible;
+  white-space:normal;
+  text-overflow:clip;
+  overflow-wrap:anywhere;
+  -webkit-line-clamp:unset
+}
+.care-schedule-appointment-content .care-schedule-appointment-range{
+  position:static;
+  margin-top:1px;
+  line-height:1.05
+}
+.care-schedule-appointment-content .care-schedule-appointment-scheme{
+  display:block!important;
+  line-height:1.12
+}
+.care-schedule-appointment-content footer{
+  display:flex!important;
+  flex-wrap:wrap;
+  gap:2px 6px;
+  overflow:visible
+}
+.care-schedule-appointment-content .care-schedule-appointment-actions,
+.care-schedule-appointment-content .care-schedule-appointment-actions button{
+  overflow:visible;
+  pointer-events:auto
+}
+.care-schedule-appointment-content.is-search-match{outline:0;filter:none}
+.care-schedule-appointment-bridge.is-search-match{z-index:3}
+
+/* Gestion clinica desde la lista de espera */
+.care-schedule-candidate.is-workflow-blocked {
+  cursor: default;
+  box-shadow: inset 0 0 0 1px rgb(87 105 117 / 8%);
+}
+
+.care-schedule-candidate.is-workflow-blocked .care-schedule-candidate-main,
+.care-schedule-candidate.is-workflow-blocked .care-schedule-candidate-alerts {
+  opacity: .72;
+}
+
+.care-schedule-candidate.is-temporary-hold,
+.care-schedule-candidate.is-discontinued {
+  background: #f3f4f5;
+}
+
+.care-schedule-candidate .care-schedule-candidate-alert.is-request-alert {
+  border-color: #7cbfe4;
+  background: #edf8fe;
+  color: #087fc4;
+}
+
+.care-schedule-candidate .care-schedule-candidate-alert.is-suspension-alert {
+  border-color: #dda0a8;
+  background: #fff0f2;
+  color: #a92837;
+}
+
+.care-schedule-candidate footer {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  justify-content: initial;
+}
+
+.care-schedule-candidate footer > b {
+  justify-self: end;
+}
+
+.care-schedule-candidate-manage {
+  display: inline-flex;
+  min-height: 23px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px solid #8fc9e8;
+  border-radius: 3px;
+  background: #edf8fe;
+  padding: 2px 6px;
+  color: #087fc4;
+  font: inherit;
+  font-size: 8px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.care-schedule-candidate-manage:hover,
+.care-schedule-candidate-manage:focus-visible {
+  border-color: #087fc4;
+  background: #fff;
+  outline: 2px solid rgb(14 154 239 / 16%);
+  outline-offset: 1px;
+}
+
+.care-schedule-candidate-manage svg {
+  width: 12px;
+  height: 12px;
+}
+
+@media (max-width: 1050px) {
+  .care-schedule-candidate-manage span {
+    display: none;
+  }
+  .care-schedule-candidate-manage {
+    width: 24px;
+    padding-inline: 3px;
+  }
+}
+
+/* La lista de espera necesita espacio para nombre, DNI, esquema y alertas clínicas. */
+.care-schedule-layout {
+  grid-template-columns: 264px minmax(0, 1fr);
+}
+
+@media (max-width: 1050px) {
+  .care-schedule-layout {
+    grid-template-columns: 222px minmax(0, 1fr);
+  }
+}

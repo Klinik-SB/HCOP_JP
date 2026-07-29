@@ -1,0 +1,112 @@
+{
+  "$schema_version": 1,
+  "organ": "corpus",
+  "edition": "AJCC 8",
+  "source": "pdfsource/_pages_corpusv8/",
+  "observables": {
+    "depth_of_invasion": {
+      "type": "enum",
+      "default": "unknown",
+      "values": [
+        "unknown",
+        "none",
+        "endometrium_or_lt_half_myometrium",
+        "ge_half_myometrium",
+        "cervical_stroma",
+        "serosa_or_adnexa",
+        "vagina_or_parametrium",
+        "bladder_or_bowel_mucosa"
+      ],
+      "description": "Greatest extent of corpus uteri tumor invasion. AJCC 8 corpus T categories are defined by this single axis (endocervical glandular involvement alone remains T1).",
+      "display": {
+        "label": "Greatest depth / extent of tumor invasion",
+        "choices": {
+          "unknown": "Unknown / not assessable",
+          "none": "No evidence of primary tumor (T0)",
+          "endometrium_or_lt_half_myometrium": "Endometrium or < 1/2 myometrium (T1a)",
+          "ge_half_myometrium": ">= 1/2 myometrium (T1b)",
+          "cervical_stroma": "Cervical stromal connective tissue, not beyond uterus (T2)",
+          "serosa_or_adnexa": "Serosa and/or adnexa (T3a)",
+          "vagina_or_parametrium": "Vagina or parametrium (T3b)",
+          "bladder_or_bowel_mucosa": "Bladder or bowel mucosa (T4)"
+        }
+      }
+    },
+    "positive_node_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of regional lymph nodes with metastasis on pathologic examination (pelvic + para-aortic combined).",
+      "display": {"label": "Positive regional lymph nodes (count)"}
+    },
+    "node_region": {
+      "type": "enum",
+      "default": "none",
+      "values": ["none", "pelvic_only", "para_aortic"],
+      "description": "Anatomic distribution of positive nodes. Para-aortic involvement (with or without positive pelvic nodes) maps to the N2 family; pelvic-only positive nodes map to the N1 family.",
+      "display": {
+        "label": "Anatomic distribution of positive nodes",
+        "choices": {
+          "none": "No positive nodes (or N0(i+) only)",
+          "pelvic_only": "Pelvic lymph nodes only (N1 family)",
+          "para_aortic": "Para-aortic nodes (with or without positive pelvic) (N2 family)"
+        }
+      }
+    },
+    "node_size": {
+      "type": "enum",
+      "default": "unknown",
+      "values": ["unknown", "itc_le_0_2_mm", "micro_gt_0_2_le_2_mm", "macro_gt_2_mm"],
+      "description": "Greatest dimension of the largest nodal metastasis. ITCs (<=0.2 mm) -> N0(i+); micrometastasis (>0.2 mm, <=2.0 mm) -> N1mi/N2mi; macrometastasis (>2.0 mm) -> N1a/N2a.",
+      "display": {
+        "label": "Largest nodal deposit size",
+        "choices": {
+          "unknown": "Unknown / not measured",
+          "itc_le_0_2_mm": "Isolated tumor cells <= 0.2 mm (N0(i+))",
+          "micro_gt_0_2_le_2_mm": "Micrometastasis > 0.2 mm and <= 2.0 mm (Nxmi)",
+          "macro_gt_2_mm": "Macrometastasis > 2.0 mm (Nxa)"
+        }
+      }
+    },
+    "distant_mets": {
+      "type": "bool",
+      "default": false,
+      "description": "Any distant metastasis (inguinal nodes, intraperitoneal disease, lung, liver, bone). Excludes pelvic/para-aortic nodes, vagina, uterine serosa, or adnexa.",
+      "display": {"label": "Distant metastasis (M1)"}
+    }
+  },
+  "axes": {
+    "T": [
+      {"label": "T4: bladder or bowel mucosa", "when": {"depth_of_invasion": {"eq": "bladder_or_bowel_mucosa"}}, "then": "T4"},
+      {"label": "T3b: vagina or parametrium", "when": {"depth_of_invasion": {"eq": "vagina_or_parametrium"}}, "then": "T3b"},
+      {"label": "T3a: serosa or adnexa", "when": {"depth_of_invasion": {"eq": "serosa_or_adnexa"}}, "then": "T3a"},
+      {"label": "T2: cervical stroma", "when": {"depth_of_invasion": {"eq": "cervical_stroma"}}, "then": "T2"},
+      {"label": "T1b: >= 1/2 myometrium", "when": {"depth_of_invasion": {"eq": "ge_half_myometrium"}}, "then": "T1b"},
+      {"label": "T1a: endometrium or < 1/2 myometrium", "when": {"depth_of_invasion": {"eq": "endometrium_or_lt_half_myometrium"}}, "then": "T1a"},
+      {"label": "T0: no evidence of primary tumor", "when": {"depth_of_invasion": {"eq": "none"}}, "then": "T0"}
+    ],
+    "N": [
+      {"label": "N2a: para-aortic macrometastasis", "when": {"node_region": {"eq": "para_aortic"}, "node_size": {"eq": "macro_gt_2_mm"}}, "then": "N2a"},
+      {"label": "N2mi: para-aortic micrometastasis", "when": {"node_region": {"eq": "para_aortic"}, "node_size": {"eq": "micro_gt_0_2_le_2_mm"}}, "then": "N2mi"},
+      {"label": "N2: para-aortic, size unknown", "when": {"node_region": {"eq": "para_aortic"}, "node_size": {"eq": "unknown"}, "positive_node_count": {"gte": 1}}, "then": "N2"},
+      {"label": "N1a: pelvic macrometastasis", "when": {"node_region": {"eq": "pelvic_only"}, "node_size": {"eq": "macro_gt_2_mm"}}, "then": "N1a"},
+      {"label": "N1mi: pelvic micrometastasis", "when": {"node_region": {"eq": "pelvic_only"}, "node_size": {"eq": "micro_gt_0_2_le_2_mm"}}, "then": "N1mi"},
+      {"label": "N1: pelvic, size unknown", "when": {"node_region": {"eq": "pelvic_only"}, "node_size": {"eq": "unknown"}, "positive_node_count": {"gte": 1}}, "then": "N1"},
+      {"label": "N0(i+): isolated tumor cells only", "when": {"node_size": {"eq": "itc_le_0_2_mm"}}, "then": "N0(i+)"},
+      {"label": "N0: no positive nodes", "when": {"node_region": {"eq": "none"}, "positive_node_count": {"eq": 0}}, "then": "N0"}
+    ],
+    "M": [
+      {"label": "M0: no distant mets", "when": {"distant_mets": {"eq": false}}, "then": "M0"},
+      {"label": "M1: distant mets", "when": {"distant_mets": {"eq": true}}, "then": "M1"}
+    ]
+  },
+  "examples": [
+    {"label": "endometrium -> T1a", "observations": {"depth_of_invasion": "endometrium_or_lt_half_myometrium"}, "expect": {"T": "T1a", "N": "N0", "M": "M0"}},
+    {"label": ">=1/2 myometrium -> T1b", "observations": {"depth_of_invasion": "ge_half_myometrium"}, "expect": {"T": "T1b"}},
+    {"label": "cervical stroma -> T2", "observations": {"depth_of_invasion": "cervical_stroma"}, "expect": {"T": "T2"}},
+    {"label": "serosa/adnexa + pelvic macro nodes -> T3a, N1a", "observations": {"depth_of_invasion": "serosa_or_adnexa", "node_region": "pelvic_only", "node_size": "macro_gt_2_mm", "positive_node_count": 2}, "expect": {"T": "T3a", "N": "N1a"}},
+    {"label": "vagina + para-aortic micro -> T3b, N2mi", "observations": {"depth_of_invasion": "vagina_or_parametrium", "node_region": "para_aortic", "node_size": "micro_gt_0_2_le_2_mm", "positive_node_count": 1}, "expect": {"T": "T3b", "N": "N2mi"}},
+    {"label": "bladder mucosa + M1 -> T4, M1", "observations": {"depth_of_invasion": "bladder_or_bowel_mucosa", "distant_mets": true}, "expect": {"T": "T4", "M": "M1"}},
+    {"label": "ITCs only -> N0(i+)", "observations": {"depth_of_invasion": "endometrium_or_lt_half_myometrium", "node_size": "itc_le_0_2_mm"}, "expect": {"T": "T1a", "N": "N0(i+)"}},
+    {"label": "no observations -> TX, N0, M0", "observations": {}, "expect": {"T": "TX", "N": "N0", "M": "M0"}}
+  ]
+}

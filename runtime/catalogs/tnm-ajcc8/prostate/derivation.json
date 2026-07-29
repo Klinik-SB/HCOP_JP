@@ -1,0 +1,106 @@
+{
+  "$schema_version": 1,
+  "organ": "prostate",
+  "edition": "AJCC 8",
+  "source": "pdfsource/prostate.pdf",
+  "observables": {
+    "tumor_extent": {
+      "type": "enum",
+      "default": "unknown",
+      "values": [
+        "unknown",
+        "incidental_le_5_percent",
+        "incidental_gt_5_percent",
+        "needle_biopsy_inapparent",
+        "palpable_half_one_lobe",
+        "palpable_more_than_half_one_lobe",
+        "palpable_both_lobes",
+        "organ_confined_pathologic",
+        "extracapsular_no_seminal_vesicle",
+        "seminal_vesicle_invasion",
+        "fixed_adjacent_structures"
+      ],
+      "description": "Anatomic extent. Combined with $classification to pick cT vs pT prefix.",
+      "display": {
+        "label": "Anatomic extent of primary tumor",
+        "choices": {
+          "unknown": "Unknown / not assessable",
+          "incidental_le_5_percent": "Incidental finding at TURP, ≤ 5% of resected tissue (cT1a)",
+          "incidental_gt_5_percent": "Incidental finding at TURP, > 5% of resected tissue (cT1b)",
+          "needle_biopsy_inapparent": "Detected on needle biopsy, clinically inapparent (cT1c)",
+          "palpable_half_one_lobe": "Palpable, ≤ half of one lobe (cT2a)",
+          "palpable_more_than_half_one_lobe": "Palpable, > half of one lobe (cT2b)",
+          "palpable_both_lobes": "Palpable in both lobes (cT2c)",
+          "organ_confined_pathologic": "Organ-confined on pathology (pT2)",
+          "extracapsular_no_seminal_vesicle": "Extracapsular extension, no seminal vesicle involvement (T3a)",
+          "seminal_vesicle_invasion": "Seminal vesicle invasion (T3b)",
+          "fixed_adjacent_structures": "Invades fixed adjacent structures (bladder neck, sphincter, rectum, levator, pelvic wall) (T4)"
+        }
+      }
+    },
+    "regional_node_mets": {"type": "bool", "default": false, "display": {"label": "Regional pelvic lymph node metastasis (N1)"}},
+    "distant_mets_pattern": {
+      "type": "enum",
+      "default": "none",
+      "values": ["none", "nonregional_nodes", "bone", "other_distant"],
+      "display": {
+        "label": "Distant metastasis pattern",
+        "choices": {
+          "none": "No distant metastasis (M0)",
+          "nonregional_nodes": "Non-regional lymph nodes (M1a)",
+          "bone": "Bone metastasis (M1b)",
+          "other_distant": "Other distant site (M1c)"
+        }
+      }
+    },
+    "psa_ng_ml": {"type": "number", "unit": "ng/mL", "description": "Serum PSA at diagnosis.", "display": {"label": "Serum PSA at diagnosis (ng/mL)"}},
+    "gleason_grade_group": {"type": "number", "description": "Gleason grade group 1-5 (pathology call).", "display": {"label": "Gleason Grade Group (1–5)"}}
+  },
+  "axes": {
+    "T": [
+      {"label": "cT1a: incidental <= 5%, clinical", "when": {"$classification": {"eq": "c"}, "tumor_extent": {"eq": "incidental_le_5_percent"}}, "then": "cT1a"},
+      {"label": "cT1b: incidental > 5%, clinical", "when": {"$classification": {"eq": "c"}, "tumor_extent": {"eq": "incidental_gt_5_percent"}}, "then": "cT1b"},
+      {"label": "cT1c: needle biopsy inapparent, clinical", "when": {"$classification": {"eq": "c"}, "tumor_extent": {"eq": "needle_biopsy_inapparent"}}, "then": "cT1c"},
+      {"label": "cT2a: palpable <= half one lobe", "when": {"$classification": {"eq": "c"}, "tumor_extent": {"eq": "palpable_half_one_lobe"}}, "then": "cT2a"},
+      {"label": "cT2b: palpable > half one lobe", "when": {"$classification": {"eq": "c"}, "tumor_extent": {"eq": "palpable_more_than_half_one_lobe"}}, "then": "cT2b"},
+      {"label": "cT2c: palpable both lobes", "when": {"$classification": {"eq": "c"}, "tumor_extent": {"eq": "palpable_both_lobes"}}, "then": "cT2c"},
+      {"label": "cT3a: ECE no SV, clinical", "when": {"$classification": {"eq": "c"}, "tumor_extent": {"eq": "extracapsular_no_seminal_vesicle"}}, "then": "cT3a"},
+      {"label": "cT3b: seminal vesicle, clinical", "when": {"$classification": {"eq": "c"}, "tumor_extent": {"eq": "seminal_vesicle_invasion"}}, "then": "cT3b"},
+      {"label": "cT4: fixed adjacent structures, clinical", "when": {"$classification": {"eq": "c"}, "tumor_extent": {"eq": "fixed_adjacent_structures"}}, "then": "cT4"},
+      {"label": "pT2: organ-confined, pathologic", "when": {"$classification": {"eq": "p"}, "tumor_extent": {"in": ["organ_confined_pathologic", "palpable_half_one_lobe", "palpable_more_than_half_one_lobe", "palpable_both_lobes"]}}, "then": "pT2"},
+      {"label": "pT3a: ECE no SV, pathologic", "when": {"$classification": {"eq": "p"}, "tumor_extent": {"eq": "extracapsular_no_seminal_vesicle"}}, "then": "pT3a"},
+      {"label": "pT3b: seminal vesicle, pathologic", "when": {"$classification": {"eq": "p"}, "tumor_extent": {"eq": "seminal_vesicle_invasion"}}, "then": "pT3b"},
+      {"label": "pT4: fixed adjacent structures, pathologic", "when": {"$classification": {"eq": "p"}, "tumor_extent": {"eq": "fixed_adjacent_structures"}}, "then": "pT4"}
+    ],
+    "N": [
+      {"label": "N0", "when": {"regional_node_mets": {"eq": false}}, "then": "N0"},
+      {"label": "N1", "when": {"regional_node_mets": {"eq": true}}, "then": "N1"}
+    ],
+    "M": [
+      {"label": "M0", "when": {"distant_mets_pattern": {"eq": "none"}}, "then": "M0"},
+      {"label": "M1a: non-regional nodes", "when": {"distant_mets_pattern": {"eq": "nonregional_nodes"}}, "then": "M1a"},
+      {"label": "M1b: bone", "when": {"distant_mets_pattern": {"eq": "bone"}}, "then": "M1b"},
+      {"label": "M1c: other distant", "when": {"distant_mets_pattern": {"eq": "other_distant"}}, "then": "M1c"}
+    ],
+    "PSA": [
+      {"label": "<10", "when": {"psa_ng_ml": {"lt": 10}}, "then": "<10"},
+      {"label": "10-<20", "when": {"psa_ng_ml": {"gte": 10, "lt": 20}}, "then": "10-<20"},
+      {"label": ">=20", "when": {"psa_ng_ml": {"gte": 20}}, "then": ">=20"}
+    ],
+    "GradeGroup": [
+      {"label": "GG1", "when": {"gleason_grade_group": {"eq": 1}}, "then": "1"},
+      {"label": "GG2", "when": {"gleason_grade_group": {"eq": 2}}, "then": "2"},
+      {"label": "GG3", "when": {"gleason_grade_group": {"eq": 3}}, "then": "3"},
+      {"label": "GG4", "when": {"gleason_grade_group": {"eq": 4}}, "then": "4"},
+      {"label": "GG5", "when": {"gleason_grade_group": {"eq": 5}}, "then": "5"}
+    ]
+  },
+  "examples": [
+    {"label": "cT1c needle biopsy", "classification": "c", "observations": {"tumor_extent": "needle_biopsy_inapparent"}, "expect": {"T": "cT1c"}},
+    {"label": "cT2b palpable", "classification": "c", "observations": {"tumor_extent": "palpable_more_than_half_one_lobe"}, "expect": {"T": "cT2b"}},
+    {"label": "pT2 organ-confined", "classification": "p", "observations": {"tumor_extent": "organ_confined_pathologic"}, "expect": {"T": "pT2"}},
+    {"label": "pT3b seminal vesicle", "classification": "p", "observations": {"tumor_extent": "seminal_vesicle_invasion"}, "expect": {"T": "pT3b"}},
+    {"label": "cT3a + N1 + M1b", "classification": "c", "observations": {"tumor_extent": "extracapsular_no_seminal_vesicle", "regional_node_mets": true, "distant_mets_pattern": "bone"}, "expect": {"T": "cT3a", "N": "N1", "M": "M1b"}},
+    {"label": "no observations (clinical default) -> cTX, N0, M0", "classification": "c", "observations": {}, "expect": {"T": "cTX", "N": "N0", "M": "M0"}}
+  ]
+}

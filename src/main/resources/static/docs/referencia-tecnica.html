@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Referencia técnica · HCOP JP</title>
+  <meta name="description" content="Arquitectura MVC, persistencia, API y mapa de campos de HCOP JP.">
+  <link rel="stylesheet" href="./documentacion.css">
+</head>
+<body>
+  <header class="doc-topbar">
+    <a class="doc-brand" href="./index.html"><span class="doc-brand-mark">HC</span><div><strong>Referencia técnica</strong><small>Java, MVC y PostgreSQL</small></div></a>
+    <div class="doc-top-actions">
+      <a class="doc-button" href="./index.html">Índice</a>
+      <a class="doc-button" href="./manual-usuario.html">Manual</a>
+      <a class="doc-button primary" href="../swagger-ui.html">Swagger</a>
+    </div>
+  </header>
+
+  <div class="doc-shell">
+    <aside class="doc-sidebar">
+      <strong>Contenido</strong>
+      <nav>
+        <a href="#orientacion">Orientación</a>
+        <a href="#mvc">Arquitectura MVC</a>
+        <a href="#modulos">Módulos</a>
+        <a href="#seguridad">Sesión y permisos</a>
+        <a href="#datos">Modelo de datos</a>
+        <a href="#campos">Campos y origen</a>
+        <a href="#tratamiento">Tratamiento y ciclos</a>
+        <a href="#archivos">Archivos clínicos</a>
+        <a href="#api">API y Swagger</a>
+        <a href="#concurrencia">Concurrencia</a>
+        <a href="#despliegue">Docker y ejecución</a>
+        <a href="#extension">Cómo extender</a>
+      </nav>
+    </aside>
+
+    <main class="doc-main">
+      <section class="doc-hero" id="orientacion">
+        <span class="doc-kicker">Guía para incorporarse al proyecto</span>
+        <h1>Dónde nace, viaja y se guarda cada dato</h1>
+        <p>HCOP JP es un monolito modular Java 21. La vista web conserva la
+        experiencia clínica; Spring MVC expone el contrato; los servicios
+        ejecutan reglas y transacciones; los repositorios acceden a PostgreSQL.</p>
+        <div class="doc-meta"><span class="doc-tag">Spring Boot</span><span class="doc-tag">Spring MVC</span><span class="doc-tag">JDBC</span><span class="doc-tag">Flyway</span><span class="doc-tag">PostgreSQL</span><span class="doc-tag">OpenAPI</span></div>
+      </section>
+
+      <section class="doc-section" id="mvc">
+        <h2>Arquitectura MVC</h2>
+        <div class="doc-flow">
+          <div class="doc-flow-box"><strong>View</strong><span><code>src/main/resources/static</code></span></div>
+          <div class="doc-flow-box"><strong>Controller</strong><span>Rutas, entrada, sesión, permisos</span></div>
+          <div class="doc-flow-box"><strong>Service</strong><span>Reglas, idempotencia, transacción</span></div>
+          <div class="doc-flow-box"><strong>Repository</strong><span>SQL parametrizado y mapeo</span></div>
+          <div class="doc-flow-box"><strong>PostgreSQL</strong><span>Datos, restricciones y auditoría</span></div>
+        </div>
+        <ul>
+          <li>Un controlador no contiene SQL ni reconstruye reglas clínicas.</li>
+          <li>Un servicio coordina escrituras relacionadas bajo <code>@Transactional</code>.</li>
+          <li>Un repositorio no conoce HTTP, cookies ni elementos visuales.</li>
+          <li>La vista usa las rutas compatibles bajo <code>/api/**</code>.</li>
+          <li>Flyway es el único mecanismo permitido para cambiar el esquema.</li>
+        </ul>
+      </section>
+
+      <section class="doc-section" id="modulos">
+        <h2>Módulos</h2>
+        <div class="doc-table-wrap">
+          <table class="doc-table">
+            <thead><tr><th>Paquete</th><th>Responsabilidad</th><th>Persistencia principal</th></tr></thead>
+            <tbody>
+              <tr><td><code>auth</code> / <code>admin</code></td><td>Login, sesiones, usuarios, roles y permisos.</td><td><code>app_users</code>, <code>auth_sessions</code>, <code>roles</code>, <code>permissions</code></td></tr>
+              <tr><td><code>patient</code></td><td>Identidad, hoja clínica y evoluciones.</td><td><code>patients</code>, <code>clinical_documents</code>, <code>clinical_evolutions</code></td></tr>
+              <tr><td><code>diagnosis</code> / <code>catalog</code></td><td>SNOMED, CIE-10, AJCC, TNM, protocolos y drogas.</td><td><code>patient_diagnoses</code> + catálogos de solo lectura</td></tr>
+              <tr><td><code>treatment</code></td><td>Prescripción, protocolo, ciclos y documentos.</td><td><code>clinical_treatments</code>, <code>treatment_details</code>, <code>treatment_cycle_logistics</code></td></tr>
+              <tr><td><code>infusion</code></td><td>Lista de espera, turnos, sillones, farmacia y administración.</td><td><code>infusion_sessions</code>, logística por ciclo</td></tr>
+              <tr><td><code>workflow</code></td><td>Suspensión, reanudación y solicitudes clínicas.</td><td><code>treatment_management</code>, <code>treatment_workflow_requests</code></td></tr>
+              <tr><td><code>qr</code></td><td>Documento firmado, escaneo y finalización.</td><td><code>qr_scan_events</code>, infusiones y evoluciones</td></tr>
+              <tr><td><code>media</code></td><td>Estudios, imágenes y plantillas.</td><td><code>clinical_files</code> + volumen privado</td></tr>
+              <tr><td><code>configuration</code></td><td>Protocolos, guías, calculadoras, formularios y parámetros.</td><td><code>configuration_items</code> y versiones</td></tr>
+              <tr><td><code>llm</code></td><td>Endpoint local/remoto opcional con clave cifrada.</td><td>Configuración versionada; nunca expone la clave</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="doc-section" id="seguridad">
+        <h2>Sesión, roles y permisos</h2>
+        <p><code>POST /api/auth/login</code> crea una cookie
+        <code>HCOP_SESSION</code> HttpOnly y SameSite Strict. Cada ruta protegida
+        resuelve la sesión, comprueba estado del usuario y exige el permiso
+        específico antes de entrar a la regla clínica.</p>
+        <dl class="doc-definition">
+          <dt>Usuario activo</dt><dd><code>app_users</code>; contraseña con hash BCrypt.</dd>
+          <dt>Sesión</dt><dd>Token aleatorio; en base se conserva su hash, vencimiento y revocación.</dd>
+          <dt>Paciente activo</dt><dd>Se asocia a la sesión, no a una variable global compartida.</dd>
+          <dt>Permiso</dt><dd>Relación usuario → rol → permiso. Los flujos distinguen solicitar de resolver.</dd>
+          <dt>Auditoría</dt><dd>Actor, fecha, entidad y cambio quedan registrados para actos relevantes.</dd>
+        </dl>
+      </section>
+
+      <section class="doc-section" id="datos">
+        <h2>Modelo de datos</h2>
+        <div class="doc-flow">
+          <div class="doc-flow-box"><strong>patients</strong><span>1 identidad</span></div>
+          <div class="doc-flow-box"><strong>clinical_documents</strong><span>1 hoja versionada</span></div>
+          <div class="doc-flow-box"><strong>patient_diagnoses</strong><span>N diagnósticos</span></div>
+          <div class="doc-flow-box"><strong>clinical_treatments</strong><span>N tratamientos</span></div>
+          <div class="doc-flow-box"><strong>treatment_cycle_logistics</strong><span>N ciclos</span></div>
+          <div class="doc-flow-box"><strong>infusion_sessions</strong><span>0..N turnos por ciclo</span></div>
+        </div>
+        <p>Los identificadores de paciente son locales. Los diagnósticos se
+        acumulan; no se sobrescribe un cáncer anterior. Un tratamiento referencia
+        al paciente y, cuando corresponde, al diagnóstico seleccionado.</p>
+      </section>
+
+      <section class="doc-section" id="campos">
+        <h2>Campos: captura, guardado y recuperación</h2>
+        <div class="doc-table-wrap">
+          <table class="doc-table">
+            <thead><tr><th>Dato visible</th><th>Entrada</th><th>Persistencia</th><th>Lectura</th></tr></thead>
+            <tbody>
+              <tr><td>Nombre, apellido, DNI, HC, nacimiento, sexo, obra social y número</td><td>Nuevo paciente / edición de identidad</td><td>Columnas tipadas de <code>patients</code></td><td>Búsqueda, cabecera, receta, turno y documentos</td></tr>
+              <tr><td>Motivo de consulta, enfermedad actual, antecedentes, examen, complementarios, resumen</td><td>Hoja blanca / evolución</td><td>JSONB versionado en <code>clinical_documents.document_json</code></td><td><code>/api/hc/patients/{id}</code></td></tr>
+              <tr><td>SNOMED, CIE-10, sitio AJCC, T, N, M, estadio</td><td>Modal Agregar diagnóstico</td><td><code>patient_diagnoses</code> y copia narrativa en evolución</td><td>Cabecera, historia y selector de Nuevo tratamiento</td></tr>
+              <tr><td>Peso en kg, talla en cm, superficie corporal</td><td>Nuevo tratamiento</td><td>Payload del tratamiento y evolución inmutable</td><td>Detalle, cálculos y hoja clínica</td></tr>
+              <tr><td>Esquema, drogas, dosis, vía, preparación, tiempo</td><td>Protocolo + prescripción</td><td><code>clinical_treatments</code> + snapshot JSONB en <code>treatment_details</code></td><td>Detalle histórico estable aunque cambie el protocolo</td></tr>
+              <tr><td>Ciclo, fecha planificada, medicación, prescripción</td><td>Prescripción / Farmacia</td><td><code>treatment_cycle_logistics</code></td><td>Lista de espera y ficha de turno</td></tr>
+              <tr><td>Fecha, sillón, inicio, duración, estado</td><td>Turnero</td><td><code>infusion_sessions</code></td><td>Grilla, detalle de tratamiento y hoja imprimible</td></tr>
+              <tr><td>Suspensión, motivo, fecha de revisión</td><td>Acciones del ciclo</td><td><code>treatment_management</code> + evolución</td><td>Lista de espera y trazabilidad clínica</td></tr>
+              <tr><td>Estudio o imagen</td><td>Selector, arrastre o portapapeles</td><td>Metadatos en <code>clinical_files</code>; bytes en volumen privado</td><td>Visor autenticado</td></tr>
+              <tr><td>Endpoint, modelo y API key del LLM</td><td>Configuración</td><td>Definición versionada; clave cifrada AES-GCM</td><td>Cliente del servidor; la API nunca devuelve la clave</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="doc-callout"><strong>JSONB con criterio:</strong> se usa para la hoja flexible y snapshots clínicos. Identidad, relaciones, fechas, estados, revisiones y restricciones operativas permanecen en columnas tipadas.</div>
+      </section>
+
+      <section class="doc-section" id="tratamiento">
+        <h2>Tratamiento, ciclos y Hospital de Día</h2>
+        <ol>
+          <li>La prescripción exige un diagnóstico perteneciente al paciente.</li>
+          <li>El protocolo aporta drogas, requisitos, intervalo y duración estimada.</li>
+          <li>Al guardar se crean tratamiento, snapshot, ciclos logísticos y evolución en una transacción.</li>
+          <li>Cada ciclo pendiente reaparece según la fecha calculada hasta ser turnado, suspendido o completado.</li>
+          <li>Farmacia marca medicación recibida o en poder del paciente y puede imprimir el QR.</li>
+          <li>El turnero reserva tantos intervalos como exige la duración y PostgreSQL impide superposiciones.</li>
+          <li>El escaneo verifica firma, documenta el acto, abre la aplicación correcta y permite finalizar.</li>
+        </ol>
+      </section>
+
+      <section class="doc-section" id="archivos">
+        <h2>Archivos clínicos</h2>
+        <p>Los binarios nunca se sirven como estáticos públicos. La API valida
+        tamaño, extensión, tipo declarado y firma binaria; genera un nombre
+        interno; guarda metadatos; y entrega el archivo sólo a una sesión
+        autorizada. La eliminación durante la misma sesión requiere un token
+        temporal específico.</p>
+        <dl class="doc-definition">
+          <dt>Desarrollo</dt><dd><code>runtime/storage</code>, ignorado por Git.</dd>
+          <dt>Docker</dt><dd>Volumen <code>hcop_jp_storage</code>.</dd>
+          <dt>Base</dt><dd><code>clinical_files</code> relaciona propietario, paciente, tratamiento, hash, tamaño y tipo.</dd>
+          <dt>Backup</dt><dd>Base y volumen deben copiarse dentro de la misma ventana de consistencia.</dd>
+        </dl>
+      </section>
+
+      <section class="doc-section" id="api">
+        <h2>API y Swagger</h2>
+        <p>Springdoc genera OpenAPI 3 en ejecución. La documentación se divide
+        en API completa, clínica y administración/configuración.</p>
+        <ul>
+          <li><a href="../swagger-ui.html"><code>/swagger-ui.html</code></a>: interfaz navegable.</li>
+          <li><a href="../v3/api-docs"><code>/v3/api-docs</code></a>: contrato completo JSON.</li>
+          <li><a href="../v3/api-docs/clinica"><code>/v3/api-docs/clinica</code></a>: contrato clínico.</li>
+          <li><a href="../v3/api-docs/administracion"><code>/v3/api-docs/administracion</code></a>: administración.</li>
+        </ul>
+        <div class="doc-callout">Swagger usa la misma cookie de sesión del navegador. “Try it out” no evita roles, permisos, control de revisión ni validaciones clínicas.</div>
+      </section>
+
+      <section class="doc-section" id="concurrencia">
+        <h2>Concurrencia e integridad</h2>
+        <ul>
+          <li>Documentos, configuración, turnos y estados usan revisión optimista.</li>
+          <li>La exclusión de intervalos en PostgreSQL evita turnos superpuestos incluso con dos usuarios a la vez.</li>
+          <li>Las claves foráneas impiden tratamientos o archivos huérfanos.</li>
+          <li>Las evoluciones generadas por flujos clínicos son inmutables e idempotentes.</li>
+          <li>Flyway valida migraciones aplicadas y tiene limpieza destructiva deshabilitada.</li>
+        </ul>
+      </section>
+
+      <section class="doc-section" id="despliegue">
+        <h2>Docker y ejecución</h2>
+        <div class="doc-flow">
+          <div class="doc-flow-box"><strong>compose.yaml</strong><span>Construcción desde código</span></div>
+          <div class="doc-flow-box"><strong>application</strong><span>Java no privilegiado :5180</span></div>
+          <div class="doc-flow-box"><strong>database</strong><span>PostgreSQL sólo en red interna</span></div>
+          <div class="doc-flow-box"><strong>volúmenes</strong><span>Base y archivos persistentes</span></div>
+        </div>
+        <p>El puerto publicado es configurable. PostgreSQL no publica puerto al
+        host. La aplicación sí posee salida para un LLM configurado; la base
+        queda aislada en la red interna.</p>
+      </section>
+
+      <section class="doc-section" id="extension">
+        <h2>Cómo extender sin romper contratos</h2>
+        <ol>
+          <li>Describir el caso clínico, permiso y regla de auditoría.</li>
+          <li>Crear una migración Flyway aditiva si cambia persistencia.</li>
+          <li>Implementar Repository, Service y Controller en ese orden conceptual.</li>
+          <li>Mantener la ruta compatible que consume la vista o versionarla explícitamente.</li>
+          <li>Documentar la operación en <code>OpenApiConfiguration</code>.</li>
+          <li>Agregar una comprobación al script integral y verificar Docker.</li>
+        </ol>
+      </section>
+    </main>
+  </div>
+  <script src="./documentacion.js"></script>
+</body>
+</html>

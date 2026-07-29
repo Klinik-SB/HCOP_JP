@@ -1,0 +1,107 @@
+{
+  "$schema_version": 1,
+  "organ": "bladder",
+  "edition": "AJCC 8",
+  "source": "pdfsource/bladderv8.pdf",
+  "observables": {
+    "depth_of_invasion": {
+      "type": "enum",
+      "default": "unknown",
+      "values": [
+        "unknown",
+        "non_invasive_papillary",
+        "in_situ_flat",
+        "lamina_propria",
+        "muscularis_propria_superficial",
+        "muscularis_propria_deep",
+        "perivesical_microscopic",
+        "perivesical_macroscopic",
+        "adjacent_organs",
+        "pelvic_or_abdominal_wall"
+      ],
+      "description": "Greatest depth/extent of bladder tumor invasion. AJCC 8 T categories are defined by this single axis.",
+      "display": {
+        "label": "Greatest depth / extent of tumor invasion",
+        "choices": {
+          "unknown": "Unknown / not assessable",
+          "non_invasive_papillary": "Non-invasive papillary carcinoma (Ta)",
+          "in_situ_flat": "Urothelial carcinoma in situ -- flat tumor (Tis)",
+          "lamina_propria": "Lamina propria / subepithelial connective tissue (T1)",
+          "muscularis_propria_superficial": "Superficial muscularis propria, inner half (T2a)",
+          "muscularis_propria_deep": "Deep muscularis propria, outer half (T2b)",
+          "perivesical_microscopic": "Perivesical soft tissue, microscopic (T3a)",
+          "perivesical_macroscopic": "Perivesical soft tissue, macroscopic / extravesical mass (T3b)",
+          "adjacent_organs": "Prostatic stroma, seminal vesicles, uterus, or vagina (T4a)",
+          "pelvic_or_abdominal_wall": "Pelvic wall or abdominal wall (T4b)"
+        }
+      }
+    },
+    "positive_node_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of regional lymph nodes with metastasis in the true pelvis.",
+      "display": {"label": "Positive regional lymph nodes in the true pelvis (count)"}
+    },
+    "common_iliac_node_mets": {
+      "type": "bool",
+      "default": false,
+      "description": "Metastasis to common iliac lymph nodes (N3).",
+      "display": {"label": "Common iliac lymph node metastasis (N3)"}
+    },
+    "distant_mets": {
+      "type": "bool",
+      "default": false,
+      "description": "Any distant metastasis (M1).",
+      "display": {"label": "Distant metastasis (M1)"}
+    },
+    "distant_mets_site": {
+      "type": "enum",
+      "default": "none",
+      "values": ["none", "lymph_nodes_beyond_common_iliacs", "non_lymph_node"],
+      "description": "Site qualifier for distant metastasis (selects M1a vs M1b).",
+      "display": {
+        "label": "Site of distant metastasis",
+        "choices": {
+          "none": "No distant metastasis",
+          "lymph_nodes_beyond_common_iliacs": "Lymph nodes beyond the common iliacs (M1a)",
+          "non_lymph_node": "Non-lymph node distant site (M1b)"
+        }
+      }
+    }
+  },
+  "axes": {
+    "T": [
+      {"label": "Ta: non-invasive papillary", "when": {"depth_of_invasion": {"eq": "non_invasive_papillary"}}, "then": "Ta"},
+      {"label": "Tis: flat in situ", "when": {"depth_of_invasion": {"eq": "in_situ_flat"}}, "then": "Tis"},
+      {"label": "T1: lamina propria", "when": {"depth_of_invasion": {"eq": "lamina_propria"}}, "then": "T1"},
+      {"label": "T2a: superficial muscularis propria", "when": {"depth_of_invasion": {"eq": "muscularis_propria_superficial"}}, "then": "T2a"},
+      {"label": "T2b: deep muscularis propria", "when": {"depth_of_invasion": {"eq": "muscularis_propria_deep"}}, "then": "T2b"},
+      {"label": "T3a: perivesical soft tissue, microscopic", "when": {"depth_of_invasion": {"eq": "perivesical_microscopic"}}, "then": "T3a"},
+      {"label": "T3b: perivesical soft tissue, macroscopic", "when": {"depth_of_invasion": {"eq": "perivesical_macroscopic"}}, "then": "T3b"},
+      {"label": "T4a: adjacent organs (prostatic stroma / seminal vesicles / uterus / vagina)", "when": {"depth_of_invasion": {"eq": "adjacent_organs"}}, "then": "T4a"},
+      {"label": "T4b: pelvic or abdominal wall", "when": {"depth_of_invasion": {"eq": "pelvic_or_abdominal_wall"}}, "then": "T4b"}
+    ],
+    "N": [
+      {"label": "N3: common iliac nodes", "when": {"common_iliac_node_mets": {"eq": true}}, "then": "N3"},
+      {"label": "N0: no positive nodes", "when": {"positive_node_count": {"eq": 0}, "common_iliac_node_mets": {"eq": false}}, "then": "N0"},
+      {"label": "N1: single true-pelvis node", "when": {"positive_node_count": {"eq": 1}, "common_iliac_node_mets": {"eq": false}}, "then": "N1"},
+      {"label": "N2: multiple true-pelvis nodes", "when": {"positive_node_count": {"gte": 2}, "common_iliac_node_mets": {"eq": false}}, "then": "N2"}
+    ],
+    "M": [
+      {"label": "M1b: non-lymph node distant mets", "when": {"distant_mets": {"eq": true}, "distant_mets_site": {"eq": "non_lymph_node"}}, "then": "M1b"},
+      {"label": "M1a: distant lymph nodes beyond common iliacs", "when": {"distant_mets": {"eq": true}, "distant_mets_site": {"eq": "lymph_nodes_beyond_common_iliacs"}}, "then": "M1a"},
+      {"label": "M1: distant mets, unspecified site", "when": {"distant_mets": {"eq": true}, "distant_mets_site": {"eq": "none"}}, "then": "M1"},
+      {"label": "M0: no distant mets", "when": {"distant_mets": {"eq": false}}, "then": "M0"}
+    ]
+  },
+  "examples": [
+    {"label": "non-invasive papillary -> Ta N0 M0", "observations": {"depth_of_invasion": "non_invasive_papillary"}, "expect": {"T": "Ta", "N": "N0", "M": "M0"}},
+    {"label": "flat in situ -> Tis N0 M0", "observations": {"depth_of_invasion": "in_situ_flat"}, "expect": {"T": "Tis", "N": "N0", "M": "M0"}},
+    {"label": "lamina propria + 1 pelvic node -> T1 N1", "observations": {"depth_of_invasion": "lamina_propria", "positive_node_count": 1}, "expect": {"T": "T1", "N": "N1"}},
+    {"label": "deep muscularis propria + 3 pelvic nodes -> T2b N2", "observations": {"depth_of_invasion": "muscularis_propria_deep", "positive_node_count": 3}, "expect": {"T": "T2b", "N": "N2"}},
+    {"label": "perivesical macroscopic + common iliac node -> T3b N3", "observations": {"depth_of_invasion": "perivesical_macroscopic", "common_iliac_node_mets": true}, "expect": {"T": "T3b", "N": "N3"}},
+    {"label": "pelvic wall + distant non-lymph node mets -> T4b N0 M1b", "observations": {"depth_of_invasion": "pelvic_or_abdominal_wall", "distant_mets": true, "distant_mets_site": "non_lymph_node"}, "expect": {"T": "T4b", "N": "N0", "M": "M1b"}},
+    {"label": "adjacent organs + distant lymph nodes -> T4a M1a", "observations": {"depth_of_invasion": "adjacent_organs", "distant_mets": true, "distant_mets_site": "lymph_nodes_beyond_common_iliacs"}, "expect": {"T": "T4a", "M": "M1a"}},
+    {"label": "no observations -> TX, N0, M0", "observations": {}, "expect": {"T": "TX", "N": "N0", "M": "M0"}}
+  ]
+}

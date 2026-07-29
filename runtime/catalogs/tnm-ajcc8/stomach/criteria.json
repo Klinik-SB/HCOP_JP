@@ -1,0 +1,100 @@
+{
+  "$schema_version": 1,
+  "organ": "stomach",
+  "edition": "AJCC 8",
+  "source": "pdfsource/stomach.pdf",
+  "axes": {
+    "T": {
+      "label": "Primary Tumor",
+      "categories": [
+        {"code": "TX",  "description": "Primary tumor cannot be assessed", "notes": []},
+        {"code": "T0",  "description": "No evidence of primary tumor", "notes": []},
+        {"code": "Tis", "description": "Carcinoma in situ; intraepithelial tumor without invasion of the lamina propria, high-grade dysplasia", "notes": []},
+        {"code": "T1",  "description": "Tumor invades the lamina propria, muscularis mucosae, or submucosa", "notes": []},
+        {"code": "T1a", "description": "Tumor invades the lamina propria or muscularis mucosae", "notes": []},
+        {"code": "T1b", "description": "Tumor invades the submucosa", "notes": []},
+        {"code": "T2",  "description": "Tumor invades the muscularis propria", "notes": ["a"]},
+        {"code": "T3",  "description": "Tumor penetrates the subserosal connective tissue without invasion of the visceral peritoneum or adjacent structures", "notes": ["b", "c"]},
+        {"code": "T4",  "description": "Tumor invades the serosa (visceral peritoneum) or adjacent structures", "notes": ["b", "c"]},
+        {"code": "T4a", "description": "Tumor invades the serosa (visceral peritoneum)", "notes": []},
+        {"code": "T4b", "description": "Tumor invades adjacent structures/organs", "notes": []}
+      ],
+      "notes": {
+        "a": "A tumor may penetrate the muscularis propria with extension into the gastrocolic or gastrohepatic ligaments, or into the greater or lesser omentum, without perforation of the visceral peritoneum covering these structures. In this case, the tumor is classified as T3. If there is perforation of the visceral peritoneum covering the gastric ligaments or the omentum, the tumor should be classified as T4.",
+        "b": "The adjacent structures of the stomach include the spleen, transverse colon, liver, diaphragm, pancreas, abdominal wall, adrenal gland, kidney, small intestine, and retroperitoneum.",
+        "c": "Intramural extension to the duodenum or esophagus is not considered invasion in any of these sites."
+      },
+      "suffixes": [
+        {"token": "(m)", "description": "Multiple synchronous primary tumors"}
+      ]
+    },
+    "N": {
+      "label": "Regional Lymph Node",
+      "categories": [
+        {"code": "NX",  "description": "Regional lymph node(s) cannot be assessed", "notes": []},
+        {"code": "N0",  "description": "No regional lymph node metastasis", "notes": []},
+        {"code": "N1",  "description": "Metastasis in one or two regional lymph nodes", "notes": []},
+        {"code": "N2",  "description": "Metastasis in three to six regional lymph nodes", "notes": []},
+        {"code": "N3",  "description": "Metastasis in seven or more regional lymph nodes", "notes": []},
+        {"code": "N3a", "description": "Metastasis in seven to 15 regional lymph nodes", "notes": []},
+        {"code": "N3b", "description": "Metastasis in 16 or more regional lymph nodes", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": [
+        {"token": "(sn)", "description": "Sentinel node procedure"},
+        {"token": "(f)",  "description": "FNA or core biopsy"}
+      ]
+    },
+    "M": {
+      "label": "Distant Metastasis",
+      "categories": [
+        {"code": "M0", "description": "No distant metastasis", "notes": []},
+        {"code": "M1", "description": "Distant metastasis", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Staging Classification",
+      "categories": [
+        {"code": "c", "description": "Clinical classification: stage assigned from imaging, endoscopy, biopsy, and clinical exam before any definitive treatment.", "notes": []},
+        {"code": "p", "description": "Pathological classification: stage assigned from the surgically resected specimen after histologic review.", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor: y (post-neoadjuvant)",
+      "categories": [
+        {"code": "Yes", "description": "Classification determined during or after the application of initial multimodal (neoadjuvant) therapy. Combined with Classification='p' this selects the ypTNM stage table.", "notes": []},
+        {"code": "No",  "description": "No neoadjuvant therapy preceded this assessment.", "notes": []}
+      ],
+      "notes": {
+        "matching": "Under Classification='p', DescY='Yes' selects the ypTNM table; DescY='No' selects the canonical pTNM table. Under Classification='c' the value is irrelevant (cTNM applies regardless)."
+      },
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor: r (recurrent)",
+      "categories": [
+        {"code": "Yes", "description": "Recurrent tumor classification, assigned when the tumor is staged after a disease-free interval.", "notes": []},
+        {"code": "No",  "description": "Not a recurrent tumor in this assessment.", "notes": []}
+      ],
+      "notes": {
+        "matching": "For stomach AJCC 8, no rTNM-specific stage table exists; DescR does not affect the stage outcome. It is recorded for clinical context only and is ignored by the rule lookup."
+      },
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor: m (multiple synchronous primaries)",
+      "categories": [
+        {"code": "Yes", "description": "Multiple synchronous primary tumors at the same anatomic site.", "notes": []},
+        {"code": "No",  "description": "Single primary tumor.", "notes": []}
+      ],
+      "notes": {
+        "matching": "For stomach AJCC 8, no mTNM-specific stage table exists; DescM does not affect the stage outcome. It is recorded for clinical context only and is ignored by the rule lookup."
+      },
+      "suffixes": []
+    }
+  }
+}

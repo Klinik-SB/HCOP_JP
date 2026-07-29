@@ -1,0 +1,91 @@
+{
+  "$schema_version": 1,
+  "organ": "thyroid_anaplastic",
+  "edition": "AJCC 8",
+  "source": "pdfsource/_pages_thyroidv8/ (Thyroid Differentiated and Anaplastic Carcinoma Quick Reference; anaplastic stage table on p5)",
+  "axes": {
+    "T": {
+      "label": "Primary Tumor (Thyroid)",
+      "categories": [
+        {"code": "TX",  "description": "Primary tumor cannot be assessed", "notes": []},
+        {"code": "T0",  "description": "No evidence of primary tumor", "notes": []},
+        {"code": "T1",  "description": "Tumor less than or equal to 2 cm in greatest dimension limited to the thyroid (parent for T1a/T1b)", "notes": []},
+        {"code": "T1a", "description": "Tumor less than or equal to 1 cm in greatest dimension limited to the thyroid", "notes": []},
+        {"code": "T1b", "description": "Tumor greater than 1 cm but less than or equal to 2 cm in greatest dimension limited to the thyroid", "notes": []},
+        {"code": "T2",  "description": "Tumor greater than 2 cm but less than or equal to 4 cm in greatest dimension limited to the thyroid", "notes": []},
+        {"code": "T3",  "description": "Tumor greater than 4 cm limited to the thyroid, or gross extrathyroidal extension invading only strap muscles (parent for T3a/T3b)", "notes": []},
+        {"code": "T3a", "description": "Tumor greater than 4 cm limited to the thyroid", "notes": []},
+        {"code": "T3b", "description": "Gross extrathyroidal extension invading only strap muscles (sternohyoid, sternothyroid, thyrohyoid, or omohyoid muscles) from a tumor of any size", "notes": []},
+        {"code": "T4",  "description": "Includes gross extrathyroidal extension, beyond the strap muscles (parent for T4a/T4b)", "notes": []},
+        {"code": "T4a", "description": "Gross extrathyroidal extension invading subcutaneous soft tissues, larynx, trachea, esophagus, or recurrent laryngeal nerve from a tumor of any size", "notes": []},
+        {"code": "T4b", "description": "Gross extrathyroidal extension invading prevertebral fascia or encasing the carotid artery or mediastinal vessels from a tumor of any size", "notes": []}
+      ],
+      "notes": {
+        "definitions": "These definitions apply to Papillary, Follicular, Poorly Differentiated, Hurthle Cell, and Anaplastic Thyroid Carcinoma. All categories may be subdivided: (s) solitary tumor and (m) multifocal tumor. The largest tumor determines the classification."
+      },
+      "suffixes": [{"token": "(m)", "description": "Multiple synchronous primary tumors"}]
+    },
+    "N": {
+      "label": "Regional Lymph Node",
+      "categories": [
+        {"code": "NX",  "description": "Regional lymph nodes cannot be assessed", "notes": []},
+        {"code": "N0",  "description": "No evidence of locoregional lymph node metastasis (parent for N0a/N0b)", "notes": []},
+        {"code": "N0a", "description": "One or more cytologically or histologically confirmed benign lymph nodes", "notes": []},
+        {"code": "N0b", "description": "No radiologic or clinical evidence of locoregional lymph node metastasis", "notes": []},
+        {"code": "N1",  "description": "Metastasis to regional nodes (parent for N1a/N1b)", "notes": []},
+        {"code": "N1a", "description": "Metastasis to level VI or VII (pretracheal, paratracheal, or prelaryngeal/Delphian, or upper mediastinal) lymph nodes. This can be unilateral or bilateral disease.", "notes": []},
+        {"code": "N1b", "description": "Metastasis to unilateral, bilateral, or contralateral lateral neck lymph nodes (levels I, II, III, IV, or V) or retropharyngeal lymph nodes", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": [
+        {"token": "(sn)", "description": "Sentinel node procedure"},
+        {"token": "(f)",  "description": "FNA or core needle biopsy"}
+      ]
+    },
+    "M": {
+      "label": "Distant Metastasis",
+      "categories": [
+        {"code": "M0", "description": "No distant metastasis", "notes": []},
+        {"code": "M1", "description": "Distant metastasis", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Staging Classification",
+      "categories": [
+        {"code": "c", "description": "Clinical classification.", "notes": []},
+        {"code": "p", "description": "Pathological classification.", "notes": []}
+      ],
+      "notes": {"matching": "Single stage table; cTNM and pTNM use the same rules."},
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor: y (post-neoadjuvant)",
+      "categories": [
+        {"code": "Yes", "description": "Post-neoadjuvant.", "notes": []},
+        {"code": "No",  "description": "No neoadjuvant therapy.", "notes": []}
+      ],
+      "notes": {"matching": "DescY does not affect the anaplastic stage outcome."},
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor: r (recurrent)",
+      "categories": [
+        {"code": "Yes", "description": "Recurrent.", "notes": []},
+        {"code": "No",  "description": "Not recurrent.", "notes": []}
+      ],
+      "notes": {"matching": "DescR is recorded for context and ignored by the rule lookup."},
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor: m (multiple synchronous primaries)",
+      "categories": [
+        {"code": "Yes", "description": "Multiple synchronous primaries.", "notes": []},
+        {"code": "No",  "description": "Single primary tumor.", "notes": []}
+      ],
+      "notes": {"matching": "DescM is recorded for context and ignored by the rule lookup."},
+      "suffixes": []
+    }
+  }
+}

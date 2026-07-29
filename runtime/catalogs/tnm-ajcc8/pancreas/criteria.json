@@ -1,0 +1,84 @@
+{
+  "$schema_version": 1,
+  "organ": "pancreas",
+  "edition": "AJCC 8",
+  "source": "pdfsource/pancreas.pdf",
+  "axes": {
+    "T": {
+      "label": "Primary Tumor (Exocrine Pancreas)",
+      "categories": [
+        {"code": "TX",  "description": "Primary tumor cannot be assessed", "notes": []},
+        {"code": "T0",  "description": "No evidence of primary tumor", "notes": []},
+        {"code": "Tis", "description": "Carcinoma in situ (includes high-grade pancreatic intraepithelial neoplasia (PanIN-3), intraductal papillary mucinous neoplasm with high-grade dysplasia, intraductal tubulopapillary neoplasm with high-grade dysplasia, and mucinous cystic neoplasm with high-grade dysplasia)", "notes": []},
+        {"code": "T1",  "description": "Tumor ≤ 2 cm in greatest dimension (parent for T1a/T1b/T1c)", "notes": []},
+        {"code": "T1a", "description": "Tumor ≤ 0.5 cm in greatest dimension", "notes": []},
+        {"code": "T1b", "description": "Tumor > 0.5 cm and < 1 cm in greatest dimension", "notes": []},
+        {"code": "T1c", "description": "Tumor 1-2 cm in greatest dimension", "notes": []},
+        {"code": "T2",  "description": "Tumor > 2 cm and ≤ 4 cm in greatest dimension", "notes": []},
+        {"code": "T3",  "description": "Tumor > 4 cm in greatest dimension", "notes": []},
+        {"code": "T4",  "description": "Tumor involves celiac axis, superior mesenteric artery, and/or common hepatic artery, regardless of size", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": [{"token": "(m)", "description": "Multiple synchronous primary tumors"}]
+    },
+    "N": {
+      "label": "Regional Lymph Node",
+      "categories": [
+        {"code": "NX", "description": "Regional lymph nodes cannot be assessed", "notes": []},
+        {"code": "N0", "description": "No regional lymph node metastasis", "notes": []},
+        {"code": "N1", "description": "Metastasis in 1-3 regional lymph nodes", "notes": []},
+        {"code": "N2", "description": "Metastasis in 4 or more regional lymph nodes", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": [
+        {"token": "(sn)", "description": "Sentinel node procedure"},
+        {"token": "(f)",  "description": "FNA or core needle biopsy"}
+      ]
+    },
+    "M": {
+      "label": "Distant Metastasis",
+      "categories": [
+        {"code": "M0", "description": "No distant metastasis", "notes": []},
+        {"code": "M1", "description": "Distant metastasis", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Staging Classification",
+      "categories": [
+        {"code": "c", "description": "Clinical classification.", "notes": []},
+        {"code": "p", "description": "Pathological classification.", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor: y (post-neoadjuvant)",
+      "categories": [
+        {"code": "Yes", "description": "Post-neoadjuvant.", "notes": []},
+        {"code": "No",  "description": "No neoadjuvant therapy.", "notes": []}
+      ],
+      "notes": {"matching": "Single stage table; DescY does not affect outcome."},
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor: r (recurrent)",
+      "categories": [
+        {"code": "Yes", "description": "Recurrent.", "notes": []},
+        {"code": "No",  "description": "Not recurrent.", "notes": []}
+      ],
+      "notes": {"matching": "DescR is recorded for context and ignored by the rule lookup."},
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor: m (multiple synchronous primaries)",
+      "categories": [
+        {"code": "Yes", "description": "Multiple synchronous primaries.", "notes": []},
+        {"code": "No",  "description": "Single primary tumor.", "notes": []}
+      ],
+      "notes": {"matching": "DescM is recorded for context and ignored by the rule lookup."},
+      "suffixes": []
+    }
+  }
+}

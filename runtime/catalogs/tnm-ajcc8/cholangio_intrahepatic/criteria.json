@@ -1,0 +1,82 @@
+{
+  "$schema_version": 1,
+  "organ": "cholangio_intrahepatic",
+  "edition": "AJCC 8",
+  "source": "pdfsource/cholangiov8.pdf",
+  "axes": {
+    "T": {
+      "label": "Primary Tumor (Intrahepatic Bile Ducts)",
+      "categories": [
+        {"code": "TX",  "description": "Primary tumor cannot be assessed", "notes": []},
+        {"code": "T0",  "description": "No evidence of primary tumor", "notes": []},
+        {"code": "Tis", "description": "Carcinoma in situ (intraductal tumor)", "notes": []},
+        {"code": "T1",  "description": "Solitary tumor without vascular invasion, less than or equal to 5 cm or greater than 5 cm (parent for T1a/T1b)", "notes": []},
+        {"code": "T1a", "description": "Solitary tumor less than or equal to 5 cm without vascular invasion", "notes": []},
+        {"code": "T1b", "description": "Solitary tumor greater than 5 cm without vascular invasion", "notes": []},
+        {"code": "T2",  "description": "Solitary tumor with intrahepatic vascular invasion or multiple tumors, with or without vascular invasion", "notes": []},
+        {"code": "T3",  "description": "Tumor perforating the visceral peritoneum", "notes": []},
+        {"code": "T4",  "description": "Tumor involving local extrahepatic structures by direct invasion", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": [{"token": "(m)", "description": "Multiple synchronous primary tumors"}]
+    },
+    "N": {
+      "label": "Regional Lymph Node",
+      "categories": [
+        {"code": "NX", "description": "Regional lymph nodes cannot be assessed", "notes": []},
+        {"code": "N0", "description": "No regional lymph node metastasis", "notes": []},
+        {"code": "N1", "description": "Regional lymph node metastasis present", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": [
+        {"token": "(sn)", "description": "Sentinel node procedure"},
+        {"token": "(f)",  "description": "FNA or core needle biopsy"}
+      ]
+    },
+    "M": {
+      "label": "Distant Metastasis",
+      "categories": [
+        {"code": "M0", "description": "No distant metastasis", "notes": []},
+        {"code": "M1", "description": "Distant metastasis", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Staging Classification",
+      "categories": [
+        {"code": "c", "description": "Clinical classification.", "notes": []},
+        {"code": "p", "description": "Pathological classification.", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor: y (post-neoadjuvant)",
+      "categories": [
+        {"code": "Yes", "description": "Post-neoadjuvant.", "notes": []},
+        {"code": "No",  "description": "No neoadjuvant therapy.", "notes": []}
+      ],
+      "notes": {"matching": "Single stage table; DescY does not affect outcome."},
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor: r (recurrent)",
+      "categories": [
+        {"code": "Yes", "description": "Recurrent.", "notes": []},
+        {"code": "No",  "description": "Not recurrent.", "notes": []}
+      ],
+      "notes": {"matching": "DescR is recorded for context and ignored by the rule lookup."},
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor: m (multiple synchronous primaries)",
+      "categories": [
+        {"code": "Yes", "description": "Multiple synchronous primaries.", "notes": []},
+        {"code": "No",  "description": "Single primary tumor.", "notes": []}
+      ],
+      "notes": {"matching": "DescM is recorded for context and ignored by the rule lookup."},
+      "suffixes": []
+    }
+  }
+}

@@ -1,0 +1,245 @@
+{
+  "$schema_version": 1,
+  "organ": "uveal_melanoma",
+  "edition": "AJCC 8",
+  "source": "20250317/uveal_blocks.pdf, pagina 24, tabla AJCC reproducida con permiso",
+  "sourceDocument": "uveal_blocks.pdf",
+  "sourcePage": 24,
+  "guideVersion": "NCCN 1.2025",
+  "axes": {
+    "T": {
+      "label": "Tumor primario",
+      "categories": [
+        {
+          "code": "TX",
+          "description": "No evaluable.",
+          "notes": []
+        },
+        {
+          "code": "T0",
+          "description": "Sin evidencia de tumor.",
+          "notes": []
+        },
+        {
+          "code": "T1a",
+          "description": "Categoria de tamaño 1, sin cuerpo ciliar ni extension extraocular.",
+          "notes": []
+        },
+        {
+          "code": "T1b",
+          "description": "Categoria de tamaño 1, con compromiso de cuerpo ciliar.",
+          "notes": []
+        },
+        {
+          "code": "T1c",
+          "description": "Categoria de tamaño 1, sin cuerpo ciliar y extension extraocular hasta 5 mm.",
+          "notes": []
+        },
+        {
+          "code": "T1d",
+          "description": "Categoria de tamaño 1, con cuerpo ciliar y extension extraocular hasta 5 mm.",
+          "notes": []
+        },
+        {
+          "code": "T2a",
+          "description": "Categoria de tamaño 2, sin cuerpo ciliar ni extension extraocular.",
+          "notes": []
+        },
+        {
+          "code": "T2b",
+          "description": "Categoria de tamaño 2, con compromiso de cuerpo ciliar.",
+          "notes": []
+        },
+        {
+          "code": "T2c",
+          "description": "Categoria de tamaño 2, sin cuerpo ciliar y extension extraocular hasta 5 mm.",
+          "notes": []
+        },
+        {
+          "code": "T2d",
+          "description": "Categoria de tamaño 2, con cuerpo ciliar y extension extraocular hasta 5 mm.",
+          "notes": []
+        },
+        {
+          "code": "T3a",
+          "description": "Categoria de tamaño 3, sin cuerpo ciliar ni extension extraocular.",
+          "notes": []
+        },
+        {
+          "code": "T3b",
+          "description": "Categoria de tamaño 3, con compromiso de cuerpo ciliar.",
+          "notes": []
+        },
+        {
+          "code": "T3c",
+          "description": "Categoria de tamaño 3, sin cuerpo ciliar y extension extraocular hasta 5 mm.",
+          "notes": []
+        },
+        {
+          "code": "T3d",
+          "description": "Categoria de tamaño 3, con cuerpo ciliar y extension extraocular hasta 5 mm.",
+          "notes": []
+        },
+        {
+          "code": "T4a",
+          "description": "Categoria de tamaño 4, sin cuerpo ciliar ni extension extraocular.",
+          "notes": []
+        },
+        {
+          "code": "T4b",
+          "description": "Categoria de tamaño 4, con compromiso de cuerpo ciliar.",
+          "notes": []
+        },
+        {
+          "code": "T4c",
+          "description": "Categoria de tamaño 4, sin cuerpo ciliar y extension extraocular hasta 5 mm.",
+          "notes": []
+        },
+        {
+          "code": "T4d",
+          "description": "Categoria de tamaño 4, con cuerpo ciliar y extension extraocular hasta 5 mm.",
+          "notes": []
+        },
+        {
+          "code": "T4e",
+          "description": "Cualquier tamaño con extension extraocular mayor de 5 mm.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "N": {
+      "label": "Ganglios regionales",
+      "categories": [
+        {
+          "code": "NX",
+          "description": "Los ganglios regionales no pueden evaluarse.",
+          "notes": []
+        },
+        {
+          "code": "N0",
+          "description": "Sin metastasis ganglionares regionales.",
+          "notes": []
+        },
+        {
+          "code": "N1",
+          "description": "Ganglios regionales o depositos orbitarios discontinuos.",
+          "notes": []
+        },
+        {
+          "code": "N1a",
+          "description": "Uno o mas ganglios regionales.",
+          "notes": []
+        },
+        {
+          "code": "N1b",
+          "description": "Depositos orbitarios sin ganglios positivos.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "M": {
+      "label": "Metastasis a distancia",
+      "categories": [
+        {
+          "code": "M0",
+          "description": "Sin metastasis.",
+          "notes": []
+        },
+        {
+          "code": "M1",
+          "description": "Metastasis.",
+          "notes": []
+        },
+        {
+          "code": "M1a",
+          "description": "Mayor metastasis hasta 3 cm.",
+          "notes": []
+        },
+        {
+          "code": "M1b",
+          "description": "Mayor metastasis de 3,1 a 8 cm.",
+          "notes": []
+        },
+        {
+          "code": "M1c",
+          "description": "Mayor metastasis de 8,1 cm o mas.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Clasificacion",
+      "categories": [
+        {
+          "code": "c",
+          "description": "Clasificacion clinica.",
+          "notes": []
+        },
+        {
+          "code": "p",
+          "description": "Clasificacion patologica.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor y",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Posterior a tratamiento neoadyuvante.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor y.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor r",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Enfermedad recurrente.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor r.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor m",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Tumores primarios multiples.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor m.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    }
+  }
+}

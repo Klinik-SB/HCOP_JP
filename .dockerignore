@@ -1,0 +1,10 @@
+.git
+.github
+.idea
+.vscode
+target
+runtime/postgres-data
+runtime/storage
+migration
+*.log
+.env

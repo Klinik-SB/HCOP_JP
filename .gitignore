@@ -1,0 +1,11 @@
+.env
+target/
+runtime/storage/
+runtime/postgres-data/
+runtime/*.log
+migration/
+*.pid
+.idea/
+.vscode/
+*.iml
+*.local

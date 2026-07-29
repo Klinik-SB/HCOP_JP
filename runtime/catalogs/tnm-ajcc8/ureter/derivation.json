@@ -1,0 +1,81 @@
+{
+  "$schema_version": 1,
+  "organ": "ureter",
+  "edition": "AJCC 8",
+  "source": "pdfsource/ureterv8.pdf",
+  "observables": {
+    "depth_of_invasion": {
+      "type": "enum",
+      "default": "unknown",
+      "values": [
+        "unknown",
+        "papillary_noninvasive",
+        "in_situ",
+        "subepithelial_connective_tissue",
+        "muscularis",
+        "beyond_muscularis",
+        "adjacent_organs_or_perinephric_fat"
+      ],
+      "description": "Greatest depth of tumor invasion through the renal pelvis/ureter wall.",
+      "display": {
+        "label": "Depth / extent of tumor invasion",
+        "choices": {
+          "unknown": "Unknown / not assessable",
+          "papillary_noninvasive": "Papillary noninvasive carcinoma (Ta)",
+          "in_situ": "Carcinoma in situ (Tis)",
+          "subepithelial_connective_tissue": "Subepithelial connective tissue (T1)",
+          "muscularis": "Muscularis (T2)",
+          "beyond_muscularis": "Beyond muscularis into peripelvic/periureteric fat or renal parenchyma (T3)",
+          "adjacent_organs_or_perinephric_fat": "Adjacent organs, or through kidney into perinephric fat (T4)"
+        }
+      }
+    },
+    "positive_node_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of regional lymph nodes with metastasis.",
+      "display": {"label": "Positive regional lymph nodes (count)"}
+    },
+    "largest_positive_node_cm": {
+      "type": "number",
+      "unit": "cm",
+      "default": 0,
+      "description": "Greatest dimension of the largest positive regional lymph node, in cm.",
+      "display": {"label": "Largest positive node (cm)"}
+    },
+    "distant_mets": {
+      "type": "bool",
+      "default": false,
+      "description": "Any distant metastasis.",
+      "display": {"label": "Distant metastasis (M1)"}
+    }
+  },
+  "axes": {
+    "T": [
+      {"label": "Ta: papillary noninvasive", "when": {"depth_of_invasion": {"eq": "papillary_noninvasive"}}, "then": "Ta"},
+      {"label": "Tis: in situ", "when": {"depth_of_invasion": {"eq": "in_situ"}}, "then": "Tis"},
+      {"label": "T1: subepithelial connective tissue", "when": {"depth_of_invasion": {"eq": "subepithelial_connective_tissue"}}, "then": "T1"},
+      {"label": "T2: muscularis", "when": {"depth_of_invasion": {"eq": "muscularis"}}, "then": "T2"},
+      {"label": "T3: beyond muscularis", "when": {"depth_of_invasion": {"eq": "beyond_muscularis"}}, "then": "T3"},
+      {"label": "T4: adjacent organs or perinephric fat", "when": {"depth_of_invasion": {"eq": "adjacent_organs_or_perinephric_fat"}}, "then": "T4"}
+    ],
+    "N": [
+      {"label": "N0: no positive nodes", "when": {"positive_node_count": {"eq": 0}}, "then": "N0"},
+      {"label": "N1: single node <= 2 cm", "when": {"positive_node_count": {"eq": 1}, "largest_positive_node_cm": {"lte": 2}}, "then": "N1"},
+      {"label": "N2: single node > 2 cm", "when": {"positive_node_count": {"eq": 1}, "largest_positive_node_cm": {"gt": 2}}, "then": "N2"},
+      {"label": "N2: multiple positive nodes", "when": {"positive_node_count": {"gte": 2}}, "then": "N2"}
+    ],
+    "M": [
+      {"label": "M0: no distant mets", "when": {"distant_mets": {"eq": false}}, "then": "M0"},
+      {"label": "M1: distant mets", "when": {"distant_mets": {"eq": true}}, "then": "M1"}
+    ]
+  },
+  "examples": [
+    {"label": "papillary noninvasive -> Ta, N0, M0", "observations": {"depth_of_invasion": "papillary_noninvasive"}, "expect": {"T": "Ta", "N": "N0", "M": "M0"}},
+    {"label": "in situ -> Tis", "observations": {"depth_of_invasion": "in_situ"}, "expect": {"T": "Tis"}},
+    {"label": "muscularis + 1 node 1.5 cm -> T2, N1", "observations": {"depth_of_invasion": "muscularis", "positive_node_count": 1, "largest_positive_node_cm": 1.5}, "expect": {"T": "T2", "N": "N1"}},
+    {"label": "beyond muscularis + 1 node 3 cm -> T3, N2", "observations": {"depth_of_invasion": "beyond_muscularis", "positive_node_count": 1, "largest_positive_node_cm": 3}, "expect": {"T": "T3", "N": "N2"}},
+    {"label": "adjacent organs + 3 nodes + M1 -> T4, N2, M1", "observations": {"depth_of_invasion": "adjacent_organs_or_perinephric_fat", "positive_node_count": 3, "largest_positive_node_cm": 1, "distant_mets": true}, "expect": {"T": "T4", "N": "N2", "M": "M1"}},
+    {"label": "no observations -> TX, N0, M0", "observations": {}, "expect": {"T": "TX", "N": "N0", "M": "M0"}}
+  ]
+}

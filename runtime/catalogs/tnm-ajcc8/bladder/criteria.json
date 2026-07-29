@@ -1,0 +1,93 @@
+{
+  "$schema_version": 1,
+  "organ": "bladder",
+  "edition": "AJCC 8",
+  "source": "pdfsource/bladderv8.pdf",
+  "axes": {
+    "T": {
+      "label": "Primary Tumor (Urinary Bladder)",
+      "categories": [
+        {"code": "TX",  "description": "Primary tumor cannot be assessed", "notes": []},
+        {"code": "T0",  "description": "No evidence of primary tumor", "notes": []},
+        {"code": "Ta",  "description": "Non-invasive papillary carcinoma", "notes": []},
+        {"code": "Tis", "description": "Urothelial carcinoma in situ: 'flat tumor'", "notes": []},
+        {"code": "T1",  "description": "Tumor invades lamina propria (subepithelial connective tissue)", "notes": []},
+        {"code": "T2",  "description": "Tumor invades muscularis propria (parent for T2a/T2b)", "notes": []},
+        {"code": "T2a", "description": "Tumor invades superficial muscularis propria (inner half)", "notes": []},
+        {"code": "T2b", "description": "Tumor invades deep muscularis propria (outer half)", "notes": []},
+        {"code": "T3",  "description": "Tumor invades perivesical soft tissue (parent for T3a/T3b)", "notes": []},
+        {"code": "T3a", "description": "Tumor invades perivesical soft tissue microscopically", "notes": []},
+        {"code": "T3b", "description": "Tumor invades perivesical soft tissue macroscopically (extravesical mass)", "notes": []},
+        {"code": "T4",  "description": "Extravesical tumor directly invades any of the following: prostatic stroma, seminal vesicles, uterus, vagina, pelvic wall, abdominal wall (parent for T4a/T4b)", "notes": []},
+        {"code": "T4a", "description": "Extravesical tumor invades directly into prostatic stroma, seminal vesicles, uterus, vagina", "notes": []},
+        {"code": "T4b", "description": "Extravesical tumor invades pelvic wall, abdominal wall", "notes": []}
+      ],
+      "notes": {
+        "pT_vs_cT": "AJCC 8 lists separate cT and pT tables; the leaf categories and stage table are identical, so a single rule set covers both."
+      },
+      "suffixes": []
+    },
+    "N": {
+      "label": "Regional Lymph Node",
+      "categories": [
+        {"code": "NX", "description": "Lymph nodes cannot be assessed", "notes": []},
+        {"code": "N0", "description": "No lymph node metastasis", "notes": []},
+        {"code": "N1", "description": "Single regional lymph node metastasis in the true pelvis (perivesical, obturator, internal and external iliac, or sacral lymph node)", "notes": []},
+        {"code": "N2", "description": "Multiple regional lymph node metastasis in the true pelvis (perivesical, obturator, internal and external iliac, or sacral lymph node metastasis)", "notes": []},
+        {"code": "N3", "description": "Lymph node metastasis to the common iliac lymph nodes", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": [
+        {"token": "(sn)", "description": "Sentinel node procedure"},
+        {"token": "(f)",  "description": "FNA or core needle biopsy"}
+      ]
+    },
+    "M": {
+      "label": "Distant Metastasis",
+      "categories": [
+        {"code": "M0",  "description": "No distant metastasis", "notes": []},
+        {"code": "M1",  "description": "Distant metastasis (parent for M1a/M1b)", "notes": []},
+        {"code": "M1a", "description": "Distant metastasis limited to lymph nodes beyond the common iliacs", "notes": []},
+        {"code": "M1b", "description": "Non-lymph node distant metastasis", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Staging Classification",
+      "categories": [
+        {"code": "c", "description": "Clinical classification.", "notes": []},
+        {"code": "p", "description": "Pathological classification.", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor: y (post-neoadjuvant)",
+      "categories": [
+        {"code": "Yes", "description": "Post-neoadjuvant.", "notes": []},
+        {"code": "No",  "description": "No neoadjuvant therapy.", "notes": []}
+      ],
+      "notes": {"matching": "Single stage table; DescY does not affect outcome."},
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor: r (recurrent)",
+      "categories": [
+        {"code": "Yes", "description": "Recurrent.", "notes": []},
+        {"code": "No",  "description": "Not recurrent.", "notes": []}
+      ],
+      "notes": {"matching": "DescR is recorded for context and ignored by the rule lookup."},
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor: m (multiple synchronous primaries)",
+      "categories": [
+        {"code": "Yes", "description": "Multiple synchronous primaries.", "notes": []},
+        {"code": "No",  "description": "Single primary tumor.", "notes": []}
+      ],
+      "notes": {"matching": "DescM is recorded for context and ignored by the rule lookup."},
+      "suffixes": []
+    }
+  }
+}

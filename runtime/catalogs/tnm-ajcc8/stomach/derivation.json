@@ -1,0 +1,71 @@
+{
+  "$schema_version": 1,
+  "organ": "stomach",
+  "edition": "AJCC 8",
+  "source": "pdfsource/stomach.pdf",
+  "observables": {
+    "depth_of_invasion": {
+      "type": "enum",
+      "default": "unknown",
+      "values": ["unknown", "in_situ", "lamina_propria", "muscularis_mucosae", "submucosa", "muscularis_propria", "subserosa", "serosa", "adjacent_structures"],
+      "description": "Greatest depth of tumor invasion through the gastric wall. AJCC 8 T categories are defined by this single axis.",
+      "display": {
+        "label": "Greatest depth of tumor invasion",
+        "choices": {
+          "unknown": "Unknown / not assessable",
+          "in_situ": "Carcinoma in situ (Tis)",
+          "lamina_propria": "Lamina propria (T1a)",
+          "muscularis_mucosae": "Muscularis mucosae (T1a)",
+          "submucosa": "Submucosa (T1b)",
+          "muscularis_propria": "Muscularis propria (T2)",
+          "subserosa": "Subserosa (T3)",
+          "serosa": "Serosa / visceral peritoneum (T4a)",
+          "adjacent_structures": "Adjacent structures (T4b)"
+        }
+      }
+    },
+    "positive_node_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of regional lymph nodes with metastasis on pathologic examination.",
+      "display": {"label": "Positive regional lymph nodes (count)"}
+    },
+    "distant_mets": {
+      "type": "bool",
+      "default": false,
+      "description": "Any distant metastasis.",
+      "display": {"label": "Distant metastasis (M1)"}
+    }
+  },
+  "axes": {
+    "T": [
+      {"label": "Tis: in situ", "when": {"depth_of_invasion": {"eq": "in_situ"}}, "then": "Tis"},
+      {"label": "T1a: lamina propria or muscularis mucosae", "when": {"depth_of_invasion": {"in": ["lamina_propria", "muscularis_mucosae"]}}, "then": "T1a"},
+      {"label": "T1b: submucosa", "when": {"depth_of_invasion": {"eq": "submucosa"}}, "then": "T1b"},
+      {"label": "T2: muscularis propria", "when": {"depth_of_invasion": {"eq": "muscularis_propria"}}, "then": "T2"},
+      {"label": "T3: subserosa", "when": {"depth_of_invasion": {"eq": "subserosa"}}, "then": "T3"},
+      {"label": "T4a: serosa (visceral peritoneum)", "when": {"depth_of_invasion": {"eq": "serosa"}}, "then": "T4a"},
+      {"label": "T4b: adjacent structures", "when": {"depth_of_invasion": {"eq": "adjacent_structures"}}, "then": "T4b"}
+    ],
+    "N": [
+      {"label": "N0: 0 nodes", "when": {"positive_node_count": {"eq": 0}}, "then": "N0"},
+      {"label": "N1: 1-2 nodes", "when": {"positive_node_count": {"gte": 1, "lte": 2}}, "then": "N1"},
+      {"label": "N2: 3-6 nodes", "when": {"positive_node_count": {"gte": 3, "lte": 6}}, "then": "N2"},
+      {"label": "N3a: 7-15 nodes", "when": {"positive_node_count": {"gte": 7, "lte": 15}}, "then": "N3a"},
+      {"label": "N3b: 16+ nodes", "when": {"positive_node_count": {"gte": 16}}, "then": "N3b"}
+    ],
+    "M": [
+      {"label": "M0: no distant mets", "when": {"distant_mets": {"eq": false}}, "then": "M0"},
+      {"label": "M1: distant mets", "when": {"distant_mets": {"eq": true}}, "then": "M1"}
+    ]
+  },
+  "examples": [
+    {"label": "in situ -> Tis", "observations": {"depth_of_invasion": "in_situ"}, "expect": {"T": "Tis", "N": "N0", "M": "M0"}},
+    {"label": "submucosa -> T1b", "observations": {"depth_of_invasion": "submucosa"}, "expect": {"T": "T1b"}},
+    {"label": "muscularis propria + 1 node -> T2, N1", "observations": {"depth_of_invasion": "muscularis_propria", "positive_node_count": 1}, "expect": {"T": "T2", "N": "N1"}},
+    {"label": "subserosa + 5 nodes -> T3, N2", "observations": {"depth_of_invasion": "subserosa", "positive_node_count": 5}, "expect": {"T": "T3", "N": "N2"}},
+    {"label": "serosa + 10 nodes -> T4a, N3a", "observations": {"depth_of_invasion": "serosa", "positive_node_count": 10}, "expect": {"T": "T4a", "N": "N3a"}},
+    {"label": "adjacent structures + 20 nodes + M1 -> T4b, N3b, M1", "observations": {"depth_of_invasion": "adjacent_structures", "positive_node_count": 20, "distant_mets": true}, "expect": {"T": "T4b", "N": "N3b", "M": "M1"}},
+    {"label": "no observations -> TX, N0, M0", "observations": {}, "expect": {"T": "TX", "N": "N0", "M": "M0"}}
+  ]
+}

@@ -1,0 +1,200 @@
+{
+  "$schema_version": 1,
+  "organ": "lung",
+  "edition": "AJCC 8",
+  "source": "20250317/nscl_blocks.pdf, pagina 116, tabla AJCC reproducida con permiso",
+  "sourceDocument": "nscl_blocks.pdf",
+  "sourcePage": 116,
+  "guideVersion": "NCCN 3.2025",
+  "axes": {
+    "T": {
+      "label": "Tumor primario",
+      "categories": [
+        {
+          "code": "TX",
+          "description": "No evaluable o citologia positiva sin lesion visible.",
+          "notes": []
+        },
+        {
+          "code": "T0",
+          "description": "Sin evidencia de tumor.",
+          "notes": []
+        },
+        {
+          "code": "Tis",
+          "description": "Carcinoma in situ.",
+          "notes": []
+        },
+        {
+          "code": "T1mi",
+          "description": "Adenocarcinoma minimamente invasivo, hasta 3 cm con invasion hasta 5 mm.",
+          "notes": []
+        },
+        {
+          "code": "T1a",
+          "description": "Hasta 1 cm.",
+          "notes": []
+        },
+        {
+          "code": "T1b",
+          "description": "Mayor de 1 y hasta 2 cm.",
+          "notes": []
+        },
+        {
+          "code": "T1c",
+          "description": "Mayor de 2 y hasta 3 cm.",
+          "notes": []
+        },
+        {
+          "code": "T2a",
+          "description": "Mayor de 3 y hasta 4 cm o criterio T2 equivalente.",
+          "notes": []
+        },
+        {
+          "code": "T2b",
+          "description": "Mayor de 4 y hasta 5 cm.",
+          "notes": []
+        },
+        {
+          "code": "T3",
+          "description": "Mayor de 5 y hasta 7 cm o invasion/nodulo ipsilateral definido.",
+          "notes": []
+        },
+        {
+          "code": "T4",
+          "description": "Mayor de 7 cm o invasion de estructuras mayores/nodulo en otro lobulo ipsilateral.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "N": {
+      "label": "Ganglios regionales",
+      "categories": [
+        {
+          "code": "NX",
+          "description": "Los ganglios regionales no pueden evaluarse.",
+          "notes": []
+        },
+        {
+          "code": "N0",
+          "description": "Sin metastasis ganglionares regionales.",
+          "notes": []
+        },
+        {
+          "code": "N1",
+          "description": "Ganglios peribronquiales, hiliares o intrapulmonares ipsilaterales.",
+          "notes": []
+        },
+        {
+          "code": "N2",
+          "description": "Ganglios mediastinales ipsilaterales o subcarinales.",
+          "notes": []
+        },
+        {
+          "code": "N3",
+          "description": "Ganglios mediastinales/hiliares contralaterales, escalenos o supraclaviculares.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "M": {
+      "label": "Metastasis a distancia",
+      "categories": [
+        {
+          "code": "M0",
+          "description": "Sin metastasis.",
+          "notes": []
+        },
+        {
+          "code": "M1a",
+          "description": "Nodulo contralateral, nodulos pleurales/pericardicos o derrame maligno.",
+          "notes": []
+        },
+        {
+          "code": "M1b",
+          "description": "Una metastasis extratoracica unica.",
+          "notes": []
+        },
+        {
+          "code": "M1c",
+          "description": "Multiples metastasis extratoracicas.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Clasificacion",
+      "categories": [
+        {
+          "code": "c",
+          "description": "Clasificacion clinica.",
+          "notes": []
+        },
+        {
+          "code": "p",
+          "description": "Clasificacion patologica.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor y",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Posterior a tratamiento neoadyuvante.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor y.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor r",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Enfermedad recurrente.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor r.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor m",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Tumores primarios multiples.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor m.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    }
+  }
+}

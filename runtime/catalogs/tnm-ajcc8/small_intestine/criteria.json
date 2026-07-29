@@ -1,0 +1,175 @@
+{
+  "$schema_version": 1,
+  "organ": "small_intestine",
+  "edition": "AJCC 8",
+  "source": "20250317/small_bowel_blocks.pdf, pagina 32, tabla AJCC reproducida con permiso",
+  "sourceDocument": "small_bowel_blocks.pdf",
+  "sourcePage": 32,
+  "guideVersion": "NCCN 2.2025",
+  "axes": {
+    "T": {
+      "label": "Tumor primario",
+      "categories": [
+        {
+          "code": "TX",
+          "description": "No evaluable.",
+          "notes": []
+        },
+        {
+          "code": "T0",
+          "description": "Sin evidencia de tumor.",
+          "notes": []
+        },
+        {
+          "code": "Tis",
+          "description": "Displasia de alto grado o carcinoma in situ.",
+          "notes": []
+        },
+        {
+          "code": "T1",
+          "description": "Invade lamina propia o submucosa.",
+          "notes": []
+        },
+        {
+          "code": "T1a",
+          "description": "Invade lamina propia.",
+          "notes": []
+        },
+        {
+          "code": "T1b",
+          "description": "Invade submucosa.",
+          "notes": []
+        },
+        {
+          "code": "T2",
+          "description": "Invade muscular propia.",
+          "notes": []
+        },
+        {
+          "code": "T3",
+          "description": "Atraviesa muscular propia hasta subserosa o tejido perimuscular no peritonealizado.",
+          "notes": []
+        },
+        {
+          "code": "T4",
+          "description": "Perfora peritoneo visceral o invade organos/estructuras adyacentes.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "N": {
+      "label": "Ganglios regionales",
+      "categories": [
+        {
+          "code": "NX",
+          "description": "Los ganglios regionales no pueden evaluarse.",
+          "notes": []
+        },
+        {
+          "code": "N0",
+          "description": "Sin metastasis ganglionares regionales.",
+          "notes": []
+        },
+        {
+          "code": "N1",
+          "description": "Uno o dos ganglios regionales.",
+          "notes": []
+        },
+        {
+          "code": "N2",
+          "description": "Tres o mas ganglios regionales.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "M": {
+      "label": "Metastasis a distancia",
+      "categories": [
+        {
+          "code": "M0",
+          "description": "Sin metastasis a distancia.",
+          "notes": []
+        },
+        {
+          "code": "M1",
+          "description": "Metastasis a distancia presente.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Clasificacion",
+      "categories": [
+        {
+          "code": "c",
+          "description": "Clasificacion clinica.",
+          "notes": []
+        },
+        {
+          "code": "p",
+          "description": "Clasificacion patologica.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor y",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Posterior a tratamiento neoadyuvante.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor y.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor r",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Enfermedad recurrente.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor r.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor m",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Tumores primarios multiples.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor m.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    }
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "$schema_version": 1,
+  "organ": "ampulla",
+  "edition": "AJCC 8",
+  "source": "pdfsource/ampulla.pdf",
+  "axes": {
+    "T": {
+      "label": "Primary Tumor (Ampulla of Vater)",
+      "categories": [
+        {"code": "TX",  "description": "Primary tumor cannot be assessed", "notes": []},
+        {"code": "T0",  "description": "No evidence of primary tumor", "notes": []},
+        {"code": "Tis", "description": "Carcinoma in situ", "notes": []},
+        {"code": "T1",  "description": "Tumor limited to ampulla of Vater or sphincter of Oddi, or tumor invades beyond the sphincter of Oddi (perisphincteric invasion) and/or into the duodenal submucosa (parent for T1a/T1b)", "notes": []},
+        {"code": "T1a", "description": "Tumor limited to ampulla of Vater or sphincter of Oddi", "notes": []},
+        {"code": "T1b", "description": "Tumor invades beyond the sphincter of Oddi (perisphincteric invasion) and/or into the duodenal submucosa", "notes": []},
+        {"code": "T2",  "description": "Tumor invades into the muscularis propria of the duodenum", "notes": []},
+        {"code": "T3",  "description": "Tumor directly invades the pancreas (up to 0.5 cm) or extends more than 0.5 cm into the pancreas, or into peripancreatic/periduodenal tissue or duodenal serosa without involvement of celiac axis or superior mesenteric artery (parent for T3a/T3b)", "notes": []},
+        {"code": "T3a", "description": "Tumor directly invades pancreas up to 0.5 cm", "notes": []},
+        {"code": "T3b", "description": "Tumor extends more than 0.5 cm into the pancreas, or extends into peripancreatic or periduodenal tissue or duodenal serosa without involvement of the celiac axis or superior mesenteric artery", "notes": []},
+        {"code": "T4",  "description": "Tumor involves the celiac axis, superior mesenteric artery, and/or common hepatic artery, irrespective of size", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": [{"token": "(m)", "description": "Multiple synchronous primary tumors"}]
+    },
+    "N": {
+      "label": "Regional Lymph Node",
+      "categories": [
+        {"code": "NX", "description": "Regional lymph nodes cannot be assessed", "notes": []},
+        {"code": "N0", "description": "No regional lymph node metastasis", "notes": []},
+        {"code": "N1", "description": "Metastasis to 1-3 regional lymph nodes", "notes": []},
+        {"code": "N2", "description": "Metastasis to 4 or more regional lymph nodes", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": [
+        {"token": "(sn)", "description": "Sentinel node procedure"},
+        {"token": "(f)",  "description": "FNA or core needle biopsy"}
+      ]
+    },
+    "M": {
+      "label": "Distant Metastasis",
+      "categories": [
+        {"code": "M0", "description": "No distant metastasis", "notes": []},
+        {"code": "M1", "description": "Distant metastasis", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Staging Classification",
+      "categories": [
+        {"code": "c", "description": "Clinical classification.", "notes": []},
+        {"code": "p", "description": "Pathological classification.", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor: y (post-neoadjuvant)",
+      "categories": [
+        {"code": "Yes", "description": "Post-neoadjuvant.", "notes": []},
+        {"code": "No",  "description": "No neoadjuvant therapy.", "notes": []}
+      ],
+      "notes": {"matching": "Single stage table; DescY does not affect outcome."},
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor: r (recurrent)",
+      "categories": [
+        {"code": "Yes", "description": "Recurrent.", "notes": []},
+        {"code": "No",  "description": "Not recurrent.", "notes": []}
+      ],
+      "notes": {"matching": "DescR is recorded for context and ignored by the rule lookup."},
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor: m (multiple synchronous primaries)",
+      "categories": [
+        {"code": "Yes", "description": "Multiple synchronous primaries.", "notes": []},
+        {"code": "No",  "description": "Single primary tumor.", "notes": []}
+      ],
+      "notes": {"matching": "DescM is recorded for context and ignored by the rule lookup."},
+      "suffixes": []
+    }
+  }
+}

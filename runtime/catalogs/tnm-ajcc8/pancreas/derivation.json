@@ -1,0 +1,61 @@
+{
+  "$schema_version": 1,
+  "organ": "pancreas",
+  "edition": "AJCC 8",
+  "source": "pdfsource/pancreas.pdf",
+  "observables": {
+    "size_cm": {"type": "number", "unit": "cm", "display": {"label": "Greatest tumor dimension (cm)"}},
+    "histology": {
+      "type": "enum", "default": "invasive", "values": ["in_situ", "invasive", "unknown"],
+      "display": {
+        "label": "Histologic class",
+        "choices": {"in_situ": "Carcinoma in situ (Tis)", "invasive": "Invasive carcinoma", "unknown": "Unknown"}
+      }
+    },
+    "vascular_invasion": {
+      "type": "enum",
+      "default": "none",
+      "values": ["none", "celiac_axis_or_sma_or_cha"],
+      "description": "'celiac_axis_or_sma_or_cha' indicates invasion of celiac axis, superior mesenteric artery, or common hepatic artery (T4).",
+      "display": {
+        "label": "Vascular invasion",
+        "choices": {
+          "none": "No major vascular invasion",
+          "celiac_axis_or_sma_or_cha": "Invades celiac axis, SMA, or common hepatic artery (T4)"
+        }
+      }
+    },
+    "positive_node_count": {"type": "number", "default": 0, "display": {"label": "Positive regional lymph nodes (count)"}},
+    "distant_mets": {"type": "bool", "default": false, "display": {"label": "Distant metastasis (M1)"}}
+  },
+  "axes": {
+    "T": [
+      {"label": "Tis", "when": {"histology": {"eq": "in_situ"}}, "then": "Tis"},
+      {"label": "T4: vascular invasion (celiac/SMA/CHA)", "when": {"vascular_invasion": {"eq": "celiac_axis_or_sma_or_cha"}}, "then": "T4"},
+      {"label": "T3: > 4 cm", "when": {"size_cm": {"gt": 4}}, "then": "T3"},
+      {"label": "T2: > 2 cm and <= 4 cm", "when": {"size_cm": {"gt": 2, "lte": 4}}, "then": "T2"},
+      {"label": "T1c: > 1 cm and <= 2 cm", "when": {"size_cm": {"gt": 1, "lte": 2}}, "then": "T1c"},
+      {"label": "T1b: > 0.5 cm and <= 1 cm", "when": {"size_cm": {"gt": 0.5, "lte": 1}}, "then": "T1b"},
+      {"label": "T1a: <= 0.5 cm", "when": {"size_cm": {"lte": 0.5}}, "then": "T1a"}
+    ],
+    "N": [
+      {"label": "N0", "when": {"positive_node_count": {"eq": 0}}, "then": "N0"},
+      {"label": "N1: 1-3", "when": {"positive_node_count": {"gte": 1, "lte": 3}}, "then": "N1"},
+      {"label": "N2: 4+", "when": {"positive_node_count": {"gte": 4}}, "then": "N2"}
+    ],
+    "M": [
+      {"label": "M0", "when": {"distant_mets": {"eq": false}}, "then": "M0"},
+      {"label": "M1", "when": {"distant_mets": {"eq": true}}, "then": "M1"}
+    ]
+  },
+  "examples": [
+    {"label": "0.3 cm -> T1a", "observations": {"size_cm": 0.3}, "expect": {"T": "T1a"}},
+    {"label": "0.8 cm -> T1b", "observations": {"size_cm": 0.8}, "expect": {"T": "T1b"}},
+    {"label": "1.5 cm -> T1c", "observations": {"size_cm": 1.5}, "expect": {"T": "T1c"}},
+    {"label": "3 cm -> T2", "observations": {"size_cm": 3.0}, "expect": {"T": "T2"}},
+    {"label": "5 cm -> T3", "observations": {"size_cm": 5.0}, "expect": {"T": "T3"}},
+    {"label": "vascular invasion -> T4", "observations": {"size_cm": 3.0, "vascular_invasion": "celiac_axis_or_sma_or_cha"}, "expect": {"T": "T4"}},
+    {"label": "T2 + N2 + M1", "observations": {"size_cm": 3.0, "positive_node_count": 5, "distant_mets": true}, "expect": {"T": "T2", "N": "N2", "M": "M1"}},
+    {"label": "no observations -> TX, N0, M0", "observations": {}, "expect": {"T": "TX", "N": "N0", "M": "M0"}}
+  ]
+}

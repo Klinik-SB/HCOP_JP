@@ -1,0 +1,165 @@
+{
+  "$schema_version": 1,
+  "organ": "bile_duct_distal",
+  "edition": "AJCC 8",
+  "source": "20250317/btc_blocks.pdf, pagina 49, tabla AJCC reproducida con permiso",
+  "sourceDocument": "btc_blocks.pdf",
+  "sourcePage": 49,
+  "guideVersion": "NCCN 6.2024",
+  "axes": {
+    "T": {
+      "label": "Tumor primario",
+      "categories": [
+        {
+          "code": "TX",
+          "description": "El tumor primario no puede evaluarse.",
+          "notes": []
+        },
+        {
+          "code": "T0",
+          "description": "Sin evidencia de tumor primario.",
+          "notes": []
+        },
+        {
+          "code": "Tis",
+          "description": "Carcinoma in situ o displasia de alto grado.",
+          "notes": []
+        },
+        {
+          "code": "T1",
+          "description": "Profundidad de invasion menor de 5 mm.",
+          "notes": []
+        },
+        {
+          "code": "T2",
+          "description": "Profundidad de invasion de 5 a 12 mm.",
+          "notes": []
+        },
+        {
+          "code": "T3",
+          "description": "Profundidad de invasion mayor de 12 mm.",
+          "notes": []
+        },
+        {
+          "code": "T4",
+          "description": "Compromete eje celiaco, arteria mesenterica superior y/o arteria hepatica comun.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "N": {
+      "label": "Ganglios regionales",
+      "categories": [
+        {
+          "code": "NX",
+          "description": "Los ganglios regionales no pueden evaluarse.",
+          "notes": []
+        },
+        {
+          "code": "N0",
+          "description": "Sin metastasis ganglionares regionales.",
+          "notes": []
+        },
+        {
+          "code": "N1",
+          "description": "Metastasis en uno a tres ganglios regionales.",
+          "notes": []
+        },
+        {
+          "code": "N2",
+          "description": "Metastasis en cuatro o mas ganglios regionales.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "M": {
+      "label": "Metastasis a distancia",
+      "categories": [
+        {
+          "code": "M0",
+          "description": "Sin metastasis a distancia.",
+          "notes": []
+        },
+        {
+          "code": "M1",
+          "description": "Metastasis a distancia presente.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Clasificacion",
+      "categories": [
+        {
+          "code": "c",
+          "description": "Clasificacion clinica.",
+          "notes": []
+        },
+        {
+          "code": "p",
+          "description": "Clasificacion patologica.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor y",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Posterior a tratamiento neoadyuvante.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor y.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor r",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Enfermedad recurrente.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor r.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor m",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Tumores primarios multiples.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor m.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    }
+  }
+}

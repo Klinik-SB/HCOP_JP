@@ -1,0 +1,61 @@
+{
+  "$schema_version": 1,
+  "organ": "oropharynx_hpv",
+  "edition": "AJCC 8",
+  "source": "criteria/ajcc8/oropharynx_hpv.json (no pdfsource/oropharynx_hpv.pdf available)",
+  "observables": {
+    "size_cm": {"type": "number", "unit": "cm", "display": {"label": "Greatest tumor dimension (cm)"}},
+    "primary_identified": {"type": "bool", "default": true, "description": "If false, T0 (HPV+ p16+ unknown primary).", "display": {"label": "Primary tumor identified (false = T0, occult HPV+ primary)"}},
+    "extension": {
+      "type": "enum",
+      "default": "none",
+      "values": ["none", "adjacent_structure", "advanced_local"],
+      "description": "'adjacent_structure' is T3. 'advanced_local' is T4 (no a/b split in HPV+ chapter).",
+      "display": {
+        "label": "Local extension",
+        "choices": {
+          "none": "No extension beyond primary site",
+          "adjacent_structure": "Extension to adjacent structure (T3 candidate)",
+          "advanced_local": "Advanced local disease (T4)"
+        }
+      }
+    },
+    "ipsi_node_count": {"type": "number", "default": 0, "description": "Count of involved ipsilateral lymph nodes (clinical or pathological).", "display": {"label": "Ipsilateral involved node count"}},
+    "has_contralateral_or_bilateral_nodes": {"type": "bool", "default": false, "display": {"label": "Contralateral or bilateral nodes present"}},
+    "largest_node_cm": {"type": "number", "unit": "cm", "default": 0, "display": {"label": "Largest involved node, greatest dimension (cm)"}},
+    "distant_mets": {"type": "bool", "default": false, "display": {"label": "Distant metastasis (M1)"}}
+  },
+  "axes": {
+    "T": [
+      {"label": "T0: no primary identified", "when": {"primary_identified": {"eq": false}}, "then": "T0"},
+      {"label": "T4: advanced local", "when": {"extension": {"eq": "advanced_local"}}, "then": "T4"},
+      {"label": "T3: > 4 cm OR extension to adjacent structure", "when": {"any_of": [
+        {"size_cm": {"gt": 4}},
+        {"extension": {"eq": "adjacent_structure"}}
+      ]}, "then": "T3"},
+      {"label": "T2: > 2 cm and <= 4 cm", "when": {"size_cm": {"gt": 2, "lte": 4}}, "then": "T2"},
+      {"label": "T1: <= 2 cm", "when": {"size_cm": {"lte": 2}}, "then": "T1"}
+    ],
+    "N": [
+      {"label": "N0: no nodes", "when": {"ipsi_node_count": {"eq": 0}, "has_contralateral_or_bilateral_nodes": {"eq": false}}, "then": "N0"},
+      {"label": "N2: contralateral or bilateral, OR largest > 6 cm", "when": {"any_of": [
+        {"has_contralateral_or_bilateral_nodes": {"eq": true}},
+        {"largest_node_cm": {"gt": 6}}
+      ]}, "then": "N2"},
+      {"label": "N1: ipsilateral, none > 6 cm", "when": {"ipsi_node_count": {"gte": 1}, "largest_node_cm": {"lte": 6}}, "then": "N1"}
+    ],
+    "M": [
+      {"label": "M0", "when": {"distant_mets": {"eq": false}}, "then": "M0"},
+      {"label": "M1", "when": {"distant_mets": {"eq": true}}, "then": "M1"}
+    ]
+  },
+  "examples": [
+    {"label": "1.5 cm -> T1", "observations": {"size_cm": 1.5}, "expect": {"T": "T1"}},
+    {"label": "3 cm -> T2", "observations": {"size_cm": 3.0}, "expect": {"T": "T2"}},
+    {"label": "5 cm -> T3", "observations": {"size_cm": 5.0}, "expect": {"T": "T3"}},
+    {"label": "no primary -> T0", "observations": {"primary_identified": false}, "expect": {"T": "T0"}},
+    {"label": "T2 + ipsi 2 cm node -> N1", "observations": {"size_cm": 3.0, "ipsi_node_count": 1, "largest_node_cm": 2.0}, "expect": {"T": "T2", "N": "N1"}},
+    {"label": "T2 + bilateral nodes -> N2", "observations": {"size_cm": 3.0, "has_contralateral_or_bilateral_nodes": true}, "expect": {"T": "T2", "N": "N2"}},
+    {"label": "no observations -> NX (no T -- no TX in this enum; T1 not triggered without size)", "observations": {}, "expect": {"N": "N0", "M": "M0"}}
+  ]
+}

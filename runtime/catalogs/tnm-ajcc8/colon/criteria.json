@@ -1,0 +1,104 @@
+{
+  "$schema_version": 1,
+  "organ": "colon",
+  "edition": "AJCC 8",
+  "source": "pdfsource/colon.pdf",
+  "axes": {
+    "T": {
+      "label": "Primary Tumor",
+      "categories": [
+        {"code": "TX",  "description": "Primary tumor cannot be assessed.", "notes": []},
+        {"code": "T0",  "description": "No evidence of primary tumor.", "notes": []},
+        {"code": "Tis", "description": "Carcinoma in situ, intramucosal carcinoma (involvement of lamina propria with no extension through muscularis mucosae).", "notes": []},
+        {"code": "T1",  "description": "Tumor invades the submucosa (through the muscularis mucosa but not into the muscularis propria).", "notes": []},
+        {"code": "T2",  "description": "Tumor invades the muscularis propria.", "notes": []},
+        {"code": "T3",  "description": "Tumor invades through the muscularis propria into pericolorectal tissues.", "notes": []},
+        {"code": "T4",  "description": "Tumor invades the visceral peritoneum or invades or adheres to adjacent organ or structure.", "notes": ["a", "b"]},
+        {"code": "T4a", "description": "Tumor invades through the visceral peritoneum (including gross perforation of the bowel through tumor and continuous invasion of tumor through areas of inflammation to the surface of the visceral peritoneum).", "notes": ["a", "b"]},
+        {"code": "T4b", "description": "Tumor directly invades or adheres to adjacent organs or structures.", "notes": ["a", "b"]}
+      ],
+      "notes": {
+        "a": "Direct invasion in T4 includes invasion of other organs or other segments of the colorectum as a result of direct extension through the serosa, as confirmed on microscopic examination (for example, invasion of the sigmoid colon by a carcinoma of the cecum), or, for cancers in a retroperitoneal or subperitoneal location, direct invasion of other organs or structures by virtue of extension beyond the muscularis propria (i.e., respectively, a tumor on the posterior wall of the descending colon invading the left kidney or lateral abdominal wall; or a mid or distal rectal cancer with invasion of prostate, seminal vesicles, cervix, or vagina).",
+        "b": "Tumor that is adherent to other organs or structures, grossly, is classified cT4b. However, if no tumor is present in the adhesion, microscopically, the classification should be pT1-4a depending on the anatomical depth of wall invasion. The V and L classification should be used to identify the presence or absence of vascular or lymphatic invasion whereas the PN prognostic factor should be used for perineural invasion."
+      },
+      "suffixes": [
+        {"token": "(m)", "description": "Multiple synchronous primary tumors"}
+      ]
+    },
+    "N": {
+      "label": "Regional Lymph Node",
+      "categories": [
+        {"code": "NX",  "description": "Regional lymph nodes cannot be assessed.", "notes": []},
+        {"code": "N0",  "description": "No regional lymph node metastasis.", "notes": []},
+        {"code": "N1",  "description": "One to three regional lymph nodes are positive (tumor in lymph nodes measuring greater than or equal to 0.2 mm), or any number of tumor deposits are present and all identifiable lymph nodes are negative.", "notes": []},
+        {"code": "N1a", "description": "One regional lymph node is positive.", "notes": []},
+        {"code": "N1b", "description": "Two or three regional lymph nodes are positive.", "notes": []},
+        {"code": "N1c", "description": "No regional lymph nodes are positive, but there are tumor deposits in the subserosa, mesentery, or nonperitonealized pericolic, or perirectal/mesorectal tissues.", "notes": []},
+        {"code": "N2",  "description": "Four or more regional lymph nodes are positive.", "notes": []},
+        {"code": "N2a", "description": "Four to six regional lymph nodes are positive.", "notes": []},
+        {"code": "N2b", "description": "Seven or more regional lymph nodes are positive.", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": [
+        {"token": "(sn)", "description": "Sentinel node procedure"},
+        {"token": "(f)",  "description": "FNA or core needle biopsy"}
+      ]
+    },
+    "M": {
+      "label": "Distant Metastasis",
+      "categories": [
+        {"code": "M0",  "description": "No distant metastasis by imaging, etc.; no evidence of tumor in distant sites or organs. (This category is not assigned by pathologists.)", "notes": []},
+        {"code": "M1",  "description": "Metastasis to one or more distant sites or organs or peritoneal metastasis is identified.", "notes": []},
+        {"code": "M1a", "description": "Metastasis to one site or organ is identified without peritoneal metastasis.", "notes": []},
+        {"code": "M1b", "description": "Metastasis to two or more sites or organs is identified without peritoneal metastasis.", "notes": []},
+        {"code": "M1c", "description": "Metastasis to the peritoneal surface is identified alone or with other site or organ metastases.", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Staging Classification",
+      "categories": [
+        {"code": "c", "description": "Clinical classification: stage assigned from imaging, endoscopy, biopsy, and clinical exam before any definitive treatment.", "notes": []},
+        {"code": "p", "description": "Pathological classification: stage assigned from the surgically resected specimen after histologic review.", "notes": []}
+      ],
+      "notes": {
+        "matching": "For colon AJCC 8 the stage table is identical for Classification=c and Classification=p; this field is recorded for clinical context but does not change the stage outcome."
+      },
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor: y (post-neoadjuvant)",
+      "categories": [
+        {"code": "Yes", "description": "Classification determined during or after the application of initial multimodal (neoadjuvant) therapy.", "notes": []},
+        {"code": "No",  "description": "No neoadjuvant therapy preceded this assessment.", "notes": []}
+      ],
+      "notes": {
+        "matching": "For colon AJCC 8 the stage table is identical regardless of DescY; field recorded for clinical context only."
+      },
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor: r (recurrent)",
+      "categories": [
+        {"code": "Yes", "description": "Recurrent tumor classification, assigned when the tumor is staged after a disease-free interval.", "notes": []},
+        {"code": "No",  "description": "Not a recurrent tumor in this assessment.", "notes": []}
+      ],
+      "notes": {
+        "matching": "For colon AJCC 8 the stage table is identical regardless of DescR; field recorded for clinical context only."
+      },
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor: m (multiple synchronous primaries)",
+      "categories": [
+        {"code": "Yes", "description": "Multiple synchronous primary tumors at the same anatomic site.", "notes": []},
+        {"code": "No",  "description": "Single primary tumor.", "notes": []}
+      ],
+      "notes": {
+        "matching": "For colon AJCC 8 the stage table is identical regardless of DescM; field recorded for clinical context only."
+      },
+      "suffixes": []
+    }
+  }
+}

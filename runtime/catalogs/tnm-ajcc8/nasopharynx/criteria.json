@@ -1,0 +1,55 @@
+{
+  "$schema_version": 1,
+  "organ": "nasopharynx",
+  "edition": "AJCC 8",
+  "source": "NCI PDQ Nasopharyngeal Carcinoma Treatment, AJCC 8 tables",
+  "axes": {
+    "T": {
+      "label": "Tumor primario",
+      "categories": [
+        {"code": "TX", "description": "El tumor primario no puede evaluarse.", "notes": []},
+        {"code": "T0", "description": "No se identifica tumor, pero existen ganglios cervicales positivos para virus de Epstein-Barr.", "notes": []},
+        {"code": "Tis", "description": "Carcinoma in situ.", "notes": []},
+        {"code": "T1", "description": "Tumor limitado a la nasofaringe o extendido a orofaringe y/o cavidad nasal, sin compromiso parafaríngeo.", "notes": []},
+        {"code": "T2", "description": "Extensión al espacio parafaríngeo y/o tejidos blandos adyacentes: pterigoideo medial, pterigoideo lateral o músculos prevertebrales.", "notes": []},
+        {"code": "T3", "description": "Infiltración de estructuras óseas de la base del cráneo, vértebras cervicales, estructuras pterigoideas y/o senos paranasales.", "notes": []},
+        {"code": "T4", "description": "Extensión intracraneal, compromiso de nervios craneales, hipofaringe, órbita, parótida y/o infiltración extensa más allá de la superficie lateral del pterigoideo lateral.", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "N": {
+      "label": "Ganglios regionales",
+      "categories": [
+        {"code": "NX", "description": "Los ganglios linfáticos regionales no pueden evaluarse.", "notes": []},
+        {"code": "N0", "description": "Sin metástasis en ganglios linfáticos regionales.", "notes": []},
+        {"code": "N1", "description": "Metástasis cervical unilateral y/o retrofaríngea unilateral o bilateral, de 6 cm o menos y por encima del borde caudal del cartílago cricoides.", "notes": []},
+        {"code": "N2", "description": "Metástasis cervical bilateral, de 6 cm o menos y por encima del borde caudal del cartílago cricoides.", "notes": []},
+        {"code": "N3", "description": "Metástasis cervical unilateral o bilateral mayor de 6 cm y/o extendida por debajo del borde caudal del cartílago cricoides.", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "M": {
+      "label": "Metástasis a distancia",
+      "categories": [
+        {"code": "M0", "description": "Sin metástasis a distancia.", "notes": []},
+        {"code": "M1", "description": "Metástasis a distancia presente.", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Clasificación",
+      "categories": [
+        {"code": "c", "description": "Clasificación clínica.", "notes": []},
+        {"code": "p", "description": "Clasificación patológica.", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescY": {"label": "Descriptor y", "categories": [{"code": "Yes", "description": "Posneoadyuvancia.", "notes": []}, {"code": "No", "description": "Sin descriptor y.", "notes": []}], "notes": {}, "suffixes": []},
+    "DescR": {"label": "Descriptor r", "categories": [{"code": "Yes", "description": "Recurrencia.", "notes": []}, {"code": "No", "description": "Sin descriptor r.", "notes": []}], "notes": {}, "suffixes": []},
+    "DescM": {"label": "Descriptor m", "categories": [{"code": "Yes", "description": "Tumores primarios múltiples.", "notes": []}, {"code": "No", "description": "Sin descriptor m.", "notes": []}], "notes": {}, "suffixes": []}
+  }
+}

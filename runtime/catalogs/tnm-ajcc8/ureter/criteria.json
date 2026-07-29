@@ -1,0 +1,82 @@
+{
+  "$schema_version": 1,
+  "organ": "ureter",
+  "edition": "AJCC 8",
+  "source": "pdfsource/ureterv8.pdf",
+  "axes": {
+    "T": {
+      "label": "Primary Tumor (Renal Pelvis and Ureter)",
+      "categories": [
+        {"code": "TX",  "description": "Primary tumor cannot be assessed", "notes": []},
+        {"code": "T0",  "description": "No evidence of primary tumor", "notes": []},
+        {"code": "Ta",  "description": "Papillary noninvasive carcinoma", "notes": []},
+        {"code": "Tis", "description": "Carcinoma in situ", "notes": []},
+        {"code": "T1",  "description": "Tumor invades subepithelial connective tissue", "notes": []},
+        {"code": "T2",  "description": "Tumor invades the muscularis", "notes": []},
+        {"code": "T3",  "description": "For renal pelvis only: Tumor invades beyond muscularis into peripelvic fat or into the renal parenchyma. For ureter only: Tumor invades beyond muscularis into periureteric fat.", "notes": []},
+        {"code": "T4",  "description": "Tumor invades adjacent organs, or through the kidney into the perinephric fat", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": [{"token": "(m)", "description": "Multiple synchronous primary tumors"}]
+    },
+    "N": {
+      "label": "Regional Lymph Node",
+      "categories": [
+        {"code": "NX", "description": "Regional lymph nodes cannot be assessed", "notes": []},
+        {"code": "N0", "description": "No regional lymph node metastasis", "notes": []},
+        {"code": "N1", "description": "Metastasis less than or equal to 2 cm in greatest dimension, in a single lymph node", "notes": []},
+        {"code": "N2", "description": "Metastasis greater than 2 cm, in a single lymph node; or multiple lymph nodes", "notes": []}
+      ],
+      "notes": {"matching": "For T4 disease, NX is treated equivalently to N0 by the stage group table (both map to Stage IV)."},
+      "suffixes": [
+        {"token": "(sn)", "description": "Sentinel node procedure"},
+        {"token": "(f)",  "description": "FNA or core needle biopsy"}
+      ]
+    },
+    "M": {
+      "label": "Distant Metastasis",
+      "categories": [
+        {"code": "M0", "description": "No distant metastasis", "notes": []},
+        {"code": "M1", "description": "Distant metastasis", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Staging Classification",
+      "categories": [
+        {"code": "c", "description": "Clinical classification.", "notes": []},
+        {"code": "p", "description": "Pathological classification.", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor: y (post-neoadjuvant)",
+      "categories": [
+        {"code": "Yes", "description": "Post-neoadjuvant.", "notes": []},
+        {"code": "No",  "description": "No neoadjuvant therapy.", "notes": []}
+      ],
+      "notes": {"matching": "Single stage table; DescY does not affect outcome."},
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor: r (recurrent)",
+      "categories": [
+        {"code": "Yes", "description": "Recurrent.", "notes": []},
+        {"code": "No",  "description": "Not recurrent.", "notes": []}
+      ],
+      "notes": {"matching": "DescR is recorded for context and ignored by the rule lookup."},
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor: m (multiple synchronous primaries)",
+      "categories": [
+        {"code": "Yes", "description": "Multiple synchronous primaries.", "notes": []},
+        {"code": "No",  "description": "Single primary tumor.", "notes": []}
+      ],
+      "notes": {"matching": "DescM is recorded for context and ignored by the rule lookup."},
+      "suffixes": []
+    }
+  }
+}

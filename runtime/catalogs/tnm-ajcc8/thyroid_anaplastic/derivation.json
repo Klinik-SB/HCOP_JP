@@ -1,0 +1,162 @@
+{
+  "$schema_version": 1,
+  "organ": "thyroid_anaplastic",
+  "edition": "AJCC 8",
+  "source": "pdfsource/_pages_thyroidv8/ (T/N criteria on p1-p2; anaplastic stage table on p5)",
+  "observables": {
+    "tumor_size_cm": {
+      "type": "number",
+      "unit": "cm",
+      "description": "Greatest dimension of the primary thyroid tumor in centimeters. Drives T1a/T1b/T2/T3a when there is no extrathyroidal extension. Absence prevents firing any size-dependent intrathyroidal rule and falls through to TX.",
+      "display": {"label": "Greatest tumor dimension (cm)"}
+    },
+    "extrathyroidal_extension": {
+      "type": "enum",
+      "default": "none",
+      "values": [
+        "none",
+        "strap_muscles",
+        "soft_tissue_or_larynx_trachea_esophagus_or_RLN",
+        "prevertebral_fascia_or_carotid_or_mediastinal_vessels"
+      ],
+      "description": "Greatest extent of gross extrathyroidal extension. 'none' = intrathyroidal (T is driven by size). 'strap_muscles' = T3b. 'soft_tissue_or_larynx_trachea_esophagus_or_RLN' = T4a. 'prevertebral_fascia_or_carotid_or_mediastinal_vessels' = T4b.",
+      "display": {
+        "label": "Gross extrathyroidal extension",
+        "choices": {
+          "none": "None / intrathyroidal",
+          "strap_muscles": "Strap muscles only (sternohyoid / sternothyroid / thyrohyoid / omohyoid) -- T3b",
+          "soft_tissue_or_larynx_trachea_esophagus_or_RLN": "Subcutaneous soft tissue, larynx, trachea, esophagus, or recurrent laryngeal nerve -- T4a",
+          "prevertebral_fascia_or_carotid_or_mediastinal_vessels": "Prevertebral fascia, carotid artery, or mediastinal vessels -- T4b"
+        }
+      }
+    },
+    "positive_node_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of regional lymph nodes with metastasis. 0 -> N0; >= 1 -> N1 (subcategory chosen by node_region).",
+      "display": {"label": "Positive regional lymph nodes (count)"}
+    },
+    "node_region": {
+      "type": "enum",
+      "default": "none",
+      "values": ["none", "central_compartment", "lateral_neck_or_retropharyngeal"],
+      "description": "Anatomic region of the positive regional nodes. 'central_compartment' = levels VI/VII (pretracheal, paratracheal, prelaryngeal/Delphian, upper mediastinal) -> N1a. 'lateral_neck_or_retropharyngeal' = levels I-V or retropharyngeal -> N1b.",
+      "display": {
+        "label": "Region of positive nodes",
+        "choices": {
+          "none": "None",
+          "central_compartment": "Central compartment (level VI/VII) -- N1a",
+          "lateral_neck_or_retropharyngeal": "Lateral neck (levels I-V) or retropharyngeal -- N1b"
+        }
+      }
+    },
+    "distant_mets": {
+      "type": "bool",
+      "default": false,
+      "description": "Any distant metastasis (M1).",
+      "display": {"label": "Distant metastasis (M1)"}
+    }
+  },
+  "axes": {
+    "T": [
+      {
+        "label": "T4b: gross ETE into prevertebral fascia / carotid / mediastinal vessels",
+        "when": {"extrathyroidal_extension": {"eq": "prevertebral_fascia_or_carotid_or_mediastinal_vessels"}},
+        "then": "T4b"
+      },
+      {
+        "label": "T4a: gross ETE into subcutaneous soft tissue, larynx, trachea, esophagus, or RLN",
+        "when": {"extrathyroidal_extension": {"eq": "soft_tissue_or_larynx_trachea_esophagus_or_RLN"}},
+        "then": "T4a"
+      },
+      {
+        "label": "T3b: gross ETE into strap muscles only",
+        "when": {"extrathyroidal_extension": {"eq": "strap_muscles"}},
+        "then": "T3b"
+      },
+      {
+        "label": "T3a: > 4 cm intrathyroidal",
+        "when": {"extrathyroidal_extension": {"eq": "none"}, "tumor_size_cm": {"gt": 4}},
+        "then": "T3a"
+      },
+      {
+        "label": "T2: > 2 cm and <= 4 cm intrathyroidal",
+        "when": {"extrathyroidal_extension": {"eq": "none"}, "tumor_size_cm": {"gt": 2, "lte": 4}},
+        "then": "T2"
+      },
+      {
+        "label": "T1b: > 1 cm and <= 2 cm intrathyroidal",
+        "when": {"extrathyroidal_extension": {"eq": "none"}, "tumor_size_cm": {"gt": 1, "lte": 2}},
+        "then": "T1b"
+      },
+      {
+        "label": "T1a: <= 1 cm intrathyroidal",
+        "when": {"extrathyroidal_extension": {"eq": "none"}, "tumor_size_cm": {"lte": 1}},
+        "then": "T1a"
+      }
+    ],
+    "N": [
+      {
+        "label": "N0: no positive regional nodes",
+        "when": {"positive_node_count": {"eq": 0}},
+        "then": "N0"
+      },
+      {
+        "label": "N1b: positive nodes in lateral neck (levels I-V) or retropharyngeal",
+        "when": {"positive_node_count": {"gte": 1}, "node_region": {"eq": "lateral_neck_or_retropharyngeal"}},
+        "then": "N1b"
+      },
+      {
+        "label": "N1a: positive nodes in central compartment (level VI/VII)",
+        "when": {"positive_node_count": {"gte": 1}, "node_region": {"eq": "central_compartment"}},
+        "then": "N1a"
+      },
+      {
+        "label": "N1: positive nodes, region unspecified",
+        "when": {"positive_node_count": {"gte": 1}, "node_region": {"eq": "none"}},
+        "then": "N1"
+      }
+    ],
+    "M": [
+      {"label": "M0: no distant metastasis", "when": {"distant_mets": {"eq": false}}, "then": "M0"},
+      {"label": "M1: distant metastasis",    "when": {"distant_mets": {"eq": true}},  "then": "M1"}
+    ]
+  },
+  "examples": [
+    {
+      "label": "0.8 cm intrathyroidal, no nodes -> T1a, N0, M0",
+      "observations": {"tumor_size_cm": 0.8},
+      "expect": {"T": "T1a", "N": "N0", "M": "M0"}
+    },
+    {
+      "label": "3 cm intrathyroidal, 1 central-compartment node -> T2, N1a, M0",
+      "observations": {"tumor_size_cm": 3.0, "positive_node_count": 1, "node_region": "central_compartment"},
+      "expect": {"T": "T2", "N": "N1a", "M": "M0"}
+    },
+    {
+      "label": "5 cm intrathyroidal, 2 lateral-neck nodes -> T3a, N1b, M0",
+      "observations": {"tumor_size_cm": 5.0, "positive_node_count": 2, "node_region": "lateral_neck_or_retropharyngeal"},
+      "expect": {"T": "T3a", "N": "N1b", "M": "M0"}
+    },
+    {
+      "label": "any size + strap-muscle ETE -> T3b",
+      "observations": {"tumor_size_cm": 1.5, "extrathyroidal_extension": "strap_muscles"},
+      "expect": {"T": "T3b", "N": "N0", "M": "M0"}
+    },
+    {
+      "label": "trachea/larynx invasion + distant mets -> T4a, N0, M1",
+      "observations": {"tumor_size_cm": 6.0, "extrathyroidal_extension": "soft_tissue_or_larynx_trachea_esophagus_or_RLN", "distant_mets": true},
+      "expect": {"T": "T4a", "N": "N0", "M": "M1"}
+    },
+    {
+      "label": "carotid encasement -> T4b regardless of size",
+      "observations": {"tumor_size_cm": 2.0, "extrathyroidal_extension": "prevertebral_fascia_or_carotid_or_mediastinal_vessels"},
+      "expect": {"T": "T4b", "N": "N0", "M": "M0"}
+    },
+    {
+      "label": "no observations -> TX, N0, M0",
+      "observations": {},
+      "expect": {"T": "TX", "N": "N0", "M": "M0"}
+    }
+  ]
+}

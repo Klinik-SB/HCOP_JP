@@ -1,0 +1,175 @@
+{
+  "$schema_version": 1,
+  "organ": "bile_duct_perihilar",
+  "edition": "AJCC 8",
+  "source": "20250317/btc_blocks.pdf, pagina 48, tabla AJCC reproducida con permiso",
+  "sourceDocument": "btc_blocks.pdf",
+  "sourcePage": 48,
+  "guideVersion": "NCCN 6.2024",
+  "axes": {
+    "T": {
+      "label": "Tumor primario",
+      "categories": [
+        {
+          "code": "TX",
+          "description": "El tumor primario no puede evaluarse.",
+          "notes": []
+        },
+        {
+          "code": "T0",
+          "description": "Sin evidencia de tumor primario.",
+          "notes": []
+        },
+        {
+          "code": "Tis",
+          "description": "Carcinoma in situ o displasia de alto grado.",
+          "notes": []
+        },
+        {
+          "code": "T1",
+          "description": "Confinado al conducto biliar hasta capa muscular o tejido fibroso.",
+          "notes": []
+        },
+        {
+          "code": "T2",
+          "description": "Invade tejido adiposo circundante o parenquima hepatico adyacente.",
+          "notes": []
+        },
+        {
+          "code": "T2a",
+          "description": "Invade tejido adiposo mas alla de la pared biliar.",
+          "notes": []
+        },
+        {
+          "code": "T2b",
+          "description": "Invade parenquima hepatico adyacente.",
+          "notes": []
+        },
+        {
+          "code": "T3",
+          "description": "Invade ramas unilaterales de vena porta o arteria hepatica.",
+          "notes": []
+        },
+        {
+          "code": "T4",
+          "description": "Invade vena porta principal o ramas bilaterales, arteria hepatica comun o estructuras bilaterales equivalentes.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "N": {
+      "label": "Ganglios regionales",
+      "categories": [
+        {
+          "code": "NX",
+          "description": "Los ganglios regionales no pueden evaluarse.",
+          "notes": []
+        },
+        {
+          "code": "N0",
+          "description": "Sin metastasis ganglionares regionales.",
+          "notes": []
+        },
+        {
+          "code": "N1",
+          "description": "Uno a tres ganglios regionales positivos.",
+          "notes": []
+        },
+        {
+          "code": "N2",
+          "description": "Cuatro o mas ganglios regionales positivos.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "M": {
+      "label": "Metastasis a distancia",
+      "categories": [
+        {
+          "code": "M0",
+          "description": "Sin metastasis a distancia.",
+          "notes": []
+        },
+        {
+          "code": "M1",
+          "description": "Metastasis a distancia presente.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Clasificacion",
+      "categories": [
+        {
+          "code": "c",
+          "description": "Clasificacion clinica.",
+          "notes": []
+        },
+        {
+          "code": "p",
+          "description": "Clasificacion patologica.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor y",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Posterior a tratamiento neoadyuvante.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor y.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor r",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Enfermedad recurrente.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor r.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor m",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Tumores primarios multiples.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor m.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    }
+  }
+}

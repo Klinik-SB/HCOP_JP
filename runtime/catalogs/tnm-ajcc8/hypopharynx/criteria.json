@@ -1,0 +1,96 @@
+{
+  "$schema_version": 1,
+  "organ": "hypopharynx",
+  "edition": "AJCC 8",
+  "source": "pdfsource/hypopharynx.pdf",
+  "axes": {
+    "T": {
+      "label": "Primary Tumor (hypopharynx, p16-/HPV-unrelated)",
+      "categories": [
+        {"code": "TX",  "description": "Primary tumor cannot be assessed", "notes": []},
+        {"code": "Tis", "description": "Carcinoma in situ", "notes": []},
+        {"code": "T1",  "description": "Tumor limited to one subsite of hypopharynx or ≤ 2 cm in greatest dimension", "notes": []},
+        {"code": "T2",  "description": "Tumor invades > 1 subsite of hypopharynx or an adjacent site, or tumor > 2 cm but ≤ 4 cm in greatest dimension without fixation of hemilarynx", "notes": []},
+        {"code": "T3",  "description": "Tumor > 4 cm in greatest dimension, or with fixation of hemilarynx, or extension to esophageal mucosa", "notes": []},
+        {"code": "T4a", "description": "Tumor of any size invading thyroid/cricoid cartilage, hyoid bone, thyroid gland, esophageal muscle or central compartment soft tissue (moderately advanced local disease)", "notes": ["central_compartment"]},
+        {"code": "T4b", "description": "Tumor of any size invading prevertebral fascia, encases carotid artery, or involves mediastinal structures (very advanced local disease)", "notes": []}
+      ],
+      "notes": {
+        "central_compartment": "Central compartment soft tissue includes prelaryngeal strap muscles and subcutaneous fat."
+      },
+      "suffixes": []
+    },
+    "N": {
+      "label": "Pathological Regional Lymph Node (p16-/HPV-unrelated)",
+      "categories": [
+        {"code": "NX",  "description": "Regional lymph nodes cannot be assessed", "notes": []},
+        {"code": "N0",  "description": "No regional lymph node metastasis", "notes": []},
+        {"code": "N1",  "description": "Metastasis in a single ipsilateral lymph node, ≤ 3 cm in greatest dimension and extranodal extension (ENE)−", "notes": ["u_l", "midline"]},
+        {"code": "N2",  "description": "Metastasis in a single ipsilateral lymph node ≤ 3 cm and ENE+; or > 3 cm but ≤ 6 cm and ENE−; or multiple ipsilateral lymph nodes, none > 6 cm and ENE−; or bilateral or contralateral lymph node(s), none > 6 cm and ENE−", "notes": ["u_l", "midline"]},
+        {"code": "N2a", "description": "Single ipsilateral lymph node ≤ 3 cm and ENE+, or single ipsilateral lymph node > 3 cm but ≤ 6 cm and ENE−", "notes": ["u_l", "midline"]},
+        {"code": "N2b", "description": "Metastasis in multiple ipsilateral lymph nodes, none > 6 cm in greatest dimension and ENE−", "notes": ["u_l", "midline"]},
+        {"code": "N2c", "description": "Metastasis in bilateral or contralateral lymph node(s), none > 6 cm in greatest dimension and ENE−", "notes": ["u_l", "midline"]},
+        {"code": "N3",  "description": "Metastasis in a lymph node > 6 cm and ENE−; or a single ipsilateral node > 3 cm and ENE+; or multiple ipsilateral, contralateral or bilateral nodes, any with ENE+; or a single contralateral node of any size and ENE+", "notes": ["u_l", "midline", "node_count"]},
+        {"code": "N3a", "description": "Metastasis in a lymph node > 6 cm in greatest dimension and ENE−", "notes": ["u_l", "midline", "node_count"]},
+        {"code": "N3b", "description": "Single ipsilateral lymph node > 3 cm and ENE+; or multiple ipsilateral, contralateral or bilateral lymph nodes, any with ENE+; or a single contralateral lymph node of any size and ENE+", "notes": ["u_l", "midline", "node_count"]}
+      ],
+      "notes": {
+        "u_l": "Designation of 'U' or 'L' may be used for any N category to indicate metastasis above the lower border of the cricoid (U) or below the lower border of the cricoid (L).",
+        "midline": "Midline nodes are considered ipsilateral nodes.",
+        "node_count": "Per AJCC 8th edition, a selective neck dissection ordinarily includes 10+ lymph nodes and a comprehensive neck dissection (radical or modified radical) ordinarily includes 15+. Negative pathologic examination of a smaller number of nodes still mandates a pN0 designation."
+      },
+      "suffixes": []
+    },
+    "M": {
+      "label": "Distant Metastasis",
+      "categories": [
+        {"code": "M0", "description": "No distant metastasis", "notes": []},
+        {"code": "M1", "description": "Distant metastasis", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Staging Classification",
+      "categories": [
+        {"code": "c", "description": "Clinical classification: stage assigned from imaging, endoscopy, biopsy, and clinical exam before any definitive treatment.", "notes": []},
+        {"code": "p", "description": "Pathological classification: stage assigned from the surgically resected specimen after histologic review.", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor: y (post-neoadjuvant)",
+      "categories": [
+        {"code": "Yes", "description": "Classification determined during or after the application of initial multimodal (neoadjuvant) therapy.", "notes": []},
+        {"code": "No",  "description": "No neoadjuvant therapy preceded this assessment.", "notes": []}
+      ],
+      "notes": {
+        "matching": "For hypopharyngeal SCC AJCC 8, no separate ypTNM stage table is defined; DescY does not affect the stage outcome."
+      },
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor: r (recurrent)",
+      "categories": [
+        {"code": "Yes", "description": "Recurrent tumor classification, assigned when the tumor is staged after a disease-free interval.", "notes": []},
+        {"code": "No",  "description": "Not a recurrent tumor in this assessment.", "notes": []}
+      ],
+      "notes": {
+        "matching": "DescR is recorded for clinical context only and is ignored by the rule lookup."
+      },
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor: m (multiple synchronous primaries)",
+      "categories": [
+        {"code": "Yes", "description": "Multiple synchronous primary tumors at the same anatomic site.", "notes": []},
+        {"code": "No",  "description": "Single primary tumor.", "notes": []}
+      ],
+      "notes": {
+        "matching": "DescM is recorded for clinical context only and is ignored by the rule lookup."
+      },
+      "suffixes": []
+    }
+  }
+}

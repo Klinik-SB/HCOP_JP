@@ -1,0 +1,96 @@
+{
+  "$schema_version": 1,
+  "organ": "esophagus_adeno",
+  "edition": "AJCC 8",
+  "source": "pdfsource/esophagus.pdf",
+  "axes": {
+    "T": {
+      "label": "Primary Tumor",
+      "categories": [
+        {"code": "TX",  "description": "Primary tumor cannot be assessed", "notes": []},
+        {"code": "T0",  "description": "No evidence of primary tumor", "notes": []},
+        {"code": "Tis", "description": "High-grade dysplasia (defined as malignant cells confined to the epithelium by the basement membrane)", "notes": []},
+        {"code": "T1",  "description": "Tumor invades lamina propria, muscularis mucosae, or submucosa", "notes": []},
+        {"code": "T1a", "description": "Tumor invades lamina propria or muscularis mucosae", "notes": []},
+        {"code": "T1b", "description": "Tumor invades submucosa", "notes": []},
+        {"code": "T2",  "description": "Tumor invades muscularis propria", "notes": []},
+        {"code": "T3",  "description": "Tumor invades adventitia", "notes": []},
+        {"code": "T4",  "description": "Tumor invades adjacent structures (parent category for T4a/T4b)", "notes": []},
+        {"code": "T4a", "description": "Tumor invades pleura, pericardium, azygos vein, diaphragm, or peritoneum", "notes": []},
+        {"code": "T4b", "description": "Tumor invades other adjacent structures, such as aorta, vertebral body, or trachea", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "N": {
+      "label": "Regional Lymph Node",
+      "categories": [
+        {"code": "NX", "description": "Regional lymph nodes cannot be assessed", "notes": []},
+        {"code": "N0", "description": "No regional lymph node metastasis", "notes": []},
+        {"code": "N1", "description": "Metastasis in 1-2 regional lymph nodes", "notes": []},
+        {"code": "N2", "description": "Metastasis in 3-6 regional lymph nodes", "notes": []},
+        {"code": "N3", "description": "Metastasis in 7 or more regional lymph nodes", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "M": {
+      "label": "Distant Metastasis",
+      "categories": [
+        {"code": "M0", "description": "No distant metastasis", "notes": []},
+        {"code": "M1", "description": "Distant metastasis", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Staging Classification",
+      "categories": [
+        {"code": "c", "description": "Clinical classification (selects cTNM stage table; Grade ignored).", "notes": []},
+        {"code": "p", "description": "Pathological classification (with DescY=No selects pTNM stage table using Grade; with DescY=Yes selects ypTNM stage table, Grade ignored).", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "Grade": {
+      "label": "Histologic Grade",
+      "categories": [
+        {"code": "GX", "description": "Grade cannot be assessed", "notes": []},
+        {"code": "G1", "description": "Well differentiated", "notes": []},
+        {"code": "G2", "description": "Moderately differentiated", "notes": []},
+        {"code": "G3", "description": "Poorly differentiated, undifferentiated", "notes": []}
+      ],
+      "notes": {
+        "matching": "Grade affects pTNM stage assignment only. For cTNM and ypTNM, Grade is ignored (rules use Grade=ANY)."
+      },
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor: y (post-neoadjuvant)",
+      "categories": [
+        {"code": "Yes", "description": "Classification determined during or after neoadjuvant therapy.", "notes": []},
+        {"code": "No",  "description": "No neoadjuvant therapy preceded this assessment.", "notes": []}
+      ],
+      "notes": {"matching": "This model does not encode the separate ypTNM table; the rule lookup ignores DescY."},
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor: r (recurrent)",
+      "categories": [
+        {"code": "Yes", "description": "Recurrent tumor classification.", "notes": []},
+        {"code": "No",  "description": "Not recurrent.", "notes": []}
+      ],
+      "notes": {"matching": "DescR is recorded for clinical context and is ignored by the rule lookup."},
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor: m (multiple synchronous primaries)",
+      "categories": [
+        {"code": "Yes", "description": "Multiple synchronous primaries at the same anatomic site.", "notes": []},
+        {"code": "No",  "description": "Single primary tumor.", "notes": []}
+      ],
+      "notes": {"matching": "DescM is recorded for clinical context and is ignored by the rule lookup."},
+      "suffixes": []
+    }
+  }
+}

@@ -1,0 +1,2359 @@
+{
+  "source": "20250317",
+  "documents": [
+    {
+      "file": "all_blocks.pdf",
+      "pages": 182,
+      "candidatePages": []
+    },
+    {
+      "file": "aml_blocks.pdf",
+      "pages": 202,
+      "candidatePages": []
+    },
+    {
+      "file": "ampullary_blocks.pdf",
+      "pages": 84,
+      "candidatePages": [
+        {
+          "page": 52,
+          "hasTnmMarker": true,
+          "combinationCount": 2,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 56,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        }
+      ]
+    },
+    {
+      "file": "amyloidosis_blocks.pdf",
+      "pages": 39,
+      "candidatePages": []
+    },
+    {
+      "file": "anal_blocks.pdf",
+      "pages": 66,
+      "candidatePages": [
+        {
+          "page": 24,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 9"
+        },
+        {
+          "page": 31,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 9"
+        },
+        {
+          "page": 33,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 9"
+        },
+        {
+          "page": 53,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 54,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        }
+      ]
+    },
+    {
+      "file": "b-cell_blocks.pdf",
+      "pages": 350,
+      "candidatePages": [
+        {
+          "page": 30,
+          "hasTnmMarker": false,
+          "combinationCount": 5,
+          "edition": ""
+        },
+        {
+          "page": 174,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        }
+      ]
+    },
+    {
+      "file": "bladder_blocks.pdf",
+      "pages": 139,
+      "candidatePages": [
+        {
+          "page": 6,
+          "hasTnmMarker": false,
+          "combinationCount": 2,
+          "edition": ""
+        },
+        {
+          "page": 28,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 64,
+          "hasTnmMarker": true,
+          "combinationCount": 2,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 65,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 66,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 72,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 73,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 116,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        }
+      ]
+    },
+    {
+      "file": "bone_blocks.pdf",
+      "pages": 114,
+      "candidatePages": [
+        {
+          "page": 42,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 43,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 44,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": ""
+        },
+        {
+          "page": 49,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 82,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        }
+      ]
+    },
+    {
+      "file": "breast_blocks.pdf",
+      "pages": 262,
+      "candidatePages": [
+        {
+          "page": 73,
+          "hasTnmMarker": false,
+          "combinationCount": 2,
+          "edition": ""
+        },
+        {
+          "page": 110,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 111,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 112,
+          "hasTnmMarker": true,
+          "combinationCount": 3,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 113,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 115,
+          "hasTnmMarker": true,
+          "combinationCount": 4,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 116,
+          "hasTnmMarker": true,
+          "combinationCount": 2,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 117,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 118,
+          "hasTnmMarker": true,
+          "combinationCount": 4,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 119,
+          "hasTnmMarker": true,
+          "combinationCount": 2,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 120,
+          "hasTnmMarker": true,
+          "combinationCount": 3,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 123,
+          "hasTnmMarker": false,
+          "combinationCount": 2,
+          "edition": ""
+        },
+        {
+          "page": 136,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 140,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 164,
+          "hasTnmMarker": false,
+          "combinationCount": 2,
+          "edition": ""
+        },
+        {
+          "page": 205,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": ""
+        },
+        {
+          "page": 209,
+          "hasTnmMarker": false,
+          "combinationCount": 2,
+          "edition": ""
+        },
+        {
+          "page": 221,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 260,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        }
+      ]
+    },
+    {
+      "file": "breast_risk_blocks.pdf",
+      "pages": 62,
+      "candidatePages": []
+    },
+    {
+      "file": "btc_blocks.pdf",
+      "pages": 109,
+      "candidatePages": [
+        {
+          "page": 3,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 46,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 47,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 48,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 49,
+          "hasTnmMarker": true,
+          "combinationCount": 2,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 54,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 61,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 85,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 88,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        }
+      ]
+    },
+    {
+      "file": "cervical_blocks.pdf",
+      "pages": 127,
+      "candidatePages": [
+        {
+          "page": 66,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 9"
+        },
+        {
+          "page": 73,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        }
+      ]
+    },
+    {
+      "file": "cll_blocks.pdf",
+      "pages": 109,
+      "candidatePages": [
+        {
+          "page": 50,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        }
+      ]
+    },
+    {
+      "file": "cml_blocks.pdf",
+      "pages": 102,
+      "candidatePages": []
+    },
+    {
+      "file": "cns_blocks.pdf",
+      "pages": 220,
+      "candidatePages": []
+    },
+    {
+      "file": "colon_blocks.pdf",
+      "pages": 242,
+      "candidatePages": [
+        {
+          "page": 9,
+          "hasTnmMarker": false,
+          "combinationCount": 2,
+          "edition": ""
+        },
+        {
+          "page": 30,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 34,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 35,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 69,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 70,
+          "hasTnmMarker": true,
+          "combinationCount": 2,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 78,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 79,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 80,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 82,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 162,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 169,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        }
+      ]
+    },
+    {
+      "file": "cutaneous_melanoma_blocks.pdf",
+      "pages": 242,
+      "candidatePages": [
+        {
+          "page": 6,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 8,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 11,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 13,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 14,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 20,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 23,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 32,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 36,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 41,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 43,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 57,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 58,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 59,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 64,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 71,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 79,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 89,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 104,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 105,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 106,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 107,
+          "hasTnmMarker": true,
+          "combinationCount": 4,
+          "edition": ""
+        },
+        {
+          "page": 113,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 114,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 115,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 116,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 134,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 136,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 137,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 139,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 140,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 141,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 142,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 169,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 193,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 194,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 195,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 198,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 200,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 204,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 222,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        }
+      ]
+    },
+    {
+      "file": "dfsp_blocks.pdf",
+      "pages": 23,
+      "candidatePages": []
+    },
+    {
+      "file": "esophageal_blocks.pdf",
+      "pages": 178,
+      "candidatePages": [
+        {
+          "page": 32,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 38,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 90,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 91,
+          "hasTnmMarker": true,
+          "combinationCount": 6,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 92,
+          "hasTnmMarker": true,
+          "combinationCount": 5,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 99,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 101,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 145,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        }
+      ]
+    },
+    {
+      "file": "gastric_blocks.pdf",
+      "pages": 149,
+      "candidatePages": [
+        {
+          "page": 27,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 74,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 75,
+          "hasTnmMarker": true,
+          "combinationCount": 5,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 80,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 81,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 122,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        }
+      ]
+    },
+    {
+      "file": "gist_blocks.pdf",
+      "pages": 56,
+      "candidatePages": [
+        {
+          "page": 5,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 24,
+          "hasTnmMarker": true,
+          "combinationCount": 2,
+          "edition": "AJCC 8"
+        }
+      ]
+    },
+    {
+      "file": "gtn_blocks.pdf",
+      "pages": 54,
+      "candidatePages": [
+        {
+          "page": 28,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 29,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 47,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        }
+      ]
+    },
+    {
+      "file": "hairy_cell_blocks.pdf",
+      "pages": 33,
+      "candidatePages": []
+    },
+    {
+      "file": "hcc_blocks.pdf",
+      "pages": 112,
+      "candidatePages": [
+        {
+          "page": 3,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 31,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 32,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 46,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 87,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 88,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        }
+      ]
+    },
+    {
+      "file": "head-and-neck_blocks.pdf",
+      "pages": 260,
+      "candidatePages": [
+        {
+          "page": 15,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 16,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 17,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 18,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 126,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 127,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 128,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 129,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 130,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 131,
+          "hasTnmMarker": true,
+          "combinationCount": 2,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 132,
+          "hasTnmMarker": true,
+          "combinationCount": 2,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 133,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 134,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 135,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 136,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 137,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 138,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 139,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 140,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 141,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 142,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 143,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 144,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 150,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 172,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 174,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 175,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 176,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 177,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 178,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 179,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": ""
+        },
+        {
+          "page": 183,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 190,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 202,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 204,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 205,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 234,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 244,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        }
+      ]
+    },
+    {
+      "file": "histiocytic_neoplasms_blocks.pdf",
+      "pages": 69,
+      "candidatePages": []
+    },
+    {
+      "file": "hodgkin_blocks.pdf",
+      "pages": 121,
+      "candidatePages": [
+        {
+          "page": 66,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        }
+      ]
+    },
+    {
+      "file": "kaposi_blocks.pdf",
+      "pages": 46,
+      "candidatePages": []
+    },
+    {
+      "file": "kidney_blocks.pdf",
+      "pages": 97,
+      "candidatePages": [
+        {
+          "page": 40,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        }
+      ]
+    },
+    {
+      "file": "mastocytosis_blocks.pdf",
+      "pages": 77,
+      "candidatePages": []
+    },
+    {
+      "file": "mcc_blocks.pdf",
+      "pages": 63,
+      "candidatePages": [
+        {
+          "page": 24,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 25,
+          "hasTnmMarker": true,
+          "combinationCount": 2,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 31,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 32,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 34,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 45,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 50,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        }
+      ]
+    },
+    {
+      "file": "mds_blocks.pdf",
+      "pages": 127,
+      "candidatePages": []
+    },
+    {
+      "file": "meso_pleural_blocks.pdf",
+      "pages": 61,
+      "candidatePages": [
+        {
+          "page": 25,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 49,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 52,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        }
+      ]
+    },
+    {
+      "file": "mlne_blocks.pdf",
+      "pages": 53,
+      "candidatePages": []
+    },
+    {
+      "file": "mpn_blocks.pdf",
+      "pages": 121,
+      "candidatePages": []
+    },
+    {
+      "file": "myeloma_blocks.pdf",
+      "pages": 124,
+      "candidatePages": []
+    },
+    {
+      "file": "neuroendocrine_blocks.pdf",
+      "pages": 222,
+      "candidatePages": [
+        {
+          "page": 61,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 119,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": ""
+        },
+        {
+          "page": 120,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": ""
+        },
+        {
+          "page": 121,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": ""
+        },
+        {
+          "page": 122,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": ""
+        },
+        {
+          "page": 123,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": ""
+        },
+        {
+          "page": 124,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 125,
+          "hasTnmMarker": true,
+          "combinationCount": 3,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 126,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 127,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": ""
+        },
+        {
+          "page": 128,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 129,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 130,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 131,
+          "hasTnmMarker": true,
+          "combinationCount": 2,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 137,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 138,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 192,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 193,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 208,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        }
+      ]
+    },
+    {
+      "file": "nmsc_blocks.pdf",
+      "pages": 50,
+      "candidatePages": []
+    },
+    {
+      "file": "nscl_blocks.pdf",
+      "pages": 286,
+      "candidatePages": [
+        {
+          "page": 22,
+          "hasTnmMarker": false,
+          "combinationCount": 2,
+          "edition": ""
+        },
+        {
+          "page": 115,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 116,
+          "hasTnmMarker": true,
+          "combinationCount": 3,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 117,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 131,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 156,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 157,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 160,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 218,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 227,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        }
+      ]
+    },
+    {
+      "file": "occult_blocks.pdf",
+      "pages": 82,
+      "candidatePages": []
+    },
+    {
+      "file": "ovarian_blocks.pdf",
+      "pages": 246,
+      "candidatePages": [
+        {
+          "page": 37,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 68,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 69,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 70,
+          "hasTnmMarker": true,
+          "combinationCount": 2,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 86,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 88,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 160,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 206,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 207,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 246,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        }
+      ]
+    },
+    {
+      "file": "pancreatic_blocks.pdf",
+      "pages": 161,
+      "candidatePages": [
+        {
+          "page": 71,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 79,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 84,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 131,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        }
+      ]
+    },
+    {
+      "file": "ped_all_blocks.pdf",
+      "pages": 161,
+      "candidatePages": []
+    },
+    {
+      "file": "ped_b-cell_blocks.pdf",
+      "pages": 73,
+      "candidatePages": []
+    },
+    {
+      "file": "ped_cns_blocks.pdf",
+      "pages": 91,
+      "candidatePages": []
+    },
+    {
+      "file": "ped_hodgkin_blocks.pdf",
+      "pages": 72,
+      "candidatePages": []
+    },
+    {
+      "file": "penile_blocks.pdf",
+      "pages": 62,
+      "candidatePages": [
+        {
+          "page": 29,
+          "hasTnmMarker": true,
+          "combinationCount": 2,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 35,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": ""
+        },
+        {
+          "page": 52,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        }
+      ]
+    },
+    {
+      "file": "primary_cutaneous_blocks.pdf",
+      "pages": 131,
+      "candidatePages": [
+        {
+          "page": 21,
+          "hasTnmMarker": false,
+          "combinationCount": 6,
+          "edition": ""
+        }
+      ]
+    },
+    {
+      "file": "prostate_blocks.pdf",
+      "pages": 225,
+      "candidatePages": [
+        {
+          "page": 67,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 84,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 85,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 91,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 167,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 172,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        }
+      ]
+    },
+    {
+      "file": "rectal_blocks.pdf",
+      "pages": 190,
+      "candidatePages": [
+        {
+          "page": 36,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 38,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 42,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 43,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 77,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 78,
+          "hasTnmMarker": true,
+          "combinationCount": 2,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 86,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 87,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 88,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 143,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        }
+      ]
+    },
+    {
+      "file": "sarcoma_blocks.pdf",
+      "pages": 137,
+      "candidatePages": [
+        {
+          "page": 7,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 8,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 9,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 10,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 69,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 70,
+          "hasTnmMarker": true,
+          "combinationCount": 2,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 71,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 72,
+          "hasTnmMarker": true,
+          "combinationCount": 2,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 80,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 92,
+          "hasTnmMarker": false,
+          "combinationCount": 2,
+          "edition": ""
+        },
+        {
+          "page": 114,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        }
+      ]
+    },
+    {
+      "file": "sclc_blocks.pdf",
+      "pages": 86,
+      "candidatePages": [
+        {
+          "page": 17,
+          "hasTnmMarker": false,
+          "combinationCount": 2,
+          "edition": ""
+        },
+        {
+          "page": 27,
+          "hasTnmMarker": false,
+          "combinationCount": 2,
+          "edition": ""
+        },
+        {
+          "page": 37,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 38,
+          "hasTnmMarker": true,
+          "combinationCount": 3,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 45,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 46,
+          "hasTnmMarker": false,
+          "combinationCount": 2,
+          "edition": ""
+        },
+        {
+          "page": 47,
+          "hasTnmMarker": false,
+          "combinationCount": 4,
+          "edition": ""
+        },
+        {
+          "page": 48,
+          "hasTnmMarker": false,
+          "combinationCount": 3,
+          "edition": ""
+        },
+        {
+          "page": 69,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        }
+      ]
+    },
+    {
+      "file": "small_bowel_blocks.pdf",
+      "pages": 67,
+      "candidatePages": [
+        {
+          "page": 7,
+          "hasTnmMarker": false,
+          "combinationCount": 2,
+          "edition": ""
+        },
+        {
+          "page": 11,
+          "hasTnmMarker": false,
+          "combinationCount": 2,
+          "edition": ""
+        },
+        {
+          "page": 32,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 40,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 55,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        }
+      ]
+    },
+    {
+      "file": "squamous_blocks.pdf",
+      "pages": 95,
+      "candidatePages": [
+        {
+          "page": 9,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 11,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 13,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 18,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 19,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 39,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 40,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 46,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 48,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 57,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 58,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 64,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 69,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 72,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 88,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        }
+      ]
+    },
+    {
+      "file": "t-cell_blocks.pdf",
+      "pages": 206,
+      "candidatePages": [
+        {
+          "page": 134,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        }
+      ]
+    },
+    {
+      "file": "testicular_blocks.pdf",
+      "pages": 99,
+      "candidatePages": [
+        {
+          "page": 6,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 16,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 52,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 53,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 54,
+          "hasTnmMarker": true,
+          "combinationCount": 3,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 61,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 62,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 64,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 73,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 85,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        }
+      ]
+    },
+    {
+      "file": "thymic_blocks.pdf",
+      "pages": 48,
+      "candidatePages": [
+        {
+          "page": 22,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 28,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 32,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 38,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        }
+      ]
+    },
+    {
+      "file": "thyroid_blocks.pdf",
+      "pages": 157,
+      "candidatePages": [
+        {
+          "page": 72,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 73,
+          "hasTnmMarker": true,
+          "combinationCount": 2,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 74,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 79,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 82,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 87,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 88,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 108,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 119,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 131,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        }
+      ]
+    },
+    {
+      "file": "uterine_blocks.pdf",
+      "pages": 143,
+      "candidatePages": [
+        {
+          "page": 32,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 68,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 69,
+          "hasTnmMarker": true,
+          "combinationCount": 2,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 70,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 71,
+          "hasTnmMarker": true,
+          "combinationCount": 1,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 79,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 80,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 83,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 87,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 93,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 104,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 114,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        }
+      ]
+    },
+    {
+      "file": "uveal_blocks.pdf",
+      "pages": 114,
+      "candidatePages": [
+        {
+          "page": 23,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 24,
+          "hasTnmMarker": true,
+          "combinationCount": 2,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 25,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 29,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 47,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 65,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        }
+      ]
+    },
+    {
+      "file": "vaginal_blocks.pdf",
+      "pages": 67,
+      "candidatePages": [
+        {
+          "page": 29,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 35,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": "AJCC 8"
+        },
+        {
+          "page": 50,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        }
+      ]
+    },
+    {
+      "file": "vulvar_blocks.pdf",
+      "pages": 78,
+      "candidatePages": [
+        {
+          "page": 35,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 36,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        },
+        {
+          "page": 52,
+          "hasTnmMarker": true,
+          "combinationCount": 0,
+          "edition": ""
+        }
+      ]
+    },
+    {
+      "file": "waldenstroms_blocks.pdf",
+      "pages": 42,
+      "candidatePages": []
+    }
+  ]
+}

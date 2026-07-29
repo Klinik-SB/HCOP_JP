@@ -1,0 +1,200 @@
+{
+  "$schema_version": 1,
+  "organ": "merkel",
+  "edition": "AJCC 8",
+  "source": "20250317/mcc_blocks.pdf, pagina 25, tabla AJCC reproducida con permiso",
+  "sourceDocument": "mcc_blocks.pdf",
+  "sourcePage": 25,
+  "guideVersion": "NCCN 1.2025",
+  "axes": {
+    "T": {
+      "label": "Tumor primario",
+      "categories": [
+        {
+          "code": "TX",
+          "description": "No evaluable.",
+          "notes": []
+        },
+        {
+          "code": "T0",
+          "description": "Sin evidencia de primario.",
+          "notes": []
+        },
+        {
+          "code": "Tis",
+          "description": "Tumor in situ.",
+          "notes": []
+        },
+        {
+          "code": "T1",
+          "description": "Diametro maximo hasta 2 cm.",
+          "notes": []
+        },
+        {
+          "code": "T2",
+          "description": "Mayor de 2 y hasta 5 cm.",
+          "notes": []
+        },
+        {
+          "code": "T3",
+          "description": "Mayor de 5 cm.",
+          "notes": []
+        },
+        {
+          "code": "T4",
+          "description": "Invade fascia, musculo, cartilago o hueso.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "N": {
+      "label": "Ganglios regionales",
+      "categories": [
+        {
+          "code": "NX",
+          "description": "Los ganglios regionales no pueden evaluarse.",
+          "notes": []
+        },
+        {
+          "code": "N0",
+          "description": "Sin metastasis ganglionares regionales.",
+          "notes": []
+        },
+        {
+          "code": "N1",
+          "description": "Metastasis ganglionar regional.",
+          "notes": []
+        },
+        {
+          "code": "N1a(sn)",
+          "description": "Metastasis oculta identificada por ganglio centinela.",
+          "notes": []
+        },
+        {
+          "code": "N1a",
+          "description": "Metastasis oculta tras diseccion.",
+          "notes": []
+        },
+        {
+          "code": "N1b",
+          "description": "Metastasis clinica/radiologica confirmada.",
+          "notes": []
+        },
+        {
+          "code": "N2",
+          "description": "Metastasis en transito sin ganglio positivo.",
+          "notes": []
+        },
+        {
+          "code": "N3",
+          "description": "Metastasis en transito con ganglio positivo.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "M": {
+      "label": "Metastasis a distancia",
+      "categories": [
+        {
+          "code": "M0",
+          "description": "Sin metastasis.",
+          "notes": []
+        },
+        {
+          "code": "M1",
+          "description": "Metastasis a distancia.",
+          "notes": []
+        },
+        {
+          "code": "M1a",
+          "description": "Piel, subcutaneo o ganglios distantes.",
+          "notes": []
+        },
+        {
+          "code": "M1b",
+          "description": "Pulmon.",
+          "notes": []
+        },
+        {
+          "code": "M1c",
+          "description": "Otros sitios viscerales.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Clasificacion",
+      "categories": [
+        {
+          "code": "c",
+          "description": "Clasificacion clinica.",
+          "notes": []
+        },
+        {
+          "code": "p",
+          "description": "Clasificacion patologica.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor y",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Posterior a tratamiento neoadyuvante.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor y.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor r",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Enfermedad recurrente.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor r.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor m",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Tumores primarios multiples.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor m.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    }
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "$schema_version": 1,
+  "organ": "headskin",
+  "edition": "AJCC 8",
+  "source": "pdfsource/_pages_headskinv8/p1-p4 (AJCC 8 cutaneous squamous cell carcinoma of the head and neck)",
+  "axes": {
+    "T": {
+      "label": "Primary Tumor",
+      "categories": [
+        {"code": "TX",  "description": "Primary tumor cannot be assessed", "notes": []},
+        {"code": "Tis", "description": "Carcinoma in situ", "notes": []},
+        {"code": "T1",  "description": "Tumor smaller than or equal to 2 cm in greatest dimension", "notes": []},
+        {"code": "T2",  "description": "Tumor larger than 2 cm, but smaller than or equal to 4 cm in greatest dimension", "notes": []},
+        {"code": "T3",  "description": "Tumor larger than 4 cm in maximum dimension, OR minor bone erosion, OR perineural invasion, OR deep invasion", "notes": ["deep_invasion", "perineural"]},
+        {"code": "T4",  "description": "Tumor with gross cortical bone/marrow invasion, skull base invasion and/or skull base foramen invasion (parent for T4a/T4b)", "notes": []},
+        {"code": "T4a", "description": "Tumor with gross cortical bone / marrow invasion", "notes": []},
+        {"code": "T4b", "description": "Tumor with skull base invasion and/or skull base foramen involvement", "notes": []}
+      ],
+      "notes": {
+        "deep_invasion": "Deep invasion is defined as invasion beyond the subcutaneous fat OR greater than 6 mm (measured from the granular layer of adjacent normal epidermis to the base of the tumor).",
+        "perineural": "Perineural invasion for T3 classification is defined as tumor cells within the nerve sheath of a nerve lying deeper than the dermis OR measuring 0.1 mm or larger in caliber, OR presenting with clinical or radiographic involvement of named nerves without skull base invasion or transgression."
+      },
+      "suffixes": [
+        {"code": "m", "description": "Multiple synchronous primary tumors"}
+      ]
+    },
+    "N": {
+      "label": "Regional Lymph Nodes (cN and pN share this engine's stage table)",
+      "categories": [
+        {"code": "NX",  "description": "Regional lymph nodes cannot be assessed", "notes": []},
+        {"code": "N0",  "description": "No regional lymph node metastasis", "notes": []},
+        {"code": "N1",  "description": "Metastasis in a single ipsilateral lymph node, 3 cm or smaller in greatest dimension and ENE(-)", "notes": ["u_l"]},
+        {"code": "N2",  "description": "Metastasis in a single ipsilateral node > 3 cm and ENE+ (cN: any size; pN: > 3 cm), OR > 3 cm and <= 6 cm and ENE-; OR multiple ipsilateral, none > 6 cm and ENE-; OR bilateral / contralateral, none > 6 cm and ENE-", "notes": ["u_l"]},
+        {"code": "N2a", "description": "Metastasis in a single ipsilateral node larger than 3 cm but not larger than 6 cm in greatest dimension and ENE(-) [pN also: <= 3 cm ENE+]", "notes": ["u_l"]},
+        {"code": "N2b", "description": "Metastasis in multiple ipsilateral nodes, none larger than 6 cm in greatest dimension and ENE(-)", "notes": ["u_l"]},
+        {"code": "N2c", "description": "Metastasis in bilateral or contralateral lymph node(s), none larger than 6 cm in greatest dimension and ENE(-)", "notes": ["u_l"]},
+        {"code": "N3",  "description": "Metastasis in a lymph node > 6 cm and ENE-; OR a single ipsilateral node > 3 cm and ENE+; OR multiple ipsilateral, contralateral, or bilateral nodes any with ENE+; OR a single contralateral node of any size and ENE+", "notes": ["u_l", "ene_record"]},
+        {"code": "N3a", "description": "Metastasis in a lymph node larger than 6 cm in greatest dimension and ENE(-)", "notes": ["u_l"]},
+        {"code": "N3b", "description": "Single ipsilateral lymph node > 3 cm and ENE+; OR multiple ipsilateral, contralateral, or bilateral nodes with any ENE+; OR a single contralateral lymph node of any size and ENE+", "notes": ["u_l", "ene_record"]}
+      ],
+      "notes": {
+        "u_l": "A designation of 'U' or 'L' may be used for any N category to indicate metastasis above the lower border of the cricoid (U) or below the lower border of the cricoid (L).",
+        "ene_record": "Clinical and pathological ENE should be recorded as ENE(-) or ENE(+)."
+      },
+      "suffixes": [
+        {"code": "sn", "description": "Sentinel node procedure"},
+        {"code": "f",  "description": "FNA or core needle biopsy"}
+      ]
+    },
+    "M": {
+      "label": "Distant Metastasis",
+      "categories": [
+        {"code": "M0", "description": "No distant metastasis", "notes": []},
+        {"code": "M1", "description": "Distant metastasis", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Staging Classification",
+      "categories": [
+        {"code": "c", "description": "Clinical classification: stage assigned from imaging, biopsy, and clinical exam before any definitive treatment.", "notes": []},
+        {"code": "p", "description": "Pathological classification: stage assigned from the surgically resected specimen after histologic review.", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor: y (post-neoadjuvant)",
+      "categories": [
+        {"code": "Yes", "description": "Classification determined during or after the application of initial multimodal (neoadjuvant) therapy.", "notes": []},
+        {"code": "No",  "description": "No neoadjuvant therapy preceded this assessment.", "notes": []}
+      ],
+      "notes": {
+        "matching": "For cutaneous head/neck SCC AJCC 8, no separate ypTNM stage table is defined; DescY does not affect the stage outcome and is recorded for clinical context only."
+      },
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor: r (recurrent)",
+      "categories": [
+        {"code": "Yes", "description": "Recurrent tumor classification, assigned when the tumor is staged after a disease-free interval.", "notes": []},
+        {"code": "No",  "description": "Not a recurrent tumor in this assessment.", "notes": []}
+      ],
+      "notes": {
+        "matching": "For cutaneous head/neck SCC AJCC 8, no rTNM-specific stage table exists; DescR does not affect the stage outcome."
+      },
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor: m (multiple synchronous primaries)",
+      "categories": [
+        {"code": "Yes", "description": "Multiple synchronous primary tumors at the same anatomic site.", "notes": []},
+        {"code": "No",  "description": "Single primary tumor.", "notes": []}
+      ],
+      "notes": {
+        "matching": "For cutaneous head/neck SCC AJCC 8, the m suffix is a primary tumor suffix but does not alter the stage outcome in the engine's flat stage table."
+      },
+      "suffixes": []
+    }
+  }
+}

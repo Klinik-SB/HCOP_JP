@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Migración y consolidación · HCOP JP</title>
+  <meta name="description" content="Alcance y operación de la migración de HCOP/Lira a Java y PostgreSQL.">
+  <link rel="stylesheet" href="./documentacion.css">
+</head>
+<body>
+  <header class="doc-topbar">
+    <a class="doc-brand" href="./index.html"><span class="doc-brand-mark">HC</span><div><strong>Migración HCOP JP</strong><small>Producto local independiente</small></div></a>
+    <div class="doc-top-actions">
+      <a class="doc-button" href="./index.html">Índice</a>
+      <a class="doc-button" href="./referencia-tecnica.html">Referencia</a>
+      <a class="doc-button primary" href="../">Abrir sistema</a>
+    </div>
+  </header>
+
+  <div class="doc-shell">
+    <aside class="doc-sidebar">
+      <strong>Contenido</strong>
+      <nav>
+        <a href="#resultado">Resultado</a>
+        <a href="#preservado">Qué se preservó</a>
+        <a href="#cambio">Qué cambió</a>
+        <a href="#datos">Datos clínicos</a>
+        <a href="#instalacion">Instalación</a>
+        <a href="#control">Controles</a>
+        <a href="#recuperacion">Backup y recuperación</a>
+      </nav>
+    </aside>
+
+    <main class="doc-main">
+      <section class="doc-hero" id="resultado">
+        <span class="doc-kicker">Arquitectura final · julio 2026</span>
+        <h1>HCOP JP funciona sin Lira, Node.js ni MySQL</h1>
+        <p>La interfaz clínica y todos los flujos operativos se consolidaron en
+        un servidor Java con PostgreSQL. El navegador accede a una sola
+        aplicación y la base local es la única fuente clínica activa.</p>
+        <div class="doc-meta"><span class="doc-tag">Un repositorio</span><span class="doc-tag">Una API</span><span class="doc-tag">Una base PostgreSQL</span><span class="doc-tag">Una interfaz</span></div>
+      </section>
+
+      <section class="doc-section" id="preservado">
+        <h2>Qué se preservó</h2>
+        <div class="doc-grid">
+          <article class="doc-card"><h3>Experiencia clínica</h3><p>Hoja blanca, panel derecho, pestañas, modales, estilos, formularios, visor de estudios y controles.</p></article>
+          <article class="doc-card"><h3>Historia</h3><p>Identidad, diagnósticos, narrativa, evoluciones, estudios, tratamientos sistémicos y cirugías.</p></article>
+          <article class="doc-card"><h3>Tratamiento</h3><p>Protocolos COIR, drogas, dosis, preparación, requisitos, duraciones, ciclos y documentos.</p></article>
+          <article class="doc-card"><h3>Hospital de Día</h3><p>Farmacia, medicación, QR, lista de espera, turnero, sillones, administración y finalización.</p></article>
+          <article class="doc-card"><h3>Configuración</h3><p>Protocolos, guías, calculadoras, scores, formularios, plantillas, LLM, usuarios y permisos.</p></article>
+          <article class="doc-card"><h3>Compatibilidad</h3><p>Las rutas que consume la interfaz mantienen su contrato, pero ahora resuelven localmente.</p></article>
+        </div>
+      </section>
+
+      <section class="doc-section" id="cambio">
+        <h2>Qué cambió internamente</h2>
+        <div class="doc-table-wrap">
+          <table class="doc-table">
+            <thead><tr><th>Antes</th><th>Ahora</th><th>Beneficio</th></tr></thead>
+            <tbody>
+              <tr><td>Servidor Node.js y motor separado</td><td>Spring Boot MVC modular</td><td>Un único proceso web y reglas transaccionales.</td></tr>
+              <tr><td>MySQL y persistencias auxiliares</td><td>PostgreSQL canónico</td><td>Relaciones, JSONB, exclusión de turnos y auditoría.</td></tr>
+              <tr><td>Dependencia de sincronización con Lira</td><td>Datos creados y gestionados localmente</td><td>Independencia operativa.</td></tr>
+              <tr><td>Instalación manual</td><td>Docker Compose + auto-instalador</td><td>Entorno reproducible y actualizable.</td></tr>
+              <tr><td>Documentación de rutas dispersa</td><td>Swagger/OpenAPI agrupado</td><td>Contrato navegable para desarrollo e integración.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="doc-section" id="datos">
+        <h2>Datos clínicos</h2>
+        <div class="doc-callout"><strong>Repositorio limpio:</strong> GitHub y la imagen Docker incluyen código, catálogos, protocolos, migraciones y plantillas; no incluyen pacientes, tratamientos reales, adjuntos, contraseñas privadas ni la base de pruebas.</div>
+        <p>En una instalación nueva, Flyway crea la estructura vacía y las
+        cuentas iniciales configuradas. Los pacientes se crean desde “Nuevo
+        paciente”. Si se realiza una migración institucional, debe ejecutarse
+        como proceso controlado, validando conteos, relaciones, hashes de
+        archivos y muestras clínicas antes del corte.</p>
+      </section>
+
+      <section class="doc-section" id="instalacion">
+        <h2>Instalación completa</h2>
+        <ol>
+          <li>El autoinstalador verifica o instala Docker Desktop.</li>
+          <li>Solicita usuario, contraseña y puerto.</li>
+          <li>Genera secretos aleatorios para PostgreSQL, QR y cifrado.</li>
+          <li>Descarga la versión más reciente del repositorio.</li>
+          <li>Obtiene la imagen publicada o la construye desde el código.</li>
+          <li>Levanta PostgreSQL, espera salud y luego inicia Java.</li>
+          <li>Flyway aplica las migraciones pendientes en orden.</li>
+          <li>Abre la interfaz y crea lanzadores de inicio y detención.</li>
+        </ol>
+      </section>
+
+      <section class="doc-section" id="control">
+        <h2>Controles de integridad</h2>
+        <ul>
+          <li>Compilación y pruebas Maven en cada cambio.</li>
+          <li>Construcción y arranque real de Docker Compose en GitHub Actions.</li>
+          <li>Prueba integral de login, paciente, diagnóstico, tratamiento, turno, QR, finalización y evoluciones.</li>
+          <li>Restricciones de claves foráneas y estados.</li>
+          <li>Control optimista de revisión para evitar sobrescrituras.</li>
+          <li>Restricción de base para impedir superposición de sillones.</li>
+          <li>Escaneo de secretos y exclusión de datos locales antes de publicar.</li>
+        </ul>
+      </section>
+
+      <section class="doc-section" id="recuperacion">
+        <h2>Backup y recuperación</h2>
+        <p>La recuperación completa requiere dos elementos de la misma
+        instalación: el volumen PostgreSQL y el volumen de archivos clínicos.
+        Se recomienda detener escrituras, crear un volcado con
+        <code>pg_dump</code>, respaldar el volumen de storage y verificar la
+        restauración en otro entorno.</p>
+        <div class="doc-callout warning"><strong>No es backup:</strong> copiar el repositorio o volver a descargar la imagen no recupera pacientes ni estudios. Esos datos viven exclusivamente en los volúmenes locales.</div>
+      </section>
+    </main>
+  </div>
+  <script src="./documentacion.js"></script>
+</body>
+</html>

@@ -1,0 +1,2947 @@
+{
+  "metadata": {
+    "title": "Esquemas COIR y tiempo entre turnos",
+    "count": 419,
+    "durationField": "ESTUDIODURACION",
+    "durationUnit": "minutes",
+    "interpretation": "Tiempo configurado entre el inicio de un turno y el siguiente para cada esquema.",
+    "sourcePattern": "https://siscoir.visualmedica.com/his_02/servlet/testudio?UPD,<id-estudio>",
+    "generatedOn": "2026-07-22",
+    "containsPatientData": false
+  },
+  "schemes": [
+    {
+      "id": 487,
+      "scheme": "5FLU - CISPLATINO",
+      "durationMinutes": 150,
+      "durationHHMM": "02:30",
+      "durationText": "2 h 30 min"
+    },
+    {
+      "id": 28,
+      "scheme": "ABVD",
+      "durationMinutes": 145,
+      "durationHHMM": "02:25",
+      "durationText": "2 h 25 min"
+    },
+    {
+      "id": 111,
+      "scheme": "AC",
+      "durationMinutes": 125,
+      "durationHHMM": "02:05",
+      "durationText": "2 h 5 min"
+    },
+    {
+      "id": 493,
+      "scheme": "AC - PEMBROLIZUMAB",
+      "durationMinutes": 120,
+      "durationHHMM": "02:00",
+      "durationText": "2 h"
+    },
+    {
+      "id": 577,
+      "scheme": "AC ZOLEDRONICO C/3 MESES",
+      "durationMinutes": 55,
+      "durationHHMM": "00:55",
+      "durationText": "55 min"
+    },
+    {
+      "id": 453,
+      "scheme": "AC ZOLEDRÓNICO MENSUAL",
+      "durationMinutes": 55,
+      "durationHHMM": "00:55",
+      "durationText": "55 min"
+    },
+    {
+      "id": 598,
+      "scheme": "AC.ZOLEDRONICO C/6 MESES",
+      "durationMinutes": 55,
+      "durationHHMM": "00:55",
+      "durationText": "55 min"
+    },
+    {
+      "id": 578,
+      "scheme": "AC/C 14 DIAS",
+      "durationMinutes": 125,
+      "durationHHMM": "02:05",
+      "durationText": "2 h 5 min"
+    },
+    {
+      "id": 202,
+      "scheme": "ACETATO DE LEUPROLIDE",
+      "durationMinutes": 20,
+      "durationHHMM": "00:20",
+      "durationText": "20 min"
+    },
+    {
+      "id": 359,
+      "scheme": "ACETATO DE LEUPROLIDE C/6M",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 455,
+      "scheme": "ACLASTA",
+      "durationMinutes": 60,
+      "durationHHMM": "01:00",
+      "durationText": "1 h"
+    },
+    {
+      "id": 280,
+      "scheme": "ACTINOMICINA",
+      "durationMinutes": 120,
+      "durationHHMM": "02:00",
+      "durationText": "2 h"
+    },
+    {
+      "id": 630,
+      "scheme": "ADMISION NEURO",
+      "durationMinutes": 60,
+      "durationHHMM": "01:00",
+      "durationText": "1 h"
+    },
+    {
+      "id": 652,
+      "scheme": "AMIVANTAMAB DIA 2",
+      "durationMinutes": 480,
+      "durationHHMM": "08:00",
+      "durationText": "8 h"
+    },
+    {
+      "id": 653,
+      "scheme": "AMIVANTAMAB DIA 8 Y 15",
+      "durationMinutes": 300,
+      "durationHHMM": "05:00",
+      "durationText": "5 h"
+    },
+    {
+      "id": 602,
+      "scheme": "ANIFROLUMAB",
+      "durationMinutes": 70,
+      "durationHHMM": "01:10",
+      "durationText": "1 h 10 min"
+    },
+    {
+      "id": 461,
+      "scheme": "ATEZOLIZUMAB - BEVACIZUMAB 1RA VEZ",
+      "durationMinutes": 190,
+      "durationHHMM": "03:10",
+      "durationText": "3 h 10 min"
+    },
+    {
+      "id": 305,
+      "scheme": "ATEZOLIZUMAB - PACLITAXEL",
+      "durationMinutes": 300,
+      "durationHHMM": "05:00",
+      "durationText": "5 h"
+    },
+    {
+      "id": 17,
+      "scheme": "ATEZOLIZUMAB 1° VEZ",
+      "durationMinutes": 105,
+      "durationHHMM": "01:45",
+      "durationText": "1 h 45 min"
+    },
+    {
+      "id": 634,
+      "scheme": "ATEZOLIZUMAB SC",
+      "durationMinutes": 20,
+      "durationHHMM": "00:20",
+      "durationText": "20 min"
+    },
+    {
+      "id": 331,
+      "scheme": "AVD - BRENTUXIMAB",
+      "durationMinutes": 180,
+      "durationHHMM": "03:00",
+      "durationText": "3 h"
+    },
+    {
+      "id": 327,
+      "scheme": "AVD - BV",
+      "durationMinutes": 300,
+      "durationHHMM": "05:00",
+      "durationText": "5 h"
+    },
+    {
+      "id": 294,
+      "scheme": "AVELUMAB",
+      "durationMinutes": 105,
+      "durationHHMM": "01:45",
+      "durationText": "1 h 45 min"
+    },
+    {
+      "id": 510,
+      "scheme": "AZACITIDINA",
+      "durationMinutes": 90,
+      "durationHHMM": "01:30",
+      "durationText": "1 h 30 min"
+    },
+    {
+      "id": 317,
+      "scheme": "AZACITIDINA - PEMBROLIZUMAB",
+      "durationMinutes": 180,
+      "durationHHMM": "03:00",
+      "durationText": "3 h"
+    },
+    {
+      "id": 170,
+      "scheme": "AZACITIDINA SC 1-5",
+      "durationMinutes": 20,
+      "durationHHMM": "00:20",
+      "durationText": "20 min"
+    },
+    {
+      "id": 325,
+      "scheme": "BELATACEPT",
+      "durationMinutes": 60,
+      "durationHHMM": "01:00",
+      "durationText": "1 h"
+    },
+    {
+      "id": 300,
+      "scheme": "BENDAMUSTINE",
+      "durationMinutes": 105,
+      "durationHHMM": "01:45",
+      "durationText": "1 h 45 min"
+    },
+    {
+      "id": 661,
+      "scheme": "BENDAMUSTINE POLATUZUMAB",
+      "durationMinutes": 150,
+      "durationHHMM": "02:30",
+      "durationText": "2 h 30 min"
+    },
+    {
+      "id": 169,
+      "scheme": "BEP",
+      "durationMinutes": 175,
+      "durationHHMM": "02:55",
+      "durationText": "2 h 55 min"
+    },
+    {
+      "id": 318,
+      "scheme": "BEVA - CAPE - IRINOTECAN",
+      "durationMinutes": 180,
+      "durationHHMM": "03:00",
+      "durationText": "3 h"
+    },
+    {
+      "id": 456,
+      "scheme": "BEVA FLOX",
+      "durationMinutes": 270,
+      "durationHHMM": "04:30",
+      "durationText": "4 h 30 min"
+    },
+    {
+      "id": 529,
+      "scheme": "BEVA PEMETREXED",
+      "durationMinutes": 150,
+      "durationHHMM": "02:30",
+      "durationText": "2 h 30 min"
+    },
+    {
+      "id": 306,
+      "scheme": "BEVACIZUMAB - LV - FU - BOMBA",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 646,
+      "scheme": "BEVACIZUMAB - PACLITAXEL - CARBOPLATINO - PEMBROLIZUMAB",
+      "durationMinutes": 420,
+      "durationHHMM": "07:00",
+      "durationText": "7 h"
+    },
+    {
+      "id": 19,
+      "scheme": "BEVACIZUMAB 1° VEZ",
+      "durationMinutes": 135,
+      "durationHHMM": "02:15",
+      "durationText": "2 h 15 min"
+    },
+    {
+      "id": 20,
+      "scheme": "BEVACIZUMAB 2° VEZ",
+      "durationMinutes": 105,
+      "durationHHMM": "01:45",
+      "durationText": "1 h 45 min"
+    },
+    {
+      "id": 21,
+      "scheme": "BEVACIZUMAB 3° VEZ",
+      "durationMinutes": 75,
+      "durationHHMM": "01:15",
+      "durationText": "1 h 15 min"
+    },
+    {
+      "id": 231,
+      "scheme": "BEVACIZUMAB-CAPECITABINE 1RA VEZ",
+      "durationMinutes": 130,
+      "durationHHMM": "02:10",
+      "durationText": "2 h 10 min"
+    },
+    {
+      "id": 585,
+      "scheme": "BEVACIZUMAB-CAPECITABINE 2DA VEZ",
+      "durationMinutes": 100,
+      "durationHHMM": "01:40",
+      "durationText": "1 h 40 min"
+    },
+    {
+      "id": 586,
+      "scheme": "BEVACIZUMAB-CAPECITABINE 3ERA EN ADELANTE",
+      "durationMinutes": 70,
+      "durationHHMM": "01:10",
+      "durationText": "1 h 10 min"
+    },
+    {
+      "id": 377,
+      "scheme": "BEVACIZUMAB-DOCETAXEL",
+      "durationMinutes": 210,
+      "durationHHMM": "03:30",
+      "durationText": "3 h 30 min"
+    },
+    {
+      "id": 232,
+      "scheme": "BEVACIZUMAB-FOLFIRI",
+      "durationMinutes": 235,
+      "durationHHMM": "03:55",
+      "durationText": "3 h 55 min"
+    },
+    {
+      "id": 233,
+      "scheme": "BEVACIZUMAB-FOLFIRI-BOMBA",
+      "durationMinutes": 245,
+      "durationHHMM": "04:05",
+      "durationText": "4 h 5 min"
+    },
+    {
+      "id": 234,
+      "scheme": "BEVACIZUMAB-FOLFOX",
+      "durationMinutes": 255,
+      "durationHHMM": "04:15",
+      "durationText": "4 h 15 min"
+    },
+    {
+      "id": 235,
+      "scheme": "BEVACIZUMAB-FOLFOX-BOMBA",
+      "durationMinutes": 260,
+      "durationHHMM": "04:20",
+      "durationText": "4 h 20 min"
+    },
+    {
+      "id": 236,
+      "scheme": "BEVACIZUMAB-GEMCITABINA",
+      "durationMinutes": 170,
+      "durationHHMM": "02:50",
+      "durationText": "2 h 50 min"
+    },
+    {
+      "id": 237,
+      "scheme": "BEVACIZUMAB-IRINOTECAN",
+      "durationMinutes": 225,
+      "durationHHMM": "03:45",
+      "durationText": "3 h 45 min"
+    },
+    {
+      "id": 238,
+      "scheme": "BEVACIZUMAB-IRINOTECAN-CAPECITABINA",
+      "durationMinutes": 195,
+      "durationHHMM": "03:15",
+      "durationText": "3 h 15 min"
+    },
+    {
+      "id": 675,
+      "scheme": "BEVACIZUMAB-NAB PACLITAXEL",
+      "durationMinutes": 120,
+      "durationHHMM": "02:00",
+      "durationText": "2 h"
+    },
+    {
+      "id": 676,
+      "scheme": "BEVACIZUMAB-NAB PACLITAXEL PRIMERA VEZ",
+      "durationMinutes": 150,
+      "durationHHMM": "02:30",
+      "durationText": "2 h 30 min"
+    },
+    {
+      "id": 239,
+      "scheme": "BEVACIZUMAB-OXALIPLATINO-CAPECITABINA",
+      "durationMinutes": 340,
+      "durationHHMM": "05:40",
+      "durationText": "5 h 40 min"
+    },
+    {
+      "id": 240,
+      "scheme": "BEVACIZUMAB-PACLITAXEL-CARBOPLATINO 1°",
+      "durationMinutes": 375,
+      "durationHHMM": "06:15",
+      "durationText": "6 h 15 min"
+    },
+    {
+      "id": 367,
+      "scheme": "BEVACIZUMAB-PACLITAXEL-CARBOPLATINO 2DA EN ADELANTE",
+      "durationMinutes": 340,
+      "durationHHMM": "05:40",
+      "durationText": "5 h 40 min"
+    },
+    {
+      "id": 640,
+      "scheme": "BEVACIZUMAB-PACLITAXEL-CISPLATINO",
+      "durationMinutes": 340,
+      "durationHHMM": "05:40",
+      "durationText": "5 h 40 min"
+    },
+    {
+      "id": 241,
+      "scheme": "BEVACIZUMAB-PEMETREXED-CISPLATINO",
+      "durationMinutes": 205,
+      "durationHHMM": "03:25",
+      "durationText": "3 h 25 min"
+    },
+    {
+      "id": 242,
+      "scheme": "BEVACIZUMAB-TOPOTECAN",
+      "durationMinutes": 165,
+      "durationHHMM": "02:45",
+      "durationText": "2 h 45 min"
+    },
+    {
+      "id": 539,
+      "scheme": "BEVA-DOCETAXEL-CARBO",
+      "durationMinutes": 360,
+      "durationHHMM": "06:00",
+      "durationText": "6 h"
+    },
+    {
+      "id": 355,
+      "scheme": "BEVA-FOLFIRINOX-BOMBA",
+      "durationMinutes": 360,
+      "durationHHMM": "06:00",
+      "durationText": "6 h"
+    },
+    {
+      "id": 488,
+      "scheme": "B-IGEV",
+      "durationMinutes": 420,
+      "durationHHMM": "07:00",
+      "durationText": "7 h"
+    },
+    {
+      "id": 289,
+      "scheme": "BLEOMICINA",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 171,
+      "scheme": "BORTEZOMIB",
+      "durationMinutes": 20,
+      "durationHHMM": "00:20",
+      "durationText": "20 min"
+    },
+    {
+      "id": 315,
+      "scheme": "BRENTU - CICLO - DOXO",
+      "durationMinutes": 300,
+      "durationHHMM": "05:00",
+      "durationText": "5 h"
+    },
+    {
+      "id": 482,
+      "scheme": "BRENTUX-DOXOLIPO-VINBLAS-GEMCITABINA",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 172,
+      "scheme": "BRENTUXIMAB",
+      "durationMinutes": 75,
+      "durationHHMM": "01:15",
+      "durationText": "1 h 15 min"
+    },
+    {
+      "id": 332,
+      "scheme": "BRENTUXIMAB - COPP",
+      "durationMinutes": 180,
+      "durationHHMM": "03:00",
+      "durationText": "3 h"
+    },
+    {
+      "id": 609,
+      "scheme": "BRENTUXIMAB GVD",
+      "durationMinutes": 180,
+      "durationHHMM": "03:00",
+      "durationText": "3 h"
+    },
+    {
+      "id": 581,
+      "scheme": "BUSERELINA",
+      "durationMinutes": 20,
+      "durationHHMM": "00:20",
+      "durationText": "20 min"
+    },
+    {
+      "id": 112,
+      "scheme": "CABAZITAXEL",
+      "durationMinutes": 105,
+      "durationHHMM": "01:45",
+      "durationText": "1 h 45 min"
+    },
+    {
+      "id": 606,
+      "scheme": "CAPOX-TRASTU-PEMBRO 1RA VEZ",
+      "durationMinutes": 340,
+      "durationHHMM": "05:40",
+      "durationText": "5 h 40 min"
+    },
+    {
+      "id": 607,
+      "scheme": "CAPOX-TRASTU-PEMBRO-MANTENIMIENTO",
+      "durationMinutes": 310,
+      "durationHHMM": "05:10",
+      "durationText": "5 h 10 min"
+    },
+    {
+      "id": 567,
+      "scheme": "CAPOX-TRASTUZUMAB",
+      "durationMinutes": 310,
+      "durationHHMM": "05:10",
+      "durationText": "5 h 10 min"
+    },
+    {
+      "id": 566,
+      "scheme": "CAPOX-TRASTUZUMAB 1ERA",
+      "durationMinutes": 340,
+      "durationHHMM": "05:40",
+      "durationText": "5 h 40 min"
+    },
+    {
+      "id": 311,
+      "scheme": "CARBO - DOXOLIPOSOMAL - BEVACIZUMAB 1RA VEZ",
+      "durationMinutes": 280,
+      "durationHHMM": "04:40",
+      "durationText": "4 h 40 min"
+    },
+    {
+      "id": 248,
+      "scheme": "CARBO - GEMCIT - BEVACIZUMAB",
+      "durationMinutes": 210,
+      "durationHHMM": "03:30",
+      "durationText": "3 h 30 min"
+    },
+    {
+      "id": 651,
+      "scheme": "CARBO - PEMETREXED - AMIVANTAMAB",
+      "durationMinutes": 420,
+      "durationHHMM": "07:00",
+      "durationText": "7 h"
+    },
+    {
+      "id": 282,
+      "scheme": "CARBO - PEMETREXED - PEMBROLIZUMAB",
+      "durationMinutes": 145,
+      "durationHHMM": "02:25",
+      "durationText": "2 h 25 min"
+    },
+    {
+      "id": 460,
+      "scheme": "CARBO-DOCETAXEL-PERTU-TRASTU",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 587,
+      "scheme": "CARBO-DOXOLIPOSOMAL-BEVACIZUMAB MANTENIMIENTO",
+      "durationMinutes": 220,
+      "durationHHMM": "03:40",
+      "durationText": "3 h 40 min"
+    },
+    {
+      "id": 183,
+      "scheme": "CARBOPLATINO",
+      "durationMinutes": 105,
+      "durationHHMM": "01:45",
+      "durationText": "1 h 45 min"
+    },
+    {
+      "id": 274,
+      "scheme": "CARBOPLATINO - BEVACIZUMAB",
+      "durationMinutes": 180,
+      "durationHHMM": "03:00",
+      "durationText": "3 h"
+    },
+    {
+      "id": 286,
+      "scheme": "CARBOPLATINO - DOXOLIPOSOMAL",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 645,
+      "scheme": "CARBOPLATINO - PACLITAXEL - IPILIMUMAB - NIVOLUMAB",
+      "durationMinutes": 300,
+      "durationHHMM": "05:00",
+      "durationText": "5 h"
+    },
+    {
+      "id": 290,
+      "scheme": "CARBOPLATINO - PEMETREXED - BEVACIZUMAB",
+      "durationMinutes": 180,
+      "durationHHMM": "03:00",
+      "durationText": "3 h"
+    },
+    {
+      "id": 666,
+      "scheme": "CARBOPLATINO PEMETREXED NIVOLUMAB IPILIMUMAB",
+      "durationMinutes": 170,
+      "durationHHMM": "02:50",
+      "durationText": "2 h 50 min"
+    },
+    {
+      "id": 531,
+      "scheme": "CARBOPLATINO-CETUXIMAB",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 378,
+      "scheme": "CARBOPLATINO-DOCETAXEL",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 588,
+      "scheme": "CARBOPLATINO-GEMCITABINE-PEMBROLIZUMAB",
+      "durationMinutes": 145,
+      "durationHHMM": "02:25",
+      "durationText": "2 h 25 min"
+    },
+    {
+      "id": 576,
+      "scheme": "CARBOPLATINO-PACLITAXEL SEMANAL RT",
+      "durationMinutes": 160,
+      "durationHHMM": "02:40",
+      "durationText": "2 h 40 min"
+    },
+    {
+      "id": 338,
+      "scheme": "CARFILZOMIB",
+      "durationMinutes": 180,
+      "durationHHMM": "03:00",
+      "durationText": "3 h"
+    },
+    {
+      "id": 337,
+      "scheme": "CARFILZOMIB - CICLOFOSFAMIDA",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 336,
+      "scheme": "CARFILZOMIB - CICLOFOSFAMIDA (DIA 1)",
+      "durationMinutes": 360,
+      "durationHHMM": "06:00",
+      "durationText": "6 h"
+    },
+    {
+      "id": 532,
+      "scheme": "CARFILZOMIB-DARATUMUMAB SC",
+      "durationMinutes": 180,
+      "durationHHMM": "03:00",
+      "durationText": "3 h"
+    },
+    {
+      "id": 354,
+      "scheme": "CETUXI-DOCETAX-CISPLATINO",
+      "durationMinutes": 300,
+      "durationHHMM": "05:00",
+      "durationText": "5 h"
+    },
+    {
+      "id": 447,
+      "scheme": "CETUXIMAB - DOCETAXEL - CARBOPLATINO",
+      "durationMinutes": 300,
+      "durationHHMM": "05:00",
+      "durationText": "5 h"
+    },
+    {
+      "id": 281,
+      "scheme": "CETUXIMAB - LV - FU",
+      "durationMinutes": 210,
+      "durationHHMM": "03:30",
+      "durationText": "3 h 30 min"
+    },
+    {
+      "id": 341,
+      "scheme": "CETUXIMAB - LV - FU - BOMBA",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 323,
+      "scheme": "CETUXIMAB - OXALIPLATINO - CAPECITABINA",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 130,
+      "scheme": "CETUXIMAB 1RA VEZ",
+      "durationMinutes": 175,
+      "durationHHMM": "02:55",
+      "durationText": "2 h 55 min"
+    },
+    {
+      "id": 625,
+      "scheme": "CETUXIMAB 2DA VEZ",
+      "durationMinutes": 100,
+      "durationHHMM": "01:40",
+      "durationText": "1 h 40 min"
+    },
+    {
+      "id": 209,
+      "scheme": "CETUXIMAB-CAPECITABINA",
+      "durationMinutes": 165,
+      "durationHHMM": "02:45",
+      "durationText": "2 h 45 min"
+    },
+    {
+      "id": 210,
+      "scheme": "CETUXIMAB-FOLFIRI",
+      "durationMinutes": 255,
+      "durationHHMM": "04:15",
+      "durationText": "4 h 15 min"
+    },
+    {
+      "id": 211,
+      "scheme": "CETUXIMAB-FOLFIRI-BOMBA",
+      "durationMinutes": 270,
+      "durationHHMM": "04:30",
+      "durationText": "4 h 30 min"
+    },
+    {
+      "id": 212,
+      "scheme": "CETUXIMAB-FOLFOX",
+      "durationMinutes": 225,
+      "durationHHMM": "03:45",
+      "durationText": "3 h 45 min"
+    },
+    {
+      "id": 213,
+      "scheme": "CETUXIMAB-FOLFOX-BOMBA",
+      "durationMinutes": 305,
+      "durationHHMM": "05:05",
+      "durationText": "5 h 5 min"
+    },
+    {
+      "id": 407,
+      "scheme": "CETUXIMAB-FOLFOX-BOMBA 2° VEZ Y SIG.",
+      "durationMinutes": 215,
+      "durationHHMM": "03:35",
+      "durationText": "3 h 35 min"
+    },
+    {
+      "id": 624,
+      "scheme": "CETUXIMAB-FU",
+      "durationMinutes": 160,
+      "durationHHMM": "02:40",
+      "durationText": "2 h 40 min"
+    },
+    {
+      "id": 589,
+      "scheme": "CETUXIMAB-IRINOTECAN 1RA VEZ",
+      "durationMinutes": 265,
+      "durationHHMM": "04:25",
+      "durationText": "4 h 25 min"
+    },
+    {
+      "id": 564,
+      "scheme": "CHOEP",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 297,
+      "scheme": "CHOP",
+      "durationMinutes": 135,
+      "durationHHMM": "02:15",
+      "durationText": "2 h 15 min"
+    },
+    {
+      "id": 326,
+      "scheme": "CHOP - BRENTUXIMAB",
+      "durationMinutes": 180,
+      "durationHHMM": "03:00",
+      "durationText": "3 h"
+    },
+    {
+      "id": 291,
+      "scheme": "CHOP – ETOPOSIDO",
+      "durationMinutes": 195,
+      "durationHHMM": "03:15",
+      "durationText": "3 h 15 min"
+    },
+    {
+      "id": 200,
+      "scheme": "CICLOFOSFAMIDA",
+      "durationMinutes": 105,
+      "durationHHMM": "01:45",
+      "durationText": "1 h 45 min"
+    },
+    {
+      "id": 459,
+      "scheme": "CICLOFOSFAMIDA - CITARABINA",
+      "durationMinutes": 90,
+      "durationHHMM": "01:30",
+      "durationText": "1 h 30 min"
+    },
+    {
+      "id": 266,
+      "scheme": "CICLOFOSFAMIDA - MESNA",
+      "durationMinutes": 180,
+      "durationHHMM": "03:00",
+      "durationText": "3 h"
+    },
+    {
+      "id": 446,
+      "scheme": "CICLOFOSFAMIDA - TOPOTECAN",
+      "durationMinutes": 120,
+      "durationHHMM": "02:00",
+      "durationText": "2 h"
+    },
+    {
+      "id": 358,
+      "scheme": "CICLOFOSFAMIDA 4HS",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 32,
+      "scheme": "CICLOFOSFAMIDA-BORTEZOMIB",
+      "durationMinutes": 105,
+      "durationHHMM": "01:45",
+      "durationText": "1 h 45 min"
+    },
+    {
+      "id": 563,
+      "scheme": "CISPLAT-GEMCIT-PEMBRO",
+      "durationMinutes": 180,
+      "durationHHMM": "03:00",
+      "durationText": "3 h"
+    },
+    {
+      "id": 184,
+      "scheme": "CISPLATINO",
+      "durationMinutes": 115,
+      "durationHHMM": "01:55",
+      "durationText": "1 h 55 min"
+    },
+    {
+      "id": 309,
+      "scheme": "CISPLATINO - CICLOFOSFAMIDA",
+      "durationMinutes": 180,
+      "durationHHMM": "03:00",
+      "durationText": "3 h"
+    },
+    {
+      "id": 264,
+      "scheme": "CISPLATINO - TRASTUZUMAB",
+      "durationMinutes": 270,
+      "durationHHMM": "04:30",
+      "durationText": "4 h 30 min"
+    },
+    {
+      "id": 356,
+      "scheme": "CISPLATINO ALTA DOSIS",
+      "durationMinutes": 360,
+      "durationHHMM": "06:00",
+      "durationText": "6 h"
+    },
+    {
+      "id": 153,
+      "scheme": "CISPLATINO DOCETAXEL",
+      "durationMinutes": 180,
+      "durationHHMM": "03:00",
+      "durationText": "3 h"
+    },
+    {
+      "id": 642,
+      "scheme": "CISPLATINO-BEVACIZUMAB",
+      "durationMinutes": 180,
+      "durationHHMM": "03:00",
+      "durationText": "3 h"
+    },
+    {
+      "id": 641,
+      "scheme": "CISPLATINO-BEVA-DOXOLIPOSOMAL",
+      "durationMinutes": 280,
+      "durationHHMM": "04:40",
+      "durationText": "4 h 40 min"
+    },
+    {
+      "id": 97,
+      "scheme": "CISPLATINO-CAPECITABINA",
+      "durationMinutes": 165,
+      "durationHHMM": "02:45",
+      "durationText": "2 h 45 min"
+    },
+    {
+      "id": 521,
+      "scheme": "CISPLATINO-IRINOTECAN",
+      "durationMinutes": 210,
+      "durationHHMM": "03:30",
+      "durationText": "3 h 30 min"
+    },
+    {
+      "id": 614,
+      "scheme": "CISPLATINO-PEMBROLIZUMAB-RT",
+      "durationMinutes": 175,
+      "durationHHMM": "02:55",
+      "durationText": "2 h 55 min"
+    },
+    {
+      "id": 173,
+      "scheme": "CITARABINA",
+      "durationMinutes": 195,
+      "durationHHMM": "03:15",
+      "durationText": "3 h 15 min"
+    },
+    {
+      "id": 503,
+      "scheme": "CITARABINA SC",
+      "durationMinutes": 20,
+      "durationHHMM": "00:20",
+      "durationText": "20 min"
+    },
+    {
+      "id": 500,
+      "scheme": "CLADRIBINE",
+      "durationMinutes": 120,
+      "durationHHMM": "02:00",
+      "durationText": "2 h"
+    },
+    {
+      "id": 670,
+      "scheme": "CLADRIBINE SC",
+      "durationMinutes": 20,
+      "durationHHMM": "00:20",
+      "durationText": "20 min"
+    },
+    {
+      "id": 201,
+      "scheme": "CMF",
+      "durationMinutes": 110,
+      "durationHHMM": "01:50",
+      "durationText": "1 h 50 min"
+    },
+    {
+      "id": 542,
+      "scheme": "CONFECCIÓN FORMULARIOS",
+      "durationMinutes": 15,
+      "durationHHMM": "00:15",
+      "durationText": "15 min"
+    },
+    {
+      "id": 511,
+      "scheme": "CONSULTA ADMISION COMPARTIDA",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 350,
+      "scheme": "CONSULTA ADMISION HEMATOLOGICA",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 509,
+      "scheme": "CONSULTA CLINICA",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 335,
+      "scheme": "CONSULTA CONFECCION RECETA",
+      "durationMinutes": 15,
+      "durationHHMM": "00:15",
+      "durationText": "15 min"
+    },
+    {
+      "id": 134,
+      "scheme": "CONSULTA CUIDADOS PALIATIVOS",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 467,
+      "scheme": "CONSULTA DE CONTROL",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 156,
+      "scheme": "CONSULTA EVALUACIONES",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 361,
+      "scheme": "CONSULTA FISIOTERAPIA",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 149,
+      "scheme": "CONSULTA FONOAUDIOLOGIA",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 150,
+      "scheme": "CONSULTA GENETISTA",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 166,
+      "scheme": "CONSULTA GINECOLOGICA",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 136,
+      "scheme": "CONSULTA HEMATOLÓGICA",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 494,
+      "scheme": "CONSULTA MEDICA UROLOGIA",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 628,
+      "scheme": "CONSULTA NEURO",
+      "durationMinutes": 20,
+      "durationHHMM": "00:20",
+      "durationText": "20 min"
+    },
+    {
+      "id": 133,
+      "scheme": "CONSULTA NUTRICIÓN",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 131,
+      "scheme": "CONSULTA ONCOLÓGICA",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 132,
+      "scheme": "CONSULTA ONCOLÓGICA ADMISIÓN",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 135,
+      "scheme": "CONSULTA PSICOLOGÍA",
+      "durationMinutes": 40,
+      "durationHHMM": "00:40",
+      "durationText": "40 min"
+    },
+    {
+      "id": 151,
+      "scheme": "CONSULTA PSIQUIATRIA",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 660,
+      "scheme": "CONSULTA R",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 673,
+      "scheme": "CONSULTA REUMATOLOGICA",
+      "durationMinutes": 20,
+      "durationHHMM": "00:20",
+      "durationText": "20 min"
+    },
+    {
+      "id": 137,
+      "scheme": "CONTROL TRATAMIENTO",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 526,
+      "scheme": "DACTINOMICINA",
+      "durationMinutes": 120,
+      "durationHHMM": "02:00",
+      "durationText": "2 h"
+    },
+    {
+      "id": 174,
+      "scheme": "DARATUMUMAB",
+      "durationMinutes": 405,
+      "durationHHMM": "06:45",
+      "durationText": "6 h 45 min"
+    },
+    {
+      "id": 260,
+      "scheme": "DARATUMUMAB - BORTEZOMIB",
+      "durationMinutes": 225,
+      "durationHHMM": "03:45",
+      "durationText": "3 h 45 min"
+    },
+    {
+      "id": 375,
+      "scheme": "DARATUMUMAB CARFILZOMIB",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 301,
+      "scheme": "DARATUMUMAB DÍA 1 Y 2",
+      "durationMinutes": 480,
+      "durationHHMM": "08:00",
+      "durationText": "8 h"
+    },
+    {
+      "id": 530,
+      "scheme": "DARATUMUMAB SC",
+      "durationMinutes": 20,
+      "durationHHMM": "00:20",
+      "durationText": "20 min"
+    },
+    {
+      "id": 533,
+      "scheme": "DARATUMUMAB/BORTEZOMIB SC",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 203,
+      "scheme": "DEGARELIX",
+      "durationMinutes": 20,
+      "durationHHMM": "00:20",
+      "durationText": "20 min"
+    },
+    {
+      "id": 249,
+      "scheme": "DENOSUMAB",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 98,
+      "scheme": "DOCETAXEL",
+      "durationMinutes": 130,
+      "durationHHMM": "02:10",
+      "durationText": "2 h 10 min"
+    },
+    {
+      "id": 113,
+      "scheme": "DOCETAXEL-CICLOFOSFAMIDA (TC)",
+      "durationMinutes": 190,
+      "durationHHMM": "03:10",
+      "durationText": "3 h 10 min"
+    },
+    {
+      "id": 363,
+      "scheme": "DOCETAXEL-CICLOFOSFAMIDA-TRASTUZUMAB",
+      "durationMinutes": 300,
+      "durationHHMM": "05:00",
+      "durationText": "5 h"
+    },
+    {
+      "id": 26,
+      "scheme": "DOCETAXEL-GEMCITABINA",
+      "durationMinutes": 145,
+      "durationHHMM": "02:25",
+      "durationText": "2 h 25 min"
+    },
+    {
+      "id": 568,
+      "scheme": "DOCETAXEL-OXA C/15 DIAS",
+      "durationMinutes": 310,
+      "durationHHMM": "05:10",
+      "durationText": "5 h 10 min"
+    },
+    {
+      "id": 621,
+      "scheme": "DOSTARLIMAB",
+      "durationMinutes": 45,
+      "durationHHMM": "00:45",
+      "durationText": "45 min"
+    },
+    {
+      "id": 622,
+      "scheme": "DOSTARLIMAB-GSK4381562",
+      "durationMinutes": 75,
+      "durationHHMM": "01:15",
+      "durationText": "1 h 15 min"
+    },
+    {
+      "id": 342,
+      "scheme": "DOXO - IFOSFAMIDA - CISPLATINO",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 245,
+      "scheme": "DOXO CICLO CISPLATINO",
+      "durationMinutes": 195,
+      "durationHHMM": "03:15",
+      "durationText": "3 h 15 min"
+    },
+    {
+      "id": 307,
+      "scheme": "DOXOLIPOSOMAL",
+      "durationMinutes": 150,
+      "durationHHMM": "02:30",
+      "durationText": "2 h 30 min"
+    },
+    {
+      "id": 285,
+      "scheme": "DOXOLIPOSOMAL - BEVACIZUMAB",
+      "durationMinutes": 135,
+      "durationHHMM": "02:15",
+      "durationText": "2 h 15 min"
+    },
+    {
+      "id": 610,
+      "scheme": "DOXOLIPOSOMAL-GEMCITABINA",
+      "durationMinutes": 90,
+      "durationHHMM": "01:30",
+      "durationText": "1 h 30 min"
+    },
+    {
+      "id": 288,
+      "scheme": "DOXORRUBICINA",
+      "durationMinutes": 65,
+      "durationHHMM": "01:05",
+      "durationText": "1 h 5 min"
+    },
+    {
+      "id": 496,
+      "scheme": "DOXORRUBICINA - METROTEXATO",
+      "durationMinutes": 60,
+      "durationHHMM": "01:00",
+      "durationText": "1 h"
+    },
+    {
+      "id": 185,
+      "scheme": "DOXORRUBICINA-CISPLATINO",
+      "durationMinutes": 165,
+      "durationHHMM": "02:45",
+      "durationText": "2 h 45 min"
+    },
+    {
+      "id": 618,
+      "scheme": "DOXORRUBICINA-TRABECTIDINA",
+      "durationMinutes": 250,
+      "durationHHMM": "04:10",
+      "durationText": "4 h 10 min"
+    },
+    {
+      "id": 254,
+      "scheme": "DOXORUBICINA - IFOSFAMIDA - MESNA",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 182,
+      "scheme": "DOXORUBICINA DACARBAZINA",
+      "durationMinutes": 180,
+      "durationHHMM": "03:00",
+      "durationText": "3 h"
+    },
+    {
+      "id": 115,
+      "scheme": "DTIC",
+      "durationMinutes": 105,
+      "durationHHMM": "01:45",
+      "durationText": "1 h 45 min"
+    },
+    {
+      "id": 559,
+      "scheme": "DUPILUMAB",
+      "durationMinutes": 180,
+      "durationHHMM": "03:00",
+      "durationText": "3 h"
+    },
+    {
+      "id": 373,
+      "scheme": "DURVALUMAB",
+      "durationMinutes": 105,
+      "durationHHMM": "01:45",
+      "durationText": "1 h 45 min"
+    },
+    {
+      "id": 554,
+      "scheme": "DURVALUMAB GEM CISPLATINO",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 204,
+      "scheme": "ELIGARD",
+      "durationMinutes": 20,
+      "durationHHMM": "00:20",
+      "durationText": "20 min"
+    },
+    {
+      "id": 555,
+      "scheme": "ENFORTUMAB VEDOTINA",
+      "durationMinutes": 90,
+      "durationHHMM": "01:30",
+      "durationText": "1 h 30 min"
+    },
+    {
+      "id": 615,
+      "scheme": "ENFORTUMAB VEDOTINA PEMBRO",
+      "durationMinutes": 120,
+      "durationHHMM": "02:00",
+      "durationText": "2 h"
+    },
+    {
+      "id": 595,
+      "scheme": "EPCORITAMAB SC",
+      "durationMinutes": 20,
+      "durationHHMM": "00:20",
+      "durationText": "20 min"
+    },
+    {
+      "id": 186,
+      "scheme": "EPIDOXORUBICINA-CISPLATINO-CAPECITABINA",
+      "durationMinutes": 135,
+      "durationHHMM": "02:15",
+      "durationText": "2 h 15 min"
+    },
+    {
+      "id": 187,
+      "scheme": "EPIDOXORUBICINA-OXALIPLATINO-CAPECITABINA",
+      "durationMinutes": 185,
+      "durationHHMM": "03:05",
+      "durationText": "3 h 5 min"
+    },
+    {
+      "id": 310,
+      "scheme": "EPIRRUBICINA",
+      "durationMinutes": 120,
+      "durationHHMM": "02:00",
+      "durationText": "2 h"
+    },
+    {
+      "id": 483,
+      "scheme": "ERIBULINA",
+      "durationMinutes": 60,
+      "durationHHMM": "01:00",
+      "durationText": "1 h"
+    },
+    {
+      "id": 293,
+      "scheme": "ETOPOSIDO",
+      "durationMinutes": 105,
+      "durationHHMM": "01:45",
+      "durationText": "1 h 45 min"
+    },
+    {
+      "id": 328,
+      "scheme": "ETOPOSIDO - CARBOPLATINO - ATEZOLIZUMAB",
+      "durationMinutes": 225,
+      "durationHHMM": "03:45",
+      "durationText": "3 h 45 min"
+    },
+    {
+      "id": 303,
+      "scheme": "ETOPOSIDO - IFOSFAMIDA - MESNA",
+      "durationMinutes": 295,
+      "durationHHMM": "04:55",
+      "durationText": "4 h 55 min"
+    },
+    {
+      "id": 565,
+      "scheme": "ETOPOSIDO/CISPLATINO/ATEZOLIZUMAB",
+      "durationMinutes": 195,
+      "durationHHMM": "03:15",
+      "durationText": "3 h 15 min"
+    },
+    {
+      "id": 188,
+      "scheme": "ETOPOSIDO-CARBOPLATINO",
+      "durationMinutes": 165,
+      "durationHHMM": "02:45",
+      "durationText": "2 h 45 min"
+    },
+    {
+      "id": 592,
+      "scheme": "ETOPOSIDO-CARBOPLATINO-DURVALUMAB",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 189,
+      "scheme": "ETOPOSIDO-CISPLATINO",
+      "durationMinutes": 175,
+      "durationHHMM": "02:55",
+      "durationText": "2 h 55 min"
+    },
+    {
+      "id": 296,
+      "scheme": "EXTRACCIÓN DE CATÉTER",
+      "durationMinutes": 15,
+      "durationHHMM": "00:15",
+      "durationText": "15 min"
+    },
+    {
+      "id": 262,
+      "scheme": "FAC",
+      "durationMinutes": 135,
+      "durationHHMM": "02:15",
+      "durationText": "2 h 15 min"
+    },
+    {
+      "id": 259,
+      "scheme": "FERINYEC",
+      "durationMinutes": 50,
+      "durationHHMM": "00:50",
+      "durationText": "50 min"
+    },
+    {
+      "id": 268,
+      "scheme": "FIRMAGON",
+      "durationMinutes": 40,
+      "durationHHMM": "00:40",
+      "durationText": "40 min"
+    },
+    {
+      "id": 580,
+      "scheme": "FLOT",
+      "durationMinutes": 310,
+      "durationHHMM": "05:10",
+      "durationText": "5 h 10 min"
+    },
+    {
+      "id": 304,
+      "scheme": "FLOT - DOCETAXEL - BOMBA",
+      "durationMinutes": 360,
+      "durationHHMM": "06:00",
+      "durationText": "6 h"
+    },
+    {
+      "id": 672,
+      "scheme": "FLOT-DURVALUMAB-BOMBA",
+      "durationMinutes": 300,
+      "durationHHMM": "05:00",
+      "durationText": "5 h"
+    },
+    {
+      "id": 457,
+      "scheme": "FLOX",
+      "durationMinutes": 210,
+      "durationHHMM": "03:30",
+      "durationText": "3 h 30 min"
+    },
+    {
+      "id": 522,
+      "scheme": "FLUOROURACILO",
+      "durationMinutes": 120,
+      "durationHHMM": "02:00",
+      "durationText": "2 h"
+    },
+    {
+      "id": 190,
+      "scheme": "FOLFIRI",
+      "durationMinutes": 135,
+      "durationHHMM": "02:15",
+      "durationText": "2 h 15 min"
+    },
+    {
+      "id": 272,
+      "scheme": "FOLFIRI - BOMBA",
+      "durationMinutes": 145,
+      "durationHHMM": "02:25",
+      "durationText": "2 h 25 min"
+    },
+    {
+      "id": 295,
+      "scheme": "FOLFIRINOX - BOMBA",
+      "durationMinutes": 275,
+      "durationHHMM": "04:35",
+      "durationText": "4 h 35 min"
+    },
+    {
+      "id": 13,
+      "scheme": "FOLFOX",
+      "durationMinutes": 165,
+      "durationHHMM": "02:45",
+      "durationText": "2 h 45 min"
+    },
+    {
+      "id": 312,
+      "scheme": "FOLFOX - BEVACIZUMAB - BOMBA",
+      "durationMinutes": 300,
+      "durationHHMM": "05:00",
+      "durationText": "5 h"
+    },
+    {
+      "id": 308,
+      "scheme": "FOLFOX - BOMBA",
+      "durationMinutes": 300,
+      "durationHHMM": "05:00",
+      "durationText": "5 h"
+    },
+    {
+      "id": 246,
+      "scheme": "FOLFOX - DOCETAXEL - BOMBA",
+      "durationMinutes": 225,
+      "durationHHMM": "03:45",
+      "durationText": "3 h 45 min"
+    },
+    {
+      "id": 490,
+      "scheme": "FOLFOXIRI - BOMBA",
+      "durationMinutes": 300,
+      "durationHHMM": "05:00",
+      "durationText": "5 h"
+    },
+    {
+      "id": 519,
+      "scheme": "FOLFOXIRI-BEVA",
+      "durationMinutes": 300,
+      "durationHHMM": "05:00",
+      "durationText": "5 h"
+    },
+    {
+      "id": 458,
+      "scheme": "FOLFOXIRI-BEVA-BOMBA",
+      "durationMinutes": 300,
+      "durationHHMM": "05:00",
+      "durationText": "5 h"
+    },
+    {
+      "id": 520,
+      "scheme": "FU-CISPLATINO-DOCETAXEL",
+      "durationMinutes": 420,
+      "durationHHMM": "07:00",
+      "durationText": "7 h"
+    },
+    {
+      "id": 527,
+      "scheme": "FU-CISPLATINO-DOCETAXEL-BOMBA",
+      "durationMinutes": 210,
+      "durationHHMM": "03:30",
+      "durationText": "3 h 30 min"
+    },
+    {
+      "id": 251,
+      "scheme": "FULVESTRANT",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 523,
+      "scheme": "GAMAGLOBULINA S/C",
+      "durationMinutes": 20,
+      "durationHHMM": "00:20",
+      "durationText": "20 min"
+    },
+    {
+      "id": 345,
+      "scheme": "GEMCIT - PACLITAXEL",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 191,
+      "scheme": "GEMCITABINA",
+      "durationMinutes": 75,
+      "durationHHMM": "01:15",
+      "durationText": "1 h 15 min"
+    },
+    {
+      "id": 192,
+      "scheme": "GEMCITABINA-CARBOPLATINO",
+      "durationMinutes": 160,
+      "durationHHMM": "02:40",
+      "durationText": "2 h 40 min"
+    },
+    {
+      "id": 193,
+      "scheme": "GEMCITABINA-CISPLATINO",
+      "durationMinutes": 135,
+      "durationHHMM": "02:15",
+      "durationText": "2 h 15 min"
+    },
+    {
+      "id": 583,
+      "scheme": "GEMCITABINA-CISPLATINO-ALTAS DOSIS",
+      "durationMinutes": 235,
+      "durationHHMM": "03:55",
+      "durationText": "3 h 55 min"
+    },
+    {
+      "id": 579,
+      "scheme": "GEMCIT-CISPLAT-NIVOLUMAB",
+      "durationMinutes": 205,
+      "durationHHMM": "03:25",
+      "durationText": "3 h 25 min"
+    },
+    {
+      "id": 612,
+      "scheme": "GVD",
+      "durationMinutes": 180,
+      "durationHHMM": "03:00",
+      "durationText": "3 h"
+    },
+    {
+      "id": 250,
+      "scheme": "HEPARINIZACION DE CATETER",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 481,
+      "scheme": "HIDRATACION",
+      "durationMinutes": 20,
+      "durationHHMM": "00:20",
+      "durationText": "20 min"
+    },
+    {
+      "id": 647,
+      "scheme": "IBANDRONATO",
+      "durationMinutes": 55,
+      "durationHHMM": "00:55",
+      "durationText": "55 min"
+    },
+    {
+      "id": 632,
+      "scheme": "IDARRUBICINA-CITARABINA",
+      "durationMinutes": 255,
+      "durationHHMM": "04:15",
+      "durationText": "4 h 15 min"
+    },
+    {
+      "id": 512,
+      "scheme": "IFL",
+      "durationMinutes": 150,
+      "durationHHMM": "02:30",
+      "durationText": "2 h 30 min"
+    },
+    {
+      "id": 462,
+      "scheme": "IFL BEVACIZUMAB",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 508,
+      "scheme": "IFL PANITUNUMAB",
+      "durationMinutes": 210,
+      "durationHHMM": "03:30",
+      "durationText": "3 h 30 min"
+    },
+    {
+      "id": 619,
+      "scheme": "IFL-CETUXI CARGA",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 620,
+      "scheme": "IFL-CETUXI MANTENIMIENTO",
+      "durationMinutes": 180,
+      "durationHHMM": "03:00",
+      "durationText": "3 h"
+    },
+    {
+      "id": 194,
+      "scheme": "IFOSFAMIDA-MESNA",
+      "durationMinutes": 195,
+      "durationHHMM": "03:15",
+      "durationText": "3 h 15 min"
+    },
+    {
+      "id": 357,
+      "scheme": "IFOSFAMIDA-MESNA ALTA DOSIS",
+      "durationMinutes": 540,
+      "durationHHMM": "09:00",
+      "durationText": "9 h"
+    },
+    {
+      "id": 489,
+      "scheme": "IGEV",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 154,
+      "scheme": "INFLIXIMAB",
+      "durationMinutes": 180,
+      "durationHHMM": "03:00",
+      "durationText": "3 h"
+    },
+    {
+      "id": 263,
+      "scheme": "INMUNOGLOBULINA",
+      "durationMinutes": 225,
+      "durationHHMM": "03:45",
+      "durationText": "3 h 45 min"
+    },
+    {
+      "id": 380,
+      "scheme": "INTERFERON SC",
+      "durationMinutes": 20,
+      "durationHHMM": "00:20",
+      "durationText": "20 min"
+    },
+    {
+      "id": 484,
+      "scheme": "INTRATECAL",
+      "durationMinutes": 20,
+      "durationHHMM": "00:20",
+      "durationText": "20 min"
+    },
+    {
+      "id": 214,
+      "scheme": "IPILIMUMAB",
+      "durationMinutes": 135,
+      "durationHHMM": "02:15",
+      "durationText": "2 h 15 min"
+    },
+    {
+      "id": 215,
+      "scheme": "IPILIMUMAB-NIVOLUMAB",
+      "durationMinutes": 195,
+      "durationHHMM": "03:15",
+      "durationText": "3 h 15 min"
+    },
+    {
+      "id": 445,
+      "scheme": "IRINO LIPOSOMAL-FU-BOMBA",
+      "durationMinutes": 120,
+      "durationHHMM": "02:00",
+      "durationText": "2 h"
+    },
+    {
+      "id": 278,
+      "scheme": "IRINOTECAN",
+      "durationMinutes": 150,
+      "durationHHMM": "02:30",
+      "durationText": "2 h 30 min"
+    },
+    {
+      "id": 498,
+      "scheme": "IRINOTECAN - RAMUCIRUMAB",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 524,
+      "scheme": "ISATUXIMAB",
+      "durationMinutes": 180,
+      "durationHHMM": "03:00",
+      "durationText": "3 h"
+    },
+    {
+      "id": 525,
+      "scheme": "ISATUXIMAB-CARFILZOMIB",
+      "durationMinutes": 360,
+      "durationHHMM": "06:00",
+      "durationText": "6 h"
+    },
+    {
+      "id": 247,
+      "scheme": "IXABEPILONA",
+      "durationMinutes": 210,
+      "durationHHMM": "03:30",
+      "durationText": "3 h 30 min"
+    },
+    {
+      "id": 313,
+      "scheme": "KADCYLA",
+      "durationMinutes": 60,
+      "durationHHMM": "01:00",
+      "durationText": "1 h"
+    },
+    {
+      "id": 667,
+      "scheme": "LEUCOVORINA IM",
+      "durationMinutes": 20,
+      "durationHHMM": "00:20",
+      "durationText": "20 min"
+    },
+    {
+      "id": 372,
+      "scheme": "LLA",
+      "durationMinutes": 120,
+      "durationHHMM": "02:00",
+      "durationText": "2 h"
+    },
+    {
+      "id": 639,
+      "scheme": "LUSPATERCEPT",
+      "durationMinutes": 20,
+      "durationHHMM": "00:20",
+      "durationText": "20 min"
+    },
+    {
+      "id": 339,
+      "scheme": "LV - FU - BEVA - BOMBA",
+      "durationMinutes": 180,
+      "durationHHMM": "03:00",
+      "durationText": "3 h"
+    },
+    {
+      "id": 261,
+      "scheme": "LV - FU - BEVACIZUMAB",
+      "durationMinutes": 210,
+      "durationHHMM": "03:30",
+      "durationText": "3 h 30 min"
+    },
+    {
+      "id": 269,
+      "scheme": "LV - FU - BOMBA",
+      "durationMinutes": 300,
+      "durationHHMM": "05:00",
+      "durationText": "5 h"
+    },
+    {
+      "id": 256,
+      "scheme": "LV / FU 4 DIAS",
+      "durationMinutes": 90,
+      "durationHHMM": "01:30",
+      "durationText": "1 h 30 min"
+    },
+    {
+      "id": 257,
+      "scheme": "LV / FU 5 DIAS",
+      "durationMinutes": 115,
+      "durationHHMM": "01:55",
+      "durationText": "1 h 55 min"
+    },
+    {
+      "id": 147,
+      "scheme": "MEDICAMENTOS",
+      "durationMinutes": 75,
+      "durationHHMM": "01:15",
+      "durationText": "1 h 15 min"
+    },
+    {
+      "id": 553,
+      "scheme": "METOTREXATO",
+      "durationMinutes": 60,
+      "durationHHMM": "01:00",
+      "durationText": "1 h"
+    },
+    {
+      "id": 324,
+      "scheme": "METOTREXATO - IM",
+      "durationMinutes": 60,
+      "durationHHMM": "01:00",
+      "durationText": "1 h"
+    },
+    {
+      "id": 379,
+      "scheme": "METOTREXATO SC",
+      "durationMinutes": 20,
+      "durationHHMM": "00:20",
+      "durationText": "20 min"
+    },
+    {
+      "id": 671,
+      "scheme": "MIRVETUXIMAB SORAVTANSINE",
+      "durationMinutes": 120,
+      "durationHHMM": "02:00",
+      "durationText": "2 h"
+    },
+    {
+      "id": 276,
+      "scheme": "MITOMICINA",
+      "durationMinutes": 150,
+      "durationHHMM": "02:30",
+      "durationText": "2 h 30 min"
+    },
+    {
+      "id": 376,
+      "scheme": "MITOXANTRONA",
+      "durationMinutes": 120,
+      "durationHHMM": "02:00",
+      "durationText": "2 h"
+    },
+    {
+      "id": 644,
+      "scheme": "MK2400",
+      "durationMinutes": 85,
+      "durationHHMM": "01:25",
+      "durationText": "1 h 25 min"
+    },
+    {
+      "id": 141,
+      "scheme": "MÓDULO ALTA COMPLEJIDAD",
+      "durationMinutes": 1,
+      "durationHHMM": "00:01",
+      "durationText": "1 min"
+    },
+    {
+      "id": 142,
+      "scheme": "MÓDULO ALTA CON MONOCLONALES",
+      "durationMinutes": 1,
+      "durationHHMM": "00:01",
+      "durationText": "1 min"
+    },
+    {
+      "id": 139,
+      "scheme": "MÓDULO BAJA COMPLEJIDAD",
+      "durationMinutes": 1,
+      "durationHHMM": "00:01",
+      "durationText": "1 min"
+    },
+    {
+      "id": 146,
+      "scheme": "MÓDULO HEMATOLÓGICO",
+      "durationMinutes": 1,
+      "durationHHMM": "00:01",
+      "durationText": "1 min"
+    },
+    {
+      "id": 140,
+      "scheme": "MÓDULO MEDIANA COMPLEJIDAD",
+      "durationMinutes": 1,
+      "durationHHMM": "00:01",
+      "durationText": "1 min"
+    },
+    {
+      "id": 143,
+      "scheme": "MÓDULO SIN COMPLEJIDAD",
+      "durationMinutes": 1,
+      "durationHHMM": "00:01",
+      "durationText": "1 min"
+    },
+    {
+      "id": 486,
+      "scheme": "MONOFER",
+      "durationMinutes": 60,
+      "durationHHMM": "01:00",
+      "durationText": "1 h"
+    },
+    {
+      "id": 665,
+      "scheme": "MOSUNETUZUMAB",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 544,
+      "scheme": "MVAC DIA 1",
+      "durationMinutes": 60,
+      "durationHHMM": "01:00",
+      "durationText": "1 h"
+    },
+    {
+      "id": 545,
+      "scheme": "MVAC DIA 2",
+      "durationMinutes": 300,
+      "durationHHMM": "05:00",
+      "durationText": "5 h"
+    },
+    {
+      "id": 107,
+      "scheme": "NAB PACLITAXEL-GEMCITABINA",
+      "durationMinutes": 105,
+      "durationHHMM": "01:45",
+      "durationText": "1 h 45 min"
+    },
+    {
+      "id": 536,
+      "scheme": "NAB-PACLITAXEL",
+      "durationMinutes": 90,
+      "durationHHMM": "01:30",
+      "durationText": "1 h 30 min"
+    },
+    {
+      "id": 668,
+      "scheme": "NALIRIFOX-BOMBA",
+      "durationMinutes": 300,
+      "durationHHMM": "05:00",
+      "durationText": "5 h"
+    },
+    {
+      "id": 319,
+      "scheme": "NIMOTUZUMAB",
+      "durationMinutes": 60,
+      "durationHHMM": "01:00",
+      "durationText": "1 h"
+    },
+    {
+      "id": 216,
+      "scheme": "NIVOLUMAB",
+      "durationMinutes": 105,
+      "durationHHMM": "01:45",
+      "durationText": "1 h 45 min"
+    },
+    {
+      "id": 556,
+      "scheme": "NIVOLUMAB FOLFOX BOMBA",
+      "durationMinutes": 300,
+      "durationHHMM": "05:00",
+      "durationText": "5 h"
+    },
+    {
+      "id": 635,
+      "scheme": "NIVOLUMAB-RELATLIMAB",
+      "durationMinutes": 75,
+      "durationHHMM": "01:15",
+      "durationText": "1 h 15 min"
+    },
+    {
+      "id": 316,
+      "scheme": "NULOJIX",
+      "durationMinutes": 90,
+      "durationHHMM": "01:30",
+      "durationText": "1 h 30 min"
+    },
+    {
+      "id": 344,
+      "scheme": "OBINUTUZUMAB 1º VEZ",
+      "durationMinutes": 345,
+      "durationHHMM": "05:45",
+      "durationText": "5 h 45 min"
+    },
+    {
+      "id": 499,
+      "scheme": "OBITUZUMAB - BENDAMUSTINE",
+      "durationMinutes": 360,
+      "durationHHMM": "06:00",
+      "durationText": "6 h"
+    },
+    {
+      "id": 582,
+      "scheme": "OCRELIZUMAB",
+      "durationMinutes": 205,
+      "durationHHMM": "03:25",
+      "durationText": "3 h 25 min"
+    },
+    {
+      "id": 205,
+      "scheme": "OCTEOTRIDE",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 514,
+      "scheme": "OXA-CAPE-PEMBRO",
+      "durationMinutes": 210,
+      "durationHHMM": "03:30",
+      "durationText": "3 h 30 min"
+    },
+    {
+      "id": 195,
+      "scheme": "OXALIPLATINO",
+      "durationMinutes": 250,
+      "durationHHMM": "04:10",
+      "durationText": "4 h 10 min"
+    },
+    {
+      "id": 485,
+      "scheme": "OXALIPLATINO CAPECITABINA NIVOLUMAB",
+      "durationMinutes": 210,
+      "durationHHMM": "03:30",
+      "durationText": "3 h 30 min"
+    },
+    {
+      "id": 108,
+      "scheme": "OXALIPLATINO-CAPECITABINA",
+      "durationMinutes": 250,
+      "durationHHMM": "04:10",
+      "durationText": "4 h 10 min"
+    },
+    {
+      "id": 515,
+      "scheme": "OXALIPLATINO-CAPECITABINA-PEMBROLIZUMAB",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 196,
+      "scheme": "OXALIPLATINO-GEMCITABINA",
+      "durationMinutes": 195,
+      "durationHHMM": "03:15",
+      "durationText": "3 h 15 min"
+    },
+    {
+      "id": 197,
+      "scheme": "OXALIPLATINO-LV-5FU",
+      "durationMinutes": 190,
+      "durationHHMM": "03:10",
+      "durationText": "3 h 10 min"
+    },
+    {
+      "id": 636,
+      "scheme": "PACLI-CARBO-DOSTARLIMAB",
+      "durationMinutes": 335,
+      "durationHHMM": "05:35",
+      "durationText": "5 h 35 min"
+    },
+    {
+      "id": 538,
+      "scheme": "PACLI-CARBO-PEMBRO-BEVA",
+      "durationMinutes": 360,
+      "durationHHMM": "06:00",
+      "durationText": "6 h"
+    },
+    {
+      "id": 270,
+      "scheme": "PACLITAXE - PERTUZUMAB - TRASTUZUMAB 1º VEZ",
+      "durationMinutes": 280,
+      "durationHHMM": "04:40",
+      "durationText": "4 h 40 min"
+    },
+    {
+      "id": 271,
+      "scheme": "PACLITAXE - PERTUZUMAB - TRASTUZUMAB 2º VEZ",
+      "durationMinutes": 220,
+      "durationHHMM": "03:40",
+      "durationText": "3 h 40 min"
+    },
+    {
+      "id": 273,
+      "scheme": "PACLITAXEL - BEVACIZUMAB",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 298,
+      "scheme": "PACLITAXEL - CARBOPLATINO - PEMBROLIZUMAB",
+      "durationMinutes": 315,
+      "durationHHMM": "05:15",
+      "durationText": "5 h 15 min"
+    },
+    {
+      "id": 343,
+      "scheme": "PACLITAXEL - CISPLATINO",
+      "durationMinutes": 385,
+      "durationHHMM": "06:25",
+      "durationText": "6 h 25 min"
+    },
+    {
+      "id": 299,
+      "scheme": "PACLITAXEL - GEMCITABINA - OXALIPLATIN",
+      "durationMinutes": 330,
+      "durationHHMM": "05:30",
+      "durationText": "5 h 30 min"
+    },
+    {
+      "id": 199,
+      "scheme": "PACLITAXEL IFOSFAMIDA CISPLATINO",
+      "durationMinutes": 355,
+      "durationHHMM": "05:55",
+      "durationText": "5 h 55 min"
+    },
+    {
+      "id": 546,
+      "scheme": "PACLITAXEL PEMBROLIZUMAB",
+      "durationMinutes": 160,
+      "durationHHMM": "02:40",
+      "durationText": "2 h 40 min"
+    },
+    {
+      "id": 109,
+      "scheme": "PACLITAXEL SEMANAL",
+      "durationMinutes": 130,
+      "durationHHMM": "02:10",
+      "durationText": "2 h 10 min"
+    },
+    {
+      "id": 572,
+      "scheme": "PACLITAXEL(S)-CARBOPLATINO(S)-PEMBROLIZUMAB",
+      "durationMinutes": 190,
+      "durationHHMM": "03:10",
+      "durationText": "3 h 10 min"
+    },
+    {
+      "id": 571,
+      "scheme": "PACLITAXEL(S)-CARBOPLATINO-PEMBROLIZUMAB",
+      "durationMinutes": 220,
+      "durationHHMM": "03:40",
+      "durationText": "3 h 40 min"
+    },
+    {
+      "id": 534,
+      "scheme": "PACLITAXEL/CARBOPLATINO/NIVOLUMAB",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 24,
+      "scheme": "PACLITAXEL-CARBOPLATINO",
+      "durationMinutes": 310,
+      "durationHHMM": "05:10",
+      "durationText": "5 h 10 min"
+    },
+    {
+      "id": 513,
+      "scheme": "PACLITAXEL-CARBOPLATINO-BEVACIZUMAB-ATEZOLIZUMA",
+      "durationMinutes": 360,
+      "durationHHMM": "06:00",
+      "durationText": "6 h"
+    },
+    {
+      "id": 626,
+      "scheme": "PACLITAXEL-CETUXI DIA 1- CICLO 1",
+      "durationMinutes": 250,
+      "durationHHMM": "04:10",
+      "durationText": "4 h 10 min"
+    },
+    {
+      "id": 627,
+      "scheme": "PACLITAXEL-CETUXIMAB",
+      "durationMinutes": 190,
+      "durationHHMM": "03:10",
+      "durationText": "3 h 10 min"
+    },
+    {
+      "id": 206,
+      "scheme": "PAMIDRONATO",
+      "durationMinutes": 150,
+      "durationHHMM": "02:30",
+      "durationText": "2 h 30 min"
+    },
+    {
+      "id": 279,
+      "scheme": "PAMIDRONATO - INMUNOGLOBULINA",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 275,
+      "scheme": "PANITUMUMAB",
+      "durationMinutes": 100,
+      "durationHHMM": "01:40",
+      "durationText": "1 h 40 min"
+    },
+    {
+      "id": 284,
+      "scheme": "PANITUMUMAB - OXALIPLATINO",
+      "durationMinutes": 235,
+      "durationHHMM": "03:55",
+      "durationText": "3 h 55 min"
+    },
+    {
+      "id": 277,
+      "scheme": "PANITUMUMAB 1º VEZ- IRINOTECAN",
+      "durationMinutes": 195,
+      "durationHHMM": "03:15",
+      "durationText": "3 h 15 min"
+    },
+    {
+      "id": 221,
+      "scheme": "PANITUMUMAB 1º VEZ-FOLFOX-BOMBA",
+      "durationMinutes": 235,
+      "durationHHMM": "03:55",
+      "durationText": "3 h 55 min"
+    },
+    {
+      "id": 222,
+      "scheme": "PANITUMUMAB 1º VEZ-LV-5FU",
+      "durationMinutes": 165,
+      "durationHHMM": "02:45",
+      "durationText": "2 h 45 min"
+    },
+    {
+      "id": 218,
+      "scheme": "PANITUMUMAB 2º VEZ Y SIG -FOLFIRI-BOMBA",
+      "durationMinutes": 195,
+      "durationHHMM": "03:15",
+      "durationText": "3 h 15 min"
+    },
+    {
+      "id": 383,
+      "scheme": "PANITUMUMAB- FOLFIRINOX - BOMBA",
+      "durationMinutes": 300,
+      "durationHHMM": "05:00",
+      "durationText": "5 h"
+    },
+    {
+      "id": 217,
+      "scheme": "PANITUMUMAB-FOLFIRI",
+      "durationMinutes": 205,
+      "durationHHMM": "03:25",
+      "durationText": "3 h 25 min"
+    },
+    {
+      "id": 219,
+      "scheme": "PANITUMUMAB-FOLFOX 1º VEZ",
+      "durationMinutes": 225,
+      "durationHHMM": "03:45",
+      "durationText": "3 h 45 min"
+    },
+    {
+      "id": 220,
+      "scheme": "PANITUMUMAB-FOLFOX 2",
+      "durationMinutes": 270,
+      "durationHHMM": "04:30",
+      "durationText": "4 h 30 min"
+    },
+    {
+      "id": 541,
+      "scheme": "PANITUMUMAB-LV-FU-BOMBA",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 502,
+      "scheme": "PEMBRO-GEMCIT-CARBO",
+      "durationMinutes": 210,
+      "durationHHMM": "03:30",
+      "durationText": "3 h 30 min"
+    },
+    {
+      "id": 223,
+      "scheme": "PEMBROLIZUMAB",
+      "durationMinutes": 75,
+      "durationHHMM": "01:15",
+      "durationText": "1 h 15 min"
+    },
+    {
+      "id": 611,
+      "scheme": "PEMBROLIZUMAB GVD",
+      "durationMinutes": 180,
+      "durationHHMM": "03:00",
+      "durationText": "3 h"
+    },
+    {
+      "id": 613,
+      "scheme": "PEMBROLIZUMAB-BEVACIZUMAB",
+      "durationMinutes": 105,
+      "durationHHMM": "01:45",
+      "durationText": "1 h 45 min"
+    },
+    {
+      "id": 349,
+      "scheme": "PEMBRO-PEMETREXED-CISPLATINO",
+      "durationMinutes": 180,
+      "durationHHMM": "03:00",
+      "durationText": "3 h"
+    },
+    {
+      "id": 252,
+      "scheme": "PEMETREXED",
+      "durationMinutes": 55,
+      "durationHHMM": "00:55",
+      "durationText": "55 min"
+    },
+    {
+      "id": 124,
+      "scheme": "PEMETREXED-CARBOPLATINO",
+      "durationMinutes": 115,
+      "durationHHMM": "01:55",
+      "durationText": "1 h 55 min"
+    },
+    {
+      "id": 198,
+      "scheme": "PEMETREXED-CISPLATINO",
+      "durationMinutes": 115,
+      "durationHHMM": "01:55",
+      "durationText": "1 h 55 min"
+    },
+    {
+      "id": 364,
+      "scheme": "PEMETREXED-PEMBROLIZUMAB",
+      "durationMinutes": 120,
+      "durationHHMM": "02:00",
+      "durationText": "2 h"
+    },
+    {
+      "id": 384,
+      "scheme": "PERTU - DOCETAXEL",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 314,
+      "scheme": "PERTU - TRASTU - DOCETAXEL - CARBO-CARGA",
+      "durationMinutes": 340,
+      "durationHHMM": "05:40",
+      "durationText": "5 h 40 min"
+    },
+    {
+      "id": 570,
+      "scheme": "PERTU - TRASTU - DOCETAXEL - CARBO-MANTENIMIENTO",
+      "durationMinutes": 310,
+      "durationHHMM": "05:10",
+      "durationText": "5 h 10 min"
+    },
+    {
+      "id": 518,
+      "scheme": "PERTU-TRASTU SC",
+      "durationMinutes": 20,
+      "durationHHMM": "00:20",
+      "durationText": "20 min"
+    },
+    {
+      "id": 528,
+      "scheme": "PERTU-TRASTU-SC + DOCETAXEL",
+      "durationMinutes": 120,
+      "durationHHMM": "02:00",
+      "durationText": "2 h"
+    },
+    {
+      "id": 25,
+      "scheme": "PERTUZUMAB-TRASTUZUMAB",
+      "durationMinutes": 195,
+      "durationHHMM": "03:15",
+      "durationText": "3 h 15 min"
+    },
+    {
+      "id": 224,
+      "scheme": "PERTUZUMAB-TRASTUZUMAB-DOCETAXEL 1ERA VEZ",
+      "durationMinutes": 280,
+      "durationHHMM": "04:40",
+      "durationText": "4 h 40 min"
+    },
+    {
+      "id": 643,
+      "scheme": "P-GEMOX",
+      "durationMinutes": 150,
+      "durationHHMM": "02:30",
+      "durationText": "2 h 30 min"
+    },
+    {
+      "id": 601,
+      "scheme": "PUNCION ASPIRACION Y BIOPSIA DE MEDULA OSEA",
+      "durationMinutes": 20,
+      "durationHHMM": "00:20",
+      "durationText": "20 min"
+    },
+    {
+      "id": 333,
+      "scheme": "PUNCION ASPIRACION Y BIOPSIA DE MEDULA OSEA.",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 144,
+      "scheme": "QUIMIOTERAPIA VIA ORAL",
+      "durationMinutes": 1,
+      "durationHHMM": "00:01",
+      "durationText": "1 min"
+    },
+    {
+      "id": 497,
+      "scheme": "R - CVP",
+      "durationMinutes": 360,
+      "durationHHMM": "06:00",
+      "durationText": "6 h"
+    },
+    {
+      "id": 540,
+      "scheme": "R-ABVD",
+      "durationMinutes": 330,
+      "durationHHMM": "05:30",
+      "durationText": "5 h 30 min"
+    },
+    {
+      "id": 320,
+      "scheme": "RAMUCIRUMAB",
+      "durationMinutes": 105,
+      "durationHHMM": "01:45",
+      "durationText": "1 h 45 min"
+    },
+    {
+      "id": 348,
+      "scheme": "RAMUCIRUMAB-DOCETAXEL",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 225,
+      "scheme": "RAMUCIRUMAB-FOLFIRI",
+      "durationMinutes": 205,
+      "durationHHMM": "03:25",
+      "durationText": "3 h 25 min"
+    },
+    {
+      "id": 226,
+      "scheme": "RAMUCIRUMAB-PACLITAXEL",
+      "durationMinutes": 165,
+      "durationHHMM": "02:45",
+      "durationText": "2 h 45 min"
+    },
+    {
+      "id": 175,
+      "scheme": "R-CHOP",
+      "durationMinutes": 345,
+      "durationHHMM": "05:45",
+      "durationText": "5 h 45 min"
+    },
+    {
+      "id": 599,
+      "scheme": "RDHAP (INTERNADO)",
+      "durationMinutes": 5,
+      "durationHHMM": "00:05",
+      "durationText": "5 min"
+    },
+    {
+      "id": 558,
+      "scheme": "RECAMBIO DE BOMBA",
+      "durationMinutes": 60,
+      "durationHHMM": "01:00",
+      "durationText": "1 h"
+    },
+    {
+      "id": 267,
+      "scheme": "RETIRO BOMBA",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 321,
+      "scheme": "R-IGEV",
+      "durationMinutes": 480,
+      "durationHHMM": "08:00",
+      "durationText": "8 h"
+    },
+    {
+      "id": 176,
+      "scheme": "RITUX-CDDP-CITARABINA",
+      "durationMinutes": 45,
+      "durationHHMM": "00:45",
+      "durationText": "45 min"
+    },
+    {
+      "id": 29,
+      "scheme": "RITUXIMAB",
+      "durationMinutes": 255,
+      "durationHHMM": "04:15",
+      "durationText": "4 h 15 min"
+    },
+    {
+      "id": 287,
+      "scheme": "RITUXIMAB - GEMCITABINA - OXALIPLATINO",
+      "durationMinutes": 420,
+      "durationHHMM": "07:00",
+      "durationText": "7 h"
+    },
+    {
+      "id": 302,
+      "scheme": "RITUXIMAB - MITOXANTRONA - ETOPOSIDO - IFOSFAMIDA",
+      "durationMinutes": 600,
+      "durationHHMM": "10:00",
+      "durationText": "10 h"
+    },
+    {
+      "id": 374,
+      "scheme": "RITUXIMAB SC",
+      "durationMinutes": 5,
+      "durationHHMM": "00:05",
+      "durationText": "5 min"
+    },
+    {
+      "id": 30,
+      "scheme": "RITUXIMAB-BENDAMUSTINE",
+      "durationMinutes": 315,
+      "durationHHMM": "05:15",
+      "durationText": "5 h 15 min"
+    },
+    {
+      "id": 27,
+      "scheme": "RITUXIMAB-BORTEZOMIB",
+      "durationMinutes": 255,
+      "durationHHMM": "04:15",
+      "durationText": "4 h 15 min"
+    },
+    {
+      "id": 178,
+      "scheme": "RITUXIMAB-CDDP-CITARABINA",
+      "durationMinutes": 465,
+      "durationHHMM": "07:45",
+      "durationText": "7 h 45 min"
+    },
+    {
+      "id": 179,
+      "scheme": "RITUXIMAB-GEMCITABINA",
+      "durationMinutes": 300,
+      "durationHHMM": "05:00",
+      "durationText": "5 h"
+    },
+    {
+      "id": 596,
+      "scheme": "RITUXIMAB-GEMCIT-CISPLATINO 1ERA VEZ",
+      "durationMinutes": 420,
+      "durationHHMM": "07:00",
+      "durationText": "7 h"
+    },
+    {
+      "id": 597,
+      "scheme": "RITUXIMAB-GEMCIT-CISPLATINO 2DA VEZ Y SIGUIENTES",
+      "durationMinutes": 360,
+      "durationHHMM": "06:00",
+      "durationText": "6 h"
+    },
+    {
+      "id": 180,
+      "scheme": "RITUXIMAB-POLATUZUMAB-BENDAMUSTINA",
+      "durationMinutes": 375,
+      "durationHHMM": "06:15",
+      "durationText": "6 h 15 min"
+    },
+    {
+      "id": 181,
+      "scheme": "RITUXIMAB-REVLIMID",
+      "durationMinutes": 45,
+      "durationHHMM": "00:45",
+      "durationText": "45 min"
+    },
+    {
+      "id": 351,
+      "scheme": "SACARATO",
+      "durationMinutes": 90,
+      "durationHHMM": "01:30",
+      "durationText": "1 h 30 min"
+    },
+    {
+      "id": 504,
+      "scheme": "SACITUZUMAB GOVITECAN 1",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 505,
+      "scheme": "SACITUZUMAB GOVITECAN 8",
+      "durationMinutes": 180,
+      "durationHHMM": "03:00",
+      "durationText": "3 h"
+    },
+    {
+      "id": 253,
+      "scheme": "SANDOSTATIN",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 243,
+      "scheme": "SESION QT CON CITOSTATICOS COD 145002",
+      "durationMinutes": 5,
+      "durationHHMM": "00:05",
+      "durationText": "5 min"
+    },
+    {
+      "id": 244,
+      "scheme": "SESION QT SIN CITOSTATICOS COD 145001",
+      "durationMinutes": 5,
+      "durationHHMM": "00:05",
+      "durationText": "5 min"
+    },
+    {
+      "id": 207,
+      "scheme": "SOMATULINE",
+      "durationMinutes": 75,
+      "durationHHMM": "01:15",
+      "durationText": "1 h 15 min"
+    },
+    {
+      "id": 669,
+      "scheme": "TALLER FISIOTERAPIA",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 674,
+      "scheme": "TALLER NUTRICION",
+      "durationMinutes": 10,
+      "durationHHMM": "00:10",
+      "durationText": "10 min"
+    },
+    {
+      "id": 227,
+      "scheme": "TDM1 1VEZ",
+      "durationMinutes": 135,
+      "durationHHMM": "02:15",
+      "durationText": "2 h 15 min"
+    },
+    {
+      "id": 434,
+      "scheme": "TDM1 2° VEZ Y SIG.",
+      "durationMinutes": 75,
+      "durationHHMM": "01:15",
+      "durationText": "1 h 15 min"
+    },
+    {
+      "id": 654,
+      "scheme": "TECLISTAMAB",
+      "durationMinutes": 20,
+      "durationHHMM": "00:20",
+      "durationText": "20 min"
+    },
+    {
+      "id": 145,
+      "scheme": "TERAPIA BLANCO MOLECULAR",
+      "durationMinutes": 1,
+      "durationHHMM": "00:01",
+      "durationText": "1 min"
+    },
+    {
+      "id": 417,
+      "scheme": "THYROGEN",
+      "durationMinutes": 20,
+      "durationHHMM": "00:20",
+      "durationText": "20 min"
+    },
+    {
+      "id": 370,
+      "scheme": "TIP",
+      "durationMinutes": 345,
+      "durationHHMM": "05:45",
+      "durationText": "5 h 45 min"
+    },
+    {
+      "id": 126,
+      "scheme": "TOPOTECAN",
+      "durationMinutes": 75,
+      "durationHHMM": "01:15",
+      "durationText": "1 h 15 min"
+    },
+    {
+      "id": 228,
+      "scheme": "TOPOTECAN-AVASTIN",
+      "durationMinutes": 165,
+      "durationHHMM": "02:45",
+      "durationText": "2 h 45 min"
+    },
+    {
+      "id": 491,
+      "scheme": "TRABECTEDINA",
+      "durationMinutes": 530,
+      "durationHHMM": "08:50",
+      "durationText": "8 h 50 min"
+    },
+    {
+      "id": 557,
+      "scheme": "TRASTUZUMAB - ERIBULINA",
+      "durationMinutes": 110,
+      "durationHHMM": "01:50",
+      "durationText": "1 h 50 min"
+    },
+    {
+      "id": 495,
+      "scheme": "TRASTUZUMAB - GEMCITABINA",
+      "durationMinutes": 90,
+      "durationHHMM": "01:30",
+      "durationText": "1 h 30 min"
+    },
+    {
+      "id": 574,
+      "scheme": "TRASTUZUMAB DERUXTECAN",
+      "durationMinutes": 135,
+      "durationHHMM": "02:15",
+      "durationText": "2 h 15 min"
+    },
+    {
+      "id": 575,
+      "scheme": "TRASTUZUMAB DERUXTECAN 2DA EN ADELANTE",
+      "durationMinutes": 105,
+      "durationHHMM": "01:45",
+      "durationText": "1 h 45 min"
+    },
+    {
+      "id": 340,
+      "scheme": "TRASTUZUMAB EV",
+      "durationMinutes": 120,
+      "durationHHMM": "02:00",
+      "durationText": "2 h"
+    },
+    {
+      "id": 492,
+      "scheme": "TRASTUZUMAB EV VINORELBINE",
+      "durationMinutes": 60,
+      "durationHHMM": "01:00",
+      "durationText": "1 h"
+    },
+    {
+      "id": 255,
+      "scheme": "TRASTUZUMAB SC",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 22,
+      "scheme": "TRASTUZUMAB-DOCETAXEL",
+      "durationMinutes": 195,
+      "durationHHMM": "03:15",
+      "durationText": "3 h 15 min"
+    },
+    {
+      "id": 229,
+      "scheme": "TRASTUZUMAB-DOCETAXEL-CISPLATINO",
+      "durationMinutes": 255,
+      "durationHHMM": "04:15",
+      "durationText": "4 h 15 min"
+    },
+    {
+      "id": 230,
+      "scheme": "TRASTUZUMAB-PACLITAXEL 1°",
+      "durationMinutes": 220,
+      "durationHHMM": "03:40",
+      "durationText": "3 h 40 min"
+    },
+    {
+      "id": 369,
+      "scheme": "TRASTUZUMAB-PACLITAXEL 2°",
+      "durationMinutes": 190,
+      "durationHHMM": "03:10",
+      "durationText": "3 h 10 min"
+    },
+    {
+      "id": 662,
+      "scheme": "TRIOXIDO DE ARSÉNICO",
+      "durationMinutes": 60,
+      "durationHHMM": "01:00",
+      "durationText": "1 h"
+    },
+    {
+      "id": 608,
+      "scheme": "USTEKINUMAB",
+      "durationMinutes": 90,
+      "durationHHMM": "01:30",
+      "durationText": "1 h 30 min"
+    },
+    {
+      "id": 283,
+      "scheme": "VAC",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 501,
+      "scheme": "VEDOLIZUMAB",
+      "durationMinutes": 120,
+      "durationHHMM": "02:00",
+      "durationText": "2 h"
+    },
+    {
+      "id": 569,
+      "scheme": "VEIP",
+      "durationMinutes": 285,
+      "durationHHMM": "04:45",
+      "durationText": "4 h 45 min"
+    },
+    {
+      "id": 562,
+      "scheme": "V-EPOCH PLASMOBLASTICO",
+      "durationMinutes": 240,
+      "durationHHMM": "04:00",
+      "durationText": "4 h"
+    },
+    {
+      "id": 322,
+      "scheme": "VINCRIS - DOXO - DAUNORUBICINA",
+      "durationMinutes": 120,
+      "durationHHMM": "02:00",
+      "durationText": "2 h"
+    },
+    {
+      "id": 561,
+      "scheme": "VINCRISTINA",
+      "durationMinutes": 120,
+      "durationHHMM": "02:00",
+      "durationText": "2 h"
+    },
+    {
+      "id": 371,
+      "scheme": "VINFLUNINA",
+      "durationMinutes": 120,
+      "durationHHMM": "02:00",
+      "durationText": "2 h"
+    },
+    {
+      "id": 265,
+      "scheme": "VINORELBINE",
+      "durationMinutes": 120,
+      "durationHHMM": "02:00",
+      "durationText": "2 h"
+    },
+    {
+      "id": 208,
+      "scheme": "ZOLADEX",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    },
+    {
+      "id": 360,
+      "scheme": "ZOLADEX C/3M",
+      "durationMinutes": 30,
+      "durationHHMM": "00:30",
+      "durationText": "30 min"
+    }
+  ]
+}

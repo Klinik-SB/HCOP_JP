@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Manual de uso · HCOP Centro Oncológico</title>
+  <meta name="description" content="Manual de usuario de HCOP Centro Oncológico: secciones, flujos y catálogo de botones.">
+  <link rel="stylesheet" href="./documentacion.css">
+</head>
+<body>
+  <header class="doc-topbar">
+    <a class="doc-brand" href="./index.html"><span class="doc-brand-mark">HC</span><div><strong>Manual de uso</strong><small>HCOP Centro Oncológico</small></div></a>
+    <div class="doc-top-actions">
+      <a class="doc-button" href="./index.html">Índice</a>
+      <a class="doc-button" href="./referencia-tecnica.html">Referencia técnica</a>
+      <a class="doc-button primary" href="../">Abrir sistema</a>
+    </div>
+  </header>
+
+  <div class="doc-shell">
+    <aside class="doc-sidebar">
+      <strong>Contenido</strong>
+      <nav>
+        <a href="#objetivo">Objetivo</a>
+        <a href="#acceso">Ingreso, usuario activo y bandeja</a>
+        <a href="#recorrido">Recorrido rápido</a>
+        <a href="#pantalla">Distribución de pantalla</a>
+        <a href="#ayuda">Ayuda interactiva</a>
+        <a href="#configuracion">Configuración</a>
+        <a class="sub" href="#config-diagnosticos">Equivalencias diagnósticas</a>
+        <a class="sub" href="#config-plantillas">Plantillas anatómicas</a>
+        <a class="sub" href="#config-ia">Inteligencia artificial</a>
+        <a class="sub" href="#config-acceso">Usuarios y permisos</a>
+        <a href="#paciente">Crear, abrir y actualizar paciente</a>
+        <a href="#historia">Historia clínica</a>
+        <a class="sub" href="#diagnostico-catalogos">Diagnóstico clasificado</a>
+        <a href="#estudios">Estudios e imágenes</a>
+        <a href="#hospital">H. de día</a>
+        <a class="sub" href="#tratamientos">Tratamientos y aplicaciones</a>
+        <a class="sub" href="#detalle-tratamiento">Detalle y documentos</a>
+        <a class="sub" href="#modal">Modal amplio</a>
+        <a href="#prescripcion">Prescripción</a>
+        <a href="#agente">Agente clínico</a>
+        <a href="#investigacion">Investigación</a>
+        <a href="#timeline">Línea de tiempo</a>
+        <a href="#protocolos">Protocolos</a>
+        <a href="#herramientas">Herramientas</a>
+        <a href="#guardar">Guardar e imprimir</a>
+        <a href="#botones">Catálogo de botones</a>
+        <a href="#problemas">Problemas frecuentes</a>
+      </nav>
+    </aside>
+
+    <main class="doc-main">
+      <section class="doc-hero">
+        <span class="doc-kicker">Guía funcional · sin datos reales</span>
+        <h1>Cómo usar cada parte de HCOP</h1>
+        <p>Manual operativo de la historia clínica oncológica, tratamiento, Hospital de día, prescripción y herramientas. Incluye condiciones previas y resultado esperado de los controles.</p>
+        <div class="doc-meta"><span class="doc-tag">Usuario clínico</span><span class="doc-tag">Secretaría / Hospital de día</span><span class="doc-tag">Farmacia</span><span class="doc-tag">Acceso identificado</span></div>
+      </section>
+
+      <section class="doc-section" id="objetivo">
+        <h2>Objetivo del sistema</h2>
+        <p class="doc-lead">HCOP JP es un único sistema para la historia clínica oncológica longitudinal y la operación de tratamientos/Hospital de Día. La hoja blanca izquierda es el documento clínico; la mitad derecha reúne estudios, H. de día, prescripción y apoyo a la decisión. Todos los pacientes y procesos comparten la base PostgreSQL local.</p>
+        <div class="doc-callout"><strong>Concepto principal:</strong> un tratamiento es el plan; cada ciclo o aplicación de ese plan ocurre en Hospital de día. Por eso la solapa integrada muestra ambos niveles como una jerarquía desplegable, sin duplicar la información.</div>
+      </section>
+
+      <section class="doc-section" id="acceso">
+        <h2>Ingreso, usuario activo y bandeja clínica</h2>
+        <p>HCOP siempre identifica a la persona que opera. El ingreso con usuario y contraseña es obligatorio.</p>
+        <div class="doc-grid">
+          <article class="doc-card accent"><h3>Ingreso con usuario y clave</h3><p>La ficha permanece bloqueada hasta validar una cuenta activa. Cada profesional trabaja con su propia sesión y sólo ve o modifica las secciones autorizadas.</p></article>
+          <article class="doc-card accent"><h3>Sesión y paciente activo</h3><p>La sesión conserva la identidad, los roles y el paciente abierto. Cambiar de paciente no afecta las sesiones de otros usuarios.</p></article>
+        </div>
+        <p>La cabecera muestra las iniciales, el nombre y los roles del <strong>usuario activo</strong>. Ese usuario queda como autor de altas, suspensiones, solicitudes y decisiones. El botón de salida revoca la sesión y vuelve a la pantalla de ingreso. El nombre de usuario no distingue mayúsculas y el correo también puede utilizarse como identificador.</p>
+        <h3>Bandeja de solicitudes</h3>
+        <p>Los profesionales con permiso para resolver prescripciones o continuidad ven una campana con la cantidad de pendientes. Una solicitud nueva se abre automáticamente cuando no hay otro formulario clínico en curso; también puede abrirse desde la campana. La bandeja muestra paciente, tratamiento, ciclo, solicitante y mensaje, y sólo el destinatario asignado puede resolverla.</p>
+        <div class="doc-callout warning"><strong>Permisos efectivos:</strong> que un control no aparezca o esté deshabilitado indica que el rol actual no lo autoriza. La API vuelve a comprobar el permiso al guardar; cambiar el HTML o abrir una ruta manualmente no evita ese control.</div>
+        <div class="doc-callout"><strong>Acceso desde otra PC de la intranet:</strong> el contenedor escucha en <code>0.0.0.0:5180</code>. Habilite TCP 5180 sólo para la subred local e ingrese con la IP actual del servidor, por ejemplo <code>http://192.168.18.41:5180</code> o <code>http://192.168.0.92:5180</code>. PostgreSQL permanece en la red privada de Docker y no publica puerto.</div>
+        <div class="doc-callout warning"><strong>Si accede desde fuera:</strong> no publique directamente <code>http://IP:5180</code>. HTTP no cifra la clave, la cookie ni los datos clínicos. Use una VPN o un proxy inverso con HTTPS/TLS y certificado válido.</div>
+      </section>
+
+      <section class="doc-section" id="recorrido">
+        <h2>Recorrido rápido recomendado</h2>
+        <div class="doc-steps">
+          <div class="doc-step"><strong>Verificar la sesión</strong><p>Confirme el nombre del usuario activo en la cabecera o ingrese con su cuenta cuando se solicite.</p></div>
+          <div class="doc-step"><strong>Crear o abrir paciente</strong><p>Use “Nuevo paciente” para comenzar una historia vacía, o busque una historia ya existente por nombre, DNI o identificador.</p></div>
+          <div class="doc-step"><strong>Verificar el encabezado</strong><p>Compruebe paciente, diagnóstico, cobertura y profesional antes de documentar.</p></div>
+          <div class="doc-step"><strong>Completar o revisar la historia</strong><p>Edite cada bloque de la hoja izquierda y registre evoluciones fechadas.</p></div>
+          <div class="doc-step"><strong>Usar la mitad derecha</strong><p>Abra Estudios, H. de día, Prescripción, Investigación, Línea de tiempo, Protocolos o Herramientas según la tarea.</p></div>
+          <div class="doc-step"><strong>Guardar y cerrar la tarea</strong><p>Los formularios guardan al confirmar; la HC mantiene además un respaldo local por paciente.</p></div>
+        </div>
+      </section>
+
+      <section class="doc-section" id="pantalla">
+        <h2>Distribución de la pantalla</h2>
+        <div class="doc-grid">
+          <article class="doc-card accent"><h3>Cabecera</h3><p>Nombre del producto, usuario activo, bandeja de solicitudes y accesos para crear o abrir pacientes, configurar contenido, abrir Hospital de día, pedir ayuda e imprimir.</p></article>
+          <article class="doc-card accent"><h3>Hoja izquierda</h3><p>Historia clínica oncológica blanca, ordenada como documento y con acciones de edición, auditoría, resaltado y evolución.</p></article>
+          <article class="doc-card accent"><h3>Divisor central</h3><p>Se arrastra para dar más espacio a una mitad. Los tres botones llevan todo a Estudios/derecha, mitad y mitad, o todo a Historia/izquierda.</p></article>
+          <article class="doc-card accent"><h3>Panel derecho</h3><p>Ocho pestañas funcionales. Cuando falta ancho, el texto se reemplaza por un icono conservando el nombre al pasar el puntero.</p></article>
+        </div>
+        <h3>Control del divisor</h3>
+        <p>Arrastre la línea vertical para elegir un ancho libre. Use las flechas dobles para colapsar por completo una mitad. El botón central restaura 50/50. En pantallas angostas el diseño se apila y no colapsa paneles.</p>
+      </section>
+
+      <section class="doc-section" id="ayuda">
+        <h2>Ayuda interactiva</h2>
+        <p>El botón <strong>Ayuda</strong> abre un menú relacionado con la
+        pantalla actual. Se usa el acceso general de la cabecera; la barra de
+        solapas queda libre de iconos de ayuda adicionales.</p>
+        <div class="doc-steps">
+          <div class="doc-step"><strong>Elegir un recorrido</strong><p>El menú distingue pacientes, historia, estudios, tratamientos, Sillones, Farmacia, prescripción, investigación, protocolos, herramientas y cada módulo de Configuración.</p></div>
+          <div class="doc-step"><strong>Seguir el cursor</strong><p>La pantalla se atenúa, el control explicado queda iluminado y un cursor animado muestra dónde se encuentra. El texto describe qué ocurriría al usarlo.</p></div>
+          <div class="doc-step"><strong>Controlar la demostración</strong><p>Puede pausar, continuar, avanzar, volver al paso anterior o cerrar en cualquier momento. La tecla Escape también cierra la ayuda.</p></div>
+          <div class="doc-step"><strong>Abrir el manual</strong><p>Cada recorrido enlaza a la sección correspondiente de este documento para consultar el procedimiento completo.</p></div>
+        </div>
+        <div class="doc-callout"><strong>Sin riesgo para la ficha:</strong> la
+        ayuda no guarda, no envía formularios, no confirma tratamientos ni
+        cambia datos. Sólo navega entre vistas seguras y señala controles.</div>
+      </section>
+
+      <section class="doc-section" id="configuracion">
+        <h2>Configuración</h2>
+        <p>El botón de la cabecera, ubicado al final inmediatamente antes de “Ayuda”, abre una pestaña administrativa sin cerrar la historia clínica. El menú lateral organiza las tareas en nueve módulos; cada usuario ve y administra sólo aquello que permiten sus roles.</p>
+        <div class="doc-grid">
+          <article class="doc-card"><h3>Protocolos</h3><p>Crea, edita, archiva o restaura protocolos completos, ordena drogas, reutiliza preparaciones y vincula registros COIR.</p></article>
+          <article class="doc-card"><h3>Equivalencias diagnósticas</h3><p>Administra vínculos entre SNOMED CT, CIE-10 y AJCC, y define cuáles de esas clasificaciones se muestran en la historia.</p></article>
+          <article class="doc-card"><h3>Guías</h3><p>Agrega PDF, corrige título, categoría, destinatarios, fuente, versión y etiquetas. Desactivar oculta la guía sin borrar su archivo.</p></article>
+          <article class="doc-card"><h3>Plantillas anatómicas</h3><p>Agrega imágenes institucionales a la biblioteca de Estudios, documenta autoría y licencia y decide si estarán disponibles para nuevas cargas.</p></article>
+          <article class="doc-card"><h3>Calculadoras y scores</h3><p>Abre cualquiera de las 57 herramientas, permite personalizar sus textos sin tocar el cálculo original o convertirla de forma explícita en una fórmula o score visual. También crea herramientas nuevas con opciones, puntos, reglas numéricas, resultado y rangos.</p></article>
+          <article class="doc-card"><h3>Investigación</h3><p>Construye formularios arrastrando secciones y campos, cambia etiquetas y códigos, configura opciones y marca datos obligatorios.</p></article>
+          <article class="doc-card"><h3>Hospital de día</h3><p>Configura cantidad de sillones, duración mínima de cada casillero y horario de inicio/fin. El valor inicial es 10 minutos, de 08:00 a 16:00.</p></article>
+          <article class="doc-card"><h3>Inteligencia artificial</h3><p>Permite activar y conectar el LLM actual, otro servicio compatible con OpenAI, LM Studio u Ollama, sin mostrar la clave privada ya guardada.</p></article>
+          <article class="doc-card"><h3>Usuarios y permisos</h3><p>Crea o desactiva cuentas, asigna roles, define permisos por sección y acción y configura la duración de sesión. El login permanece obligatorio.</p></article>
+        </div>
+        <h3>Guardado y recuperación</h3>
+        <p>Cada guardado crea una revisión nueva en PostgreSQL. El sistema conserva quién modificó la definición y permite desactivarla sin destruir versiones anteriores. En Investigación, cada respuesta guarda además una copia de las etiquetas y opciones que se usaron: modificar la plantilla futura no cambia registros ya firmados. Las imágenes institucionales se guardan en el volumen privado de archivos; un respaldo completo debe incluir la base y ese volumen.</p>
+        <h3 id="config-diagnosticos">Administrar equivalencias y clasificaciones visibles</h3>
+        <div class="doc-steps">
+          <div class="doc-step"><strong>Abra Equivalencias diagnósticas</strong><p>La lista contiene las relaciones activas e inactivas entre SNOMED CT, CIE-10 y los sitios AJCC. Puede buscar una existente o seleccionar “Nueva equivalencia”.</p></div>
+          <div class="doc-step"><strong>Defina la visibilidad global</strong><p>En “Clasificaciones visibles” marque entre uno y tres sistemas y pulse <strong>Guardar</strong>. La preferencia se aplica a la lectura, el resumen y la impresión; el editor mantiene visibles AJCC, SNOMED CT y CIE-10 porque los tres son obligatorios. Ocultar una clasificación en las vistas de lectura no elimina lo ya guardado en los pacientes.</p></div>
+          <div class="doc-step"><strong>Revise los tres conceptos</strong><p>Busque o complete código y descripción para SNOMED CT, CIE-10 y AJCC. Una equivalencia activa necesita los tres; una inactiva puede conservarse como borrador, pero siempre debe identificar el sitio AJCC.</p></div>
+          <div class="doc-step"><strong>Documente el criterio</strong><p>Indique si la relación es exacta, más amplia o condicional; asigne confianza alta, media o baja y registre las condiciones clínicas. Guardar crea una nueva revisión. Desactivar deja de sugerirla sin borrar sus versiones.</p></div>
+        </div>
+        <div class="doc-callout warning"><strong>Las equivalencias son una ayuda provisional:</strong> el sistema incluye 38 relaciones iniciales para los sitios AJCC disponibles, pero no sustituyen la confirmación de topografía, histología, biomarcadores o subsitio. Ante una relación ambigua, seleccione manualmente la clasificación correcta.</div>
+        <h3 id="config-plantillas">Agregar o administrar una plantilla anatómica</h3>
+        <div class="doc-steps">
+          <div class="doc-step"><strong>Abra Plantillas anatómicas</strong><p>Configuración muestra las imágenes institucionales que se pueden buscar, editar, desactivar y reactivar. Al cargar una plantilla desde Estudios, el selector combina automáticamente esas imágenes activas con las 165 incluidas de sólo lectura.</p></div>
+          <div class="doc-step"><strong>Seleccione “Nueva plantilla”</strong><p>Elija un PNG, JPEG, GIF o WebP estático de hasta 15 MB. El servidor comprueba el tipo real, la estructura, las dimensiones y la huella SHA-256. Rechaza duplicados y archivos incompletos o animados.</p></div>
+          <div class="doc-step"><strong>Complete la procedencia</strong><p>Indique título, categoría, autor o institución y licencia o autorización. Fuente y enlace de licencia son opcionales, pero si se informan deben comenzar con HTTPS. Puede agregar etiquetas, atribución y descripción.</p></div>
+          <div class="doc-step"><strong>Confirme los derechos</strong><p>Marque la declaración sólo si la institución es autora, tiene permiso o cuenta con una licencia compatible con el uso clínico. Sin esta confirmación la imagen no se guarda.</p></div>
+          <div class="doc-step"><strong>Active o desactive</strong><p>Una plantilla activa aparece en Estudios. “Desactivar” es una eliminación lógica: deja de ofrecerla para cargas nuevas, pero conserva el archivo, sus revisiones y las copias ya usadas. “Reactivar” vuelve a publicarla.</p></div>
+          <div class="doc-step"><strong>Repare un archivo si fuera necesario</strong><p>Configuración marca una imagen ausente o dañada como “Revisar” y no la ofrece en Estudios. Seleccione “Nueva plantilla” y vuelva a elegir exactamente el mismo archivo: su SHA-256 permite restaurarlo sin duplicar la definición ni perder versiones.</p></div>
+        </div>
+        <div class="doc-callout warning"><strong>No cargue material sin autorización:</strong> el hecho de encontrar una imagen en Internet no concede permiso para incorporarla. Registre la fuente y la licencia cuando el material no sea propio.</div>
+        <h3 id="config-ia">Configurar el servicio de inteligencia artificial</h3>
+        <div class="doc-steps">
+          <div class="doc-step"><strong>Abra Inteligencia artificial</strong><p>En Configuración elija el último módulo del menú. “Servicio activo” habilita o deshabilita las funciones asistidas sin borrar el endpoint, el modelo ni la clave guardada.</p></div>
+          <div class="doc-step"><strong>Elija el proveedor</strong><p>Puede seleccionar Gemini, Compatible con OpenAI, LM Studio local u Ollama local. Los accesos “Gemini actual”, “LM Studio” y “Ollama” completan un endpoint y un modelo iniciales; todavía debe revisar esos valores y guardarlos.</p></div>
+          <div class="doc-step"><strong>Complete endpoint y modelo</strong><p>Para Gemini o un servicio compatible use la dirección que suministra el proveedor. Para LM Studio u Ollama el servidor debe estar ejecutándose en este mismo equipo y el endpoint debe usar <code>127.0.0.1</code> o <code>localhost</code>. Incluya <code>/v1</code> cuando corresponda a la API compatible con OpenAI.</p></div>
+          <div class="doc-step"><strong>Administre la clave</strong><p>Elija “Conservar” para no modificar la existente, “Reemplazar” para pegar una nueva o “Quitar” para eliminarla. El campo sólo aparece al reemplazar y siempre vuelve a quedar vacío: la clave guardada nunca se recupera ni se muestra.</p></div>
+          <div class="doc-step"><strong>Guarde y pruebe</strong><p>Pulse <strong>Guardar configuración</strong> y luego <strong>Probar conexión</strong>. Una prueba correcta informa el modelo que respondió; si falla, revise que el servicio esté iniciado, que endpoint y modelo existan y que la clave sea válida cuando el proveedor la exige.</p></div>
+        </div>
+        <div class="doc-callout warning"><strong>Local y nube no significan lo mismo:</strong> la pantalla indica “Conexión local” para loopback y “Servicio en la nube” para un destino externo. En el segundo caso la información incluida en cada solicitud sale de este equipo. Use únicamente un proveedor aprobado por la institución y no comparta la API key.</div>
+        <h3 id="config-acceso">Administrar usuarios, roles y seguridad</h3>
+        <div class="doc-steps">
+          <div class="doc-step"><strong>Abra Usuarios y permisos</strong><p>Este módulo está protegido. Sólo se habilitan sus vistas si el usuario activo posee el permiso administrativo correspondiente.</p></div>
+          <div class="doc-step"><strong>Cree o actualice un usuario</strong><p>Registre nombre de usuario, correo, nombre visible, especialidad, matrícula, clave inicial y uno o más roles. El nombre de usuario es obligatorio y único: debe tener entre 3 y 64 caracteres, comenzar con letra o número y usar sólo letras sin acento, números, punto, guion o guion bajo. Se guarda en minúsculas. Desactivar una cuenta cierra sus sesiones y evita nuevos ingresos sin borrar la auditoría. Un administrador no puede desactivar su propia cuenta activa.</p></div>
+          <div class="doc-step"><strong>Defina los roles</strong><p>Use los roles base —Administrador, Médico oncólogo, Enfermería, Farmacia y Admisión— o cree uno institucional. La matriz separa ver y modificar cada sección, usar herramientas, gestionar Hospital de día, solicitar/resolver decisiones y administrar el sistema.</p></div>
+          <div class="doc-step"><strong>Configure la sesión</strong><p>El ingreso con usuario y clave es obligatorio y no puede desactivarse. Defina la duración o TTL de la sesión y guarde.</p></div>
+          <div class="doc-step"><strong>Compruebe el resultado</strong><p>Los cambios de permisos se aplican en el próximo control de acceso. Al vencer el TTL, la interfaz debe volver a solicitar autenticación antes de leer o guardar. Cierre y vuelva a abrir la sección o la sesión para comprobarla con la identidad correspondiente.</p></div>
+        </div>
+        <div class="doc-callout warning"><strong>Principio de mínimo acceso:</strong> asigne sólo las secciones y decisiones necesarias. La posibilidad de ver una historia no implica permiso para editarla, y operar Sillones no concede por sí sola la capacidad de suspender o resolver continuidad.</div>
+        <h3>Crear o modificar una calculadora</h3>
+        <div class="doc-steps">
+          <div class="doc-step"><strong>Seleccione una existente o cree una nueva</strong><p>Use el catálogo clínico para abrir una herramienta incluida, “Nueva fórmula” para un cálculo matemático o “Nuevo score” para una suma de puntos.</p></div>
+          <div class="doc-step"><strong>Elija el tipo de cálculo</strong><p>“Motor clínico original” protege el algoritmo y habilita sólo textos y ayudas. “Fórmula visual” se arma con variables, operadores y funciones. “Score por puntos” asigna puntos a opciones, casillas o rangos numéricos.</p></div>
+          <div class="doc-step"><strong>Defina la interpretación</strong><p>Agregue rangos visuales con límite inferior, superior, leyenda y color; la vista previa permite comprobar el resultado antes de guardar.</p></div>
+          <div class="doc-step"><strong>Guarde una versión</strong><p>Una personalización que reemplaza una herramienta original queda identificada como tal. Desactivarla recupera el motor original sin borrar el historial.</p></div>
+        </div>
+        <div class="doc-callout warning"><strong>Uso responsable:</strong> antes de activar una herramienta clínica nueva o reemplazar una existente, compruebe reglas, fórmula, fuente, unidades y rangos. El constructor no ejecuta código suministrado por el usuario, pero la validación clínica sigue siendo institucional.</div>
+      </section>
+
+      <section class="doc-section" id="paciente">
+        <h2>Crear, abrir y actualizar un paciente</h2>
+        <h3>Nuevo paciente</h3>
+        <div class="doc-steps">
+          <div class="doc-step"><strong>Pulse “Nuevo paciente”</strong><p>Se abre un formulario vacío. El sistema guarda primero la historia que estuviera activa, pero no copia ninguno de sus datos.</p></div>
+          <div class="doc-step"><strong>Complete la identidad mínima</strong><p>Nombre y apellido son obligatorios. También debe informar al menos DNI o número de historia clínica. Fecha, sexo, teléfono, correo, cobertura, afiliado y domicilio son opcionales.</p></div>
+          <div class="doc-step"><strong>Revise posibles duplicados</strong><p>Si el DNI o la historia clínica ya existen, el alta se detiene y muestra el paciente encontrado para evitar dos identidades clínicas.</p></div>
+          <div class="doc-step"><strong>Confirme “Crear paciente”</strong><p>Se crea la identidad, su auditoría y una historia HCOP en blanco dentro de una sola operación. La nueva ficha queda activa inmediatamente.</p></div>
+        </div>
+        <div class="doc-callout"><strong>Qué significa “en blanco”:</strong>
+        sólo contiene los datos de identificación escritos en el alta. No
+        hereda diagnóstico, antecedentes, estudios, tratamientos, evoluciones,
+        prescripciones ni formularios del paciente anterior o del ejemplo. La
+        hoja no queda vacía visualmente: mantiene visibles sus secciones y
+        formularios para comenzar la carga. “Sin datos cargados” es un aviso de
+        interfaz y no se guarda dentro de la historia.</div>
+        <h3>Completar la primera historia</h3>
+        <div class="doc-steps">
+          <div class="doc-step"><strong>Elija un bloque y pulse “Cargar”</strong><p>La hoja ofrece esta acción en Motivo de consulta, Antecedentes de la enfermedad actual, Antecedentes personales, Estudios complementarios, Examen físico y Conclusión / resumen.</p></div>
+          <div class="doc-step"><strong>Complete el formulario propio</strong><p>Motivo y enfermedad actual usan su texto clínico; Antecedentes separa los clínico-quirúrgicos, medicación habitual, oncofamiliares y gineco-obstétricos; Examen reúne peso, talla en centímetros y examen físico; y Conclusión / resumen conserva también la conducta o plan.</p></div>
+          <div class="doc-step"><strong>Registre estudios y tratamientos en su estructura</strong><p>Estudios complementarios usa filas con fecha y descripción. Tratamientos sistémicos y Cirugías oncológicas ya conservan sus bloques visibles y se cargan mediante sus flujos específicos para mantener fechas, esquema, tipo y trazabilidad; no se reemplazan por texto libre.</p></div>
+          <div class="doc-step"><strong>Guarde la carga inicial</strong><p>La primera carga se registra como “cargado” y no exige justificar una modificación. Una modificación posterior sí solicita el motivo y conserva una nueva versión.</p></div>
+        </div>
+        <div class="doc-callout"><strong>Talla homogénea:</strong> ingrese y lea la talla siempre en centímetros. HCOP convierte los valores históricos en metros para mostrarlos en cm y usa esa misma normalización para IMC y superficie corporal.</div>
+        <div class="doc-callout"><strong>Impresión limpia:</strong> las secciones que todavía no tienen datos permanecen disponibles en pantalla, pero se omiten al imprimir la historia.</div>
+        <h3>Abrir paciente</h3>
+        <div class="doc-steps">
+          <div class="doc-step"><strong>Pulse “Abrir paciente”</strong><p>Se abre el buscador conectado con la base PostgreSQL local.</p></div>
+          <div class="doc-step"><strong>Escriba un criterio</strong><p>Puede usar nombre, documento o identificador. Seleccione un resultado para ver su resumen.</p></div>
+          <div class="doc-step"><strong>Confirme “Abrir historia”</strong><p>HCOP JP recupera desde PostgreSQL la historia, los tratamientos y los estudios y cambia el paciente activo de la sesión.</p></div>
+        </div>
+        <h3>Actualizar datos del paciente</h3>
+        <p>El icono gris de dos flechas junto al nombre vuelve a consultar la API Java para ese mismo ID y reconstruye la vista desde PostgreSQL. Úselo cuando otro usuario registró datos nuevos y todavía no aparecen en la hoja.</p>
+        <div class="doc-callout warning"><strong>Antes de actualizar:</strong> confirme que el nombre de la cabecera corresponde al paciente correcto. Mientras la actualización está en curso el botón se deshabilita para evitar dos reconstrucciones simultáneas de la ficha.</div>
+        <h3>Modificar encabezado</h3>
+        <p>El botón de edición del encabezado permite ajustar nombre, fecha de nacimiento, DNI, HC, cobertura, número de afiliado, contacto, estado/intención oncológica y profesional. Guardar actualiza el documento; cancelar descarta lo escrito en el modal.</p>
+      </section>
+
+      <section class="doc-section" id="historia">
+        <h2>Historia clínica oncológica</h2>
+        <p>La hoja izquierda conserva el orden documental: identificación, <strong>Diagnóstico oncológico</strong>, motivo de consulta, enfermedad actual, antecedentes, estudios, examen físico, tratamientos, cirugías, conclusión/resumen y actividad clínica cronológica. En una historia nueva estos bloques permanecen visibles aunque todavía no tengan valores.</p>
+        <div class="doc-callout"><strong>Historia integrada:</strong> las evoluciones anteriores y las creadas en HCOP JP se muestran juntas desde PostgreSQL; no se abre ni se consulta una aplicación separada.</div>
+        <div class="doc-grid">
+          <article class="doc-card"><h3>Diagnósticos</h3><p>Aparecen inmediatamente después de la identificación del paciente. La cabecera conserva un resumen separado de AJCC/TNM, SNOMED CT y CIE-10 por cada cáncer registrado. El botón <strong>Agregar diagnóstico</strong>, debajo de <strong>Agregar evolución</strong>, abre siempre un editor nuevo y vacío.</p></article>
+          <article class="doc-card"><h3>Relato clínico</h3><p>Motivo, enfermedad actual, antecedentes clínicos, medicación habitual, antecedentes familiares y gineco-obstétricos.</p></article>
+          <article class="doc-card"><h3>Examen</h3><p>Peso y talla alimentan superficie corporal; el examen físico se documenta como texto.</p></article>
+          <article class="doc-card"><h3>Cierre clínico</h3><p>Resumen propio, conducta/plan, evoluciones, prescripciones e investigación incorporada.</p></article>
+        </div>
+        <h3 id="diagnostico-catalogos">Cargar el diagnóstico clasificado</h3>
+        <div class="doc-steps">
+          <div class="doc-step"><strong>Seleccione primero el sitio AJCC</strong><p>El bloque AJCC ocupa todo el ancho y ofrece el catálogo local completo de sitios primarios. Cada opción se presenta como <strong>Sección – Sitio</strong>, por ejemplo <strong>Genitourinario – Pene</strong>. No hay un input de texto libre: el diagnóstico comienza con una selección estructurada.</p></div>
+          <div class="doc-step"><strong>Complete la estadificación</strong><p>Indique el tipo de TNM, la fecha, T, N y M. Complete además todos los ejes específicos que solicite ese sitio, por ejemplo grado o biomarcadores. Con esos datos, las reglas locales AJCC 8 intentan calcular el estadio y lo cargan en un campo editable. Puede corregirlo antes de guardar; si la matriz no contempla la combinación, complete ese campo manualmente.</p></div>
+          <div class="doc-step"><strong>Revise SNOMED CT y CIE-10</strong><p>Debajo de AJCC aparecen ambos sistemas en dos columnas. Al elegir el sitio, las equivalencias activas proponen sus conceptos SNOMED CT y CIE-10; confirme que el código y la descripción de cada columna correspondan al diagnóstico.</p></div>
+          <div class="doc-step"><strong>Complete todo lo obligatorio</strong><p>El botón permanece deshabilitado mientras falten sitio AJCC, tipo y fecha, T, N, M, algún eje adicional, un estadio —automático o informado manualmente—, SNOMED CT o CIE-10. La indicación al pie enumera los datos pendientes.</p></div>
+          <div class="doc-step"><strong>Pulse “Guardar diagnóstico”</strong><p>AJCC, TNM, estadio, SNOMED CT y CIE-10 se persisten juntos como un diagnóstico nuevo y pasan a estar disponibles en <strong>Nuevo tratamiento</strong>. Hasta ese momento las elecciones permanecen en un borrador aislado y no modifican la historia guardada; cambiar el sitio AJCC reemplaza las propuestas dependientes para evitar combinaciones incoherentes.</p></div>
+        </div>
+        <div class="doc-callout"><strong>Visibilidad y obligatoriedad:</strong> la preferencia de Configuración puede decidir qué sistemas se muestran en la lectura, el resumen o la impresión. El editor siempre presenta AJCC, SNOMED CT y CIE-10 porque los tres son obligatorios para guardar.</div>
+        <div class="doc-callout"><strong>Diagnósticos acumulativos e inmutables:</strong> guardar nunca reemplaza un cáncer anterior. Cada registro permanece en la cabecera, aparece como texto clínico plano dentro de la actividad cronológica y queda disponible para prescribir tratamientos. No hay acciones para modificarlo, borrarlo o archivarlo; una corrección o un segundo cáncer se documentan con <strong>Agregar diagnóstico</strong>, conservando la trazabilidad de ambos registros.</div>
+          <div class="doc-callout"><strong>Historias anteriores:</strong> el diagnóstico previo se conserva en la cabecera y en la cronología aunque sólo tenga parte de sus datos. Si ya tenía AJCC, TNM y estadio, SNOMED CT y CIE-10 completos, al abrir o actualizar Hospital de día el sistema crea además su vínculo heredado con <strong>Nuevo tratamiento</strong>, una sola vez y sin volver a guardar. Si el conjunto histórico está incompleto, permanece visible pero no se ofrece para prescribir; complete un registro nuevo desde <strong>Agregar diagnóstico</strong>.</div>
+        <div class="doc-callout warning"><strong>Cómo leer CIE-10:</strong> el resultado presenta el <em>código</em> CIE-10 mapeado desde el término SNOMED CT encontrado. La frase que acompaña al código identifica ese término de origen y no debe interpretarse como el título oficial de la categoría CIE-10.</div>
+        <h3>Acciones de la hoja</h3>
+        <ul>
+          <li><strong>Lupa:</strong> abre una búsqueda de palabras dentro de la historia visible.</li>
+          <li><strong>Resaltar:</strong> con texto seleccionado, guarda un resaltado celeste como información importante.</li>
+          <li><strong>Quitar resaltado:</strong> elimina la marca guardada sobre la selección.</li>
+          <li><strong>Cargar / lápiz de sección:</strong> “Cargar” abre el formulario estructurado cuando el bloque está vacío; después de la primera carga, el lápiz permite modificarlo con historial.</li>
+          <li><strong>Estrella/hito:</strong> marca una sección o evolución como importante para filtros y línea de tiempo.</li>
+          <li><strong>Historial:</strong> muestra versiones anteriores y auditoría del bloque o evolución.</li>
+          <li><strong>Agregar evolución:</strong> registra fecha, autor, motivo, texto y adjuntos. También puede armar un borrador desde la HC o estudios.</li>
+        </ul>
+        <div class="doc-callout"><strong>Eliminación trazable:</strong> eliminar una evolución no la borra físicamente del documento interno. Queda marcada como eliminada, con fecha, autor y versión previa para auditoría.</div>
+      </section>
+
+      <section class="doc-section" id="estudios">
+        <h2>Estudios e imágenes</h2>
+        <p>La solapa Estudios combina registros importados y cargas locales sin repetir el mismo ID. Los archivos agregados quedan listados debajo del área de carga; al elegir uno se muestra su información y, cuando el formato lo permite, una vista previa.</p>
+        <h3>Subir uno o varios estudios</h3>
+        <div class="doc-steps">
+          <div class="doc-step"><strong>Abra la carga</strong><p>Pulse “Subir estudios” o, cuando la lista está vacía, pulse el bloque “Sin estudios cargados”.</p></div>
+          <div class="doc-step"><strong>Seleccione o arrastre</strong><p>Use “Seleccionar archivos…” para abrir el selector del equipo o arrastre varios archivos sobre el recuadro punteado.</p></div>
+          <div class="doc-step"><strong>O pegue una imagen</strong><p>Con Estudios visible y el puntero dentro de esa sección, pulse Ctrl+V. La imagen del portapapeles se agrega a la misma cola; si el diálogo ya está abierto, puede seguir pegando imágenes.</p></div>
+          <div class="doc-step"><strong>Revise la cola</strong><p>Antes de guardar puede quitar cualquier archivo. Se aceptan hasta 20 por envío, con un máximo de 250 MB por archivo y 500 MB para el conjunto.</p></div>
+          <div class="doc-step"><strong>Pulse “Subir archivos”</strong><p>Cada archivo válido se guarda como un estudio independiente, aparece inmediatamente en la lista y queda vinculado sólo al paciente activo. Si uno falla puede reintentarlo sin repetir los demás.</p></div>
+        </div>
+        <div class="doc-callout"><strong>Formatos admitidos:</strong> imágenes habituales y médicas (incluido DICOM), PDF, documentos Word/RTF/ODT, presentaciones PowerPoint/ODP y videos de uso corriente. El sistema valida tanto la extensión como el contenido real antes de conservarlos.</div>
+        <p>Las imágenes, los PDF y los videos compatibles se visualizan dentro de HCOP. Word, PowerPoint y otros formatos documentales se muestran como una tarjeta de archivo para abrirlos o descargarlos con la aplicación correspondiente.</p>
+        <h3>Usar una plantilla anatómica</h3>
+        <p>Junto a <strong>Subir estudios</strong>, el botón <strong>Cargar plantilla</strong> abre una biblioteca local que combina 165 imágenes anatómicas incluidas con las plantillas institucionales activas creadas en Configuración. Incluye ocho grupos: cuerpo completo —con vistas de frente y espalda—, ginecología, urología, tórax, abdomen, cabeza y cuello, extremidades y órganos individuales.</p>
+        <div class="doc-steps">
+          <div class="doc-step"><strong>Busque o elija una categoría</strong><p>Escriba una región, órgano o especialidad, o filtre la galería. Cada tarjeta usa una miniatura WebP real y optimizada; la imagen completa se carga recién al incorporarla al paciente.</p></div>
+          <div class="doc-step"><strong>Use el odontograma</strong><p>Busque “odontograma”, “FDI” u “odontología”. La lámina adulta muestra las 32 piezas permanentes, maxilar y mandíbula, cinco superficies por corona y raíces libres para marcar; derecha e izquierda corresponden al paciente observado de frente.</p></div>
+          <div class="doc-step"><strong>Seleccione una miniatura</strong><p>La selección muestra el nombre de la plantilla y su procedencia. Pulse <strong>Agregar como imagen</strong> para copiar el archivo a la ficha del paciente activo; la historia no queda enlazada al catálogo compartido.</p></div>
+          <div class="doc-step"><strong>Marque la imagen</strong><p>La plantilla aparece como imagen suelta a todo el ancho. Use <strong>Escribir / dibujar</strong> para agregar trazos, resaltado o texto y guardar el resultado como una versión rasterizada.</p></div>
+          <div class="doc-step"><strong>Documente el hallazgo</strong><p>Pulse <strong>A evolución</strong> para adjuntar la versión activa al borrador de una evolución. La relación con la imagen, la plantilla y su procedencia se conserva.</p></div>
+        </div>
+        <div class="doc-callout"><strong>Biblioteca sin conexión:</strong> las imágenes completas y sus 165 miniaturas WebP —de hasta 360 px— están guardadas por separado dentro del sistema; no se consultan sitios externos durante el uso clínico. Las 165 plantillas cubren cuerpo completo, pelvis femenina y masculina en múltiples cortes, mapas ganglionares, órganos y sistemas, regiones anatómicas alineadas con subsitios AJCC de cabeza y cuello y un odontograma adulto con 32 piezas, numeración FDI, superficies y raíces marcables. Son recursos anatómicos de apoyo, no láminas oficiales AJCC ni un sustituto de sus reglas de estadificación. Cada plantilla conserva autor, procedencia, derechos, atribución y huella de integridad. Si la licencia exige crédito, HCOP lo mantiene al imprimir o vincular la imagen a una evolución. Si la base de configuración no responde, las 165 imágenes incluidas continúan disponibles; sólo se oculta temporalmente el catálogo personalizado.</div>
+        <div class="doc-callout"><strong>Historia estable:</strong> al incorporar una plantilla, HCOP crea una copia propia del paciente y conserva <code>templateSource</code>. Editar o desactivar después la plantilla global no modifica imágenes ni evoluciones ya guardadas.</div>
+        <div class="doc-callout warning"><strong>Uso clínico:</strong> una plantilla anatómica es un soporte gráfico para señalar y documentar. No reemplaza un estudio diagnóstico, una imagen médica original ni su informe.</div>
+        <h3>Acciones sobre imágenes</h3>
+        <div class="doc-grid">
+          <article class="doc-card"><h3>Ampliar</h3><p>Abre la imagen completa en un modal.</p></article>
+          <article class="doc-card"><h3>Imprimir</h3><p>Prepara una impresión de la imagen activa.</p></article>
+          <article class="doc-card"><h3>Escribir / dibujar</h3><p>En imágenes sueltas y plantillas aplana lápiz, resaltador y texto en una nueva versión bitmap que queda activa. El original continúa disponible como origen de la versión.</p></article>
+          <article class="doc-card"><h3>Anotar copia</h3><p>En imágenes de estudios históricos crea una versión derivada sin alterar el archivo original.</p></article>
+          <article class="doc-card"><h3>Agregar a evolución</h3><p>Adjunta la imagen elegida a una evolución nueva o en edición y conserva la relación con el estudio.</p></article>
+          <article class="doc-card"><h3>Subir / bajar</h3><p>Cambia el orden de las imágenes sueltas y guarda ese orden en la ficha.</p></article>
+          <article class="doc-card"><h3>Eliminar carga actual</h3><p>La acción aparece sólo en imágenes subidas durante la sesión abierta. Al recargar la página deja de estar disponible; las imágenes históricas no se pueden borrar desde este control.</p></article>
+        </div>
+        <div class="doc-callout"><strong>Borrado seguro:</strong> HCOP confirma primero que la ficha quedó guardada sin esa imagen. Si el guardado falla, restaura el registro; si el archivo está compartido o ya existía, conserva el binario para no romper otra referencia clínica.</div>
+        <p>En el editor puede elegir color y grosor, deshacer el último trazo, limpiar los trazos nuevos, cancelar o guardar la imagen rasterizada o la copia anotada, según el origen.</p>
+      </section>
+
+      <section class="doc-section" id="hospital">
+        <h2>H. de día</h2>
+        <p>El botón <strong>Hospital de día</strong> abre un único modal que integra, en este orden, <strong>Nuevo tratamiento</strong>, <strong>Farmacia</strong>, <strong>Sillones</strong> y <strong>Tratamientos</strong>. Farmacia queda antes que Sillones porque confirma la medicación antes de asignar el turno. Sillones y Farmacia muestran la operación general aunque no haya una historia abierta; Tratamientos y Nuevo tratamiento heredan el paciente activo o, si falta, muestran una explicación y la acción <strong>Abrir paciente</strong>.</p>
+        <div class="doc-callout"><strong>Un solo espacio de trabajo:</strong> ya no hay un botón ni una ventana aparte para el turnero, ni un segundo modal legado. Cambiar de pestaña conserva la fecha, los filtros y el contexto disponible sin duplicar información.</div>
+        <p>La pestaña H. de día de la mitad derecha presenta el flujo integrado. “Tratamientos y aplicaciones” organiza la información como tarjetas: cerradas resumen plan, estado, duración estimada y fechas límite; abiertas muestran una cronología de todos los ciclos, incluso los que todavía no tienen turno. Las acciones operativas permanecen en Sillones y en el detalle amplio para no duplicar controles.</p>
+        <div class="doc-callout warning"><strong>Duración para agenda:</strong> expresa el tiempo operativo estimado del turno/sillón. No son los días entre ciclos y no reemplaza los tiempos de administración indicados. Al dejar el puntero sobre el valor se muestra su procedencia.</div>
+        <div class="doc-callout"><strong>Diferencia útil:</strong> Tratamiento responde “qué plan se indicó y cómo está compuesto”; Hospital de día responde “cuándo y en qué estado se administró cada ciclo”. Al desplegar una tarjeta se ven juntos porque pertenecen a la misma cadena asistencial.</div>
+
+        <h3 id="tratamientos">Tratamientos y aplicaciones</h3>
+        <ul>
+          <li><strong>Tarjeta cerrada:</strong> diagnóstico/esquema, estado, duración estimada, primera fecha y última fecha disponible.</li>
+          <li><strong>Botón + o encabezado:</strong> despliega todos los ciclos indicados. Cada uno diferencia fecha prevista o plan actualizado, turno real, sillón, estado clínico, Farmacia y Administración. “Aplicado” significa que la sesión activa del ciclo terminó; “Pendiente” indica que todavía no existe un turno.</li>
+          <li><strong>Asignar / Ver turno en Sillones:</strong> cambia a la agenda del mismo Hospital de día, conserva el paciente y el ciclo seleccionados y resalta su tarjeta o su turno. Ya no abre un formulario manual separado; si el ciclo está suspendido, lleva a su gestión antes de permitir asignarlo.</li>
+          <li><strong>Buscar:</strong> filtra por los valores visibles del tratamiento.</li>
+          <li><strong>Fecha y estado:</strong> acotan aplicaciones; “Limpiar” restaura todos los resultados.</li>
+          <li><strong>Nuevo tratamiento:</strong> abre el formulario con antecedentes desplegables, diagnóstico, carácter, tipo, esquema, ciclos, fecha prevista del primer ciclo, consentimiento, observaciones y requisitos del esquema. Al elegir esquema, cantidad y fecha muestra el intervalo, la duración de sillón y las fechas orientativas de los ciclos. Al guardar crea además una evolución completa en la hoja izquierda con esos datos, peso, talla en cm, IMC, superficie corporal y demás cálculos disponibles; esa entrada de sistema es inmutable y un reintento no la duplica.</li>
+          <li><strong>Drogas y esquemas:</strong> busca el catálogo local. Al seleccionar un resultado se desplaza el panel para dejar el detalle visible.</li>
+        </ul>
+        <h3>Requisitos antes de iniciar</h3>
+        <p>Al elegir un esquema, HCOP consulta sus requisitos. Cada requisito obligatorio debe completarse y confirmarse. Si el esquema no informa requisitos, el sistema lo indica explícitamente y permite continuar con los datos generales.</p>
+        <h3>Aplicaciones programadas</h3>
+        <p>Las aplicaciones se pueden filtrar por texto, fecha y estado. Esos filtros reducen los ciclos visibles sin alterar el plan completo de la tarjeta. El resumen desplegado es de lectura: la asignación o reprogramación se hace en <strong>Sillones</strong>, y los avances, la cancelación y la finalización se realizan en el detalle operativo de la aplicación.</p>
+        <h3 id="escanear-qr">Escanear QR y abrir la administración</h3>
+        <p>En la cabecera del modal <strong>Hospital de día</strong>, pulse <strong>Escanear QR</strong>. El control está disponible para los roles con permiso de edición de Hospital de día y ofrece tres formas de lectura:</p>
+        <ul>
+          <li><strong>Iniciar cámara:</strong> centre el código en el recuadro. El navegador sólo permite usar la cámara en HTTPS o en <code>localhost</code>; si abrió HCOP mediante una IP con HTTP, use una de las alternativas siguientes.</li>
+          <li><strong>Leer imagen:</strong> elija una foto o captura nítida que contenga el QR.</li>
+          <li><strong>Contenido manual:</strong> pegue el texto completo del código y pulse <strong>Identificar</strong>.</li>
+        </ul>
+        <p>HCOP valida el código contra la base local y exige una única coincidencia de paciente, tratamiento, ciclo y aplicación. Cuando es correcto, registra quién lo escaneó y cuándo y muestra primero un resumen con identidad, DNI, tratamiento, ciclo y turno. Revise esos datos y pulse <strong>Abrir ficha de administración</strong>; recién entonces cambia al paciente encontrado y abre su sesión exacta. Puede elegir <strong>Escanear otro</strong> sin cambiar la historia que estaba activa.</p>
+        <div class="doc-callout warning"><strong>Escanear no administra ni finaliza:</strong> la lectura no cambia los estados de Farmacia, administración o sesión. Sólo identifica la aplicación y deja una evolución inmutable y auditada en la hoja clínica.</div>
+        <p>La ficha de administración presenta un checklist de <strong>Estado clínico</strong>, <strong>Farmacia</strong>, <strong>Administración</strong> y <strong>Drogas</strong>. Debajo muestra una sola acción de <strong>Siguiente paso</strong>, correspondiente al primer requisito todavía pendiente. Al completar ese paso, la ficha se actualiza y ofrece el siguiente, sin obligar a decidir entre acciones incompatibles.</p>
+        <h4>Finalizar la aplicación</h4>
+        <p>Avance el flujo operativo normalmente hasta <strong>En observación</strong>. El cierre por QR sólo se habilita cuando Farmacia figura liberada o no requerida, la administración general figura completada y todas las drogas quedaron completadas, suspendidas o canceladas. Marque <strong>Confirmo que la administración fue completada</strong>, escriba la observación de finalización —tolerancia, incidencias o condición al egreso— y pulse <strong>Finalizar aplicación</strong>.</p>
+        <p>La finalización es una acción separada y exclusiva de <strong>Finalizar aplicación</strong>: ningún avance general puede cerrar definitivamente la sesión. Usa la versión más reciente para evitar que dos operadores se pisen y registra otra evolución inmutable con el usuario activo. Si otro profesional modificó la aplicación, actualice la ficha y vuelva a comprobarla antes de cerrar.</p>
+        <h3>Agenda general</h3>
+        <p>Abra <strong>Hospital de día</strong> y elija <strong>Farmacia</strong> para preparar el ciclo o <strong>Sillones</strong> para asignar el turno. Estas dos pestañas no dependen del paciente abierto: consultan todos los ciclos pendientes y turnos de la fecha seleccionada. La fecha se muestra como día/mes/año junto al calendario y el día de la semana.</p>
+        <h4>Farmacia</h4>
+        <p>La tabla reúne todos los próximos ciclos todavía sin turno. Muestra paciente, DNI, cobertura, número de afiliado, fecha estimada, número de ciclo, protocolo, diagnóstico y duración. Use el buscador para reducir la lista. En <strong>Medicación</strong> marque uno de tres estados: <strong>Pendiente</strong>, <strong>Recibida</strong> en el centro o <strong>Paciente</strong> cuando la conserva el paciente. El estado queda guardado por tratamiento y ciclo y también alimenta los filtros de la lista de espera. El botón QR genera una identificación local del paciente, tratamiento y ciclo; si existe un identificador histórico de aplicación también lo conserva, pero ya no depende de él ni reutiliza el QR de otro ciclo.</p>
+        <h4>Sillones</h4>
+        <p>Cada sillón es una columna conceptual y cada hora se organiza dentro de ella como una mini-tabla de casilleros grises, todos identificados con su horario. El intervalo se configura en 5, 10, 15, 20 o 30 minutos. Así, una hora ocupa 3 filas × 4 columnas con intervalos de 5 minutos; 2 × 3 con 10; 2 × 2 con 15; 1 × 3 con 20; y 1 × 2 con 30. Arrastre una tarjeta de “Pacientes prescriptos” al sillón y hora deseados: la duración del protocolo determina cuántas celdas se ocupan.</p>
+        <ul>
+          <li><strong>Gris:</strong> horario disponible.</li>
+          <li><strong>Azul:</strong> turno asignado todavía sin confirmar.</li>
+          <li><strong>Rojo:</strong> turno asignado y confirmado; puede arrastrarse para reprogramarlo.</li>
+          <li><strong>Verde durante el arrastre:</strong> ubicación válida y espacio completo que se ocupará.</li>
+          <li><strong>Rojo rayado durante el arrastre:</strong> el tratamiento no cabe o se superpone; el sistema impide guardarlo.</li>
+        </ul>
+        <p>El selector de la cabecera permite alternar entre todos los pacientes prescriptos y sólo aquellos cuya medicación está confirmada. Los ciclos pendientes se ordenan cronológicamente por la fecha prevista más próxima —incluido el ciclo de hoy— y después por paciente, tratamiento y número de ciclo; un ciclo sin fecha queda al final. El buscador consulta paciente, DNI, esquema y diagnóstico tanto en la lista de espera como en los turnos ya ubicados: las coincidencias de los sillones se resaltan y el resto se atenúa sin cambiar el color de estado. Haga clic sobre un paciente en espera para seleccionarlo: la grilla marca en celeste todos los horarios y sillones donde el tratamiento completo puede comenzar sin superponerse ni exceder la jornada. En la lista de espera, la línea izquierda de la tarjeta es azul cuando la medicación fue recibida y roja mientras la recepción siga pendiente. La sombra verde marca el destino exacto durante el arrastre; al soltar, la tarjeta aparece inmediatamente allí con la leyenda “Guardando” mientras el servidor vuelve a comprobar sillón, hora, jornada y superposiciones. Un turno nunca puede ocupar total o parcialmente el intervalo de otro turno del mismo sillón. Si otra persona ocupa el lugar antes de confirmar, el sistema rechaza el guardado, actualiza la agenda y restaura el tratamiento en espera. Tanto la espera como el bloque asignado muestran nombre y DNI. El bloque completo del turno es azul mientras la confirmación está pendiente y rojo cuando el turno está confirmado; el cambio se refleja inmediatamente en todas las celdas que ocupa. El símbolo de paquete mantiene un estado independiente: es azul mientras la recepción de medicación no está confirmada y rojo cuando ya fue recibida. Haga clic en el turno para abrir su ficha completa: paciente, DNI, obra social y número de afiliado, diagnóstico, esquema, fecha, hora, sillón, duración, prescripción, recepción de medicación y confirmación del turno. Las dos últimas confirmaciones se pueden marcar o desmarcar desde esa ficha y quedan guardadas. Cada turno cargado tiene un icono de mover: arrástrelo para cambiar el horario o el sillón. El icono de eliminar quita la sesión de la grilla y libera el sillón. También está disponible si el tratamiento fue suspendido: en ese caso no lo reactiva ni cambia el motivo o tipo de suspensión, y el ciclo sólo volverá a espera cuando el flujo clínico permita reanudarlo. La duración se copia en el turno para que un cambio futuro del protocolo no altere la agenda histórica.</p>
+
+        <h4>Gestionar un ciclo pendiente</h4>
+        <p>Cada tarjeta de la lista de espera tiene un botón <strong>Gestionar</strong>. Las opciones visibles dependen del estado y de los permisos del usuario activo:</p>
+        <div class="doc-steps">
+          <div class="doc-step"><strong>Suspender tratamiento</strong><p>Elija suspensión transitoria o definitiva y escriba el motivo. La transitoria puede incluir una fecha prevista de reactivación: conserva el ciclo visible pero bloqueado y marca que, antes de reactivarlo, deberá existir una nueva confirmación de prescripción. La definitiva retira el tratamiento de la lista de ciclos futuros.</p></div>
+          <div class="doc-step"><strong>Solicitar prescripción</strong><p>Seleccione un médico de la lista de usuarios habilitados para resolver prescripciones y agregue un mensaje opcional. El ciclo queda identificado como solicitado y no puede turnarse hasta que el destinatario confirme la prescripción.</p></div>
+          <div class="doc-step"><strong>Solicitar continuidad</strong><p>Seleccione un médico habilitado y envíe el contexto del paciente, esquema, ciclo y fecha. Mientras exista una solicitud de continuidad pendiente, el ciclo permanece bloqueado para evitar decisiones paralelas.</p></div>
+          <div class="doc-step"><strong>Resolver desde la bandeja</strong><p>Al destinatario se le abre la solicitud y puede confirmar la prescripción, rechazarla con motivo, confirmar continuidad, suspender transitoriamente o suspender definitivamente. Una solicitud sólo puede resolverse una vez y sólo por la persona asignada.</p></div>
+          <div class="doc-step"><strong>Reanudar, paso 1: nueva prescripción</strong><p>En una suspensión transitoria, Gestionar muestra primero el ciclo exacto desde el que se detuvo el tratamiento y permite enviar su prescripción al médico. Mientras espera la respuesta, la tarjeta indica “Prescripción solicitada” y no permite enviar otra solicitud ni dar turno. Los ciclos posteriores permanecen bloqueados detrás de ese ciclo y no generan solicitudes separadas.</p></div>
+          <div class="doc-step"><strong>Reanudar, paso 2: habilitar el ciclo</strong><p>Cuando el médico confirma la prescripción, Gestionar habilita una única acción “Reanudar”. Se conserva el mismo tratamiento y se retoma el ciclo suspendido: los ciclos anteriores, aplicaciones realizadas y fechas ya guardadas no cambian. Reanudar exige un motivo y no crea otro tratamiento ni reinicia el plan. Si la fecha debe cambiar, se reprograma después desde Sillones.</p></div>
+        </div>
+        <div class="doc-callout warning"><strong>Suspensión definitiva:</strong> es terminal y no ofrece Reanudar. Si más adelante se indica otro curso terapéutico, debe registrarse como un nuevo tratamiento para que ambas decisiones queden separadas y auditables.</div>
+        <div class="doc-callout"><strong>Historia clínica automática:</strong> enviar, resolver, suspender o reactivar crea inmediatamente una evolución visible como texto plano en la hoja blanca. Incluye usuario activo, matrícula cuando existe, fecha, esquema, ciclo, destinatario, mensaje, motivo y fecha de reactivación. La evolución es generada por el sistema, inmutable e idempotente, y el evento original permanece en la auditoría PostgreSQL.</div>
+
+        <h3 id="detalle-tratamiento">Detalle, consentimiento y documentos</h3>
+        <p>El ojo de cada fila abre el tratamiento completo. Allí se muestran Drogas, Aplicaciones, Hospital de día y Farmacia. La banda superior ofrece acceso directo a los documentos que están disponibles en la base clínica y su almacén local:</p>
+        <div class="doc-callout"><strong>Tratamientos creados en HCOP JP:</strong> el detalle está disponible inmediatamente desde PostgreSQL, con los ciclos y las drogas del snapshot del protocolo indicado. No requiere abrir, consultar ni sincronizar Lira. Si todavía no existen aplicaciones, la sección se muestra vacía y el tratamiento continúa siendo operable.</div>
+        <ul>
+          <li><strong>Icono de hoja azul antes del ojo:</strong> existe consentimiento; al pulsarlo descarga o abre el PDF.</li>
+          <li><strong>Icono de hoja rojo:</strong> el consentimiento no está disponible. El texto emergente explica el estado.</li>
+          <li><strong>Prescripción:</strong> descarga la prescripción almacenada; aparece deshabilitada cuando ese documento no está disponible.</li>
+          <li><strong>Hoja tratamiento:</strong> genera/descarga la hoja del ciclo seleccionado.</li>
+          <li><strong>QR:</strong> genera la identificación exacta del paciente, tratamiento y ciclo seleccionado; puede usar la referencia local aunque no exista un identificador histórico de aplicación.</li>
+          <li><strong>Actualizar detalle:</strong> vuelve a pedir ciclos, drogas, aplicaciones, farmacia y documentos sin cerrar el tratamiento.</li>
+          <li><strong>Hospital de día:</strong> muestra sesiones del ciclo, estados y el próximo avance operativo.</li>
+          <li><strong>Farmacia:</strong> muestra preparación/liberación y las drogas relacionadas.</li>
+        </ul>
+
+        <h3 id="modal">Modal amplio de Hospital de día</h3>
+        <p>El botón “Hospital de día” de la cabecera abre una vista amplia con el lenguaje operativo integrado del producto. Incluye el resumen compacto del paciente, la tabla completa de tratamientos, búsqueda, acciones y detalle. Es una superficie distinta de la pestaña integrada: los cambios visuales de una no deben alterar la otra.</p>
+        <p>En la tabla del modal:</p>
+        <ul>
+          <li>pulse un encabezado para ordenar;</li>
+          <li>use el icono de consentimiento antes del ojo;</li>
+          <li>pulse el ojo para abrir el detalle sin tener que seleccionar primero la fila;</li>
+          <li>“Nuevo tratamiento” crea un plan;</li>
+          <li>“Turnos en Hospital de día” programa o consulta aplicaciones para el tratamiento seleccionado;</li>
+          <li>la tabla muestra todos los registros y usa desplazamiento interno sólo si realmente hace falta.</li>
+        </ul>
+      </section>
+
+      <section class="doc-section" id="prescripcion">
+        <h2>Prescripción e indicaciones</h2>
+        <p>Todo documento generado se incorpora a “Documentos registrados” y a la historia clínica. La receta de medicamentos incluye paciente, DNI, obra social y número de afiliado.</p>
+        <div class="doc-grid">
+          <article class="doc-card"><h3>Medicamento</h3><p>Busca genérico/marca, completa presentación, forma, dosis, vía, frecuencia, duración, cantidad e instrucciones. Los accesos rápidos precargan ejemplos frecuentes.</p></article>
+          <article class="doc-card"><h3>Certificado</h3><p>Genera constancia, reposo, certificación de tratamiento, traslado o texto personalizado, con rango de fechas e inclusión opcional del diagnóstico.</p></article>
+          <article class="doc-card"><h3>Estudio</h3><p>Solicita laboratorio, imagen, anatomía patológica, procedimiento o interconsulta con prioridad, indicación y preparación.</p></article>
+          <article class="doc-card"><h3>Texto libre</h3><p>Registra una indicación completa con título propio.</p></article>
+          <article class="doc-card"><h3>Sistémico</h3><p>Elige un formulario institucional; prepara sus páginas con campos locales y extracción asistida sobre una historia desidentificada.</p></article>
+        </div>
+        <h3>Documentos registrados</h3>
+        <p><strong>Imprimir</strong> abre la vista lista para papel; <strong>Duplicar</strong> crea un nuevo borrador independiente; <strong>Eliminar</strong> quita el documento de la colección activa; <strong>Exportar documentos</strong> descarga un JSON de prescripciones para el paciente.</p>
+      </section>
+
+      <section class="doc-section" id="agente">
+        <h2>Agente clínico</h2>
+        <p>Analiza el documento clínico y la línea de tiempo. Los botones de sugerencia preparan consultas para resumen dirigido, tabla de tratamientos, gráfico de marcadores o resaltado de hallazgos. El botón enviar procesa la pregunta; la papelera limpia sólo la conversación visible.</p>
+        <div class="doc-callout warning"><strong>Responsabilidad clínica:</strong> el resultado es apoyo de lectura, no una indicación automática. Verifique fechas, negaciones, dosis, respuesta y contexto antes de copiar o actuar.</div>
+      </section>
+
+      <section class="doc-section" id="investigacion">
+        <h2>Investigación oncológica</h2>
+        <p>Registra eventos de protocolo en el formulario general o en una plantilla activa creada desde Configuración. El registro queda estructurado y también se incorpora como texto legible a la HC.</p>
+        <ul>
+          <li><strong>Tipo de formulario:</strong> permite elegir el registro general o una plantilla personalizada activa.</li>
+          <li><strong>Plantilla personalizada:</strong> muestra exactamente las secciones, etiquetas, opciones y campos obligatorios definidos en Configuración.</li>
+          <li>Protocolo, código, participante, tipo, fecha y estado son obligatorios.</li>
+          <li>Un consentimiento “Firmado” necesita fecha y versión.</li>
+          <li>La inclusión o aleatorización exige elegibilidad documentada; la aleatorización exige código.</li>
+          <li>Un evento adverso requiere término y grado; una progresión requiere fecha de evaluación.</li>
+          <li>“Limpiar” reinicia el formulario. “Registrar en historia clínica” valida, guarda y agrega la entrada cronológica.</li>
+          <li>El localizador de una tarjeta lleva al registro correspondiente en la hoja izquierda y lo destaca en celeste.</li>
+        </ul>
+      </section>
+
+      <section class="doc-section" id="timeline">
+        <h2>Línea de tiempo</h2>
+        <p>Combina diagnóstico, tratamientos, estudios, evoluciones, prescripciones e investigación. Puede buscar por texto, filtrar tipos, ver sólo hitos, desplegar años/meses, expandir todo o restablecer la vista.</p>
+        <ul>
+          <li><strong>Solo hitos:</strong> oculta eventos no marcados como importantes.</li>
+          <li><strong>Expandir:</strong> abre o pliega todos los períodos.</li>
+          <li><strong>Restablecer:</strong> limpia filtros, búsqueda y expansión.</li>
+          <li><strong>Reintentar:</strong> vuelve a pedir el enriquecimiento asistido si falló, sin perder la cronología determinística.</li>
+          <li><strong>Seleccionar evento:</strong> desplaza la historia izquierda al registro relacionado y lo resalta en celeste.</li>
+        </ul>
+      </section>
+
+      <section class="doc-section" id="protocolos">
+        <h2>Protocolos</h2>
+        <p>Explora esquemas sistémicos y drogas. “COIR” reúne todos los protocolos clínicos actuales con una duración persistida y los 297 registros operativos del JSON que todavía no tenían una correspondencia segura; “SEER*Rx” ofrece el catálogo de referencia actualizado. En COIR elija grupo, esquema y droga para ver duración, preparación, componentes y detalle.</p>
+        <ul>
+          <li><strong>COIR sin vincular:</strong> tratamientos del catálogo de agenda que conservan nombre y duración, pero todavía no tienen composición clínica confirmada.</li>
+          <li><strong>Servicios COIR:</strong> consultas, admisiones, módulos y talleres; se conservan para planificar agenda, pero no aparecen en Nuevo tratamiento.</li>
+          <li><strong>Procedimientos COIR:</strong> retiro/recambio de bomba, catéteres y otros movimientos operativos.</li>
+        </ul>
+        <h3>Administrador de protocolos</h3>
+        <p>La consulta clínica de Protocolos ya no contiene un botón administrativo. Abra <strong>Configuración → Protocolos</strong> desde la cabecera; allí puede buscar protocolos activos, archivados y registros COIR pendientes y editar el protocolo completo.</p>
+        <ol>
+          <li>Complete nombre, grupo, días del ciclo, duración estimada y, si corresponde, el vínculo con la agenda COIR.</li>
+          <li>Agregue drogas en el orden de administración. Puede buscarlas para vincular la droga ya existente o escribir una nueva referencia.</li>
+          <li>En cada droga registre día/patrón, dosis, tipo de cálculo, vía, tiempo de administración y si usa Hospital de día.</li>
+          <li>Despliegue “Preparación de farmacia” para consultar o completar reconstituyente, concentración, diluyente, volumen, estabilidad, fotosensibilidad, guía de infusión y observaciones. La casilla “Guardar esta preparación” evita modificar una preparación compartida por accidente.</li>
+          <li>Revise la vista previa y pulse “Guardar protocolo”. Al volver a la pestaña clínica, Protocolos se actualiza automáticamente.</li>
+        </ol>
+        <div class="doc-callout"><strong>Eliminar sin perder historia:</strong> “Archivar” quita el protocolo de las nuevas indicaciones pero conserva tratamientos y datos previos. Active “Archivados”, abra el registro y use “Restaurar” para recuperarlo. Un registro “COIR sin vincular” se convierte con “Crear protocolo desde aquí” y no entra al selector clínico hasta completar y guardar al menos una droga.</div>
+        <div class="doc-callout"><strong>No es una orden:</strong> esta sección consulta catálogos. Crear el tratamiento real se hace desde H. de día → Nuevo tratamiento.</div>
+      </section>
+
+      <section class="doc-section" id="herramientas">
+        <h2>Herramientas</h2>
+        <div class="doc-grid">
+          <article class="doc-card"><h3>Guías</h3><p>Lista PDF locales. Buscar filtra por tumor/título; actualizar relee la biblioteca; una tarjeta abre el visor.</p></article>
+          <article class="doc-card"><h3>Estadificación TNM</h3><p>Elija sitio, tipo de TNM, fecha, T, N, M y factores específicos. El grupo se calcula con reglas AJCC 8 locales determinísticas.</p></article>
+          <article class="doc-card"><h3>Calculadoras</h3><p>Abre la biblioteca clínica embebida. Incluye las calculadoras locales activadas en Configuración y usa un único desplazamiento para evitar dos barras de scroll.</p></article>
+        </div>
+      </section>
+
+      <section class="doc-section" id="guardar">
+        <h2>Guardar e imprimir</h2>
+        <dl class="doc-definition">
+          <dt>Guardado de formularios</dt><dd>Guardar/Registrar valida la operación y conserva primero un borrador local. Para una ficha vinculada, la base clínica confirma la revisión antes de actualizar la copia activa; si otra ventana la modificó, el formulario permanece abierto y no sobrescribe el cambio ajeno.</dd>
+          <dt>Guardar diagnóstico</dt><dd>Sólo se habilita con AJCC, tipo y fecha, T, N, M, ejes adicionales, estadio automático o manual, SNOMED CT y CIE-10 completos. Agrega el conjunto como un registro inmutable; antes de pulsarlo, las elecciones permanecen como borrador aislado y no alteran la historia guardada.</dd>
+          <dt>Imprimir hoja</dt><dd>Prepara la HC en un formato continuo, con identidad y secciones del documento.</dd>
+          <dt>Imprimir prescripción</dt><dd>Usa formato A5 apaisado para receta/indicación, con paciente, cobertura cuando corresponde y profesional.</dd>
+          <dt>Motor clínico temporalmente inactivo</dt><dd>El borrador de la HC permanece local y el editor continúa abierto para reintentar. La versión canónica no se reemplaza hasta que la base confirme; Hospital de Día y sus documentos pueden quedar temporalmente no disponibles.</dd>
+        </dl>
+      </section>
+
+      <section class="doc-section" id="botones">
+        <h2>Catálogo de botones y controles</h2>
+        <p>Busque el texto visible, el icono o la sección. Los botones repetidos Cerrar, Cancelar y Guardar se documentan una vez porque su comportamiento es consistente.</p>
+        <div class="doc-searchbar no-print"><span>Buscar</span><input type="search" placeholder="Ej.: consentimiento, ojo, imprimir, evolución…" data-doc-search="#buttonCatalog" data-doc-counter="#buttonCount"><span id="buttonCount"></span></div>
+        <div class="doc-table-wrap" id="buttonCatalog">
+          <table class="doc-table">
+            <thead><tr><th>Sección</th><th>Control</th><th>Qué hace</th><th>Condición / resultado</th></tr></thead>
+            <tbody>
+              <tr data-filter-item><td>Cabecera</td><td>Configuración</td><td>Abre en otra pestaña la gestión de protocolos, equivalencias, guías, plantillas, calculadoras, investigación, Hospital de día, inteligencia artificial, usuarios y permisos.</td><td>No cambia ni cierra el paciente activo; cada módulo exige su permiso.</td></tr>
+              <tr data-filter-item><td>Cabecera</td><td>Usuario activo</td><td>Muestra identidad, especialidad y roles usados para autoría y permisos.</td><td>No es un selector; para cambiar de persona debe cerrarse la sesión.</td></tr>
+              <tr data-filter-item><td>Cabecera</td><td>Campana / bandeja</td><td>Abre las solicitudes de prescripción o continuidad asignadas al usuario.</td><td>Sólo aparece con permiso de resolución; el contador informa pendientes.</td></tr>
+              <tr data-filter-item><td>Cabecera</td><td>Salir</td><td>Revoca la sesión clínica y elimina su cookie.</td><td>Vuelve a la pantalla de ingreso obligatorio.</td></tr>
+              <tr data-filter-item><td>Cabecera</td><td>Nuevo paciente</td><td>Crea una identidad local y abre una historia totalmente vacía.</td><td>Requiere nombre, apellido y DNI o HC; rechaza duplicados.</td></tr>
+              <tr data-filter-item><td>Cabecera</td><td>Abrir paciente</td><td>Busca en PostgreSQL, muestra vista previa y abre la historia.</td><td>Necesita el servidor Java y la base disponibles.</td></tr>
+              <tr data-filter-item><td>Cabecera</td><td>Hospital de día</td><td>Abre el único modal operativo con Nuevo tratamiento, Farmacia, Sillones y Tratamientos.</td><td>Farmacia antecede a la asignación de sillón; ambas funcionan sin paciente. Las vistas clínicas heredan el activo o permiten abrirlo.</td></tr>
+              <tr data-filter-item><td>H. de día</td><td>Escanear QR</td><td>Lee por cámara, imagen o contenido manual e identifica una única aplicación local.</td><td>Requiere permiso de edición. Abre paciente, tratamiento y ciclo exactos y registra una evolución auditada; no cambia estados.</td></tr>
+              <tr data-filter-item><td>Administración por QR</td><td>Abrir tratamiento completo</td><td>Abre el detalle del tratamiento en el ciclo identificado.</td><td>No finaliza la aplicación ni modifica la administración.</td></tr>
+              <tr data-filter-item><td>Administración por QR</td><td>Finalizar aplicación</td><td>Cierra explícitamente una aplicación que ya está en Observación.</td><td>Exige confirmación, observación escrita, Farmacia liberada/no requerida y drogas resueltas; registra usuario, evolución y auditoría.</td></tr>
+              <tr data-filter-item><td>H. de día</td><td>Nuevo tratamiento</td><td>Abre la carga de un plan terapéutico para el paciente activo.</td><td>Es la primera pestaña; sin paciente ofrece abrir uno antes de continuar.</td></tr>
+              <tr data-filter-item><td>H. de día</td><td>Farmacia</td><td>Gestiona la ubicación de la medicación por ciclo y el acceso al QR disponible.</td><td>No requiere paciente activo y reúne los ciclos pendientes de todos los pacientes.</td></tr>
+              <tr data-filter-item><td>H. de día</td><td>Sillones</td><td>Abre la agenda general por fecha, horario y sillón.</td><td>No requiere paciente activo; asigna, reprograma o devuelve tratamientos a espera.</td></tr>
+              <tr data-filter-item><td>Tratamiento · Hospital de día</td><td>Asignar / Ver turno en Sillones</td><td>Lleva el ciclo visible a la agenda integrada y resalta el candidato o el turno existente.</td><td>No crea por sí solo una aplicación ni abre el formulario manual heredado; la asignación se completa en la grilla, con disponibilidad y superposiciones visibles.</td></tr>
+              <tr data-filter-item><td>Sillones</td><td>Gestionar</td><td>Abre las decisiones del tratamiento y ciclo de esa tarjeta.</td><td>Ofrece sólo acciones permitidas y evita turnar ciclos bloqueados.</td></tr>
+              <tr data-filter-item><td>Gestionar ciclo</td><td>Suspender</td><td>Registra una suspensión transitoria o definitiva con motivo.</td><td>La transitoria admite fecha y exige nueva prescripción para reactivar; la definitiva retira futuros candidatos.</td></tr>
+              <tr data-filter-item><td>Gestionar ciclo</td><td>Solicitar prescripción</td><td>Envía el ciclo a un médico habilitado.</td><td>Bloquea el turno hasta su confirmación o rechazo; no permite duplicar una pendiente.</td></tr>
+              <tr data-filter-item><td>Gestionar ciclo</td><td>Solicitar continuidad</td><td>Pide una decisión médica sobre la continuidad.</td><td>El destinatario puede continuar, suspender transitoriamente o definitivamente.</td></tr>
+              <tr data-filter-item><td>Gestionar ciclo</td><td>Reactivar</td><td>Devuelve a activo un tratamiento suspendido transitoriamente.</td><td>Exige motivo y confirmar una nueva prescripción.</td></tr>
+              <tr data-filter-item><td>Bandeja</td><td>Resolver solicitud</td><td>Guarda la decisión del destinatario sobre prescripción o continuidad.</td><td>Rechazo y suspensiones exigen motivo; cada decisión crea evolución inmutable.</td></tr>
+              <tr data-filter-item><td>H. de día</td><td>Tratamientos</td><td>Muestra planes, ciclos, aplicaciones, documentos y detalle.</td><td>Hereda el paciente activo; sin paciente ofrece Abrir paciente.</td></tr>
+              <tr data-filter-item><td>Cabecera</td><td>Imprimir</td><td>Abre la versión imprimible de la historia.</td><td>Recoge los campos visibles y registros activos.</td></tr>
+              <tr data-filter-item><td>Cabecera</td><td>Ayuda</td><td>Abre los recorridos interactivos relacionados con la vista actual.</td><td>No guarda ni ejecuta acciones clínicas; no se repite en la barra de solapas.</td></tr>
+              <tr data-filter-item><td>Paciente</td><td>Actualizar ↻</td><td>Actualiza toda la información del paciente desde la base clínica canónica.</td><td>Sólo activo con ID válido; crea respaldo previo.</td></tr>
+              <tr data-filter-item><td>Historia</td><td>Lupa</td><td>Abre/cierra búsqueda dentro de la hoja.</td><td>Resalta coincidencias visibles.</td></tr>
+              <tr data-filter-item><td>Historia</td><td>Resaltador</td><td>Guarda la selección como dato importante.</td><td>Requiere texto seleccionado dentro de la HC.</td></tr>
+              <tr data-filter-item><td>Historia</td><td>Quitar resaltado</td><td>Elimina una marca clínica guardada.</td><td>Requiere selección que intersecte el resaltado.</td></tr>
+              <tr data-filter-item><td>Historia</td><td>Editar paciente</td><td>Abre los datos de cabecera y profesional.</td><td>Guardar actualiza la hoja; cancelar no cambia nada.</td></tr>
+              <tr data-filter-item><td>Historia</td><td>Editar sección</td><td>Abre el bloque clínico en un modal editable.</td><td>Crea versión y auditoría al guardar.</td></tr>
+              <tr data-filter-item><td>Historia</td><td>Historial</td><td>Muestra versiones y acciones previas.</td><td>Disponible cuando existe auditoría.</td></tr>
+              <tr data-filter-item><td>Historia</td><td>Marcar hito</td><td>Agrega o quita importancia clínica.</td><td>Alimenta filtros de línea de tiempo.</td></tr>
+              <tr data-filter-item><td>Historia</td><td>Agregar evolución</td><td>Abre el editor de evolución.</td><td>Guarda fecha, autor, motivo, texto y adjuntos.</td></tr>
+              <tr data-filter-item><td>Historia</td><td>Agregar diagnóstico</td><td>Abre un editor diagnóstico nuevo y vacío en una ventana dedicada.</td><td>Cada registro se agrega a la cabecera y a la cronología; no modifica ni borra los anteriores.</td></tr>
+              <tr data-filter-item><td>Diagnóstico</td><td>AJCC / SNOMED / CIE-10</td><td>Muestra AJCC completo primero y SNOMED CT con CIE-10 debajo, en dos columnas.</td><td>El editor siempre presenta los tres; la preferencia global sólo controla su lectura, resumen e impresión.</td></tr>
+              <tr data-filter-item><td>Diagnóstico</td><td>Sitio AJCC</td><td>Selecciona el sitio primario y carga TNM, ejes adicionales y equivalencias terminológicas.</td><td>Al cambiarlo se sustituyen las propuestas SNOMED CT y CIE-10 dependientes.</td></tr>
+              <tr data-filter-item><td>Diagnóstico</td><td>Guardar diagnóstico</td><td>Agrega AJCC, TNM, estadio, SNOMED CT y CIE-10 como un conjunto y lo vincula al alta de tratamientos.</td><td>Sólo se habilita cuando todo está completo. El registro queda inmutable; otro cáncer o una corrección se agregan como un diagnóstico separado.</td></tr>
+              <tr data-filter-item><td>Evolución</td><td>Armar texto</td><td>Prepara un borrador desde HC, estudios y plan.</td><td>No guarda hasta pulsar Agregar/Guardar.</td></tr>
+              <tr data-filter-item><td>Evolución</td><td>Modificar</td><td>Edita la evolución existente.</td><td>Conserva la versión anterior en historial.</td></tr>
+              <tr data-filter-item><td>Evolución</td><td>Eliminar</td><td>Oculta la evolución del documento activo.</td><td>Conserva marca y auditoría de eliminación.</td></tr>
+              <tr data-filter-item><td>Divisor</td><td>Flechas izquierda</td><td>Muestra sólo el panel derecho.</td><td>Colapsa completamente Historia en escritorio.</td></tr>
+              <tr data-filter-item><td>Divisor</td><td>Columnas</td><td>Restaura mitad y mitad.</td><td>Guarda la preferencia de ancho.</td></tr>
+              <tr data-filter-item><td>Divisor</td><td>Flechas derecha</td><td>Muestra sólo Historia.</td><td>Colapsa completamente el panel derecho.</td></tr>
+              <tr data-filter-item><td>Estudios</td><td>Subir estudios / Sin estudios cargados</td><td>Abre la carga múltiple de archivos.</td><td>No guarda nada hasta confirmar “Subir archivos”.</td></tr>
+              <tr data-filter-item><td>Estudios</td><td>Seleccionar archivos…</td><td>Abre el selector múltiple del equipo.</td><td>También se pueden arrastrar archivos al recuadro.</td></tr>
+              <tr data-filter-item><td>Estudios</td><td>Ctrl+V</td><td>Pega las imágenes del portapapeles en la cola de carga.</td><td>Requiere Estudios visible y el puntero sobre su sección, o el diálogo de carga abierto.</td></tr>
+              <tr data-filter-item><td>Estudios</td><td>Quitar / Reintentar</td><td>Quita un pendiente o reintenta sólo el que falló.</td><td>No repite los archivos que ya terminaron correctamente.</td></tr>
+              <tr data-filter-item><td>Estudios</td><td>Subir archivos</td><td>Valida y guarda la cola para el paciente activo.</td><td>Cada archivo aparece como una fila nueva debajo del cargador.</td></tr>
+              <tr data-filter-item><td>Imagen</td><td>Ampliar</td><td>Abre el visor grande.</td><td>Selecciona esa imagen como activa.</td></tr>
+              <tr data-filter-item><td>Imagen</td><td>Anotar copia</td><td>Habilita lápiz, resaltador y texto.</td><td>El original se conserva sin cambios.</td></tr>
+              <tr data-filter-item><td>Imagen</td><td>Deshacer / Limpiar</td><td>Quita el último trazo o todos los nuevos.</td><td>Afecta sólo la edición en curso.</td></tr>
+              <tr data-filter-item><td>Imagen</td><td>Guardar copia anotada</td><td>Persiste una nueva versión de la imagen.</td><td>La versión queda enlazada al estudio original.</td></tr>
+              <tr data-filter-item><td>Imagen</td><td>Agregar a evolución</td><td>Adjunta la imagen al registro clínico.</td><td>Guarda también el ID del estudio vinculado.</td></tr>
+              <tr data-filter-item><td>H. de día</td><td>Nuevo tratamiento</td><td>Abre el alta de plan oncológico y permite elegir uno de los diagnósticos guardados del paciente activo.</td><td>El diagnóstico es obligatorio; el sistema no reutiliza opciones de otro paciente ni permite continuar si todavía no se guardó uno.</td></tr>
+              <tr data-filter-item><td>H. de día</td><td>+ / desplegar tarjeta</td><td>Muestra la cronología de ciclos, fechas previstas, turnos reales, sillón y estados de aplicación.</td><td>Incluye ciclos todavía sin turno; la tarjeta cerrada conserva resumen y fechas límite.</td></tr>
+              <tr data-filter-item><td>H. de día</td><td>Buscar</td><td>Filtra tratamientos o aplicaciones por texto.</td><td>No modifica los datos.</td></tr>
+              <tr data-filter-item><td>H. de día</td><td>Limpiar filtros</td><td>Quita búsqueda, fecha y estado.</td><td>Vuelve a mostrar todos los registros.</td></tr>
+              <tr data-filter-item><td>H. de día → Sillones</td><td>Asignar / mover turno</td><td>Crea o reprograma el turno real de un ciclo.</td><td>Valida jornada, duración, sillón y superposiciones.</td></tr>
+              <tr data-filter-item><td>Detalle de aplicación</td><td>Siguiente paso</td><td>Pasa la aplicación al próximo estado operativo permitido.</td><td>Usa control de versión para evitar cambios pisados.</td></tr>
+              <tr data-filter-item><td>Detalle de aplicación</td><td>Cancelar / finalizar</td><td>Cancela la sesión o registra su finalización clínica.</td><td>Exige el estado y las confirmaciones correspondientes.</td></tr>
+              <tr data-filter-item><td>Tratamiento</td><td>Ojo</td><td>Abre detalle completo de una fila.</td><td>No requiere selección previa.</td></tr>
+              <tr data-filter-item><td>Tratamiento</td><td>Hoja azul</td><td>Abre/descarga consentimiento.</td><td>Azul indica documento disponible.</td></tr>
+              <tr data-filter-item><td>Tratamiento</td><td>Hoja roja</td><td>Informa consentimiento faltante o pendiente.</td><td>No es pulsable; el tooltip explica el estado.</td></tr>
+              <tr data-filter-item><td>Tratamiento</td><td>Drogas</td><td>Muestra componentes del esquema.</td><td>Trabaja sobre el tratamiento abierto.</td></tr>
+              <tr data-filter-item><td>Tratamiento</td><td>Aplicaciones</td><td>Muestra ciclos y aplicaciones persistidos por el motor interno.</td><td>Permite abrir observaciones y signos vitales.</td></tr>
+              <tr data-filter-item><td>Tratamiento</td><td>Hospital de día</td><td>Muestra sesiones y avance operativo.</td><td>Permite programar una nueva aplicación.</td></tr>
+              <tr data-filter-item><td>Tratamiento</td><td>Farmacia</td><td>Muestra preparación y liberación.</td><td>Refleja el flujo clínico integrado.</td></tr>
+              <tr data-filter-item><td>Tratamiento</td><td>Actualizar detalle</td><td>Recarga el tratamiento abierto.</td><td>No reconstruye toda la HC.</td></tr>
+              <tr data-filter-item><td>Tratamiento</td><td>Prescripción</td><td>Descarga el documento almacenado para ese tratamiento.</td><td>Gris/deshabilitado significa no disponible.</td></tr>
+              <tr data-filter-item><td>Tratamiento</td><td>Hoja tratamiento</td><td>Descarga la hoja del ciclo.</td><td>Necesita un ciclo identificable.</td></tr>
+              <tr data-filter-item><td>Tratamiento</td><td>QR</td><td>Genera identificación del paciente, tratamiento y ciclo.</td><td>Usa una referencia local exacta; si existe un ID de aplicación de origen también se conserva.</td></tr>
+              <tr data-filter-item><td>Tratamiento</td><td>Volver</td><td>Regresa del detalle a la lista.</td><td>Conserva filtros y contexto del modal.</td></tr>
+              <tr data-filter-item><td>Prescripción</td><td>Antiemesis / Analgesia / etc.</td><td>Precarga un medicamento frecuente.</td><td>Los datos siguen siendo editables antes de prescribir.</td></tr>
+              <tr data-filter-item><td>Prescripción</td><td>Prescribir / Generar</td><td>Valida y registra el documento.</td><td>Abre vista previa o formulario según el tipo.</td></tr>
+              <tr data-filter-item><td>Prescripción</td><td>Limpiar</td><td>Borra campos del editor activo.</td><td>No elimina documentos registrados.</td></tr>
+              <tr data-filter-item><td>Prescripción</td><td>Imprimir borrador</td><td>Abre la versión imprimible.</td><td>Incluye cobertura y afiliado en medicamento.</td></tr>
+              <tr data-filter-item><td>Prescripción</td><td>Duplicar</td><td>Crea una copia como documento nuevo.</td><td>Asigna ID, fecha y auditoría nuevos.</td></tr>
+              <tr data-filter-item><td>Prescripción</td><td>Eliminar</td><td>Quita el documento registrado.</td><td>Actualiza HC y respaldo local.</td></tr>
+              <tr data-filter-item><td>Prescripción</td><td>Exportar documentos</td><td>Descarga la colección en JSON.</td><td>Incluye identidad y profesional.</td></tr>
+              <tr data-filter-item><td>Agente</td><td>Sugerencia</td><td>Carga y envía una consulta modelo.</td><td>Usa la historia activa.</td></tr>
+              <tr data-filter-item><td>Agente</td><td>Enviar</td><td>Analiza la pregunta clínica.</td><td>Requiere configuración de agente/LLM.</td></tr>
+              <tr data-filter-item><td>Agente</td><td>Papelera</td><td>Limpia la conversación.</td><td>No borra la historia clínica.</td></tr>
+              <tr data-filter-item><td>Investigación</td><td>Registrar en historia</td><td>Valida y guarda un evento de protocolo.</td><td>Agrega estructura y texto a la HC.</td></tr>
+              <tr data-filter-item><td>Investigación</td><td>Localizar</td><td>Lleva al evento en la hoja izquierda.</td><td>Resalta el registro en celeste.</td></tr>
+              <tr data-filter-item><td>Línea de tiempo</td><td>Solo hitos</td><td>Filtra eventos importantes.</td><td>Usa marcas de secciones/evoluciones.</td></tr>
+              <tr data-filter-item><td>Línea de tiempo</td><td>Expandir</td><td>Abre o cierra períodos.</td><td>No altera registros.</td></tr>
+              <tr data-filter-item><td>Línea de tiempo</td><td>Restablecer</td><td>Limpia el estado visual de la cronología.</td><td>Conserva los datos.</td></tr>
+              <tr data-filter-item><td>Herramientas</td><td>Actualizar guías</td><td>Relee el listado de PDF locales.</td><td>No descarga fuentes externas.</td></tr>
+              <tr data-filter-item><td>Modal</td><td>Cerrar / X</td><td>Cierra la ventana y devuelve el foco.</td><td>No guarda cambios no confirmados.</td></tr>
+              <tr data-filter-item><td>Formulario</td><td>Cancelar</td><td>Cierra o abandona la edición.</td><td>Descarta el borrador no guardado.</td></tr>
+              <tr data-filter-item><td>Formulario</td><td>Guardar</td><td>Valida y persiste datos.</td><td>Los errores dejan el foco en el campo a corregir.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="doc-section" id="problemas">
+        <h2>Problemas frecuentes</h2>
+        <dl class="doc-definition">
+          <dt>No aparece un dato nuevo</dt><dd>Pulse actualizar junto al nombre. Si persiste, compruebe el estado del motor clínico y vuelva a abrir el paciente.</dd>
+          <dt>No aparece una sección o acción</dt><dd>Revise el usuario activo y sus roles. Un administrador puede comprobar el permiso específico en Configuración → Usuarios y permisos; la visibilidad no sustituye la autorización del servidor.</dd>
+          <dt>No puedo turnar un ciclo</dt><dd>Abra Gestionar y revise si está suspendido, si falta prescripción o si hay una solicitud de continuidad pendiente. Una suspensión transitoria exige nueva prescripción antes de reactivar.</dd>
+          <dt>Nuevo tratamiento no habilita requisitos</dt><dd>Seleccione primero diagnóstico y esquema. Espere la carga; complete y confirme cada requisito obligatorio.</dd>
+          <dt>Documento deshabilitado</dt><dd>Ese PDF no está almacenado o falta el ciclo/aplicación necesario. Actualice el detalle; no se genera contenido clínico ficticio.</dd>
+          <dt>Consentimiento rojo</dt><dd>El documento está pendiente, ausente o no disponible. Pase el puntero para leer el estado.</dd>
+          <dt>La HC dice “Guardado local”</dt><dd>El navegador conservó el documento, pero el servidor no respondió. No cierre el equipo hasta restablecer el servicio y guardar nuevamente.</dd>
+          <dt>No aparecen SNOMED CT o CIE-10</dt><dd>Seleccione primero un sitio AJCC y espere la carga de sus equivalencias. Si alguna clasificación continúa vacía, no podrá guardar: revise en Configuración que exista una equivalencia activa y completa para ese sitio.</dd>
+          <dt>Dos barras de desplazamiento</dt><dd>Recargue la página después de actualizar el código. La calculadora y los modales están diseñados para usar un único scroll de contenido.</dd>
+          <dt>Una mitad desapareció</dt><dd>Use el botón central del divisor para restaurar 50/50.</dd>
+          <dt>No abre paciente</dt><dd>Ejecute <code>iniciar.bat</code>, espere el estado saludable y verifique <code>http://localhost:5180/actuator/health</code>.</dd>
+          <dt>No abre desde otra PC de la intranet</dt><dd>Compruebe que Docker publique el puerto 5180 y que el firewall de Windows lo admita sólo para <code>LocalSubnet</code>. Use la IP actual del servidor; no reutilice la IP de otra ubicación.</dd>
+        </dl>
+      </section>
+
+      <footer class="doc-footer">Manual funcional de HCOP JP · Java y PostgreSQL · 29/07/2026.</footer>
+    </main>
+  </div>
+  <script src="./documentacion.js"></script>
+</body>
+</html>

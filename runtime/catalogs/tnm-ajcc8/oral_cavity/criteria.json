@@ -1,0 +1,100 @@
+{
+  "$schema_version": 1,
+  "organ": "oral_cavity",
+  "edition": "AJCC 8",
+  "source": "pdfsource/oral_cavity.pdf",
+  "axes": {
+    "T": {
+      "label": "Primary Tumor",
+      "categories": [
+        {"code": "TX",  "description": "Primary tumor cannot be assessed", "notes": []},
+        {"code": "Tis", "description": "Carcinoma in situ", "notes": []},
+        {"code": "T1",  "description": "Tumor ≤ 2 cm with depth of invasion (DOI) ≤ 5 mm", "notes": ["doi"]},
+        {"code": "T2",  "description": "Tumor ≤ 2 cm with DOI > 5 mm and ≤ 10 mm, or tumor > 2 cm and ≤ 4 cm with DOI ≤ 10 mm", "notes": ["doi"]},
+        {"code": "T3",  "description": "Tumor > 2 cm and ≤ 4 cm with DOI > 10 mm, or tumor > 4 cm with DOI ≤ 10 mm", "notes": ["doi"]},
+        {"code": "T4",  "description": "Moderately advanced or very advanced local disease (parent category for T4a/T4b)", "notes": []},
+        {"code": "T4a", "description": "Moderately advanced disease: tumor > 4 cm with DOI > 10 mm, or tumor invades adjacent structures only (e.g. through cortical bone of the mandible or maxilla, or involves the maxillary sinus or skin of the face)", "notes": ["doi", "bone"]},
+        {"code": "T4b", "description": "Very advanced disease: tumor invades masticator space, pterygoid plates or skull base, or encases the internal carotid artery", "notes": []}
+      ],
+      "notes": {
+        "doi": "DOI is depth of invasion and not tumor thickness; see Terminology section for the formal definition.",
+        "bone": "Superficial erosion of bone / tooth socket alone by a gingival primary is not sufficient to classify a tumor as T4."
+      },
+      "suffixes": []
+    },
+    "N": {
+      "label": "Pathological Regional Lymph Node",
+      "categories": [
+        {"code": "NX",  "description": "Regional lymph nodes cannot be assessed", "notes": []},
+        {"code": "N0",  "description": "No regional lymph node metastasis", "notes": []},
+        {"code": "N1",  "description": "Metastasis in a single ipsilateral lymph node, ≤ 3 cm in greatest dimension and extranodal extension (ENE)−", "notes": ["u_l", "midline"]},
+        {"code": "N2",  "description": "Metastasis in a single ipsilateral lymph node ≤ 3 cm and ENE+; or > 3 cm but ≤ 6 cm and ENE−; or multiple ipsilateral lymph nodes, none > 6 cm and ENE−; or bilateral or contralateral lymph node(s), none > 6 cm and ENE−", "notes": ["u_l", "midline"]},
+        {"code": "N2a", "description": "Single ipsilateral lymph node ≤ 3 cm and ENE+, or single ipsilateral lymph node > 3 cm but ≤ 6 cm and ENE−", "notes": ["u_l", "midline"]},
+        {"code": "N2b", "description": "Metastasis in multiple ipsilateral lymph nodes, none > 6 cm in greatest dimension and ENE−", "notes": ["u_l", "midline"]},
+        {"code": "N2c", "description": "Metastasis in bilateral or contralateral lymph node(s), none > 6 cm in greatest dimension and ENE−", "notes": ["u_l", "midline"]},
+        {"code": "N3",  "description": "Metastasis in a lymph node > 6 cm and ENE−; or a single ipsilateral node > 3 cm and ENE+; or multiple ipsilateral, contralateral or bilateral nodes, any with ENE+; or a single contralateral node of any size and ENE+", "notes": ["u_l", "midline", "node_count"]},
+        {"code": "N3a", "description": "Metastasis in a lymph node > 6 cm in greatest dimension and ENE−", "notes": ["u_l", "midline", "node_count"]},
+        {"code": "N3b", "description": "Single ipsilateral lymph node > 3 cm and ENE+; or multiple ipsilateral, contralateral or bilateral lymph nodes, any with ENE+; or a single contralateral lymph node of any size and ENE+", "notes": ["u_l", "midline", "node_count"]}
+      ],
+      "notes": {
+        "u_l": "Designation of 'U' or 'L' may be used for any N category to indicate metastasis above the lower border of the cricoid (U) or below the lower border of the cricoid (L).",
+        "midline": "Midline nodes are considered ipsilateral nodes.",
+        "node_count": "Per AJCC 8th edition, a selective neck dissection ordinarily includes 10+ lymph nodes and a comprehensive neck dissection (radical or modified radical) ordinarily includes 15+. Negative pathologic examination of a smaller number of nodes still mandates a pN0 designation."
+      },
+      "suffixes": []
+    },
+    "M": {
+      "label": "Distant Metastasis",
+      "categories": [
+        {"code": "M0", "description": "No distant metastasis", "notes": []},
+        {"code": "M1", "description": "Distant metastasis", "notes": ["cm_pm"]}
+      ],
+      "notes": {
+        "cm_pm": "Metastasis found on imaging is considered cM1; biopsy-proven metastasis is considered pM1."
+      },
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Staging Classification",
+      "categories": [
+        {"code": "c", "description": "Clinical classification: stage assigned from imaging, endoscopy, biopsy, and clinical exam before any definitive treatment.", "notes": []},
+        {"code": "p", "description": "Pathological classification: stage assigned from the surgically resected specimen after histologic review.", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor: y (post-neoadjuvant)",
+      "categories": [
+        {"code": "Yes", "description": "Classification determined during or after the application of initial multimodal (neoadjuvant) therapy.", "notes": []},
+        {"code": "No",  "description": "No neoadjuvant therapy preceded this assessment.", "notes": []}
+      ],
+      "notes": {
+        "matching": "For oral cavity AJCC 8, no separate ypTNM stage table is defined; DescY does not affect the stage outcome. It is recorded for clinical context only and is ignored by the rule lookup."
+      },
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor: r (recurrent)",
+      "categories": [
+        {"code": "Yes", "description": "Recurrent tumor classification, assigned when the tumor is staged after a disease-free interval.", "notes": []},
+        {"code": "No",  "description": "Not a recurrent tumor in this assessment.", "notes": []}
+      ],
+      "notes": {
+        "matching": "For oral cavity AJCC 8, no rTNM-specific stage table exists; DescR does not affect the stage outcome. It is recorded for clinical context only and is ignored by the rule lookup."
+      },
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor: m (multiple synchronous primaries)",
+      "categories": [
+        {"code": "Yes", "description": "Multiple synchronous primary tumors at the same anatomic site.", "notes": []},
+        {"code": "No",  "description": "Single primary tumor.", "notes": []}
+      ],
+      "notes": {
+        "matching": "For oral cavity AJCC 8, no mTNM-specific stage table exists; DescM does not affect the stage outcome. It is recorded for clinical context only and is ignored by the rule lookup."
+      },
+      "suffixes": []
+    }
+  }
+}

@@ -1,0 +1,66 @@
+name: hcop-jp
+
+services:
+  database:
+    image: postgres:18.4-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${HCOP_DB_NAME:-hcop_jp}
+      POSTGRES_USER: ${HCOP_DB_USER:-hcop}
+      POSTGRES_PASSWORD: ${HCOP_DB_PASSWORD}
+    volumes:
+      - hcop_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks:
+      - hcop_internal
+
+  application:
+    image: ghcr.io/marcolyto/hcop_jp:latest
+    restart: unless-stopped
+    pull_policy: always
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      HCOP_DB_URL: jdbc:postgresql://database:5432/${HCOP_DB_NAME:-hcop_jp}
+      HCOP_DB_USER: ${HCOP_DB_USER:-hcop}
+      HCOP_DB_PASSWORD: ${HCOP_DB_PASSWORD}
+      HCOP_BOOTSTRAP_USERNAME: ${HCOP_BOOTSTRAP_USERNAME:-marcolyto}
+      HCOP_BOOTSTRAP_PASSWORD: ${HCOP_BOOTSTRAP_PASSWORD}
+      HCOP_BOOTSTRAP_SECOND_USERNAME: ${HCOP_BOOTSTRAP_SECOND_USERNAME:-marcolyto2}
+      HCOP_QR_SECRET: ${HCOP_QR_SECRET}
+      HCOP_ENCRYPTION_SECRET: ${HCOP_ENCRYPTION_SECRET}
+      HCOP_PUBLIC_BASE_URL: ${HCOP_PUBLIC_BASE_URL:-http://localhost:5180}
+      HCOP_BIND_ADDRESS: 0.0.0.0
+      HCOP_PORT: 5180
+    ports:
+      - "${HCOP_PORT:-5180}:5180"
+    volumes:
+      - hcop_storage:/opt/hcop/runtime/storage
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/5180 && printf 'GET /actuator/health HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q '\"status\":\"UP\"' <&3"]
+      interval: 15s
+      timeout: 8s
+      retries: 8
+      start_period: 60s
+    networks:
+      - hcop_internal
+      - hcop_egress
+
+volumes:
+  hcop_postgres:
+    name: hcop_jp_postgres
+  hcop_storage:
+    name: hcop_jp_storage
+
+networks:
+  hcop_internal:
+    name: hcop_jp_internal
+    internal: true
+  hcop_egress:
+    name: hcop_jp_egress

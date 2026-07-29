@@ -1,0 +1,55 @@
+{
+  "meta": {
+    "version": 1,
+    "currentUser": "",
+    "currentProfessional": {
+      "lastName": "",
+      "license": ""
+    },
+    "createdAt": null,
+    "updatedAt": null,
+    "sectionAudit": {},
+    "sectionVersions": {}
+  },
+  "patient": {
+    "fullName": "",
+    "dni": "",
+    "medicalRecord": "",
+    "birthDate": "",
+    "phone": "",
+    "insurance": "",
+    "affiliateNumber": "",
+    "address": "",
+    "email": ""
+  },
+  "oncology": {
+    "diagnosis": "",
+    "topography": "",
+    "histology": "",
+    "diagnosisDate": "",
+    "stage": "",
+    "intent": "En estudio",
+    "status": "En estudio",
+    "performanceStatus": "",
+    "biomarkers": ""
+  },
+  "exam": {
+    "weightKg": "",
+    "heightM": ""
+  },
+  "narrative": {
+    "chiefComplaint": "",
+    "currentIllness": "",
+    "backgroundClinical": "",
+    "currentMedication": "",
+    "familyOncology": "",
+    "gynecology": "",
+    "physicalExam": "",
+    "summary": "",
+    "plan": ""
+  },
+  "evolutions": [],
+  "treatments": [],
+  "studies": [],
+  "externalStudies": []
+}

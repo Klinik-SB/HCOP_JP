@@ -1,0 +1,89 @@
+{
+  "$schema_version": 1,
+  "organ": "corpus",
+  "edition": "AJCC 8",
+  "source": "pdfsource/_pages_corpusv8/",
+  "axes": {
+    "T": {
+      "label": "Primary Tumor (Corpus Uteri Carcinoma and Carcinosarcoma, with FIGO equivalents)",
+      "categories": [
+        {"code": "TX",  "description": "Primary tumor cannot be assessed", "notes": []},
+        {"code": "T0",  "description": "No evidence of primary tumor", "notes": []},
+        {"code": "T1",  "description": "Tumor confined to the corpus uteri, including endocervical glandular involvement (FIGO I)", "notes": []},
+        {"code": "T1a", "description": "Tumor limited to the endometrium or invading less than half the myometrium (FIGO IA)", "notes": []},
+        {"code": "T1b", "description": "Tumor invading one half or more of the myometrium (FIGO IB)", "notes": []},
+        {"code": "T2",  "description": "Tumor invading the stromal connective tissue of the cervix but not extending beyond the uterus. Does NOT include endocervical glandular involvement (FIGO II)", "notes": []},
+        {"code": "T3",  "description": "Tumor involving serosa, adnexa, vagina, or parametrium (FIGO III)", "notes": []},
+        {"code": "T3a", "description": "Tumor involving the serosa and/or adnexa (direct extension or metastasis) (FIGO IIIA)", "notes": []},
+        {"code": "T3b", "description": "Vaginal involvement (direct extension or metastasis) or parametrial involvement (FIGO IIIB)", "notes": []},
+        {"code": "T4",  "description": "Tumor invading the bladder mucosa and/or bowel mucosa (bullous edema is not sufficient to classify a tumor as T4) (FIGO IVA)", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": [{"token": "(m)", "description": "Multiple synchronous primary tumors"}]
+    },
+    "N": {
+      "label": "Regional Lymph Node (with FIGO equivalents)",
+      "categories": [
+        {"code": "NX",     "description": "Regional lymph nodes cannot be assessed", "notes": []},
+        {"code": "N0",     "description": "No regional lymph node metastasis", "notes": []},
+        {"code": "N0(i+)", "description": "Isolated tumor cells in regional lymph node(s) no greater than 0.2 mm", "notes": []},
+        {"code": "N1",     "description": "Regional lymph node metastasis to pelvic lymph nodes (FIGO IIIC1)", "notes": []},
+        {"code": "N1mi",   "description": "Regional lymph node metastasis (greater than 0.2 mm but not greater than 2.0 mm in diameter) to pelvic lymph nodes (FIGO IIIC1)", "notes": []},
+        {"code": "N1a",    "description": "Regional lymph node metastasis (greater than 2.0 mm in diameter) to pelvic lymph nodes (FIGO IIIC1)", "notes": []},
+        {"code": "N2",     "description": "Regional lymph node metastasis to para-aortic lymph nodes, with or without positive pelvic lymph nodes (FIGO IIIC2)", "notes": []},
+        {"code": "N2mi",   "description": "Regional lymph node metastasis (greater than 0.2 mm but not greater than 2.0 mm in diameter) to para-aortic lymph nodes, with or without positive pelvic lymph nodes (FIGO IIIC2)", "notes": []},
+        {"code": "N2a",    "description": "Regional lymph node metastasis (greater than 2.0 mm in diameter) to para-aortic lymph nodes, with or without positive pelvic lymph nodes (FIGO IIIC2)", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": [
+        {"token": "(sn)", "description": "Sentinel node procedure"},
+        {"token": "(f)",  "description": "FNA or core needle biopsy"}
+      ]
+    },
+    "M": {
+      "label": "Distant Metastasis",
+      "categories": [
+        {"code": "M0", "description": "No distant metastasis", "notes": []},
+        {"code": "M1", "description": "Distant metastasis including metastasis to inguinal lymph nodes, intraperitoneal disease, lung, liver, or bone. Excluding metastasis to pelvic or para-aortic lymph nodes, vagina, uterine serosa, or adnexa (FIGO IVB)", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Staging Classification",
+      "categories": [
+        {"code": "c", "description": "Clinical classification.", "notes": []},
+        {"code": "p", "description": "Pathological classification.", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor: y (post-neoadjuvant)",
+      "categories": [
+        {"code": "Yes", "description": "Post-neoadjuvant.", "notes": []},
+        {"code": "No",  "description": "No neoadjuvant therapy.", "notes": []}
+      ],
+      "notes": {"matching": "Single stage table; DescY does not affect outcome."},
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor: r (recurrent)",
+      "categories": [
+        {"code": "Yes", "description": "Recurrent.", "notes": []},
+        {"code": "No",  "description": "Not recurrent.", "notes": []}
+      ],
+      "notes": {"matching": "DescR is recorded for context and ignored by the rule lookup."},
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor: m (multiple synchronous primaries)",
+      "categories": [
+        {"code": "Yes", "description": "Multiple synchronous primaries.", "notes": []},
+        {"code": "No",  "description": "Single primary tumor.", "notes": []}
+      ],
+      "notes": {"matching": "DescM is recorded for context and ignored by the rule lookup."},
+      "suffixes": []
+    }
+  }
+}

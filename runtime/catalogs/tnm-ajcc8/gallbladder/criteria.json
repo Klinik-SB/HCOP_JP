@@ -1,0 +1,185 @@
+{
+  "$schema_version": 1,
+  "organ": "gallbladder",
+  "edition": "AJCC 8",
+  "source": "20250317/btc_blocks.pdf, pagina 46, tabla AJCC reproducida con permiso",
+  "sourceDocument": "btc_blocks.pdf",
+  "sourcePage": 46,
+  "guideVersion": "NCCN 6.2024",
+  "axes": {
+    "T": {
+      "label": "Tumor primario",
+      "categories": [
+        {
+          "code": "TX",
+          "description": "El tumor primario no puede evaluarse.",
+          "notes": []
+        },
+        {
+          "code": "T0",
+          "description": "Sin evidencia de tumor primario.",
+          "notes": []
+        },
+        {
+          "code": "Tis",
+          "description": "Carcinoma in situ.",
+          "notes": []
+        },
+        {
+          "code": "T1",
+          "description": "Invade lamina propia o capa muscular.",
+          "notes": []
+        },
+        {
+          "code": "T1a",
+          "description": "Invade lamina propia.",
+          "notes": []
+        },
+        {
+          "code": "T1b",
+          "description": "Invade la capa muscular.",
+          "notes": []
+        },
+        {
+          "code": "T2",
+          "description": "Invade tejido conectivo perimuscular sin extension mas alla de la serosa o al higado.",
+          "notes": []
+        },
+        {
+          "code": "T2a",
+          "description": "Invade tejido perimuscular del lado peritoneal sin afectar serosa.",
+          "notes": []
+        },
+        {
+          "code": "T2b",
+          "description": "Invade tejido perimuscular del lado hepatico sin extension al higado.",
+          "notes": []
+        },
+        {
+          "code": "T3",
+          "description": "Perfora serosa y/o invade directamente higado u otro organo adyacente.",
+          "notes": []
+        },
+        {
+          "code": "T4",
+          "description": "Invade vena porta principal, arteria hepatica o dos o mas organos extrahepaticos.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "N": {
+      "label": "Ganglios regionales",
+      "categories": [
+        {
+          "code": "NX",
+          "description": "Los ganglios regionales no pueden evaluarse.",
+          "notes": []
+        },
+        {
+          "code": "N0",
+          "description": "Sin metastasis ganglionares regionales.",
+          "notes": []
+        },
+        {
+          "code": "N1",
+          "description": "Metastasis en uno a tres ganglios regionales.",
+          "notes": []
+        },
+        {
+          "code": "N2",
+          "description": "Metastasis en cuatro o mas ganglios regionales.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "M": {
+      "label": "Metastasis a distancia",
+      "categories": [
+        {
+          "code": "M0",
+          "description": "Sin metastasis a distancia.",
+          "notes": []
+        },
+        {
+          "code": "M1",
+          "description": "Metastasis a distancia presente.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Clasificacion",
+      "categories": [
+        {
+          "code": "c",
+          "description": "Clasificacion clinica.",
+          "notes": []
+        },
+        {
+          "code": "p",
+          "description": "Clasificacion patologica.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor y",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Posterior a tratamiento neoadyuvante.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor y.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor r",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Enfermedad recurrente.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor r.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor m",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Tumores primarios multiples.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor m.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    }
+  }
+}

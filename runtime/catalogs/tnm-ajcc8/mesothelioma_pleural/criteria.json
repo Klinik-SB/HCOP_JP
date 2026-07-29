@@ -1,0 +1,160 @@
+{
+  "$schema_version": 1,
+  "organ": "mesothelioma_pleural",
+  "edition": "AJCC 8",
+  "source": "20250317/meso_pleural_blocks.pdf, pagina 25, tabla AJCC reproducida con permiso",
+  "sourceDocument": "meso_pleural_blocks.pdf",
+  "sourcePage": 25,
+  "guideVersion": "NCCN 2.2025",
+  "axes": {
+    "T": {
+      "label": "Tumor primario",
+      "categories": [
+        {
+          "code": "TX",
+          "description": "No evaluable.",
+          "notes": []
+        },
+        {
+          "code": "T0",
+          "description": "Sin evidencia de tumor.",
+          "notes": []
+        },
+        {
+          "code": "T1",
+          "description": "Limitado a pleura parietal ipsilateral, con o sin otras superficies pleurales.",
+          "notes": []
+        },
+        {
+          "code": "T2",
+          "description": "Todas las superficies pleurales ipsilaterales con musculo diafragmatico o parenquima pulmonar.",
+          "notes": []
+        },
+        {
+          "code": "T3",
+          "description": "Localmente avanzado pero potencialmente resecable.",
+          "notes": []
+        },
+        {
+          "code": "T4",
+          "description": "Localmente avanzado tecnicamente irresecable.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "N": {
+      "label": "Ganglios regionales",
+      "categories": [
+        {
+          "code": "NX",
+          "description": "Los ganglios regionales no pueden evaluarse.",
+          "notes": []
+        },
+        {
+          "code": "N0",
+          "description": "Sin metastasis ganglionares regionales.",
+          "notes": []
+        },
+        {
+          "code": "N1",
+          "description": "Ganglios broncopulmonares, hiliares o mediastinales ipsilaterales.",
+          "notes": []
+        },
+        {
+          "code": "N2",
+          "description": "Mediastinales contralaterales o supraclaviculares.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "M": {
+      "label": "Metastasis a distancia",
+      "categories": [
+        {
+          "code": "M0",
+          "description": "Sin metastasis a distancia.",
+          "notes": []
+        },
+        {
+          "code": "M1",
+          "description": "Metastasis a distancia presente.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "Classification": {
+      "label": "Clasificacion",
+      "categories": [
+        {
+          "code": "c",
+          "description": "Clasificacion clinica.",
+          "notes": []
+        },
+        {
+          "code": "p",
+          "description": "Clasificacion patologica.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescY": {
+      "label": "Descriptor y",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Posterior a tratamiento neoadyuvante.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor y.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescR": {
+      "label": "Descriptor r",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Enfermedad recurrente.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor r.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    },
+    "DescM": {
+      "label": "Descriptor m",
+      "categories": [
+        {
+          "code": "Yes",
+          "description": "Tumores primarios multiples.",
+          "notes": []
+        },
+        {
+          "code": "No",
+          "description": "Sin descriptor m.",
+          "notes": []
+        }
+      ],
+      "notes": {},
+      "suffixes": []
+    }
+  }
+}

@@ -1,0 +1,175 @@
+{
+  "$schema_version": 1,
+  "organ": "breast",
+  "edition": "AJCC 8",
+  "source": "pdfsource/breast.pdf",
+  "axes": {
+    "T": {
+      "label": "Primary Tumor",
+      "categories": [
+        {"code": "TX", "description": "Primary tumor cannot be assessed.", "notes": []},
+        {"code": "T0", "description": "No evidence of primary tumor.", "notes": []},
+        {"code": "Tis", "description": "Carcinoma in situ. Serializes the Tis (DCIS) and Tis (Paget) variants together; the underlying parenchymal disease, if any, is categorized by its own T value with Paget disease noted separately.", "notes": ["tis_variants", "lcis_removed"]},
+        {"code": "T1mi", "description": "Tumor <= 1 mm in greatest dimension.", "notes": []},
+        {"code": "T1", "description": "Tumor <= 20 mm in greatest dimension.", "notes": []},
+        {"code": "T1a", "description": "Tumor > 1 mm but <= 5 mm in greatest dimension (round measurements > 1.0–1.9 mm to 2 mm).", "notes": []},
+        {"code": "T1b", "description": "Tumor > 5 mm but <= 10 mm in greatest dimension.", "notes": []},
+        {"code": "T1c", "description": "Tumor > 10 mm but <= 20 mm in greatest dimension.", "notes": []},
+        {"code": "T2", "description": "Tumor > 20 mm but <= 50 mm in greatest dimension.", "notes": []},
+        {"code": "T3", "description": "Tumor > 50 mm in greatest dimension.", "notes": []},
+        {"code": "T4", "description": "Tumor of any size with direct extension to the chest wall and/or to the skin (ulceration or macroscopic nodules); invasion of the dermis alone does not qualify as T4.", "notes": []},
+        {"code": "T4a", "description": "Extension to the chest wall; invasion or adherence to pectoralis muscle in the absence of invasion of chest wall structures does not qualify as T4.", "notes": []},
+        {"code": "T4b", "description": "Ulceration and/or ipsilateral macroscopic satellite nodules and/or edema (including peau d'orange) of the skin that does not meet the criteria for inflammatory carcinoma.", "notes": []},
+        {"code": "T4c", "description": "Both T4a and T4b are present.", "notes": []},
+        {"code": "T4d", "description": "Inflammatory carcinoma.", "notes": []}
+      ],
+      "notes": {
+        "tis_variants": "AJCC distinguishes Tis (DCIS) -- ductal carcinoma in situ -- from Tis (Paget) -- Paget disease of the nipple NOT associated with invasive carcinoma and/or DCIS in the underlying parenchyma. Both share the same Tis category code in this model.",
+        "lcis_removed": "Lobular carcinoma in situ (LCIS) is a benign entity and is removed from TNM staging."
+      },
+      "suffixes": [
+        {"token": "(m)", "description": "Multiple synchronous primary tumors."}
+      ]
+    },
+    "N": {
+      "label": "Regional Lymph Node",
+      "categories": [
+        {"code": "NX", "description": "Regional lymph nodes cannot be assessed (e.g., previously removed).", "notes": []},
+        {"code": "N0", "description": "No regional lymph node metastases. In pathological staging this includes pN0(i+) (isolated tumor cells only) and pN0(mol+) (positive RT-PCR molecular findings, no ITCs detected).", "notes": ["pn0_variants"]},
+        {"code": "N1mi", "description": "Micrometastases (approximately 200 cells, larger than 0.2 mm, but none larger than 2.0 mm).", "notes": []},
+        {"code": "N1", "description": "Clinical (cN1): metastases to movable ipsilateral Level I, II axillary lymph node(s). Pathological (pN1): micrometastases, or 1–3 axillary nodes, and/or clinically negative internal mammary nodes with sentinel-node mets.", "notes": []},
+        {"code": "N1a", "description": "Pathological only: metastases in 1–3 axillary lymph nodes, at least one deposit larger than 2.0 mm.", "notes": ["pn_only"]},
+        {"code": "N1b", "description": "Pathological only: metastases in ipsilateral internal mammary sentinel nodes, excluding ITCs.", "notes": ["pn_only"]},
+        {"code": "N1c", "description": "Pathological only: pN1a and pN1b combined.", "notes": ["pn_only"]},
+        {"code": "N2", "description": "Clinical: ipsilateral Level I, II axillary nodes clinically fixed or matted, or ipsilateral internal mammary nodes in the absence of axillary mets. Pathological: 4–9 axillary nodes, or positive ipsilateral internal mammary nodes by imaging in the absence of axillary mets.", "notes": []},
+        {"code": "N2a", "description": "Clinical: ipsilateral Level I, II axillary nodes fixed to one another (matted) or to other structures. Pathological: metastases in 4–9 axillary nodes (>= one deposit > 2.0 mm).", "notes": []},
+        {"code": "N2b", "description": "Clinical: metastases only in ipsilateral internal mammary nodes in the absence of axillary mets. Pathological: clinically detected internal mammary nodes with or without microscopic confirmation, axillary nodes negative.", "notes": []},
+        {"code": "N3", "description": "Clinical: ipsilateral infraclavicular (Level III axillary) nodes; or ipsilateral internal mammary plus Level I/II axillary; or ipsilateral supraclavicular nodes. Pathological: >= 10 axillary nodes, or infraclavicular, or internal mammary plus axillary, or supraclavicular.", "notes": []},
+        {"code": "N3a", "description": "Clinical: ipsilateral infraclavicular lymph node(s). Pathological: >= 10 axillary nodes (>= one deposit > 2.0 mm) or metastases to infraclavicular nodes.", "notes": []},
+        {"code": "N3b", "description": "Clinical: ipsilateral internal mammary and axillary node(s). Pathological: pN1a or pN2a in the presence of cN2b (positive internal mammary nodes by imaging).", "notes": []},
+        {"code": "N3c", "description": "Metastases in ipsilateral supraclavicular lymph node(s).", "notes": []}
+      ],
+      "notes": {
+        "pn0_variants": "Pathological pN0(i+) (isolated tumor cells, <= 0.2 mm) and pN0(mol+) (RT-PCR positive, no ITCs) both serialize to N0 in this model. They behave identically for stage-group lookup; record them at the data-entry layer if needed.",
+        "pn_only": "N1a, N1b, and N1c are defined only in the pathological (pN) axis; clinical cN does not subdivide N1."
+      },
+      "suffixes": [
+        {"token": "(sn)", "description": "Confirmation by sentinel node biopsy."},
+        {"token": "(f)", "description": "Confirmation by FNA or core needle biopsy."}
+      ]
+    },
+    "M": {
+      "label": "Distant Metastasis",
+      "categories": [
+        {"code": "M0", "description": "No clinical or radiographic evidence of distant metastases.", "notes": ["cM0_isolated"]},
+        {"code": "M1", "description": "Distant metastases. Clinical cM1 means detected by clinical and radiographic means; pathological pM1 means any histologically proven distant metastasis, or non-regional nodal metastasis > 0.2 mm. Both serialize to M1 here; the c/p prefix is carried on the Classification axis.", "notes": ["cm_pm_prefix"]}
+      ],
+      "notes": {
+        "cM0_isolated": "cM0(i+) -- no clinical/radiographic mets but tumor cells <= 0.2 mm detected in circulating blood, marrow, or non-regional nodal tissue in an asymptomatic patient -- is staged as M0 in this model.",
+        "cm_pm_prefix": "AJCC distinguishes cM1 (clinical detection) from pM1 (pathologic detection). This model encodes the prefix on the Classification axis (c vs p) rather than splitting M into cM1/pM1 literals."
+      },
+      "suffixes": [
+      ]
+    },
+    "Classification": {
+      "label": "Staging Classification",
+      "categories": [
+        {"code": "a", "description": "Anatomic stage group: TNM-only grouping, biomarkers and grade are not consulted. Use when biomarker status is unavailable, or when comparison with historical anatomic staging is needed.", "notes": []},
+        {"code": "c", "description": "Clinical Prognostic stage group: stage assigned from imaging, biopsy, and clinical exam, incorporating Grade + HER2/ER/PR status. cM categories indicate imaging-based metastasis assessment.", "notes": ["her2_equivocal"]},
+        {"code": "p", "description": "Pathological Prognostic stage group: stage assigned from the surgically resected specimen with histologic review, incorporating Grade + HER2/ER/PR status. pM categories require microscopic confirmation of distant metastasis.", "notes": ["oncotype_gap"]}
+      ],
+      "notes": {
+        "her2_equivocal": "AJCC notes that Equivocal HER2 should be treated as Negative for Clinical Prognostic Stage Grouping. This model does NOT auto-coerce -- pass HER2 = Negative if the IHC/ISH cascade ended Equivocal. An Equivocal value will return UNSTAGEABLE.",
+        "oncotype_gap": "AJCC defines a Pathological-only exception: T1/T2 N0 M0 HER2- ER+ with Oncotype DX Score < 11 maps to IA regardless of grade. This model does NOT carry an OncotypeDX axis, so the exception is not applied automatically."
+      },
+      "suffixes": [
+      ]
+    },
+    "DescY": {
+      "label": "Descriptor: y (post-neoadjuvant)",
+      "categories": [
+        {"code": "Yes", "description": "Classification determined during or after the application of initial multimodal (neoadjuvant) therapy.", "notes": []},
+        {"code": "No", "description": "No neoadjuvant therapy preceded this assessment.", "notes": []}
+      ],
+      "notes": {
+        "matching": "For breast AJCC 8 the stage table is identical regardless of DescY; the field is recorded for clinical context but does not affect the stage outcome."
+      },
+      "suffixes": [
+      ]
+    },
+    "DescR": {
+      "label": "Descriptor: r (recurrent)",
+      "categories": [
+        {"code": "Yes", "description": "Recurrent tumor classification, assigned when the tumor is staged after a disease-free interval.", "notes": []},
+        {"code": "No", "description": "Not a recurrent tumor in this assessment.", "notes": []}
+      ],
+      "notes": {
+        "matching": "For breast AJCC 8 the stage table is identical regardless of DescR; the field is recorded for clinical context but does not affect the stage outcome."
+      },
+      "suffixes": [
+      ]
+    },
+    "DescM": {
+      "label": "Descriptor: m (multiple synchronous primaries)",
+      "categories": [
+        {"code": "Yes", "description": "Multiple synchronous primary tumors at the same anatomic site.", "notes": []},
+        {"code": "No", "description": "Single primary tumor.", "notes": []}
+      ],
+      "notes": {
+        "matching": "For breast AJCC 8 the stage table is identical regardless of DescM; the field is recorded for clinical context but does not affect the stage outcome."
+      },
+      "suffixes": [
+      ]
+    },
+    "Grade": {
+      "label": "Histologic Grade",
+      "categories": [
+        {"code": "GX", "description": "Grade cannot be assessed.", "notes": []},
+        {"code": "G1", "description": "Low combined histologic grade (favorable); Scarff-Bloom-Richardson (SBR) score of 3–5 points.", "notes": []},
+        {"code": "G2", "description": "Intermediate combined histologic grade (moderately favorable); SBR score of 6–7 points.", "notes": []},
+        {"code": "G3", "description": "High combined histologic grade (unfavorable); SBR score of 8–9 points.", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": [
+      ]
+    },
+    "HER2": {
+      "label": "HER2 Status (IHC/ISH)",
+      "categories": [
+        {"code": "Positive", "description": "HER2 positive by current IHC/ISH cascade.", "notes": []},
+        {"code": "Negative", "description": "HER2 negative by current IHC/ISH cascade.", "notes": ["her2_equivocal_in_breast"]},
+        {"code": "Equivocal", "description": "HER2 status equivocal. AJCC: treat as Negative for Clinical Prognostic Stage Grouping (data-entry layer must apply this coercion; this model returns UNSTAGEABLE for Equivocal).", "notes": ["her2_equivocal_in_breast"]},
+        {"code": "Unknown", "description": "HER2 status not determined or not available.", "notes": []}
+      ],
+      "notes": {
+        "her2_equivocal_in_breast": "Per AJCC 8, Equivocal HER2 is treated as Negative for Clinical Prognostic Stage Grouping. This model does NOT auto-apply the coercion -- callers must pass Negative when the cascade ended Equivocal."
+      },
+      "suffixes": [
+      ]
+    },
+    "ER": {
+      "label": "Estrogen Receptor Status",
+      "categories": [
+        {"code": "Positive", "description": "ER positive.", "notes": []},
+        {"code": "Negative", "description": "ER negative.", "notes": []},
+        {"code": "Equivocal", "description": "ER equivocal. Not handled by the AJCC stage tables; query will return UNSTAGEABLE.", "notes": []},
+        {"code": "Unknown", "description": "ER status not determined or not available.", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": [
+      ]
+    },
+    "PR": {
+      "label": "Progesterone Receptor Status",
+      "categories": [
+        {"code": "Positive", "description": "PR positive.", "notes": []},
+        {"code": "Negative", "description": "PR negative.", "notes": []},
+        {"code": "Equivocal", "description": "PR equivocal. Not handled by the AJCC stage tables; query will return UNSTAGEABLE.", "notes": []},
+        {"code": "Unknown", "description": "PR status not determined or not available.", "notes": []}
+      ],
+      "notes": {},
+      "suffixes": [
+      ]
+    }
+  }
+}

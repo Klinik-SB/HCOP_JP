@@ -1,0 +1,78 @@
+{
+  "$schema_version": 1,
+  "organ": "cholangio_intrahepatic",
+  "edition": "AJCC 8",
+  "source": "pdfsource/cholangiov8.pdf",
+  "observables": {
+    "size_cm": {"type": "number", "unit": "cm", "description": "Greatest dimension of the (largest) tumor.", "display": {"label": "Largest tumor, greatest dimension (cm)"}},
+    "histology": {
+      "type": "enum",
+      "default": "invasive",
+      "values": ["in_situ", "invasive", "unknown"],
+      "display": {
+        "label": "Histologic class",
+        "choices": {"in_situ": "Carcinoma in situ / intraductal tumor (Tis)", "invasive": "Invasive carcinoma", "unknown": "Unknown"}
+      }
+    },
+    "multiple_tumors": {
+      "type": "bool",
+      "default": false,
+      "description": "Multiple intrahepatic tumors (forces T2 regardless of vascular invasion).",
+      "display": {"label": "Multiple tumors present"}
+    },
+    "vascular_invasion": {
+      "type": "enum",
+      "default": "none",
+      "values": ["none", "intrahepatic_vascular", "perforates_visceral_peritoneum", "local_extrahepatic_structures"],
+      "description": "Highest-grade vascular / peritoneal / extrahepatic invasion present.",
+      "display": {
+        "label": "Vascular / peritoneal / extrahepatic invasion",
+        "choices": {
+          "none": "No vascular invasion (T1 family)",
+          "intrahepatic_vascular": "Intrahepatic vascular invasion (T2)",
+          "perforates_visceral_peritoneum": "Perforates the visceral peritoneum (T3)",
+          "local_extrahepatic_structures": "Direct invasion of local extrahepatic structures (T4)"
+        }
+      }
+    },
+    "positive_node_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of regional lymph nodes with metastasis.",
+      "display": {"label": "Positive regional lymph nodes (count)"}
+    },
+    "distant_mets": {"type": "bool", "default": false, "display": {"label": "Distant metastasis (M1)"}}
+  },
+  "axes": {
+    "T": [
+      {"label": "Tis: carcinoma in situ", "when": {"histology": {"eq": "in_situ"}}, "then": "Tis"},
+      {"label": "T4: direct invasion of local extrahepatic structures", "when": {"vascular_invasion": {"eq": "local_extrahepatic_structures"}}, "then": "T4"},
+      {"label": "T3: perforates visceral peritoneum", "when": {"vascular_invasion": {"eq": "perforates_visceral_peritoneum"}}, "then": "T3"},
+      {"label": "T2: solitary with intrahepatic vascular invasion OR multiple tumors", "when": {"any_of": [
+        {"vascular_invasion": {"eq": "intrahepatic_vascular"}},
+        {"multiple_tumors": {"eq": true}}
+      ]}, "then": "T2"},
+      {"label": "T1b: solitary > 5 cm without vascular invasion", "when": {"size_cm": {"gt": 5}, "vascular_invasion": {"eq": "none"}, "multiple_tumors": {"eq": false}}, "then": "T1b"},
+      {"label": "T1a: solitary <= 5 cm without vascular invasion", "when": {"size_cm": {"lte": 5}, "vascular_invasion": {"eq": "none"}, "multiple_tumors": {"eq": false}}, "then": "T1a"}
+    ],
+    "N": [
+      {"label": "N0: no positive nodes", "when": {"positive_node_count": {"eq": 0}}, "then": "N0"},
+      {"label": "N1: at least one positive node", "when": {"positive_node_count": {"gte": 1}}, "then": "N1"}
+    ],
+    "M": [
+      {"label": "M0: no distant mets", "when": {"distant_mets": {"eq": false}}, "then": "M0"},
+      {"label": "M1: distant mets", "when": {"distant_mets": {"eq": true}}, "then": "M1"}
+    ]
+  },
+  "examples": [
+    {"label": "in situ -> Tis", "observations": {"histology": "in_situ"}, "expect": {"T": "Tis", "N": "N0", "M": "M0"}},
+    {"label": "3 cm solitary no invasion -> T1a", "observations": {"size_cm": 3.0}, "expect": {"T": "T1a"}},
+    {"label": "7 cm solitary no invasion -> T1b", "observations": {"size_cm": 7.0}, "expect": {"T": "T1b"}},
+    {"label": "solitary with intrahepatic vascular invasion -> T2", "observations": {"size_cm": 3.0, "vascular_invasion": "intrahepatic_vascular"}, "expect": {"T": "T2"}},
+    {"label": "multiple tumors no invasion -> T2", "observations": {"size_cm": 4.0, "multiple_tumors": true}, "expect": {"T": "T2"}},
+    {"label": "perforates peritoneum -> T3", "observations": {"vascular_invasion": "perforates_visceral_peritoneum"}, "expect": {"T": "T3"}},
+    {"label": "local extrahepatic invasion -> T4", "observations": {"vascular_invasion": "local_extrahepatic_structures"}, "expect": {"T": "T4"}},
+    {"label": "T1a + 2 nodes + M1", "observations": {"size_cm": 3.0, "positive_node_count": 2, "distant_mets": true}, "expect": {"T": "T1a", "N": "N1", "M": "M1"}},
+    {"label": "no observations -> TX, N0, M0", "observations": {}, "expect": {"T": "TX", "N": "N0", "M": "M0"}}
+  ]
+}

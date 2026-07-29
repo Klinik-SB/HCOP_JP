@@ -1,0 +1,63 @@
+{
+  "$schema_version": 1,
+  "organ": "liver",
+  "edition": "AJCC 8",
+  "source": "pdfsource/liver.pdf",
+  "observables": {
+    "size_cm": {"type": "number", "unit": "cm", "description": "Greatest dimension of the largest tumor.", "display": {"label": "Largest tumor, greatest dimension (cm)"}},
+    "multiple_tumors": {"type": "bool", "default": false, "description": "Multiple HCC tumors (any > 5 cm OR >= 4 of any size triggers T3).", "display": {"label": "Multiple tumors present"}},
+    "any_tumor_gt_5_cm": {"type": "bool", "default": false, "description": "Used with multiple_tumors=true to distinguish T2 vs T3.", "display": {"label": "Any tumor > 5 cm (used with multiple tumors)"}},
+    "tumor_count_ge_4": {"type": "bool", "default": false, "description": "4 or more tumors. Forces T3 regardless of individual sizes.", "display": {"label": "4 or more tumors (forces T3)"}},
+    "vascular_invasion": {
+      "type": "enum",
+      "default": "none",
+      "values": ["none", "microvascular", "major_branch_portal_or_hepatic", "perforates_visceral_peritoneum_or_adjacent_organs_except_gallbladder"],
+      "description": "'microvascular' alone with a solitary tumor <= 2 cm allows T1a. Other categories drive T1b/T3/T4.",
+      "display": {
+        "label": "Vascular or peritoneal invasion",
+        "choices": {
+          "none": "No vascular or peritoneal invasion",
+          "microvascular": "Microvascular invasion only",
+          "major_branch_portal_or_hepatic": "Major branch of portal or hepatic vein invasion (T3)",
+          "perforates_visceral_peritoneum_or_adjacent_organs_except_gallbladder": "Perforates visceral peritoneum OR invades adjacent organs (excl. gallbladder) (T4)"
+        }
+      }
+    },
+    "regional_node_mets": {"type": "bool", "default": false, "display": {"label": "Regional lymph node metastasis (N1)"}},
+    "distant_mets": {"type": "bool", "default": false, "display": {"label": "Distant metastasis (M1)"}}
+  },
+  "axes": {
+    "T": [
+      {"label": "T4: perforates visceral peritoneum or invades adjacent organs (not gallbladder)", "when": {"vascular_invasion": {"eq": "perforates_visceral_peritoneum_or_adjacent_organs_except_gallbladder"}}, "then": "T4"},
+      {"label": "T3: multiple tumors any > 5 cm OR 4+ tumors OR major vascular invasion", "when": {"any_of": [
+        {"multiple_tumors": {"eq": true}, "any_tumor_gt_5_cm": {"eq": true}},
+        {"tumor_count_ge_4": {"eq": true}},
+        {"vascular_invasion": {"eq": "major_branch_portal_or_hepatic"}}
+      ]}, "then": "T3"},
+      {"label": "T2: solitary > 2 cm with vascular invasion, OR multiple all <= 5 cm", "when": {"any_of": [
+        {"size_cm": {"gt": 2}, "vascular_invasion": {"eq": "microvascular"}},
+        {"multiple_tumors": {"eq": true}, "any_tumor_gt_5_cm": {"eq": false}}
+      ]}, "then": "T2"},
+      {"label": "T1b: solitary > 2 cm without vascular invasion", "when": {"size_cm": {"gt": 2}, "vascular_invasion": {"eq": "none"}, "multiple_tumors": {"eq": false}}, "then": "T1b"},
+      {"label": "T1a: solitary <= 2 cm", "when": {"size_cm": {"lte": 2}, "multiple_tumors": {"eq": false}}, "then": "T1a"}
+    ],
+    "N": [
+      {"label": "N0", "when": {"regional_node_mets": {"eq": false}}, "then": "N0"},
+      {"label": "N1", "when": {"regional_node_mets": {"eq": true}}, "then": "N1"}
+    ],
+    "M": [
+      {"label": "M0", "when": {"distant_mets": {"eq": false}}, "then": "M0"},
+      {"label": "M1", "when": {"distant_mets": {"eq": true}}, "then": "M1"}
+    ]
+  },
+  "examples": [
+    {"label": "1.5 cm solitary -> T1a", "observations": {"size_cm": 1.5}, "expect": {"T": "T1a"}},
+    {"label": "3 cm solitary no invasion -> T1b", "observations": {"size_cm": 3.0}, "expect": {"T": "T1b"}},
+    {"label": "3 cm solitary microvascular -> T2", "observations": {"size_cm": 3.0, "vascular_invasion": "microvascular"}, "expect": {"T": "T2"}},
+    {"label": "multiple <= 5 cm -> T2", "observations": {"size_cm": 4.0, "multiple_tumors": true}, "expect": {"T": "T2"}},
+    {"label": "multiple with one > 5 cm -> T3", "observations": {"size_cm": 6.0, "multiple_tumors": true, "any_tumor_gt_5_cm": true}, "expect": {"T": "T3"}},
+    {"label": "major vascular invasion -> T3", "observations": {"size_cm": 4.0, "vascular_invasion": "major_branch_portal_or_hepatic"}, "expect": {"T": "T3"}},
+    {"label": "perforates peritoneum -> T4", "observations": {"vascular_invasion": "perforates_visceral_peritoneum_or_adjacent_organs_except_gallbladder"}, "expect": {"T": "T4"}},
+    {"label": "no observations -> TX, N0, M0", "observations": {}, "expect": {"T": "TX", "N": "N0", "M": "M0"}}
+  ]
+}
