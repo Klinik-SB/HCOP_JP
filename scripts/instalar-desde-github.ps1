@@ -5,7 +5,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $RepositoryZip = "https://github.com/Marcolyto/HCOP_JP/archive/refs/heads/main.zip"
-$RawInstaller = "https://raw.githubusercontent.com/Marcolyto/HCOP_JP/main/scripts/instalar-desde-github.ps1"
+$RepositoryArchiveApi = "https://api.github.com/repos/Marcolyto/HCOP_JP/zipball/main"
 
 function Write-Step([string]$Message) {
   Write-Host ""
@@ -17,6 +17,70 @@ function New-RandomSecret([int]$Bytes = 36) {
   $generator = [System.Security.Cryptography.RandomNumberGenerator]::Create()
   try { $generator.GetBytes($buffer) } finally { $generator.Dispose() }
   ([Convert]::ToBase64String($buffer)).TrimEnd("=").Replace("+", "-").Replace("/", "_")
+}
+
+function Refresh-ProcessPath {
+  $machinePath = [Environment]::GetEnvironmentVariable("Path", "Machine")
+  $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+  $env:Path = "$machinePath;$userPath"
+}
+
+function Ensure-GitHubCli {
+  $command = Get-Command gh.exe -ErrorAction SilentlyContinue
+  if (-not $command) {
+    Write-Step "Instalando GitHub CLI para acceder al repositorio privado"
+    $winget = Get-Command winget.exe -ErrorAction SilentlyContinue
+    if (-not $winget) {
+      throw "El repositorio es privado. Instale GitHub CLI desde https://cli.github.com/ y vuelva a intentar."
+    }
+    winget install --exact --id GitHub.cli --accept-source-agreements --accept-package-agreements |
+      Out-Host
+    if ($LASTEXITCODE -ne 0) { throw "GitHub CLI no pudo instalarse automáticamente." }
+    Refresh-ProcessPath
+    $candidate = Join-Path $env:ProgramFiles "GitHub CLI\gh.exe"
+    $command = if (Test-Path -LiteralPath $candidate) {
+      Get-Item -LiteralPath $candidate
+    } else {
+      Get-Command gh.exe -ErrorAction SilentlyContinue
+    }
+  }
+  if (-not $command) { throw "GitHub CLI no está disponible." }
+  $executable = if ($command.Source) { $command.Source } else { $command.FullName }
+  & $executable auth status --hostname github.com *> $null
+  if ($LASTEXITCODE -ne 0) {
+    Write-Step "Iniciando sesión segura en GitHub"
+    & $executable auth login --hostname github.com --git-protocol https --web |
+      Out-Host
+  }
+  if ($LASTEXITCODE -ne 0) { throw "No se pudo iniciar sesión en GitHub." }
+  return $executable
+}
+
+function Get-GitHubAccess {
+  $executable = Ensure-GitHubCli
+  $token = (& $executable auth token).Trim()
+  $username = (& $executable api user --jq ".login").Trim()
+  if ([string]::IsNullOrWhiteSpace($token) -or [string]::IsNullOrWhiteSpace($username)) {
+    throw "La sesión de GitHub no entregó credenciales válidas."
+  }
+  return @{ Executable = $executable; Token = $token; Username = $username }
+}
+
+function Download-RepositoryArchive([string]$Destination) {
+  try {
+    Invoke-WebRequest -UseBasicParsing -Uri $RepositoryZip -OutFile $Destination
+    return $null
+  } catch {
+    Write-Step "El repositorio es privado; validando su acceso a GitHub"
+    $access = Get-GitHubAccess
+    $headers = @{
+      Authorization = "Bearer $($access.Token)"
+      Accept = "application/vnd.github+json"
+      "X-GitHub-Api-Version" = "2022-11-28"
+    }
+    Invoke-WebRequest -UseBasicParsing -Headers $headers -Uri $RepositoryArchiveApi -OutFile $Destination
+    return $access
+  }
 }
 
 function Wait-Docker {
@@ -43,9 +107,7 @@ function Ensure-Docker {
     }
     winget install --exact --id Docker.DockerDesktop --accept-source-agreements --accept-package-agreements
     if ($LASTEXITCODE -ne 0) { throw "Docker Desktop no pudo instalarse automáticamente." }
-    $machinePath = [Environment]::GetEnvironmentVariable("Path", "Machine")
-    $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-    $env:Path = "$machinePath;$userPath"
+    Refresh-ProcessPath
     $dockerBin = Join-Path $env:ProgramFiles "Docker\Docker\resources\bin"
     if (Test-Path -LiteralPath $dockerBin) {
       $env:Path = "$dockerBin;$env:Path"
@@ -99,7 +161,7 @@ function Install-Version([string]$Root) {
   $temporary = Join-Path ([System.IO.Path]::GetTempPath()) ("hcop-jp-" + [Guid]::NewGuid().ToString("N"))
   $archive = "$temporary.zip"
   try {
-    Invoke-WebRequest -UseBasicParsing -Uri $RepositoryZip -OutFile $archive
+    $githubAccess = Download-RepositoryArchive $archive
     Expand-Archive -LiteralPath $archive -DestinationPath $temporary -Force
     $source = Get-ChildItem -LiteralPath $temporary -Directory |
       Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName "compose.github.yaml") } |
@@ -112,7 +174,7 @@ function Install-Version([string]$Root) {
     Copy-Item -LiteralPath $source.FullName -Destination $destination -Recurse
     [System.IO.File]::WriteAllText((Join-Path $Root "current.txt"), $destination, (New-Object System.Text.UTF8Encoding($false)))
     Copy-Item -LiteralPath (Join-Path $source.FullName "scripts\instalar-desde-github.ps1") -Destination (Join-Path $Root "instalar-desde-github.ps1") -Force
-    return $destination
+    return @{ Version = $destination; GitHubAccess = $githubAccess }
   } finally {
     if (Test-Path -LiteralPath $archive) { Remove-Item -LiteralPath $archive -Force }
     if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Recurse -Force }
@@ -173,12 +235,20 @@ New-Item -ItemType Directory -Path $resolvedInstall -Force | Out-Null
 
 Ensure-Docker
 Ensure-Environment $resolvedInstall
-$version = Install-Version $resolvedInstall
+$installation = Install-Version $resolvedInstall
+$version = $installation.Version
 Write-Launchers $resolvedInstall
 
 Write-Step "Descargando y arrancando HCOP JP"
 $compose = Join-Path $version "compose.github.yaml"
 $environment = Join-Path $resolvedInstall ".env"
+if ($installation.GitHubAccess) {
+  $installation.GitHubAccess.Token |
+    docker login ghcr.io --username $installation.GitHubAccess.Username --password-stdin *> $null
+  if ($LASTEXITCODE -ne 0) {
+    Write-Warning "No se pudo abrir la imagen privada; se construirá desde el código descargado."
+  }
+}
 docker compose --project-name hcop-jp --env-file $environment -f $compose pull
 if ($LASTEXITCODE -ne 0) {
   Write-Warning "La imagen publicada aún no está disponible; se construirá desde el código descargado."

@@ -3,7 +3,8 @@
 ## Opción recomendada: autoinstalador
 
 1. Abra el repositorio `Marcolyto/HCOP_JP`.
-2. Descargue `INSTALAR-DESDE-GITHUB.bat`.
+2. Inicie sesión con una cuenta autorizada y descargue
+   `INSTALAR-DESDE-GITHUB.bat`.
 3. Haga doble clic sobre el archivo descargado.
 4. Si Docker Desktop no está instalado, el asistente intenta instalarlo con
    `winget`. Windows puede pedir permisos.
@@ -12,6 +13,10 @@
 6. Ingrese usuario, contraseña y puerto. Puede presionar Enter para usar los
    valores sugeridos.
 7. Espere a que se abra el navegador.
+
+El repositorio es privado. Si la computadora todavía no tiene una sesión de
+GitHub, el instalador agrega GitHub CLI y abre el navegador para autorizarla.
+No copie tokens ni claves: el acceso queda en el almacén seguro de Windows.
 
 El programa se instala por defecto en:
 
@@ -24,6 +29,7 @@ En el Escritorio aparece un acceso directo **HCOP JP**.
 ## Qué hace el autoinstalador
 
 - comprueba Docker Desktop;
+- valida el acceso al repositorio privado;
 - descarga el código más reciente desde GitHub;
 - conserva cada versión en una carpeta separada;
 - crea `.env` con contraseñas y secretos locales;
