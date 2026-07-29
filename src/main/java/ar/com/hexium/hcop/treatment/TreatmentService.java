@@ -287,15 +287,43 @@ public class TreatmentService {
         .findFirst().orElse("");
   }
 
-  private String diagnosisDisplay(JsonNode record) {
-    String diagnosis = text(record, "diagnostico", "snomed", "cie10", "tipoDiagnostico", "name");
+  static String diagnosisDisplay(JsonNode record) {
+    JsonNode classifications = record.path("diagnosticClassifications");
+    JsonNode snomed = classifications.path("snomed");
+    JsonNode cie10 = classifications.path("cie10");
+    JsonNode ajcc = classifications.path("ajcc");
+    JsonNode tnm = record.path("tnm");
+
+    String diagnosis = text(
+        record, "diagnosis", "diagnostico", "snomed", "cie10", "tipoDiagnostico", "name");
+    if (diagnosis.isBlank()) {
+      diagnosis = text(snomed, "display", "freeText", "sourceDisplay");
+    }
+    if (diagnosis.isBlank()) {
+      diagnosis = text(cie10, "display", "freeText", "sourceDisplay");
+    }
+    if (diagnosis.isBlank()) {
+      diagnosis = text(record, "topography", "topografia");
+    }
+    if (diagnosis.isBlank()) {
+      diagnosis = text(tnm, "siteDisplay");
+    }
+    if (diagnosis.isBlank()) {
+      diagnosis = text(ajcc, "display", "freeText");
+    }
+    if (diagnosis.isBlank()) return "";
+
     String code = text(record, "cie10Codigo", "code");
-    String stage = text(record, "estadio", "stage");
-    StringBuilder result = new StringBuilder();
-    if (!code.isBlank() && !normalize(diagnosis).contains(normalize(code))) result.append("CIE-10 ").append(code).append(" · ");
-    result.append(diagnosis);
+    if (code.isBlank()) code = text(cie10, "code");
+    String stage = text(record, "stage", "estadio");
+    if (stage.isBlank()) stage = text(tnm, "stage", "stageGroup");
+
+    StringBuilder result = new StringBuilder(diagnosis);
+    if (!code.isBlank() && !normalize(diagnosis).contains(normalize(code))) {
+      result.append(" · CIE-10 ").append(code);
+    }
     if (!stage.isBlank()) result.append(" · Estadio ").append(stage);
-    return result.toString().trim();
+    return result.toString();
   }
 
   private ObjectNode createDetail(
@@ -427,7 +455,7 @@ public class TreatmentService {
     throw new ApiException(HttpStatus.BAD_REQUEST, "Una fecha del tratamiento es inválida.");
   }
 
-  private String text(JsonNode node, String... keys) {
+  private static String text(JsonNode node, String... keys) {
     for (String key : keys) {
       JsonNode value = node.path(key);
       if (!value.isMissingNode() && !value.isNull()) {
@@ -438,7 +466,7 @@ public class TreatmentService {
     return "";
   }
 
-  private String normalize(String value) {
+  private static String normalize(String value) {
     return java.text.Normalizer.normalize(value == null ? "" : value, java.text.Normalizer.Form.NFD)
         .replaceAll("\\p{M}", "").toLowerCase(Locale.ROOT).trim();
   }
