@@ -1,4 +1,4 @@
-# Docker para principiantes
+# Docker
 
 Docker ejecuta HCOP JP y PostgreSQL en dos contenedores coordinados. No necesita
 instalar Java ni PostgreSQL en Windows.

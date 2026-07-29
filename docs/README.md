@@ -53,7 +53,7 @@ Con el sistema iniciado también existe una versión navegable en
 
 ## 05 · Operación
 
-- [Docker para principiantes](05-operacion/DOCKER-PARA-PRINCIPIANTES.md)
+- [Docker](05-operacion/DOCKER.md)
 - [Actualización](05-operacion/ACTUALIZACION.md)
 - [Backup y restauración](05-operacion/BACKUP-Y-RESTAURACION.md)
 - [Acceso por red](05-operacion/ACCESO-POR-RED.md)

@@ -78,7 +78,7 @@ Empiece por el [índice de documentación](docs/README.md).
 - [Crear el proyecto desde cero](docs/04-desarrollo/CREAR-DESDE-CERO.md)
 - [Recrear todo con buenas prácticas](docs/08-recrear-desde-cero/README.md)
 - [Checklist de producto final](docs/08-recrear-desde-cero/10-CHECKLIST-PRODUCTO-FINAL.md)
-- [Docker para principiantes](docs/05-operacion/DOCKER-PARA-PRINCIPIANTES.md)
+- [Docker](docs/05-operacion/DOCKER.md)
 - [Copias de seguridad](docs/05-operacion/BACKUP-Y-RESTAURACION.md)
 - [Seguridad](docs/05-operacion/SEGURIDAD.md)
 
