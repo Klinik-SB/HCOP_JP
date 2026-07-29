@@ -1,5 +1,9 @@
 # Crear HCOP JP desde cero
 
+Esta es la versión resumida. Para una reconstrucción completa, con decisiones,
+seguridad, migración, pruebas, Docker y checklist de aceptación, use el
+[manual de reconstrucción con buenas prácticas](../08-recrear-desde-cero/README.md).
+
 ## 1. Herramientas
 
 - Java 21;

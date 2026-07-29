@@ -69,6 +69,12 @@ Con el sistema iniciado también existe una versión navegable en
 - [Mapa funcional: pantalla → API → Java → PostgreSQL](07-referencia/MAPA-FUNCIONAL.md)
 - [Glosario técnico y clínico-operativo](07-referencia/GLOSARIO.md)
 
+## 08 · Recrear desde cero
+
+- [Manual completo de reconstrucción con buenas prácticas](08-recrear-desde-cero/README.md)
+- [Checklist de producto final](08-recrear-desde-cero/10-CHECKLIST-PRODUCTO-FINAL.md)
+- [Plantilla para decisiones de arquitectura](08-recrear-desde-cero/PLANTILLA-ADR.md)
+
 ## Fuentes de verdad
 
 Cuando dos documentos difieran, prevalecen en este orden:
