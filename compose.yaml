@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: ${HCOP_DB_USER:-hcop}
       POSTGRES_PASSWORD: ${HCOP_DB_PASSWORD:-hcop_local_change_me}
     volumes:
-      - hcop_postgres:/var/lib/postgresql/data
+      - hcop_postgres:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
