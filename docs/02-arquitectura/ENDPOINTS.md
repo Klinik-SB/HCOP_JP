@@ -21,7 +21,7 @@ Asocia o limpia el paciente activo únicamente para la sesión actual.
 - **Acceso requerido:** `authenticated`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/auth/login` - Iniciar sesión
 
@@ -32,7 +32,7 @@ Valida usuario y contraseña y crea una cookie HttpOnly SameSite=Strict.
 - **Acceso requerido:** `public`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Usuario o contraseña incorrectos.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/auth/logout` - Cerrar sesión
 
@@ -43,7 +43,7 @@ Revoca la sesión actual y elimina su cookie.
 - **Acceso requerido:** `authenticated`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/auth/me` - Consultar sesión
 
@@ -54,7 +54,7 @@ Devuelve el usuario, roles, permisos y paciente activo; no expone el token.
 - **Acceso requerido:** `public`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `PUT /api/auth/password` - Cambiar contraseña
 
@@ -65,7 +65,7 @@ Cambia la contraseña y revoca las otras sesiones del usuario.
 - **Acceso requerido:** `authenticated`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ## Pacientes e historia
 
@@ -78,7 +78,7 @@ Busca por nombre, apellido, DNI, historia clínica o identificador local.
 - **Acceso requerido:** `section.history.view`
 - **Parámetros:** `q` (query, opcional): Texto de búsqueda; admite coincidencia parcial.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/clinical/patients` - Crear paciente
 
@@ -89,7 +89,7 @@ Crea un paciente local, su hoja clínica en blanco y lo deja activo.
 - **Acceso requerido:** `section.history.edit`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `201` Recurso creado correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/clinical/patients/{patientId}/activate` - Activar paciente y abrir espacio clínico
 
@@ -100,7 +100,7 @@ Asocia el paciente a la sesión y devuelve identidad, historia, tratamientos, tu
 - **Acceso requerido:** `section.history.view`
 - **Parámetros:** `patientId` (path, obligatorio): Identificador local inmutable del paciente.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/clinical/patients/{patientId}/diagnosis` - Listar diagnósticos
 
@@ -111,7 +111,7 @@ Lista todos los diagnósticos oncológicos no archivados del paciente.
 - **Acceso requerido:** `section.history.view`
 - **Parámetros:** `patientId` (path, obligatorio): Identificador local inmutable del paciente.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `PUT /api/clinical/patients/{patientId}/diagnosis` - Validar diagnóstico de tratamiento
 
@@ -122,7 +122,7 @@ Confirma que el diagnóstico seleccionado pertenece a la historia del paciente.
 - **Acceso requerido:** `section.history.edit`
 - **Parámetros:** `patientId` (path, obligatorio): Identificador local inmutable del paciente.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `422` Los datos son válidos sintácticamente pero no cumplen una regla clínica.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/clinical/patients/{patientId}/workspace` - Abrir espacio clínico del paciente
 
@@ -133,7 +133,7 @@ Devuelve el agregado de trabajo del paciente sin cambiar otra sesión.
 - **Acceso requerido:** `section.history.view`
 - **Parámetros:** `patientId` (path, obligatorio): Identificador local inmutable del paciente.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/diagnosis-catalogs/search` - Buscar SNOMED CT o CIE-10
 
@@ -142,9 +142,9 @@ Filtra el catálogo diagnóstico local por sistema, texto y límite de resultado
 - **Controlador MVC:** `DiagnosisCatalogController`
 - **Operación Java/OpenAPI:** `search_1`
 - **Acceso requerido:** `authenticated`
-- **Parámetros:** `system` (query, obligatorio): Sin descripción adicional.; `q` (query, obligatorio): Texto de búsqueda; admite coincidencia parcial.; `limit` (query, opcional): Cantidad máxima de resultados devueltos.
+- **Parámetros:** `system` (query, obligatorio): Sistema terminológico: snomed o cie10.; `q` (query, obligatorio): Texto de búsqueda; admite coincidencia parcial.; `limit` (query, opcional): Cantidad máxima de resultados devueltos.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/hc` - Leer historia clínica
 
@@ -155,7 +155,7 @@ Recupera la hoja del paciente activo o la plantilla en blanco.
 - **Acceso requerido:** `authenticated`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `PUT /api/hc` - Guardar historia clínica
 
@@ -166,7 +166,7 @@ Guarda con control optimista de revisión para evitar pisar cambios concurrentes
 - **Acceso requerido:** `section.history.edit`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/hc/restore-demo-on-reload` - Compatibilidad de persistencia
 
@@ -177,7 +177,7 @@ Confirma que la historia es persistente y que no se restaura un demo.
 - **Acceso requerido:** `authenticated`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/lira/patients` - Buscar pacientes
 
@@ -188,7 +188,7 @@ Busca por nombre, apellido, DNI, historia clínica o identificador local.
 - **Acceso requerido:** `section.history.view`
 - **Parámetros:** `q` (query, opcional): Texto de búsqueda; admite coincidencia parcial.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/lira/patients/{patientId}/import` - Abrir paciente local
 
@@ -199,7 +199,7 @@ Activa una historia ya consolidada en PostgreSQL; no consulta Lira.
 - **Acceso requerido:** `section.history.view`
 - **Parámetros:** `patientId` (path, obligatorio): Identificador local inmutable del paciente.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/lira/patients/{patientId}/preview` - Previsualizar paciente
 
@@ -210,7 +210,7 @@ Resume disponibilidad y cantidad de registros antes de abrir la historia.
 - **Acceso requerido:** `section.history.view`
 - **Parámetros:** `patientId` (path, obligatorio): Identificador local inmutable del paciente.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/lira/patients/{patientId}/refresh` - Abrir paciente local
 
@@ -221,7 +221,7 @@ Activa una historia ya consolidada en PostgreSQL; no consulta Lira.
 - **Acceso requerido:** `section.history.view`
 - **Parámetros:** `patientId` (path, obligatorio): Identificador local inmutable del paciente.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ## Tratamientos
 
@@ -234,7 +234,7 @@ Devuelve diagnósticos, esquemas, tipos, intención y estados de consentimiento.
 - **Acceso requerido:** `section.prescriptions.view`
 - **Parámetros:** `patientId` (path, obligatorio): Identificador local inmutable del paciente.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/clinical/patients/{patientId}/treatment-requirements/{schemeId}` - Calcular requisitos del esquema
 
@@ -243,9 +243,9 @@ Indica antropometría y variables necesarias antes de iniciar el protocolo.
 - **Controlador MVC:** `TreatmentController`
 - **Operación Java/OpenAPI:** `requirements`
 - **Acceso requerido:** `section.prescriptions.view`
-- **Parámetros:** `patientId` (path, obligatorio): Identificador local inmutable del paciente.; `schemeId` (path, obligatorio): Sin descripción adicional.
+- **Parámetros:** `patientId` (path, obligatorio): Identificador local inmutable del paciente.; `schemeId` (path, obligatorio): Identificador estable del protocolo o esquema terapéutico.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/clinical/patients/{patientId}/treatments` - Listar tratamientos
 
@@ -256,7 +256,7 @@ Devuelve tratamientos oncológicos locales y su estado actual.
 - **Acceso requerido:** `section.prescriptions.view`
 - **Parámetros:** `patientId` (path, obligatorio): Identificador local inmutable del paciente.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/clinical/patients/{patientId}/treatments` - Prescribir tratamiento
 
@@ -267,7 +267,7 @@ Crea tratamiento, ciclos, logística y una evolución clínica inmutable en una 
 - **Acceso requerido:** `section.prescriptions.edit`
 - **Parámetros:** `patientId` (path, obligatorio): Identificador local inmutable del paciente.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `201` Recurso creado correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `422` Los datos son válidos sintácticamente pero no cumplen una regla clínica.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/clinical/patients/{patientId}/treatments/{treatmentId}/detail` - Abrir detalle de tratamiento
 
@@ -278,7 +278,7 @@ Integra protocolo, drogas, ciclos y turnos reales de PostgreSQL.
 - **Acceso requerido:** `section.prescriptions.view`
 - **Parámetros:** `patientId` (path, obligatorio): Identificador local inmutable del paciente.; `treatmentId` (path, obligatorio): Identificador local o importado del tratamiento.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/clinical/patients/{patientId}/treatments/{treatmentId}/documents/prescription` - Abrir prescripción
 
@@ -289,7 +289,7 @@ Entrega el documento de prescripción guardado sin reconstruir uno inexistente.
 - **Acceso requerido:** `section.prescriptions.view`
 - **Parámetros:** `patientId` (path, obligatorio): Identificador local inmutable del paciente.; `treatmentId` (path, obligatorio): Identificador local o importado del tratamiento.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/clinical/patients/{patientId}/treatments/{treatmentId}/documents/treatment-sheet` - Generar hoja de tratamiento
 
@@ -300,7 +300,7 @@ Genera una hoja imprimible con paciente, esquema, drogas, turno y estados.
 - **Acceso requerido:** `section.prescriptions.view`
 - **Parámetros:** `patientId` (path, obligatorio): Identificador local inmutable del paciente.; `treatmentId` (path, obligatorio): Identificador local o importado del tratamiento.; `cycle` (query, obligatorio): Número de ciclo, comenzando en 1.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/clinical/schemes` - Buscar esquemas
 
@@ -311,7 +311,7 @@ Busca protocolos COIR y personalizados activos.
 - **Acceso requerido:** `section.protocols.view`
 - **Parámetros:** `q` (query, opcional): Texto de búsqueda; admite coincidencia parcial.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/clinical/schemes/{id}/duration` - Consultar duración
 
@@ -322,7 +322,7 @@ Devuelve la duración operativa estimada del esquema.
 - **Acceso requerido:** `section.protocols.view`
 - **Parámetros:** `id` (path, obligatorio): Identificador del recurso solicitado.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/clinical/treatments/{treatmentId}/consent` - Abrir consentimiento
 
@@ -333,7 +333,7 @@ Entrega el consentimiento guardado; responde 404 si no existe archivo.
 - **Acceso requerido:** `section.prescriptions.view`
 - **Parámetros:** `treatmentId` (path, obligatorio): Identificador local o importado del tratamiento.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ## Hospital de Día
 
@@ -346,7 +346,7 @@ Ordena los ciclos no turnados por fecha planificada y continuidad.
 - **Acceso requerido:** `section.day-hospital.view`
 - **Parámetros:** `q` (query, opcional): Texto de búsqueda; admite coincidencia parcial.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/clinical/infusions` - Listar turnos
 
@@ -355,9 +355,9 @@ Lista turnos por paciente y/o fecha con farmacia, administración y medicación.
 - **Controlador MVC:** `InfusionController`
 - **Operación Java/OpenAPI:** `list_4`
 - **Acceso requerido:** `section.day-hospital.view`
-- **Parámetros:** `patientId` (query, opcional): Identificador local inmutable del paciente.; `date` (query, opcional): Sin descripción adicional.
+- **Parámetros:** `patientId` (query, opcional): Identificador local inmutable del paciente.; `date` (query, opcional): Fecha operativa en formato ISO 8601 (AAAA-MM-DD).
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/clinical/infusions` - Asignar turno a sillón
 
@@ -368,7 +368,7 @@ Reserva el bloque completo; PostgreSQL rechaza superposiciones concurrentes.
 - **Acceso requerido:** `section.day-hospital.edit`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `201` Recurso creado correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `PATCH /api/clinical/infusions/{id}` - Actualizar turno
 
@@ -379,7 +379,7 @@ Mueve, cancela o avanza un turno usando control de versión.
 - **Acceso requerido:** `section.day-hospital.edit`
 - **Parámetros:** `id` (path, obligatorio): Identificador del recurso solicitado.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/clinical/infusions/{id}/finalize` - Finalizar administración
 
@@ -390,7 +390,7 @@ Completa la aplicación y agrega una evolución inmutable, de forma idempotente.
 - **Acceso requerido:** `section.day-hospital.edit`
 - **Parámetros:** `id` (path, obligatorio): Identificador del recurso solicitado.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/clinical/patients/{patientId}/treatments/{treatmentId}/documents/qr` - Imprimir QR
 
@@ -401,7 +401,7 @@ Genera un QR firmado para identificar paciente, tratamiento y ciclo sin texto cl
 - **Acceso requerido:** `section.day-hospital.view`
 - **Parámetros:** `patientId` (path, obligatorio): Identificador local inmutable del paciente.; `treatmentId` (path, obligatorio): Identificador local o importado del tratamiento.; `cycle` (query, obligatorio): Número de ciclo, comenzando en 1.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/clinical/qr-scans` - Escanear QR
 
@@ -412,7 +412,7 @@ Verifica firma, abre el turno correcto y documenta el escaneo en la historia.
 - **Acceso requerido:** `section.day-hospital.edit`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `PATCH /api/clinical/treatment-cycles/{patientId}/{treatmentId}/{cycleNumber}/logistics` - Actualizar farmacia y prescripción
 
@@ -423,7 +423,7 @@ Registra medicación recibida, en poder del paciente y estado de prescripción.
 - **Acceso requerido:** `section.day-hospital.edit`
 - **Parámetros:** `patientId` (path, obligatorio): Identificador local inmutable del paciente.; `treatmentId` (path, obligatorio): Identificador local o importado del tratamiento.; `cycleNumber` (path, obligatorio): Número de ciclo, comenzando en 1.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ## Flujos clínicos
 
@@ -436,7 +436,7 @@ Reanuda desde un ciclo válido y exige nueva prescripción cuando corresponde.
 - **Acceso requerido:** `workflow.resume`
 - **Parámetros:** `patientId` (path, obligatorio): Identificador local inmutable del paciente.; `treatmentId` (path, obligatorio): Identificador local o importado del tratamiento.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/clinical/treatments/{patientId}/{treatmentId}/suspend` - Suspender tratamiento
 
@@ -447,7 +447,7 @@ Suspende transitoria o definitivamente y documenta el motivo.
 - **Acceso requerido:** `workflow.suspend`
 - **Parámetros:** `patientId` (path, obligatorio): Identificador local inmutable del paciente.; `treatmentId` (path, obligatorio): Identificador local o importado del tratamiento.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/clinical/treatment-workflow-requests` - Crear solicitud clínica
 
@@ -458,7 +458,7 @@ Solicita prescripción o continuidad a un usuario autorizado.
 - **Acceso requerido:** `workflow.request-prescription | workflow.request-continuity`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `201` Recurso creado correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/clinical/treatment-workflow-requests/{id}/resolve` - Resolver solicitud
 
@@ -469,7 +469,7 @@ Confirma, rechaza, suspende o continúa y deja trazabilidad clínica.
 - **Acceso requerido:** `workflow.resolve-prescription | workflow.resolve-continuity`
 - **Parámetros:** `id` (path, obligatorio): Identificador del recurso solicitado.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `PATCH /api/clinical/treatment-workflow-requests/{id}/seen` - Marcar solicitud leída
 
@@ -480,7 +480,7 @@ Registra que el destinatario abrió la solicitud.
 - **Acceso requerido:** `authenticated`
 - **Parámetros:** `id` (path, obligatorio): Identificador del recurso solicitado.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/clinical/treatment-workflow-requests/inbox` - Consultar solicitudes
 
@@ -491,7 +491,7 @@ Lista las solicitudes asignadas al usuario activo.
 - **Acceso requerido:** `authenticated`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ## Configuración
 
@@ -504,7 +504,7 @@ Expone esquemas COIR, duración y periodicidad para vinculación.
 - **Acceso requerido:** `section.protocols.view`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/clinical/configuration/{kind}` - Listar configuración
 
@@ -513,9 +513,9 @@ Lista elementos activos o históricos de un tipo permitido.
 - **Controlador MVC:** `ConfigurationController`
 - **Operación Java/OpenAPI:** `list_5`
 - **Acceso requerido:** `section.configuration.view`
-- **Parámetros:** `kind` (path, obligatorio): Tipo de configuración permitido por el servicio.; `includeInactive` (query, opcional): Sin descripción adicional.
+- **Parámetros:** `kind` (path, obligatorio): Tipo de configuración permitido por el servicio.; `includeInactive` (query, opcional): Use 1 para incluir elementos archivados; 0 devuelve sólo activos.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/clinical/configuration/{kind}` - Crear configuración
 
@@ -526,7 +526,7 @@ Crea una definición versionada de guía, cálculo, formulario o parámetro.
 - **Acceso requerido:** `section.configuration.manage`
 - **Parámetros:** `kind` (path, obligatorio): Tipo de configuración permitido por el servicio.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `201` Recurso creado correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `PUT /api/clinical/configuration/{kind}/{id}` - Modificar configuración
 
@@ -537,7 +537,7 @@ Actualiza con revisión optimista y conserva la versión anterior.
 - **Acceso requerido:** `section.configuration.manage`
 - **Parámetros:** `kind` (path, obligatorio): Tipo de configuración permitido por el servicio.; `id` (path, obligatorio): Identificador del recurso solicitado.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `DELETE /api/clinical/configuration/{kind}/{id}` - Archivar configuración
 
@@ -548,7 +548,7 @@ Desactiva el elemento sin borrar su historial.
 - **Acceso requerido:** `section.configuration.manage`
 - **Parámetros:** `kind` (path, obligatorio): Tipo de configuración permitido por el servicio.; `id` (path, obligatorio): Identificador del recurso solicitado.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/clinical/configuration/{kind}/{id}/versions` - Listar versiones
 
@@ -559,7 +559,7 @@ Devuelve el historial auditable del elemento.
 - **Acceso requerido:** `section.configuration.view`
 - **Parámetros:** `kind` (path, obligatorio): Tipo de configuración permitido por el servicio.; `id` (path, obligatorio): Identificador del recurso solicitado.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/clinical/configuration/{kind}/{id}/versions/{revision}` - Leer versión
 
@@ -570,7 +570,7 @@ Recupera una revisión histórica exacta.
 - **Acceso requerido:** `section.configuration.view`
 - **Parámetros:** `kind` (path, obligatorio): Tipo de configuración permitido por el servicio.; `id` (path, obligatorio): Identificador del recurso solicitado.; `revision` (path, obligatorio): Revisión histórica exacta del recurso.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/clinical/drugs` - Buscar drogas de protocolo
 
@@ -581,7 +581,7 @@ Busca drogas locales para relacionarlas con componentes del protocolo.
 - **Acceso requerido:** `section.protocols.view`
 - **Parámetros:** `q` (query, opcional): Texto de búsqueda; admite coincidencia parcial.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/clinical/protocols` - Listar protocolos administrables
 
@@ -590,9 +590,9 @@ Combina protocolos personalizados y catálogo COIR no vinculado.
 - **Controlador MVC:** `ProtocolController`
 - **Operación Java/OpenAPI:** `list_2`
 - **Acceso requerido:** `section.protocols.view`
-- **Parámetros:** `includeArchived` (query, opcional): Sin descripción adicional.; `includeCatalog` (query, opcional): Sin descripción adicional.
+- **Parámetros:** `includeArchived` (query, opcional): Incluye protocolos archivados cuando vale true.; `includeCatalog` (query, opcional): Incluye esquemas COIR todavía no vinculados cuando vale true.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/clinical/protocols` - Crear protocolo
 
@@ -603,7 +603,7 @@ Crea un protocolo completo y actualiza inmediatamente el catálogo clínico.
 - **Acceso requerido:** `section.protocols.edit`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `201` Recurso creado correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/clinical/protocols/{id}` - Abrir protocolo
 
@@ -614,7 +614,7 @@ Devuelve componentes, duración, periodicidad y vínculos a drogas.
 - **Acceso requerido:** `section.protocols.view`
 - **Parámetros:** `id` (path, obligatorio): Identificador del recurso solicitado.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `PUT /api/clinical/protocols/{id}` - Modificar protocolo
 
@@ -625,7 +625,7 @@ Edita componentes, preparación, tiempo y periodicidad con versionado.
 - **Acceso requerido:** `section.protocols.edit`
 - **Parámetros:** `id` (path, obligatorio): Identificador del recurso solicitado.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `DELETE /api/clinical/protocols/{id}` - Archivar protocolo
 
@@ -636,7 +636,7 @@ Retira un protocolo de nuevas prescripciones sin romper tratamientos existentes.
 - **Acceso requerido:** `section.protocols.edit`
 - **Parámetros:** `id` (path, obligatorio): Identificador del recurso solicitado.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ## Catálogos
 
@@ -649,7 +649,7 @@ Devuelve los sitios tumorales y variables de estadificación disponibles en el c
 - **Acceso requerido:** `authenticated`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/ajcc8/detail` - Abrir definición AJCC 8
 
@@ -660,7 +660,7 @@ Devuelve TNM, factores específicos y reglas del sitio AJCC seleccionado.
 - **Acceso requerido:** `authenticated`
 - **Parámetros:** `id` (query, obligatorio): Identificador del recurso solicitado.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/ajcc8/stage` - Calcular estadio AJCC 8
 
@@ -671,7 +671,7 @@ Calcula el grupo de estadio de forma determinística a partir del sitio y los va
 - **Acceso requerido:** `authenticated`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/catalogs/status` - Consultar catálogos locales
 
@@ -682,7 +682,7 @@ Informa disponibilidad y cantidad de protocolos y esquemas TNM locales.
 - **Acceso requerido:** `authenticated`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/catalogs/update` - Releer catálogos locales
 
@@ -693,7 +693,7 @@ Confirma que los catálogos empaquetados ya están disponibles y versionados.
 - **Acceso requerido:** `authenticated`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/guides` - Listar guías clínicas
 
@@ -702,9 +702,9 @@ Lista las guías locales activas y, con permiso administrativo, también las arc
 - **Controlador MVC:** `GuideCatalogController`
 - **Operación Java/OpenAPI:** `list_7`
 - **Acceso requerido:** `section.tools.view`
-- **Parámetros:** `includeInactive` (query, opcional): Sin descripción adicional.
+- **Parámetros:** `includeInactive` (query, opcional): Use 1 para incluir elementos archivados; 0 devuelve sólo activos.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/guides/file` - Abrir guía clínica
 
@@ -715,7 +715,7 @@ Entrega el PDF local solicitado con nombre y tipo de contenido seguros.
 - **Acceso requerido:** `section.tools.view`
 - **Parámetros:** `name` (query, obligatorio): Nombre seguro del archivo o recurso.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `PUT /api/guides/import` - Importar guía clínica
 
@@ -725,8 +725,8 @@ Guarda un PDF institucional y actualiza el catálogo de guías.
 - **Operación Java/OpenAPI:** `upload`
 - **Acceso requerido:** `section.configuration.manage`
 - **Parámetros:** `name` (query, obligatorio): Nombre seguro del archivo o recurso.
-- **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Cuerpo:** `application/pdf`
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `413` El archivo supera el límite permitido.; `415` El tipo declarado o la firma binaria no están permitidos.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/medications/search` - Buscar medicamentos
 
@@ -737,7 +737,7 @@ Busca por genérico, marca o presentación en el catálogo local de drogas.
 - **Acceso requerido:** `authenticated`
 - **Parámetros:** `q` (query, opcional): Texto de búsqueda; admite coincidencia parcial.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/protocols` - Listar protocolos compatibles
 
@@ -746,9 +746,9 @@ Mantiene el contrato histórico de la interfaz y responde desde los catálogos l
 - **Controlador MVC:** `LegacyCatalogController`
 - **Operación Java/OpenAPI:** `protocols`
 - **Acceso requerido:** `authenticated`
-- **Parámetros:** `source` (query, opcional): Sin descripción adicional.
+- **Parámetros:** `source` (query, opcional): Origen del catálogo compatible; por defecto coir.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/protocols/detail` - Abrir protocolo compatible
 
@@ -757,9 +757,9 @@ Devuelve el detalle local de un protocolo COIR o personalizado usando el contrat
 - **Controlador MVC:** `LegacyCatalogController`
 - **Operación Java/OpenAPI:** `protocolDetail`
 - **Acceso requerido:** `authenticated`
-- **Parámetros:** `id` (query, obligatorio): Identificador del recurso solicitado.; `source` (query, opcional): Sin descripción adicional.
+- **Parámetros:** `id` (query, obligatorio): Identificador del recurso solicitado.; `source` (query, opcional): Origen del catálogo compatible; por defecto coir.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/systemic-forms` - Listar formularios sistémicos
 
@@ -770,7 +770,7 @@ Devuelve los formularios institucionales y sus campos para prescripción y docum
 - **Acceso requerido:** `section.prescriptions.view`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/tnm` - Listar esquemas TNM
 
@@ -781,7 +781,7 @@ Devuelve el catálogo SEER/TNM local disponible para las herramientas de estadif
 - **Acceso requerido:** `authenticated`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/tnm/detail` - Abrir esquema TNM
 
@@ -792,7 +792,7 @@ Devuelve campos, opciones y reglas del esquema TNM seleccionado.
 - **Acceso requerido:** `authenticated`
 - **Parámetros:** `id` (query, obligatorio): Identificador del recurso solicitado.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ## Archivos clínicos
 
@@ -805,7 +805,7 @@ Guarda una imagen o anotación rasterizada y valida su firma binaria.
 - **Acceso requerido:** `section.studies.edit`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `201` Recurso creado correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `413` El archivo supera el límite permitido.; `415` El tipo declarado o la firma binaria no están permitidos.; `422` Los datos son válidos sintácticamente pero no cumplen una regla clínica.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/media/images/{name}` - Abrir imagen clínica
 
@@ -816,7 +816,7 @@ Entrega una imagen local autenticada y cacheable.
 - **Acceso requerido:** `section.studies.view`
 - **Parámetros:** `name` (path, obligatorio): Nombre seguro del archivo o recurso.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/media/studies` - Subir estudio
 
@@ -825,9 +825,9 @@ Guarda por streaming, valida formato y permite borrar durante la misma sesión.
 - **Controlador MVC:** `ClinicalFileController`
 - **Operación Java/OpenAPI:** `uploadStudy`
 - **Acceso requerido:** `section.studies.edit`
-- **Parámetros:** `patientId` (query, obligatorio): Identificador local inmutable del paciente.; `studyId` (query, obligatorio): Sin descripción adicional.; `name` (query, obligatorio): Nombre seguro del archivo o recurso.
-- **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Parámetros:** `patientId` (query, obligatorio): Identificador local inmutable del paciente.; `studyId` (query, obligatorio): Identificador del estudio dentro de la historia clínica del paciente.; `name` (query, obligatorio): Nombre seguro del archivo o recurso.
+- **Cuerpo:** `application/octet-stream`
+- **Respuestas:** `201` Recurso creado correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `413` El archivo supera el límite permitido.; `415` El tipo declarado o la firma binaria no están permitidos.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/media/studies/{name}` - Abrir archivo de estudio
 
@@ -838,7 +838,7 @@ Entrega el archivo autenticado con tipo y nombre seguros.
 - **Acceso requerido:** `section.studies.view`
 - **Parámetros:** `name` (path, obligatorio): Nombre seguro del archivo o recurso.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `DELETE /api/media/studies/{name}` - Eliminar carga reciente
 
@@ -847,9 +847,9 @@ Elimina únicamente con el token temporal de la sesión que subió el archivo.
 - **Controlador MVC:** `ClinicalFileController`
 - **Operación Java/OpenAPI:** `deleteStudy`
 - **Acceso requerido:** `section.studies.edit`
-- **Parámetros:** `name` (path, obligatorio): Nombre seguro del archivo o recurso.; `X-Study-Delete-Token` (header, opcional): Sin descripción adicional.
+- **Parámetros:** `name` (path, obligatorio): Nombre seguro del archivo o recurso.; `X-Study-Delete-Token` (header, opcional): Token temporal emitido al subir el archivo; sólo permite eliminarlo durante esa sesión.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/study-templates` - Listar plantillas anatómicas
 
@@ -858,9 +858,9 @@ Combina biblioteca incluida y plantillas personalizadas.
 - **Controlador MVC:** `StudyTemplateController`
 - **Operación Java/OpenAPI:** `list_1`
 - **Acceso requerido:** `section.studies.view`
-- **Parámetros:** `scope` (query, opcional): Sin descripción adicional.; `includeInactive` (query, opcional): Sin descripción adicional.
+- **Parámetros:** `scope` (query, opcional): Origen de plantillas: all, bundled o custom.; `includeInactive` (query, opcional): Use 1 para incluir elementos archivados; 0 devuelve sólo activos.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/study-templates` - Crear plantilla anatómica
 
@@ -869,9 +869,9 @@ Guarda imagen, metadatos, licencia y confirmación de derechos.
 - **Controlador MVC:** `StudyTemplateController`
 - **Operación Java/OpenAPI:** `create`
 - **Acceso requerido:** `section.configuration.manage`
-- **Parámetros:** `title` (query, obligatorio): Sin descripción adicional.; `category` (query, obligatorio): Sin descripción adicional.; `author` (query, opcional): Sin descripción adicional.; `license` (query, opcional): Sin descripción adicional.; `description` (query, opcional): Sin descripción adicional.; `sourceUrl` (query, opcional): Sin descripción adicional.; `licenseUrl` (query, opcional): Sin descripción adicional.; `rightsConfirmed` (query, opcional): Sin descripción adicional.; `name` (query, opcional): Nombre seguro del archivo o recurso.
-- **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Parámetros:** `title` (query, obligatorio): Título visible de la plantilla anatómica.; `category` (query, obligatorio): Categoría anatómica usada para ordenar y filtrar la plantilla.; `author` (query, opcional): Autor o institución responsable de la imagen.; `license` (query, opcional): Licencia o condición de uso declarada.; `description` (query, opcional): Descripción clínica y visual de la plantilla.; `sourceUrl` (query, opcional): URL de procedencia declarada; no se descarga automáticamente.; `licenseUrl` (query, opcional): URL donde puede verificarse la licencia.; `rightsConfirmed` (query, opcional): Debe valer 1 para confirmar que se poseen derechos de uso.; `name` (query, opcional): Nombre seguro del archivo o recurso.
+- **Cuerpo:** `image/png`, `image/jpeg`, `image/gif`, `image/webp`, `image/bmp`, `image/tiff`
+- **Respuestas:** `201` Recurso creado correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `413` El archivo supera el límite permitido.; `415` El tipo declarado o la firma binaria no están permitidos.; `500` Error interno sin exposición de detalles sensibles.
 
 ## Administración
 
@@ -884,7 +884,7 @@ Lista roles y permisos disponibles.
 - **Acceso requerido:** `admin.manage-roles`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/admin/roles` - Crear rol
 
@@ -895,7 +895,7 @@ Crea un rol personalizado con permisos explícitos.
 - **Acceso requerido:** `admin.manage-roles`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `201` Recurso creado correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `PUT /api/admin/roles/{id}` - Modificar rol
 
@@ -906,7 +906,7 @@ Actualiza nombre, estado y permisos del rol.
 - **Acceso requerido:** `admin.manage-roles`
 - **Parámetros:** `id` (path, obligatorio): Identificador del recurso solicitado.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/admin/security-settings` - Leer seguridad
 
@@ -917,7 +917,7 @@ Devuelve la política de acceso obligatorio y duración de sesión.
 - **Acceso requerido:** `admin.manage-security`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `PUT /api/admin/security-settings` - Modificar seguridad
 
@@ -928,7 +928,7 @@ Mantiene login obligatorio y actualiza la duración de sesión.
 - **Acceso requerido:** `admin.manage-security`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/admin/users` - Listar usuarios
 
@@ -939,7 +939,7 @@ Lista usuarios, roles y estado para administración.
 - **Acceso requerido:** `admin.manage-users`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/admin/users` - Crear usuario
 
@@ -950,7 +950,7 @@ Crea una cuenta y asigna roles existentes.
 - **Acceso requerido:** `admin.manage-users`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `201` Recurso creado correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `PUT /api/admin/users/{id}` - Modificar usuario
 
@@ -961,7 +961,7 @@ Actualiza perfil, estado, contraseña y roles.
 - **Acceso requerido:** `admin.manage-users`
 - **Parámetros:** `id` (path, obligatorio): Identificador del recurso solicitado.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/clinical/users` - Buscar destinatarios clínicos
 
@@ -970,9 +970,9 @@ Lista usuarios habilitados para una capacidad de flujo.
 - **Controlador MVC:** `AdminController`
 - **Operación Java/OpenAPI:** `clinicalUsers`
 - **Acceso requerido:** `authenticated`
-- **Parámetros:** `capability` (query, opcional): Sin descripción adicional.
+- **Parámetros:** `capability` (query, opcional): Permiso o capacidad clínica que debe poseer el usuario destinatario.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ## Integraciones
 
@@ -985,7 +985,7 @@ Responde sobre el contexto entregado y diferencia hechos de inferencias.
 - **Acceso requerido:** `section.agent.view`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.; `502` El servicio LLM respondió con un resultado inválido.; `503` El servicio LLM está desactivado o no está configurado.; `504` El servicio LLM excedió el tiempo de espera.
 
 ### `GET /api/config` - Leer configuración LLM
 
@@ -996,7 +996,7 @@ Devuelve endpoint, modelo y parámetros sin revelar la API key.
 - **Acceso requerido:** `section.configuration.view`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `PUT /api/config` - Guardar configuración LLM
 
@@ -1007,7 +1007,7 @@ Valida y cifra la API key antes de persistirla.
 - **Acceso requerido:** `section.configuration.manage`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/llm/extract-timeline` - Extraer línea de tiempo
 
@@ -1018,7 +1018,7 @@ Solicita eventos estructurados y auditables a partir de texto clínico.
 - **Acceso requerido:** `section.timeline.view`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.; `502` El servicio LLM respondió con un resultado inválido.; `503` El servicio LLM está desactivado o no está configurado.; `504` El servicio LLM excedió el tiempo de espera.
 
 ### `POST /api/llm/fill-systemic-form` - Completar formulario sistémico
 
@@ -1029,7 +1029,7 @@ Extrae únicamente campos configurados como asistidos por LLM.
 - **Acceso requerido:** `section.prescriptions.edit`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.; `502` El servicio LLM respondió con un resultado inválido.; `503` El servicio LLM está desactivado o no está configurado.; `504` El servicio LLM excedió el tiempo de espera.
 
 ### `GET /api/llm/status` - Consultar estado LLM
 
@@ -1040,7 +1040,7 @@ Informa si la integración está habilitada y configurada.
 - **Acceso requerido:** `section.agent.view`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/llm/summarize` - Resumir eventos
 
@@ -1051,7 +1051,7 @@ Resume hasta 250 eventos sin inventar información.
 - **Acceso requerido:** `section.timeline.view`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.; `502` El servicio LLM respondió con un resultado inválido.; `503` El servicio LLM está desactivado o no está configurado.; `504` El servicio LLM excedió el tiempo de espera.
 
 ### `POST /api/llm/test` - Probar conexión LLM
 
@@ -1062,7 +1062,7 @@ Prueba un borrador de configuración sin guardarlo.
 - **Acceso requerido:** `section.configuration.manage`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.; `502` El servicio LLM respondió con un resultado inválido.; `503` El servicio LLM está desactivado o no está configurado.; `504` El servicio LLM excedió el tiempo de espera.
 
 ## Estado
 
@@ -1075,7 +1075,7 @@ Comprueba PostgreSQL y confirma que el sistema es local, unificado e independien
 - **Acceso requerido:** `public`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/lira/status` - Compatibilidad Lira
 
@@ -1086,7 +1086,7 @@ Informa que las rutas históricas operan sobre HCOP JP local.
 - **Acceso requerido:** `public`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/runtime/status` - Estado de ejecución
 
@@ -1097,7 +1097,7 @@ Expone versión y motor para diagnóstico y automatización.
 - **Acceso requerido:** `public`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/runtime/stop` - Instrucciones de detención
 
@@ -1108,4 +1108,4 @@ Indica el mecanismo seguro de parada del contenedor.
 - **Acceso requerido:** `admin.manage-security`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** Sin cuerpo.
-- **Respuestas:** `200` OK; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.

@@ -10,9 +10,21 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.servers.Server;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.models.responses.ApiResponse;
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.media.BooleanSchema;
+import io.swagger.v3.oas.models.media.Content;
+import io.swagger.v3.oas.models.media.IntegerSchema;
+import io.swagger.v3.oas.models.media.ObjectSchema;
+import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.media.StringSchema;
+import io.swagger.v3.oas.models.parameters.RequestBody;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springdoc.core.customizers.OperationCustomizer;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
@@ -247,36 +259,135 @@ public class OpenApiConfiguration {
       Map.entry("name", "Nombre seguro del archivo o recurso."),
       Map.entry("q", "Texto de búsqueda; admite coincidencia parcial."),
       Map.entry("query", "Texto de búsqueda; admite coincidencia parcial."),
-      Map.entry("limit", "Cantidad máxima de resultados devueltos.")
+      Map.entry("limit", "Cantidad máxima de resultados devueltos."),
+      Map.entry("date", "Fecha operativa en formato ISO 8601 (AAAA-MM-DD)."),
+      Map.entry("schemeId", "Identificador estable del protocolo o esquema terapéutico."),
+      Map.entry("studyId", "Identificador del estudio dentro de la historia clínica del paciente."),
+      Map.entry("scope", "Origen de plantillas: all, bundled o custom."),
+      Map.entry("includeInactive", "Use 1 para incluir elementos archivados; 0 devuelve sólo activos."),
+      Map.entry("includeArchived", "Incluye protocolos archivados cuando vale true."),
+      Map.entry("includeCatalog", "Incluye esquemas COIR todavía no vinculados cuando vale true."),
+      Map.entry("capability", "Permiso o capacidad clínica que debe poseer el usuario destinatario."),
+      Map.entry("system", "Sistema terminológico: snomed o cie10."),
+      Map.entry("source", "Origen del catálogo compatible; por defecto coir."),
+      Map.entry("X-Study-Delete-Token", "Token temporal emitido al subir el archivo; sólo permite eliminarlo durante esa sesión."),
+      Map.entry("title", "Título visible de la plantilla anatómica."),
+      Map.entry("category", "Categoría anatómica usada para ordenar y filtrar la plantilla."),
+      Map.entry("author", "Autor o institución responsable de la imagen."),
+      Map.entry("license", "Licencia o condición de uso declarada."),
+      Map.entry("description", "Descripción clínica y visual de la plantilla."),
+      Map.entry("sourceUrl", "URL de procedencia declarada; no se descarga automáticamente."),
+      Map.entry("licenseUrl", "URL donde puede verificarse la licencia."),
+      Map.entry("rightsConfirmed", "Debe valer 1 para confirmar que se poseen derechos de uso.")
+  );
+
+  private static final Set<String> CREATED_OPERATIONS = Set.of(
+      "AdminController.createRole",
+      "AdminController.createUser",
+      "ClinicalFileController.uploadImage",
+      "ClinicalFileController.uploadStudy",
+      "ConfigurationController.create",
+      "InfusionController.create",
+      "PatientController.create",
+      "ProtocolController.create",
+      "StudyTemplateController.create",
+      "TreatmentController.create",
+      "TreatmentWorkflowController.create"
+  );
+
+  private static final Map<String, BinaryRequest> BINARY_REQUESTS = Map.of(
+      "ClinicalFileController.uploadStudy",
+      new BinaryRequest(
+          List.of("application/octet-stream"),
+          "Contenido binario original del estudio. El tipo real se envía en Content-Type y debe coincidir con la firma del archivo."),
+      "GuideCatalogController.upload",
+      new BinaryRequest(
+          List.of("application/pdf"),
+          "Archivo PDF institucional completo, con un máximo de 50 MB."),
+      "StudyTemplateController.create",
+      new BinaryRequest(
+          List.of(
+              "image/png",
+              "image/jpeg",
+              "image/gif",
+              "image/webp",
+              "image/bmp",
+              "image/tiff"),
+          "Imagen anatómica completa. Los metadatos y la confirmación de derechos se envían como parámetros de consulta.")
   );
 
   @Bean
-  GroupedOpenApi completeApi(OperationCustomizer documentedOperations) {
+  OpenApiCustomizer reusableSchemas() {
+    return openApi -> {
+      if (openApi.getComponents() == null) openApi.setComponents(new Components());
+      openApi.getComponents().addSchemas("ApiError", apiErrorSchema());
+      if (openApi.getPaths() == null || openApi.getTags() == null) return;
+      Set<String> usedTags = new HashSet<>();
+      openApi.getPaths().values().forEach(path ->
+          path.readOperations().forEach(operation -> usedTags.addAll(operation.getTags())));
+      openApi.setTags(openApi.getTags().stream()
+          .filter(tag -> usedTags.contains(tag.getName()))
+          .toList());
+    };
+  }
+
+  @Bean
+  GroupedOpenApi completeApi(
+      OperationCustomizer documentedOperations,
+      OpenApiCustomizer reusableSchemas) {
     return GroupedOpenApi.builder()
         .group("hcop-jp-completa")
         .displayName("HCOP JP · API completa")
         .pathsToMatch("/api/**")
         .addOperationCustomizer(documentedOperations)
+        .addOpenApiCustomizer(reusableSchemas)
         .build();
   }
 
   @Bean
-  GroupedOpenApi clinicalApi(OperationCustomizer documentedOperations) {
+  GroupedOpenApi clinicalApi(
+      OperationCustomizer documentedOperations,
+      OpenApiCustomizer reusableSchemas) {
     return GroupedOpenApi.builder()
         .group("clinica")
         .displayName("Clínica y Hospital de Día")
-        .pathsToMatch("/api/clinical/**", "/api/hc/**", "/api/media/**")
+        .pathsToMatch(
+            "/api/clinical/**",
+            "/api/hc/**",
+            "/api/media/**",
+            "/api/diagnosis-catalogs/**",
+            "/api/ajcc8/**",
+            "/api/tnm/**",
+            "/api/protocols/**",
+            "/api/medications/**",
+            "/api/systemic-forms/**",
+            "/api/guides/**",
+            "/api/llm/**",
+            "/api/agent/**")
         .addOperationCustomizer(documentedOperations)
+        .addOpenApiCustomizer(reusableSchemas)
         .build();
   }
 
   @Bean
-  GroupedOpenApi administrationApi(OperationCustomizer documentedOperations) {
+  GroupedOpenApi administrationApi(
+      OperationCustomizer documentedOperations,
+      OpenApiCustomizer reusableSchemas) {
     return GroupedOpenApi.builder()
         .group("administracion")
         .displayName("Administración y configuración")
-        .pathsToMatch("/api/admin/**", "/api/config", "/api/guides/**", "/api/study-templates/**")
+        .pathsToMatch(
+            "/api/admin/**",
+            "/api/config",
+            "/api/llm/test",
+            "/api/clinical/configuration/**",
+            "/api/clinical/protocols/**",
+            "/api/clinical/coir-catalog",
+            "/api/clinical/drugs",
+            "/api/guides/**",
+            "/api/study-templates/**")
         .addOperationCustomizer(documentedOperations)
+        .addOpenApiCustomizer(reusableSchemas)
         .build();
   }
 
@@ -293,7 +404,7 @@ public class OpenApiConfiguration {
         operation.setSummary(method.getName());
         operation.setDescription("Operación MVC del módulo " + controller.replace("Controller", "") + ".");
       }
-      operation.addTagsItem(tag(controller));
+      operation.setTags(List.of(tag(controller)));
       operation.addExtension("x-hcop-controller", controller);
       String key = controller + "." + method.getName();
       boolean secured = requiresSession(controller, method.getName());
@@ -305,10 +416,28 @@ public class OpenApiConfiguration {
         operation.addExtension("x-hcop-authentication", "public");
         operation.addExtension("x-hcop-permission", "public");
       }
+      describeBinaryRequest(operation, key);
       describeParameters(operation);
-      describeResponses(operation, controller, secured, isWrite(method));
+      describeResponses(operation, key, controller, secured, isWrite(method));
       return operation;
     };
+  }
+
+  private static void describeBinaryRequest(
+      io.swagger.v3.oas.models.Operation operation,
+      String key) {
+    BinaryRequest binary = BINARY_REQUESTS.get(key);
+    if (binary == null) return;
+    Content content = new Content();
+    binary.contentTypes().forEach(contentType ->
+        content.addMediaType(
+            contentType,
+            new io.swagger.v3.oas.models.media.MediaType()
+                .schema(new StringSchema().format("binary"))));
+    operation.setRequestBody(new RequestBody()
+        .required(true)
+        .description(binary.description())
+        .content(content));
   }
 
   private static void describeParameters(io.swagger.v3.oas.models.Operation operation) {
@@ -330,26 +459,106 @@ public class OpenApiConfiguration {
 
   private static void describeResponses(
       io.swagger.v3.oas.models.Operation operation,
+      String key,
       String controller,
       boolean secured,
       boolean write) {
     var responses = operation.getResponses();
     if (responses == null) return;
+    describeSuccessResponse(responses, key);
     if (secured) {
-      responses.putIfAbsent("401", new ApiResponse().description("Sesión ausente, vencida o revocada."));
-      responses.putIfAbsent("403", new ApiResponse().description("El usuario no posee el permiso requerido."));
+      ensureErrorResponse(responses, "401", "Sesión ausente, vencida o revocada.");
+      ensureErrorResponse(responses, "403", "El usuario no posee el permiso requerido.");
+    } else if ("AuthController.login".equals(key)) {
+      ensureErrorResponse(responses, "401", "Usuario o contraseña incorrectos.");
     }
-    responses.putIfAbsent("400", new ApiResponse().description("Parámetros o cuerpo de solicitud inválidos."));
+    ensureErrorResponse(responses, "400", "Parámetros o cuerpo de solicitud inválidos.");
     if (secured) {
-      responses.putIfAbsent("404", new ApiResponse().description(
-          "Paciente, tratamiento, archivo o recurso inexistente."));
+      ensureErrorResponse(
+          responses,
+          "404",
+          "Paciente, tratamiento, archivo o recurso inexistente.");
     }
     if (write && !"AuthController".equals(controller)) {
-      responses.putIfAbsent("409", new ApiResponse().description(
-          "Conflicto de revisión, estado, superposición o integridad."));
+      ensureErrorResponse(
+          responses,
+          "409",
+          "Conflicto de revisión, estado, superposición o integridad.");
     }
-    responses.putIfAbsent("500", new ApiResponse().description(
-        "Error interno sin exposición de detalles sensibles."));
+    if (BINARY_REQUESTS.containsKey(key) || "ClinicalFileController.uploadImage".equals(key)) {
+      ensureErrorResponse(responses, "413", "El archivo supera el límite permitido.");
+      ensureErrorResponse(responses, "415", "El tipo declarado o la firma binaria no están permitidos.");
+    }
+    if ("ClinicalFileController.uploadImage".equals(key)
+        || "DiagnosisController.link".equals(key)
+        || "TreatmentController.create".equals(key)) {
+      ensureErrorResponse(responses, "422", "Los datos son válidos sintácticamente pero no cumplen una regla clínica.");
+    }
+    if ("LlmController".equals(controller)
+        && !Set.of("config", "updateConfig", "status").contains(key.substring(key.indexOf('.') + 1))) {
+      ensureErrorResponse(responses, "502", "El servicio LLM respondió con un resultado inválido.");
+      ensureErrorResponse(responses, "503", "El servicio LLM está desactivado o no está configurado.");
+      ensureErrorResponse(responses, "504", "El servicio LLM excedió el tiempo de espera.");
+    }
+    ensureErrorResponse(
+        responses,
+        "500",
+        "Error interno sin exposición de detalles sensibles.");
+  }
+
+  private static void describeSuccessResponse(
+      io.swagger.v3.oas.models.responses.ApiResponses responses,
+      String key) {
+    if (CREATED_OPERATIONS.contains(key)) {
+      ApiResponse created = responses.remove("200");
+      if (created == null) created = new ApiResponse();
+      created.setDescription("Recurso creado correctamente.");
+      responses.put("201", created);
+      return;
+    }
+    ApiResponse success = responses.get("200");
+    if (success != null &&
+        (success.getDescription() == null || "OK".equalsIgnoreCase(success.getDescription()))) {
+      success.setDescription("Solicitud procesada correctamente.");
+    }
+  }
+
+  private static void ensureErrorResponse(
+      io.swagger.v3.oas.models.responses.ApiResponses responses,
+      String status,
+      String description) {
+    ApiResponse response = responses.get(status);
+    if (response == null) {
+      response = new ApiResponse();
+      responses.put(status, response);
+    }
+    response.setDescription(description);
+    Content content = response.getContent();
+    if (content == null) content = new Content();
+    if (!content.containsKey("application/json")) {
+      content.addMediaType(
+          "application/json",
+          new io.swagger.v3.oas.models.media.MediaType()
+              .schema(new Schema<>().$ref("#/components/schemas/ApiError")));
+    }
+    response.setContent(content);
+  }
+
+  private static Schema<?> apiErrorSchema() {
+    ObjectSchema schema = new ObjectSchema();
+    schema.setDescription("Respuesta uniforme de error de HCOP JP.");
+    schema.addProperty("ok", new BooleanSchema()
+        .description("Siempre false en una respuesta de error.")
+        ._default(false));
+    schema.addProperty("error", new StringSchema()
+        .description("Mensaje seguro y apto para mostrar al usuario."));
+    schema.addProperty("code", new StringSchema()
+        .description("Código estable opcional para integraciones y automatización."));
+    schema.addProperty("status", new IntegerSchema()
+        .format("int32")
+        .description("Código de estado HTTP."));
+    schema.setRequired(List.of("ok", "error", "status"));
+    return schema;
   }
 
   private static boolean isWrite(Method method) {
@@ -388,5 +597,8 @@ public class OpenApiConfiguration {
   }
 
   private record Documentation(String summary, String description) {
+  }
+
+  private record BinaryRequest(List<String> contentTypes, String description) {
   }
 }
