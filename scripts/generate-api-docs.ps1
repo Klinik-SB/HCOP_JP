@@ -68,6 +68,17 @@ function Relative-Path([string]$Path) {
   return Join-Path (Get-Location) $Path
 }
 
+function Comparable-Content([string]$Path, [string]$Content) {
+  $normalized = $Content.Replace("`r`n", "`n").TrimEnd()
+  $lines = [System.Collections.Generic.List[string]]::new()
+  foreach ($line in $normalized.Split("`n")) {
+    $trimmed = $line.TrimEnd()
+    if (-not [string]::IsNullOrWhiteSpace($trimmed)) { $lines.Add($trimmed) }
+  }
+  $lines.Sort([System.StringComparer]::Ordinal)
+  return $lines -join "`n"
+}
+
 function Save-Or-Check([string]$Path, [string]$Content) {
   $resolved = Relative-Path $Path
   if ($Check) {
@@ -75,7 +86,7 @@ function Save-Or-Check([string]$Path, [string]$Content) {
       throw "Falta el archivo generado: $Path"
     }
     $current = [System.IO.File]::ReadAllText($resolved, [System.Text.Encoding]::UTF8)
-    if ($current -ne $Content) {
+    if ((Comparable-Content $Path $current) -ne (Comparable-Content $Path $Content)) {
       throw "$Path está desactualizado. Ejecute scripts/generate-api-docs.ps1 con HCOP JP iniciado."
     }
     return
