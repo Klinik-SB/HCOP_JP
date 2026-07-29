@@ -83,8 +83,13 @@ Assert-True ($savedHistory.unified.persisted -eq $true) "No se guardó el diagn�
 
 $options = Invoke-HcopJson -Path "/api/clinical/patients/$patientId/treatment-options"
 $scheme = @($options.options.schemes) |
-  Where-Object { [int]($_.durationMinutes) -gt 0 } |
+  Where-Object { [string]$_.id -eq "347" } |
   Select-Object -First 1
+if ($null -eq $scheme) {
+  $scheme = @($options.options.schemes) |
+    Where-Object { [int]($_.durationMinutes) -gt 0 } |
+    Select-Object -First 1
+}
 if ($null -eq $scheme) { $scheme = @($options.options.schemes) | Select-Object -First 1 }
 Assert-True ($null -ne $scheme) "No hay protocolos disponibles."
 
@@ -141,6 +146,7 @@ Assert-True ($finalized.infusion.clinicalStatus -eq "completed") "No se finaliz�
 
 $detail = Invoke-HcopJson -Path "/api/clinical/patients/$patientId/treatments/$treatmentId/detail"
 $cycleOne = @($detail.detail.cycles) | Where-Object { [int]$_.number -eq 1 } | Select-Object -First 1
+Assert-True (@($cycleOne.drugs).Count -ge 1) "El detalle del ciclo no incorporó las drogas del protocolo."
 Assert-True (@($cycleOne.applications).Count -eq 1) "El detalle no incorporó el turno real."
 
 $sheet = Invoke-WebRequest -UseBasicParsing -Uri "$BaseUrl/api/clinical/patients/$patientId/treatments/$treatmentId/documents/treatment-sheet?cycle=1" -WebSession $script:WebSession -Headers @{ Accept = "text/html" }
@@ -148,6 +154,20 @@ Assert-True ($sheet.StatusCode -eq 200 -and $sheet.Content -match "Hoja de trata
 
 $finalHistory = Invoke-HcopJson -Path "/api/hc"
 Assert-True (@($finalHistory.evolutions).Count -ge 3) "Los actos clínicos no quedaron documentados."
+
+$sessionBeforeConfiguration = Invoke-HcopJson -Path "/api/auth/me"
+Assert-True ([string]$sessionBeforeConfiguration.activePatientId -eq $patientId) "La sesión no conservó el paciente abierto."
+$configurationPage = Invoke-WebRequest -UseBasicParsing -Uri "$BaseUrl/configuration/" -WebSession $script:WebSession
+Assert-True ($configurationPage.StatusCode -eq 200) "No se pudo navegar a Configuración."
+$sessionAfterConfiguration = Invoke-HcopJson -Path "/api/auth/me"
+Assert-True ([string]$sessionAfterConfiguration.activePatientId -eq $patientId) "Configuración liberó el paciente activo."
+
+$closedPatient = Invoke-HcopJson -Method PUT -Path "/api/auth/active-patient" -Body @{ patientId = $null }
+Assert-True ([string]::IsNullOrWhiteSpace([string]$closedPatient.activePatientId)) "No se cerró el paciente activo."
+$blankHistory = Invoke-HcopJson -Path "/api/hc"
+Assert-True ([string]::IsNullOrWhiteSpace([string]$blankHistory.patient.fullName)) "La hoja no quedó en blanco al cerrar el paciente."
+$reopenedPatient = Invoke-HcopJson -Method POST -Path "/api/clinical/patients/$patientId/activate" -Body @{}
+Assert-True ([string]$reopenedPatient.state.meta.liraImport.patientId -eq $patientId) "No se pudo volver a abrir el paciente cerrado."
 
 [pscustomobject]@{
   ok = $true

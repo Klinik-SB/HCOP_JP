@@ -43,6 +43,12 @@ clínica (`/api/hc`) trabajan con ese contexto. Las rutas cuyo contrato incluye
 `patientId` lo reciben explícitamente. Abrir un paciente en una PC no cambia el
 paciente activo de otro usuario ni de otra sesión.
 
+El arranque de la interfaz siempre recupera `GET /api/hc` después de validar la
+sesión. Por eso, navegar a Configuración, volver o recargar no libera el
+paciente. El cierre explícito ejecuta `PUT /api/auth/active-patient` con
+`patientId: null` y después vuelve a pedir `/api/hc`, que entrega la plantilla
+en blanco sin borrar ningún dato clínico.
+
 ## Control de concurrencia
 
 Las escrituras versionadas reciben `revision` o `version`. El servidor actualiza

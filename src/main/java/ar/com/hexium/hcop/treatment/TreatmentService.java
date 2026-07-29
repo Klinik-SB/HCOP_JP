@@ -165,10 +165,11 @@ public class TreatmentService {
         .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Tratamiento no encontrado."));
     JsonNode detail = treatments.detail(treatmentId).deepCopy();
     if (detail instanceof ObjectNode object) {
+      Scheme scheme = catalog.scheme(treatment.schemeId()).orElse(null);
       object.put("localView", true);
       object.put("localRecord", true);
       object.put("origin", "local");
-      object.put("schemeFound", true);
+      object.put("schemeFound", scheme != null);
       List<Map<String, Object>> sessions = infusions.list(patientId, null).stream()
           .filter(item -> treatmentId.equals(String.valueOf(item.get("treatmentId"))))
           .toList();
@@ -177,6 +178,10 @@ public class TreatmentService {
       for (JsonNode value : object.path("cycles")) {
         if (!(value instanceof ObjectNode cycle)) continue;
         int number = cycle.path("number").asInt();
+        if ((!cycle.path("drugs").isArray() || cycle.path("drugs").isEmpty()) && scheme != null) {
+          cycle.set("drugs", extractDrugs(scheme.definition(), number));
+          object.put("protocolSnapshotRecovered", true);
+        }
         List<Map<String, Object>> cycleSessions = sessions.stream()
             .filter(item -> number == Integer.parseInt(String.valueOf(item.get("cycleNumber"))))
             .toList();
@@ -367,8 +372,14 @@ public class TreatmentService {
       ObjectNode drug = result.addObject();
       drug.put("drugId", text(item, "drugId", "idDroga", "id"));
       drug.put("drugName", text(item, "drugName", "droga", "name", "nombre"));
-      drug.put("prescribedDoseText", text(item, "prescribedDoseText", "dosis", "dose"));
-      drug.put("route", text(item, "route", "via"));
+      String dose = text(item, "prescribedDoseText", "dosisDiaria", "dosis", "dose");
+      drug.put("calculationMethod", text(item, "calculationMethod", "calculoDosis", "doseCalculation"));
+      drug.put("calculatedDoseText", text(item, "calculatedDoseText", "dosisCalculada", "dosisDiaria", "dosis", "dose"));
+      drug.put("prescribedDoseText", dose);
+      drug.put("applicationDays", text(item, "applicationDays", "dia", "days"));
+      drug.put("route", text(item, "route", "viaAdministracion", "via"));
+      drug.put("administrationTime", text(item, "administrationTime", "tiempoAdministracion", "time"));
+      drug.put("totalDoseText", text(item, "totalDoseText", "cantidadTotal", "totalDose", "dosisDiaria"));
       drug.put("cycleNumber", cycleNumber);
       drug.set("source", item.deepCopy());
     }

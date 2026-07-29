@@ -12,6 +12,12 @@
 - **Campana**: muestra solicitudes clínicas asignadas al usuario.
 - **Usuario**: informa quién firma las acciones y permite cerrar sesión.
 
+Al abrir un paciente, la ficha queda activa en esa sesión aunque se recargue la
+página o se navegue por Configuración. Para dejar la hoja en blanco, use
+**Cerrar paciente** (icono de persona con una `X`) a la derecha de la goma de
+resaltado. Esta acción no elimina la historia: solamente cierra el contexto
+activo y permite volver a abrirlo después.
+
 ## Hoja clínica izquierda
 
 Es la historia longitudinal. Contiene identidad, diagnóstico, motivo de
@@ -47,7 +53,9 @@ automáticas e inmutables.
   La lupa `+` muestra menos sillones con más ancho y la lupa `-` vuelve a
   mostrar más. Las flechas recorren los sillones que quedan fuera de la vista.
 - **Tratamientos**: abre detalle longitudinal, ciclos, aplicaciones y
-  documentos.
+  documentos. Al seleccionar un ciclo, **Drogas** muestra la composición del
+  protocolo prescripto: nombre, dosis, método de cálculo, días, vía y tiempo de
+  administración.
 - **Escanear QR**: identifica el ciclo a administrar y deja trazabilidad.
 
 ## Configuración clínica

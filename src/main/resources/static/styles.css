@@ -2114,6 +2114,29 @@ body.resizing {
   width:17px;
   height:17px;
 }
+.paper-highlight-actions .clinical-close-patient-button {
+  position:relative;
+  margin-left:5px;
+  color:#526777;
+}
+.paper-highlight-actions .clinical-close-patient-button::before {
+  position:absolute;
+  top:6px;
+  bottom:6px;
+  left:-5px;
+  width:1px;
+  background:#e2e8ec;
+  content:"";
+}
+.paper-highlight-actions .clinical-close-patient-button:not(:disabled):hover,
+.paper-highlight-actions .clinical-close-patient-button:not(:disabled):focus-visible {
+  border-color:#b6c9d8;
+  background:#f1f7fb;
+  color:#216c9d;
+}
+.paper-highlight-actions .clinical-close-patient-button.is-loading svg {
+  animation:timeline-spin .85s linear infinite;
+}
 
 .paper-area {
   padding: 18px;

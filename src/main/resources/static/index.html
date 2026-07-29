@@ -4,14 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>HCOP Centro Oncologico</title>
-    <link rel="stylesheet" href="styles.css?v=20260729-cycle-timeline-1">
+    <link rel="stylesheet" href="styles.css?v=20260729-active-patient-1">
     <link rel="stylesheet" href="care-scheduler.css?v=20260728-suspended-turn-removal-1">
     <link rel="stylesheet" href="care-scheduler-modal.css?v=20260725-hospital-unified-2">
     <link rel="stylesheet" href="/help/help.css?v=20260725-1">
     <script src="/vendor/lucide.min.js" defer></script>
     <script src="/help/help-content.js?v=20260725-hospital-tab-order-1" defer></script>
     <script src="/help/help.js?v=20260725-hospital-unified-1" defer></script>
-    <script src="app.js?v=20260729-cycle-timeline-1" defer></script>
+    <script src="app.js?v=20260729-active-patient-1" defer></script>
   </head>
   <body>
     <div class="app-shell">
@@ -88,6 +88,9 @@
               </button>
               <button class="icon-button clinical-unhighlight-button" type="button" data-action="remove-clinical-highlight" title="Quitar resaltado del texto seleccionado" aria-label="Quitar resaltado del texto seleccionado">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 21-4.3-4.3a2.4 2.4 0 0 1 0-3.4L13.3 2.7a2.4 2.4 0 0 1 3.4 0l4.6 4.6a2.4 2.4 0 0 1 0 3.4L11 21"></path><path d="m5 11 9 9"></path><path d="M22 21H7"></path></svg>
+              </button>
+              <button class="icon-button clinical-close-patient-button" id="closeActivePatientBtn" type="button" title="Cerrar paciente" aria-label="Cerrar paciente" disabled>
+                <i data-lucide="user-round-x" aria-hidden="true"></i>
               </button>
             </div>
           </div>

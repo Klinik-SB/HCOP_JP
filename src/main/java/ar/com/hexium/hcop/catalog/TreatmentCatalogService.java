@@ -18,6 +18,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 @Service
 public class TreatmentCatalogService {
@@ -109,8 +110,9 @@ public class TreatmentCatalogService {
           String name = node.path("nombre").asText("").trim();
           if (id.isBlank() || name.isBlank()) continue;
           Integer duration = durations.get(normalize(name));
+          JsonNode definition = catalogDefinition(node, id);
           merged.put(id, new Scheme(
-              id, name, number(node, "duracionCiclo"), duration, node.deepCopy(), false));
+              id, name, number(node, "duracionCiclo"), duration, definition, false));
         }
       }
     } catch (IOException ignored) {
@@ -140,6 +142,24 @@ public class TreatmentCatalogService {
     Map<String, Scheme> byId = new HashMap<>();
     schemes.forEach(item -> byId.put(item.id(), item));
     return new Catalog(schemes, Map.copyOf(byId), Instant.now());
+  }
+
+  private JsonNode catalogDefinition(JsonNode summary, String id) {
+    JsonNode definition = summary.deepCopy();
+    var detailFile = properties.catalogRoot()
+        .resolve("protocolos-lira")
+        .resolve("esquemas")
+        .resolve("detalle_" + id + ".json");
+    if (!(definition instanceof ObjectNode object) || !Files.isRegularFile(detailFile)) {
+      return definition;
+    }
+    try {
+      JsonNode drugs = mapper.readTree(Files.readString(detailFile));
+      if (drugs.isArray()) object.set("drugs", drugs);
+    } catch (IOException ignored) {
+      // Un detalle opcional inválido no debe impedir que el resto del catálogo se cargue.
+    }
+    return definition;
   }
 
   private Map<String, Integer> readDurations() {

@@ -225,6 +225,7 @@ let liraImportPreviewController = null;
 let liraImportReturnFocus = null;
 let liraImportBusy = false;
 let liraPatientRefreshBusy = false;
+let closeActivePatientBusy = false;
 let newPatientReturnFocus = null;
 let newPatientBusy = false;
 let liraSourceAvailable = false;
@@ -354,7 +355,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   applyStoredSplit();
   wireEvents();
   await initializeClinicalSession();
-  await loadState();
+  await loadState({ forceServer: clinicalSession.authenticated });
   syncClinicalActorToState();
   renderAll();
   setPrescriptionType(prescriptionType);
@@ -979,6 +980,7 @@ function wireEvents() {
   });
   $("#openLiraImportBtn")?.addEventListener("click", () => openLiraImportModal());
   $("#refreshActiveLiraPatientBtn")?.addEventListener("click", refreshActiveLiraPatient);
+  $("#closeActivePatientBtn")?.addEventListener("click", closeActivePatient);
   $("#closeLiraImportBtn")?.addEventListener("click", closeLiraImportModal);
   $("#cancelLiraImportBtn")?.addEventListener("click", closeLiraImportModal);
   $("#refreshLiraStatusBtn")?.addEventListener("click", refreshLiraStatus);
@@ -8096,6 +8098,61 @@ function setLiraPatientRefreshBusy(busy) {
   button.setAttribute("aria-label", button.title);
 }
 
+function syncActivePatientCloseButton() {
+  const button = $("#closeActivePatientBtn");
+  if (!button) return;
+  const patientId = getActiveLiraPatientId();
+  const patientName = String(state?.patient?.fullName || "").trim();
+  const hasPatient = Boolean(patientId);
+  button.disabled = closeActivePatientBusy || !hasPatient;
+  button.classList.toggle("is-loading", closeActivePatientBusy);
+  button.setAttribute("aria-busy", String(closeActivePatientBusy));
+  button.title = closeActivePatientBusy
+    ? "Cerrando paciente"
+    : hasPatient
+      ? `Cerrar paciente${patientName ? `: ${patientName}` : ""}`
+      : "No hay un paciente abierto";
+  button.setAttribute("aria-label", button.title);
+}
+
+async function closeActivePatient() {
+  const patientId = getActiveLiraPatientId();
+  if (!patientId || closeActivePatientBusy) return;
+  const patientName = String(state?.patient?.fullName || "este paciente").trim() || "este paciente";
+  if (!window.confirm(`¿Cerrar la ficha de ${patientName}?\n\nLa información guardada no se elimina y podrá volver a abrirla cuando la necesite.`)) {
+    return;
+  }
+
+  closeActivePatientBusy = true;
+  syncActivePatientCloseButton();
+  try {
+    await clinicalPersistenceQueue;
+    const response = await fetch("/api/auth/active-patient", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ patientId: null })
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || payload.ok === false) {
+      throw new Error(payload.error || "No se pudo cerrar el paciente");
+    }
+
+    await loadState({ forceServer: true });
+    resetPatientContextAfterLiraImport();
+    syncClinicalActorToState();
+    setActiveTab("historia");
+    setRightTab("studies");
+    renderAll();
+    await refreshCareWorkspace({ force: true });
+    toast("Paciente cerrado. La hoja quedó en blanco.");
+  } catch (error) {
+    toast(error.message || "No se pudo cerrar el paciente");
+  } finally {
+    closeActivePatientBusy = false;
+    syncActivePatientCloseButton();
+  }
+}
+
 function setLiraImportBusy(busy) {
   liraImportBusy = busy;
   const confirmButton = $("#confirmLiraImportBtn");
@@ -9500,6 +9557,7 @@ function renderPatientOutputs(isDirty = false) {
     ].join(" · ");
   }
   setLiraPatientRefreshBusy(liraPatientRefreshBusy);
+  syncActivePatientCloseButton();
 }
 
 function openEvolutionHistoryModal(id) {
@@ -9559,7 +9617,8 @@ function setActiveTab(tabName) {
   $$("[data-tab]").forEach((tab) => tab.classList.toggle("active", tab.dataset.tab === tabName));
   $$("[data-panel]").forEach((panel) => panel.classList.toggle("active", panel.dataset.panel === tabName));
   const historyActive = tabName === "historia";
-  $$(".paper-highlight-actions button, .paper-highlight-actions input").forEach((control) => { control.disabled = !historyActive; });
+  $$(".paper-highlight-actions button:not(#closeActivePatientBtn), .paper-highlight-actions input").forEach((control) => { control.disabled = !historyActive; });
+  syncActivePatientCloseButton();
   if (!historyActive) {
     const shell = $("[data-clinical-search-shell]");
     shell?.classList.remove("open");
