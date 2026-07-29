@@ -3,7 +3,7 @@ target/
 runtime/storage/
 runtime/postgres-data/
 runtime/*.log
-migration/
+/migration/
 *.pid
 .idea/
 .vscode/
