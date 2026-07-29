@@ -36,6 +36,8 @@ producción.
 ## Clínica
 
 - [ ] Nuevo paciente comienza con hoja en blanco.
+- [ ] Todos los modales tienen `X` y permanecen abiertos al tocar el fondo,
+      presionar `Esc` o esperar.
 - [ ] Diagnóstico conserva SNOMED, CIE-10, AJCC, TNM y estadio.
 - [ ] Agregar diagnóstico no borra los anteriores.
 - [ ] Prescripción vincula diagnóstico/protocolo y crea ciclos.

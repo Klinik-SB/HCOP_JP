@@ -54,6 +54,8 @@ en turnos y administración de medicación.
 - `label` asociado a cada input;
 - teclado en tabs, modales y tablas;
 - foco dentro del modal y devolución al cerrar;
+- cierre de modales solamente por controles explícitos: nunca por clic en el
+  fondo, tecla `Esc` o temporizador;
 - `aria-live` para estados;
 - contraste suficiente;
 - iconos con nombre accesible;

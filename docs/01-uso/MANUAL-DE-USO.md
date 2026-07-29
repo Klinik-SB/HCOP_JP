@@ -18,6 +18,14 @@ página o se navegue por Configuración. Para dejar la hoja en blanco, use
 resaltado. Esta acción no elimina la historia: solamente cierra el contexto
 activo y permite volver a abrirlo después.
 
+## Ventanas de carga y confirmación
+
+Los formularios que se abren como ventana, incluido **Nuevo paciente**, se
+mantienen abiertos mientras el usuario trabaja. No se cierran por tocar el
+fondo, por presionar `Esc` ni por transcurrir tiempo. Para descartarlos use la
+`X` visible en la cabecera; **Guardar**, **Confirmar** o **Cancelar** siguen
+siendo acciones explícitas y nunca se ejecutan automáticamente.
+
 ## Hoja clínica izquierda
 
 Es la historia longitudinal. Contiene identidad, diagnóstico, motivo de

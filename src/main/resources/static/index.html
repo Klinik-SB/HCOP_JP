@@ -4,14 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>HCOP Centro Oncologico</title>
-    <link rel="stylesheet" href="styles.css?v=20260729-active-patient-1">
+    <link rel="stylesheet" href="styles.css?v=20260729-explicit-modals-1">
     <link rel="stylesheet" href="care-scheduler.css?v=20260728-suspended-turn-removal-1">
     <link rel="stylesheet" href="care-scheduler-modal.css?v=20260725-hospital-unified-2">
     <link rel="stylesheet" href="/help/help.css?v=20260725-1">
     <script src="/vendor/lucide.min.js" defer></script>
     <script src="/help/help-content.js?v=20260725-hospital-tab-order-1" defer></script>
     <script src="/help/help.js?v=20260725-hospital-unified-1" defer></script>
-    <script src="app.js?v=20260729-active-patient-1" defer></script>
+    <script src="app.js?v=20260729-explicit-modals-1" defer></script>
   </head>
   <body>
     <div class="app-shell">
@@ -1203,7 +1203,7 @@
             <span class="sheet-kicker">Nueva evolucion</span>
             <h2 id="evolutionModalTitle">Agregar registro a la hoja</h2>
           </div>
-          <button class="icon-button" id="closeEvolutionModalBtn" type="button" title="Cerrar">
+          <button class="icon-button" id="closeEvolutionModalBtn" type="button" title="Cerrar" aria-label="Cerrar registro clínico">
             <i data-lucide="x"></i>
           </button>
         </header>
@@ -1278,7 +1278,7 @@
             <span class="sheet-kicker">Datos del paciente</span>
             <h2 id="patientModalTitle">Modificar encabezado de hoja</h2>
           </div>
-          <button class="icon-button" id="closePatientModalBtn" type="button" title="Cerrar">
+          <button class="icon-button" id="closePatientModalBtn" type="button" title="Cerrar" aria-label="Cerrar datos del paciente">
             <i data-lucide="x"></i>
           </button>
         </header>
@@ -1376,7 +1376,7 @@
             <span class="sheet-kicker">Modificar seccion</span>
             <h2 id="sectionEditModalTitle">Seccion</h2>
           </div>
-          <button class="icon-button" id="closeSectionEditModalBtn" type="button" title="Cerrar">
+          <button class="icon-button" id="closeSectionEditModalBtn" type="button" title="Cerrar" aria-label="Cerrar edición de sección">
             <i data-lucide="x"></i>
           </button>
         </header>
@@ -1435,7 +1435,7 @@
             <span class="sheet-kicker">Historial de modificaciones</span>
             <h2 id="sectionHistoryModalTitle">Historial</h2>
           </div>
-          <button class="icon-button" id="closeSectionHistoryModalBtn" type="button" title="Cerrar">
+          <button class="icon-button" id="closeSectionHistoryModalBtn" type="button" title="Cerrar" aria-label="Cerrar historial de sección">
             <i data-lucide="x"></i>
           </button>
         </header>
@@ -1450,7 +1450,7 @@
       <section class="modal-card prescription-preview-modal" role="dialog" aria-modal="true" aria-labelledby="prescriptionPreviewTitle">
         <header class="modal-header">
           <div><span class="sheet-kicker">Documento generado</span><h2 id="prescriptionPreviewTitle">Vista previa de la prescripcion</h2></div>
-          <button class="icon-button" id="closePrescriptionPreviewBtn" type="button" title="Cerrar"><i data-lucide="x"></i></button>
+          <button class="icon-button" id="closePrescriptionPreviewBtn" type="button" title="Cerrar" aria-label="Cerrar vista previa de la prescripción"><i data-lucide="x"></i></button>
         </header>
         <section class="modal-body prescription-preview-body" id="prescriptionPreviewBody">
           <div class="systemic-preview-toolbar" id="systemicPreviewToolbar" hidden>
@@ -1474,7 +1474,7 @@
       <section class="modal-card guide-pdf-modal" role="dialog" aria-modal="true" aria-labelledby="guidePdfTitle">
         <header class="modal-header">
           <div><span class="sheet-kicker" id="guidePdfSource">Guia local</span><h2 id="guidePdfTitle">Guia</h2></div>
-          <button class="icon-button" id="closeGuidePdfBtn" type="button" title="Cerrar"><i data-lucide="x"></i></button>
+          <button class="icon-button" id="closeGuidePdfBtn" type="button" title="Cerrar" aria-label="Cerrar guía clínica"><i data-lucide="x"></i></button>
         </header>
         <section class="guide-pdf-body"><iframe id="guidePdfFrame" title="Visor de guia PDF"></iframe></section>
         <footer class="modal-actions guide-pdf-actions">

@@ -649,19 +649,10 @@ function wireClinicalSessionEvents() {
   $("#clinicalInboxLaterBtn")?.addEventListener("click", closeClinicalInbox);
   $("#clinicalInboxResolveForm")?.addEventListener("submit", submitClinicalInboxResolution);
   $("#clinicalInboxResolution")?.addEventListener("change", syncClinicalInboxResolutionFields);
-  $("#clinicalInboxModal")?.addEventListener("click", (event) => {
-    if (event.target === event.currentTarget) closeClinicalInbox();
-  });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Tab" && $("#clinicalInboxModal")?.classList.contains("open")) {
       event.stopImmediatePropagation();
       trapCareModalFocus(event, "clinicalInboxModal");
-      return;
-    }
-    if (event.key === "Escape" && $("#clinicalInboxModal")?.classList.contains("open")) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      closeClinicalInbox();
     }
   });
   window.addEventListener("focus", () => {
@@ -965,15 +956,26 @@ async function submitClinicalInboxResolution(event) {
   }
 }
 
+function wireExplicitModalDismissal() {
+  document.addEventListener("click", (event) => {
+    const backdrop = event.target.closest?.(".modal-backdrop, .lira-observation-backdrop");
+    if (!backdrop || event.target !== backdrop) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const closeButton = backdrop.querySelector(
+      '[aria-label^="Cerrar"], [title^="Cerrar"], [data-care-manager-detail-action="close-observation"]'
+    );
+    closeButton?.focus?.({ preventScroll: true });
+  }, true);
+}
+
 function wireEvents() {
+  wireExplicitModalDismissal();
   wireClinicalSessionEvents();
   $("#newPatientBtn")?.addEventListener("click", openNewPatientModal);
   $("#closeNewPatientBtn")?.addEventListener("click", closeNewPatientModal);
   $("#cancelNewPatientBtn")?.addEventListener("click", closeNewPatientModal);
   $("#newPatientForm")?.addEventListener("submit", createNewPatient);
-  $("#newPatientModal")?.addEventListener("click", (event) => {
-    if (event.target.id === "newPatientModal") closeNewPatientModal();
-  });
   $("#newPatientForm")?.addEventListener("input", (event) => {
     event.target.removeAttribute?.("aria-invalid");
     hideNewPatientError();
@@ -1005,9 +1007,6 @@ function wireEvents() {
     if (result) selectLiraPatient(result.dataset.liraPatientId);
   });
   $("#liraPatientResults")?.addEventListener("keydown", handleLiraResultsKeydown);
-  $("#liraImportModal")?.addEventListener("click", (event) => {
-    if (event.target.id === "liraImportModal") closeLiraImportModal();
-  });
   $("#printBtn").addEventListener("click", printClinicalDocument);
   const clinicalScrollArea = $(".clinical-panel .panel-scroll");
   clinicalScrollArea?.addEventListener("scroll", updateClinicalScrollEndButton, { passive: true });
@@ -1028,19 +1027,10 @@ function wireEvents() {
     await saveState();
     closePatientModal();
   });
-  $("#patientModal").addEventListener("click", (event) => {
-    if (event.target.id === "patientModal") closePatientModal();
-  });
   $("#closeEvolutionModalBtn").addEventListener("click", closeEvolutionModal);
   $("#cancelEvolutionModalBtn").addEventListener("click", closeEvolutionModal);
   $("#deleteEvolutionBtn").addEventListener("click", deleteEditingEvolution);
-  $("#evolutionModal").addEventListener("click", (event) => {
-    if (event.target.id === "evolutionModal") closeEvolutionModal();
-  });
   $("#closeDiagnosticClassificationModalBtn")?.addEventListener("click", closeDiagnosticClassificationModal);
-  $("#diagnosticClassificationModal")?.addEventListener("click", (event) => {
-    if (event.target.id === "diagnosticClassificationModal") closeDiagnosticClassificationModal();
-  });
   $("#closeSectionEditModalBtn").addEventListener("click", closeSectionEditModal);
   $("#cancelSectionEditModalBtn").addEventListener("click", closeSectionEditModal);
   $("#saveSectionEditBtn").addEventListener("click", saveSectionEdit);
@@ -1050,13 +1040,7 @@ function wireEvents() {
   $("#sectionStructuredFields").addEventListener("click", (event) => {
     if (event.target.closest('[data-action="prefill-section-exam"]')) prefillStructuredPhysicalExam();
   });
-  $("#sectionEditModal").addEventListener("click", (event) => {
-    if (event.target.id === "sectionEditModal") closeSectionEditModal();
-  });
   $("#closeSectionHistoryModalBtn").addEventListener("click", closeSectionHistoryModal);
-  $("#sectionHistoryModal").addEventListener("click", (event) => {
-    if (event.target.id === "sectionHistoryModal") closeSectionHistoryModal();
-  });
   $("#closePrescriptionPreviewBtn")?.addEventListener("click", closePrescriptionPreview);
   $("#cancelPrescriptionPreviewBtn")?.addEventListener("click", closePrescriptionPreview);
   $("#printPrescriptionPreviewBtn")?.addEventListener("click", () => {
@@ -1074,13 +1058,7 @@ function wireEvents() {
     if (!button) return;
     $("#systemicPreviewPages")?.querySelector(`[data-systemic-page=\"${button.dataset.systemicPageNav}\"]`)?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
-  $("#prescriptionPreviewModal")?.addEventListener("click", (event) => {
-    if (event.target.id === "prescriptionPreviewModal") closePrescriptionPreview();
-  });
   $("#closeStudyImageModalBtn")?.addEventListener("click", closeStudyImageModal);
-  $("#studyImageModal")?.addEventListener("click", (event) => {
-    if (event.target.id === "studyImageModal") closeStudyImageModal();
-  });
   $("#printStudyImageBtn")?.addEventListener("click", () => printActiveStudyImage());
   $("#annotateStudyImageBtn")?.addEventListener("click", beginStudyImageAnnotation);
   $("#attachStudyImageBtn")?.addEventListener("click", attachActiveStudyImageToEvolution);
@@ -1104,38 +1082,6 @@ function wireEvents() {
     if (event.key === "Tab" && $("#liraImportModal")?.classList.contains("open")) {
       trapLiraImportFocus(event);
       return;
-    }
-    if (event.key === "Escape") {
-      if ($("#diagnosticClassificationModal")?.classList.contains("open")) {
-        closeDiagnosticClassificationModal();
-        return;
-      }
-      if ($("#newPatientModal")?.classList.contains("open")) {
-        closeNewPatientModal();
-        return;
-      }
-      if ($("#liraImportModal")?.classList.contains("open")) {
-        closeLiraImportModal();
-        return;
-      }
-      if ($("#studyTemplateModal")?.classList.contains("open")) {
-        closeStudyTemplateModal();
-        return;
-      }
-      if ($("#studyUploadModal")?.classList.contains("open")) {
-        closeStudyUploadModal();
-        return;
-      }
-      if ($("#studyImageModal")?.classList.contains("open")) {
-        closeStudyImageModal();
-        return;
-      }
-      closePatientModal();
-      closeEvolutionModal();
-      closeSectionEditModal();
-      closeSectionHistoryModal();
-      closePrescriptionPreview();
-      closeGuidePdf();
     }
   });
 
@@ -1331,9 +1277,6 @@ function wireEvents() {
     event.target.value = "";
   });
   $("#studyUploadQueue")?.addEventListener("click", handleStudyUploadQueueAction);
-  $("#studyUploadModal")?.addEventListener("click", (event) => {
-    if (event.target.id === "studyUploadModal") closeStudyUploadModal();
-  });
   $("#studyUploadZone")?.addEventListener("keydown", (event) => {
     if (!["Enter", " "].includes(event.key)) return;
     event.preventDefault();
@@ -1345,9 +1288,6 @@ function wireEvents() {
   $("#studyTemplateSearch")?.addEventListener("input", renderStudyTemplateGallery);
   $("#studyTemplateCategory")?.addEventListener("change", renderStudyTemplateGallery);
   $("#studyTemplateGallery")?.addEventListener("click", handleStudyTemplateGalleryAction);
-  $("#studyTemplateModal")?.addEventListener("click", (event) => {
-    if (event.target.id === "studyTemplateModal") closeStudyTemplateModal();
-  });
   document.addEventListener("paste", handleStudyClipboardPaste);
   document.addEventListener("pointermove", updateStudyClipboardPointerContext, { passive: true });
   document.addEventListener("pointerdown", updateStudyClipboardPointerContext, { passive: true });
@@ -1428,7 +1368,6 @@ function wireEvents() {
   $("#guideList")?.addEventListener("click", (event)=>{const button=event.target.closest("[data-guide-name]");if(button)openGuidePdf(button.dataset.guideName)});
   $("#closeGuidePdfBtn")?.addEventListener("click", closeGuidePdf);
   $("#closeGuidePdfFooterBtn")?.addEventListener("click", closeGuidePdf);
-  $("#guidePdfModal")?.addEventListener("click",(event)=>{if(event.target.id==="guidePdfModal")closeGuidePdf()});
   $("#calculatorType")?.addEventListener("change", renderCalculatorFields);
   $("#calculatorFields")?.addEventListener("input", calculateClinicalTool);
   $("#systemConfigForm")?.addEventListener("submit", saveSystemConfig);
@@ -2017,17 +1956,6 @@ function wireCareEvents() {
   $$('[data-care-modal-close]').forEach((button) => {
     button.addEventListener("click", () => closeCareModal(button.closest(".modal-backdrop, [role=dialog]")?.id));
   });
-  [$("#careQrScannerModal"), $("#careScheduleDetailModal"), $("#careScheduleWorkflowActionModal"), $("#careTreatmentManagerModal"), $("#careTreatmentModal"), $("#careTreatmentWorkflowModal"), $("#careInfusionModal")].filter(Boolean).forEach((modal) => {
-    modal.addEventListener("click", (event) => {
-      if (event.target !== modal) return;
-      if (modal.id === "careQrScannerModal") closeCareQrScannerModal();
-      else if (modal.id === "careScheduleDetailModal") closeCareScheduleDetailModal();
-      else if (modal.id === "careScheduleWorkflowActionModal") closeCareScheduleWorkflowActionModal();
-      else if (modal.id === "careTreatmentManagerModal") closeCareTreatmentManagerModal();
-      else if (modal.id === "careInfusionModal") closeCareInfusionModal();
-      else closeCareModal(modal.id);
-    });
-  });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Tab" && $("#careQrScannerModal")?.classList.contains("open")) {
       trapCareModalFocus(event, "careQrScannerModal");
@@ -2049,14 +1977,6 @@ function wireCareEvents() {
       trapCareModalFocus(event, "careTreatmentManagerModal");
       return;
     }
-    if (event.key !== "Escape") return;
-    if ($("#careQrScannerModal")?.classList.contains("open")) closeCareQrScannerModal();
-    else if ($("#careScheduleWorkflowActionModal")?.classList.contains("open")) closeCareScheduleWorkflowActionModal();
-    else if ($("#careScheduleDetailModal")?.classList.contains("open")) closeCareScheduleDetailModal();
-    else if ($("#careTreatmentWorkflowModal")?.classList.contains("open")) closeCareModal("careTreatmentWorkflowModal");
-    else if ($("#careTreatmentModal")?.classList.contains("open")) closeCareModal("careTreatmentModal");
-    else if ($("#careInfusionModal")?.classList.contains("open")) closeCareInfusionModal();
-    else if ($("#careTreatmentManagerModal")?.classList.contains("open")) closeCareTreatmentManagerModal();
   });
 }
 
@@ -6195,9 +6115,6 @@ async function openCareScheduleFromTreatmentDetail(actionButton, item) {
 }
 
 async function handleCareTreatmentManagerDetailAction(event) {
-  if (event.target === event.currentTarget.querySelector(".lira-observation-backdrop")) {
-    careTreatmentManagerState.observationApplicationId = "";
-  }
   const item = selectedCareTreatmentManagerRecord();
   const cycleButton = event.target.closest("[data-care-manager-cycle]");
   if (cycleButton && item) {
