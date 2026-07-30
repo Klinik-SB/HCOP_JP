@@ -29,9 +29,8 @@ $hcopScript = Join-Path $env:TEMP "EJECUTAR-DOCKER-DESDE-GITHUB.ps1"; Invoke-Web
 En la primera ejecución solicita las credenciales iniciales sin mostrarlas,
 genera los demás secretos una sola vez y guarda todo en
 `%LOCALAPPDATA%\HCOP_JP-Docker`. Los datos clínicos quedan en volúmenes Docker
-persistentes. Si el repositorio todavía es privado, descargue el script desde
-GitHub después de iniciar sesión; el propio ejecutor resuelve por separado el
-acceso a la imagen privada.
+persistentes. El repositorio y la imagen Docker publicados son públicos, por lo
+que esta modalidad no requiere autenticación en GitHub.
 
 Modos disponibles:
 
@@ -45,22 +44,20 @@ powershell.exe -File .\EJECUTAR-DOCKER-DESDE-GITHUB.ps1 -Mode Status
 powershell.exe -File .\EJECUTAR-DOCKER-DESDE-GITHUB.ps1 -Mode Stop
 ```
 
-## Instalación más simple desde GitHub
+## Instalación administrada desde GitHub
 
 Requisitos: Windows 10/11 de 64 bits, conexión a Internet y permisos para
 instalar Docker Desktop.
 
-1. Inicie sesión en GitHub con una cuenta autorizada y descargue
-   [`INSTALAR-DESDE-GITHUB.bat`](INSTALAR-DESDE-GITHUB.bat).
+1. Descargue [`INSTALAR-DESDE-GITHUB.bat`](INSTALAR-DESDE-GITHUB.bat).
 2. Haga doble clic.
 3. Acepte la instalación de Docker Desktop si Windows la solicita.
 4. Elija usuario, contraseña y puerto o presione Enter para usar los valores
    sugeridos.
 5. El instalador abre `http://localhost:5180`.
 
-Como el repositorio y la imagen son privados, el asistente puede instalar
-GitHub CLI y abrir una autorización por navegador en el primer equipo. No pide
-que copie ni pegue tokens.
+El repositorio y la imagen Docker publicados son públicos. La instalación no
+requiere iniciar sesión en GitHub, GitHub CLI ni tokens personales.
 
 El acceso directo **HCOP JP** del Escritorio sirve como lanzador diario:
 comprueba Docker, descarga la versión más reciente publicada en GitHub, mantiene
@@ -83,7 +80,7 @@ Luego abra:
 - Salud: <http://localhost:5180/actuator/health>
 
 El usuario sugerido es `marcolyto`; la contraseña inicial siempre debe ser
-elegida durante la instalación.
+elegida durante la instalación y debe tener al menos 10 caracteres.
 
 ## Arquitectura
 

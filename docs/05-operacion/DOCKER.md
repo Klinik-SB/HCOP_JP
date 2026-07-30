@@ -3,14 +3,31 @@
 Docker ejecuta HCOP JP y PostgreSQL en dos contenedores coordinados. No necesita
 instalar Java ni PostgreSQL en Windows.
 
-## Conceptos mínimos
+## Componentes del despliegue
 
 - **imagen**: programa empaquetado;
 - **contenedor**: instancia que está ejecutándose;
 - **volumen**: disco persistente;
 - **compose**: archivo que inicia todo junto.
 
-## Comandos
+## Ejecución directa desde GitHub
+
+Cuando Docker Desktop ya está instalado, copie y pegue esta línea completa en
+Windows PowerShell:
+
+```powershell
+$hcopScript = Join-Path $env:TEMP "EJECUTAR-DOCKER-DESDE-GITHUB.ps1"; Invoke-WebRequest "https://raw.githubusercontent.com/Marcolyto/HCOP_JP/main/EJECUTAR-DOCKER-DESDE-GITHUB.ps1" -OutFile $hcopScript; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $hcopScript
+```
+
+El lanzador mantiene `compose.yaml`, `.env` y los registros operativos en
+`%LOCALAPPDATA%\HCOP_JP-Docker`. Conserva la base y los documentos entre
+reinicios y actualizaciones.
+
+## Comandos desde un checkout del repositorio
+
+Los comandos siguientes se ejecutan únicamente dentro de una copia local de
+`HCOP_JP`, donde existen `compose.yaml` y `.env`. No sustituyen la línea de
+ejecución directa anterior.
 
 Iniciar:
 
