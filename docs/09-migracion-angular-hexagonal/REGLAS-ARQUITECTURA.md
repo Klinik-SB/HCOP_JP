@@ -40,10 +40,10 @@ configuration
 
 El primer corte vertical ya reemplaza `ConfigurationController` y
 `ConfigurationRepository` mediante esta estructura. `ConfigurationService`
-permanece temporalmente como puente de compatibilidad para Guías y Plantillas
-anatómicas; delega en el caso de uso nuevo y no contiene reglas ni acceso a
-datos. Se retirará cuando esos dos consumidores completen su propia
-migración.
+permanece temporalmente como puente de compatibilidad únicamente para
+Plantillas anatómicas; delega en el caso de uso nuevo y no contiene reglas ni
+acceso a datos. Guías ya posee su propio módulo y dejó de usar ese puente. Se
+retirará cuando Plantillas complete su migración.
 
 No se cambiaron rutas, códigos HTTP ni formas JSON durante la convivencia. La
 paridad se comprueba con pruebas unitarias, reglas ArchUnit y una prueba de
@@ -54,6 +54,11 @@ configuración local y el catálogo COIR mediante puertos explícitos; los
 adaptadores de catálogo son los únicos que conocen los servicios heredados de
 archivos y drogas. El controlador ya no contiene decisiones de combinación,
 duración, vínculo ni versionado.
+
+`guide` divide explícitamente la autoridad de metadatos y archivos. La
+configuración versionada se accede mediante un puerto y el almacenamiento local
+mediante otro. El caso de uso coordina ambas operaciones sin depender de
+Spring, Jackson ni el sistema de archivos.
 
 ## Kernel compartido
 

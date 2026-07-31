@@ -25,6 +25,8 @@ frontend anterior sólo se retira cuando la matriz de paridad está completa.
   vertical, estrategia de convivencia y evidencia de paridad.
 - [Migración de Protocolos](MIGRACION-PROTOCOLOS.md): unificación del catálogo
   COIR, protocolos locales, drogas y administración versionada.
+- [Migración de Guías](MIGRACION-GUIAS.md): separación entre metadatos
+  versionados y archivos, validación PDF y descargas seguras.
 - [ADR-0001](adr/ADR-0001-MONOLITO-MODULAR-HEXAGONAL.md): monolito modular
   hexagonal.
 - [ADR-0002](adr/ADR-0002-ANGULAR-Y-CONVIVENCIA.md): Angular y convivencia
@@ -57,3 +59,6 @@ frontend anterior sólo se retira cuando la matriz de paridad está completa.
   la migración.
 - La validación local usa el puerto 5181 y recursos Docker con prefijo
   `hcop_ajp_validation`.
+- La imagen publicada para probar esta rama usa la etiqueta
+  `angular-hexagonal-migration` y recursos persistentes `hcop_ajp_*`; nunca
+  reemplaza `latest` ni los volúmenes estables.

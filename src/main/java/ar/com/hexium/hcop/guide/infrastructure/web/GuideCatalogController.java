@@ -1,10 +1,11 @@
-package ar.com.hexium.hcop.catalog;
+package ar.com.hexium.hcop.guide.infrastructure.web;
 
 import ar.com.hexium.hcop.auth.AuthContext;
+import ar.com.hexium.hcop.guide.application.port.in.GuideCatalogUseCase;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.Map;
-import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -16,11 +17,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class GuideCatalogController {
-  private final GuideCatalogService guides;
+  private final GuideCatalogUseCase guides;
+  private final GuideJsonMapper json;
   private final AuthContext auth;
 
-  public GuideCatalogController(GuideCatalogService guides, AuthContext auth) {
+  public GuideCatalogController(
+      GuideCatalogUseCase guides,
+      GuideJsonMapper json,
+      AuthContext auth) {
     this.guides = guides;
+    this.json = json;
     this.auth = auth;
   }
 
@@ -29,21 +35,23 @@ public class GuideCatalogController {
       @RequestParam(defaultValue = "0") int includeInactive,
       HttpServletRequest request) {
     auth.requirePermission(request, "section.tools.view");
-    var items = guides.list(includeInactive == 1);
+    var items = guides.list(includeInactive == 1).stream().map(json::view).toList();
     return Map.of("ok", true, "guides", items, "count", items.size());
   }
 
   @GetMapping("/api/guides/file")
-  ResponseEntity<FileSystemResource> file(
-      @RequestParam String name, HttpServletRequest request) throws IOException {
+  ResponseEntity<InputStreamResource> file(
+      @RequestParam String name,
+      HttpServletRequest request) {
     auth.requirePermission(request, "section.tools.view");
-    var path = guides.file(name);
+    var guide = guides.open(name);
     return ResponseEntity.ok()
         .contentType(MediaType.APPLICATION_PDF)
-        .contentLength(java.nio.file.Files.size(path))
-        .header(HttpHeaders.CONTENT_DISPOSITION,
-            ContentDisposition.inline().filename(path.getFileName().toString()).build().toString())
-        .body(new FileSystemResource(path));
+        .contentLength(guide.size())
+        .header(
+            HttpHeaders.CONTENT_DISPOSITION,
+            ContentDisposition.inline().filename(guide.name()).build().toString())
+        .body(new InputStreamResource(guide.content()));
   }
 
   @PutMapping(value = "/api/guides/import", consumes = MediaType.APPLICATION_PDF_VALUE)
@@ -51,6 +59,11 @@ public class GuideCatalogController {
       @RequestParam String name,
       HttpServletRequest request) throws IOException {
     auth.requirePermission(request, "section.configuration.manage");
-    return guides.store(name, request.getInputStream(), request.getContentLengthLong());
+    var result = guides.upload(name, request.getInputStream(), request.getContentLengthLong());
+    return Map.of(
+        "ok", true,
+        "name", result.name(),
+        "size", result.size(),
+        "replaced", result.replaced());
   }
 }

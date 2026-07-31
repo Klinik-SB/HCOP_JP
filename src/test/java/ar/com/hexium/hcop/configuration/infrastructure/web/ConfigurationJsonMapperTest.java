@@ -86,4 +86,24 @@ class ConfigurationJsonMapperTest {
     assertThat(definition.get("variables")).isEqualTo(java.util.List.of("peso", "talla"));
     assertThat(definition.containsKey("name")).isFalse();
   }
+
+  @Test
+  void aceptaLaRevisionEsperadaQueEnviaLaInterfazDeConfiguracion() {
+    var input = objectMapper.readTree("""
+        {
+          "name": "Guía",
+          "expectedRevision": 7,
+          "definition": {
+            "fileName": "guia.pdf"
+          }
+        }
+        """);
+
+    var command = mapper.updateCommand("guide", 12, input, 5);
+    Map<?, ?> definition = (Map<?, ?>) command.definition().value();
+
+    assertThat(command.expectedRevision()).isEqualTo(7);
+    assertThat(definition.get("fileName")).isEqualTo("guia.pdf");
+    assertThat(definition.containsKey("expectedRevision")).isFalse();
+  }
 }

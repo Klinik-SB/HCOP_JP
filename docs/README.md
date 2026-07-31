@@ -11,6 +11,7 @@ y técnicos para localizar rápidamente la referencia correspondiente.
 |---|---|
 | Usar HCOP JP en atención clínica | [Manual de uso](01-uso/MANUAL-DE-USO.md) |
 | Instalarlo en una PC | [Instalación desde GitHub](00-inicio/INSTALACION-DESDE-GITHUB.md) |
+| Probar la rama Angular/hexagonal sin tocar la estable | [Canal Docker de migración](00-inicio/PRUEBA-RAMA-ANGULAR-HEXAGONAL.md) |
 | Entender el circuito de tratamiento | [Flujo de tratamiento](01-uso/FLUJO-TRATAMIENTO.md) |
 | Operar Hospital de día paso a paso | [Video detallado y guía de capítulos](01-uso/VIDEO-CIRCUITO-HOSPITAL-DIA-PASO-A-PASO.md), [circuito de 7 pasos](01-uso/CIRCUITO-HOSPITAL-DE-DIA-7-PASOS.md) y [guía por roles](01-uso/GUIA-POR-ROLES-HOSPITAL-DE-DIA.md) |
 | Revisar la auditoría de Hospital de día | [Reporte del 30/07/2026](08-auditoria/REPORTE-AUDITORIA-HOSPITAL-DIA-2026-07-30.md) y [matriz de 100 casos](08-auditoria/HOSPITAL-DIA-100-CASOS.md) |
@@ -25,6 +26,7 @@ Con el sistema iniciado también existe una versión navegable en
 ## 00 · Empezar
 
 - [Instalación desde GitHub](00-inicio/INSTALACION-DESDE-GITHUB.md)
+- [Prueba aislada de la rama Angular/hexagonal](00-inicio/PRUEBA-RAMA-ANGULAR-HEXAGONAL.md)
 - [Primer ingreso](00-inicio/PRIMER-INGRESO.md)
 
 ## 01 · Uso clínico
@@ -94,6 +96,11 @@ Con el sistema iniciado también existe una versión navegable en
 - [Programa de migración](09-migracion-angular-hexagonal/README.md)
 - [Línea base verificada](09-migracion-angular-hexagonal/BASELINE-2026-07-30.md)
 - [Matriz de paridad funcional](09-migracion-angular-hexagonal/MATRIZ-DE-PARIDAD.md)
+- [Arquitectura objetivo](09-migracion-angular-hexagonal/ARQUITECTURA-OBJETIVO.md)
+- [Contratos REST](09-migracion-angular-hexagonal/CONTRATOS-REST.md)
+- [Configuración](09-migracion-angular-hexagonal/MIGRACION-CONFIGURACION.md),
+  [Protocolos](09-migracion-angular-hexagonal/MIGRACION-PROTOCOLOS.md) y
+  [Guías](09-migracion-angular-hexagonal/MIGRACION-GUIAS.md)
 
 ## Fuentes de verdad
 

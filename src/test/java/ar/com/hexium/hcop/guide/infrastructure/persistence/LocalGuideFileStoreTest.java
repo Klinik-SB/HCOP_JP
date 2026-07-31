@@ -1,21 +1,17 @@
-package ar.com.hexium.hcop.catalog;
+package ar.com.hexium.hcop.guide.infrastructure.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import ar.com.hexium.hcop.config.HcopProperties;
-import ar.com.hexium.hcop.configuration.ConfigurationService;
+import ar.com.hexium.hcop.guide.domain.GuideFileName;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-class GuideCatalogServiceTest {
-
+class LocalGuideFileStoreTest {
   @TempDir
   Path temporary;
 
@@ -34,19 +30,24 @@ class GuideCatalogServiceTest {
         1024,
         "test-qr-secret",
         "test-encryption-secret");
-    ConfigurationService configurations = mock(ConfigurationService.class);
-    when(configurations.list("guide", true)).thenReturn(List.of());
-    var service = new GuideCatalogService(properties, configurations);
+    var store = new LocalGuideFileStore(properties);
     byte[] pdf = "%PDF-1.4\n% HCOP test\n".getBytes(StandardCharsets.US_ASCII);
+    GuideFileName name = GuideFileName.fromRaw("guia-prueba.pdf");
 
-    service.store("guia-prueba.pdf", new ByteArrayInputStream(pdf), pdf.length);
+    store.store(name, new ByteArrayInputStream(pdf), 1024);
 
     assertThat(storageRoot.resolve("guides/guia-prueba.pdf")).exists();
     assertThat(catalogRoot.resolve("guides/guia-prueba.pdf")).doesNotExist();
-    assertThat(service.list(false))
+    assertThat(store.list())
         .singleElement()
-        .extracting(item -> item.get("name"))
+        .extracting(item -> item.name().value())
         .isEqualTo("guia-prueba.pdf");
-    assertThat(Files.readAllBytes(service.file("guia-prueba.pdf"))).isEqualTo(pdf);
+    try (var content = store.open(name).orElseThrow().content()) {
+      assertThat(content.readAllBytes()).isEqualTo(pdf);
+    }
+    try (var temporaryFiles = Files.list(storageRoot.resolve("guides"))) {
+      assertThat(temporaryFiles.filter(path -> path.toString().endsWith(".part")))
+          .isEmpty();
+    }
   }
 }

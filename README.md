@@ -1,5 +1,11 @@
 # HCOP JP
 
+> **Rama de migración:** `codex/angular-hexagonal-migration` es un canal de
+> prueba aislado. Conserva la interfaz clínica vigente mientras traslada el
+> backend por capacidades a una arquitectura hexagonal y estabiliza los
+> contratos que consumirá Angular. La versión estable continúa en `main`, con
+> la imagen `latest`, el puerto 5180 y sus volúmenes habituales.
+
 HCOP JP reúne en un único sistema la historia clínica oncológica, diagnósticos,
 prescripciones, protocolos, farmacia, Hospital de Día, turnero por sillón,
 estudios, investigación, herramientas, usuarios y auditoría.
@@ -12,6 +18,22 @@ rol trabaja en su propia cola sin poder adelantar estados.
 La interfaz conserva el producto HCOP/Lira construido hasta ahora. El servidor
 fue migrado a Java 21 con Spring MVC y la persistencia a PostgreSQL. No necesita
 Lira, Node.js ni MySQL para funcionar.
+
+## Probar esta rama migratoria desde GitHub
+
+Con Docker Desktop iniciado, copie esta línea completa en Windows PowerShell:
+
+```powershell
+$hcopScript = Join-Path $env:TEMP "EJECUTAR-DOCKER-DESDE-GITHUB.ps1"; Invoke-WebRequest "https://raw.githubusercontent.com/Marcolyto/HCOP_JP/codex/angular-hexagonal-migration/EJECUTAR-DOCKER-DESDE-GITHUB.ps1" -OutFile $hcopScript; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $hcopScript -Channel Migration
+```
+
+La prueba abre <http://localhost:5181> y utiliza la imagen
+`ghcr.io/marcolyto/hcop_jp:angular-hexagonal-migration`, una base
+`hcop_ajp` y volúmenes `hcop_ajp_*`. Puede convivir con la versión estable:
+no modifica su imagen `latest`, su puerto 5180 ni sus datos.
+
+La guía [Probar la rama Angular/hexagonal](docs/00-inicio/PRUEBA-RAMA-ANGULAR-HEXAGONAL.md)
+incluye inicio, actualización, estado, detención y límites actuales.
 
 ## Ejecutar directamente con Docker Desktop, sin clonar
 
@@ -84,13 +106,21 @@ elegida durante la instalación y debe tener al menos 10 caracteres.
 
 ## Arquitectura
 
-HCOP JP es un monolito modular con separación MVC:
+HCOP JP evoluciona como monolito modular hexagonal, con migración incremental:
 
-- `controller`: contrato HTTP y autorización;
-- `service`: reglas clínicas, validaciones y transacciones;
-- `repository`: consultas parametrizadas a PostgreSQL;
-- `static`: interfaz web existente;
-- `db/migration`: creación y evolución reproducible de la base.
+- cada capacidad migrada separa `domain`, `application` e `infrastructure`;
+- los puertos de entrada expresan casos de uso y los de salida aíslan
+  persistencia, archivos y catálogos;
+- los módulos todavía no migrados conservan su estructura MVC mientras se
+  verifica la paridad;
+- `static` mantiene temporalmente la interfaz vigente;
+- Angular se incorporará por recorridos completos, sin una reescritura masiva;
+- `db/migration` conserva la evolución reproducible de PostgreSQL mediante
+  Flyway.
+
+ArchUnit impide que dominio y aplicación dependan de Spring, JDBC, JSON o los
+adaptadores. La migración de Configuración, Protocolos y Guías ya usa estos
+límites; las demás capacidades siguen en convivencia controlada.
 
 Cada cambio de estructura usa Flyway. Las reglas de concurrencia críticas,
 incluida la superposición de turnos, también están protegidas por PostgreSQL.
@@ -100,6 +130,7 @@ incluida la superposición de turnos, también están protegidas por PostgreSQL.
 Empiece por el [índice de documentación](docs/README.md).
 
 - [Instalar desde GitHub](docs/00-inicio/INSTALACION-DESDE-GITHUB.md)
+- [Probar la rama Angular/hexagonal](docs/00-inicio/PRUEBA-RAMA-ANGULAR-HEXAGONAL.md)
 - [Manual de uso](docs/01-uso/MANUAL-DE-USO.md)
 - [Flujo clínico](docs/01-uso/FLUJO-TRATAMIENTO.md)
 - [Circuito de Hospital de día en 7 pasos](docs/01-uso/CIRCUITO-HOSPITAL-DE-DIA-7-PASOS.md)
@@ -120,6 +151,7 @@ Empiece por el [índice de documentación](docs/README.md).
 - [Docker](docs/05-operacion/DOCKER.md)
 - [Copias de seguridad](docs/05-operacion/BACKUP-Y-RESTAURACION.md)
 - [Seguridad](docs/05-operacion/SEGURIDAD.md)
+- [Programa de migración Angular y hexagonal](docs/09-migracion-angular-hexagonal/README.md)
 
 ## Verificación
 
@@ -136,6 +168,11 @@ reanudación, administración, hoja de tratamiento y evoluciones. Además existe
 una [matriz reproducible de Hospital de día](docs/08-auditoria/HOSPITAL-DIA-100-CASOS.md);
 su última ejecución obtuvo
 [100 PASS de 100](docs/08-auditoria/resultados/hospital-dia-100-casos-20260730-100711.md).
-La verificación final incluyó además **101 pruebas Java aprobadas** y el E2E
-multidroga con cuatro componentes: Carboplatino se interrumpió al 50 %, se
-reanudó y la aplicación terminó completada sin perder la reacción.
+La verificación de publicación ejecuta la suite Java, reglas ArchUnit,
+contratos reales de Configuración, Protocolos y Guías, OpenAPI, enlaces de
+documentación y el E2E clínico multidroga. Carboplatino se interrumpe al 50 %,
+se reanuda y la aplicación termina completada sin perder la reacción.
+
+En este corte, `mvn verify` aprobó **142 pruebas** sin fallas ni omisiones. La
+prueba Docker confirmó además los 111 endpoints documentados y el circuito
+clínico completo con cuatro drogas.

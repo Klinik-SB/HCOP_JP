@@ -18,10 +18,10 @@ El caso de uso genérico administra estas clases de configuración:
 - formularios de investigación;
 - protocolos.
 
-Protocolos ya consume el puerto de entrada de Configuración desde su propio
-caso de uso hexagonal. Guías y Plantillas todavía conservan adaptadores
-especializados y, durante esa transición, consumen el caso de uso nuevo a
-través de un puente de compatibilidad sin acceso directo a PostgreSQL.
+Protocolos y Guías ya consumen el puerto de entrada de Configuración desde sus
+propios casos de uso hexagonales. Plantillas anatómicas todavía conserva su
+adaptador especializado y, durante esa transición, consume el caso de uso
+nuevo a través de un puente de compatibilidad sin acceso directo a PostgreSQL.
 
 ## Flujo de dependencias
 
@@ -77,7 +77,7 @@ la aplicación empaquetada y PostgreSQL reales:
 Además, la regresión comprueba:
 
 - 111 operaciones OpenAPI con identificadores únicos;
-- 58 documentos Markdown y sus enlaces;
+- todos los documentos Markdown y sus enlaces;
 - catálogo de protocolos y plantillas;
 - recorrido clínico completo desde paciente y tratamiento hasta administración;
 - reglas automáticas de arquitectura.
@@ -85,6 +85,6 @@ Además, la regresión comprueba:
 ## Condición de salida
 
 Este corte se considera backend hexagonal validado para la configuración
-genérica. La capacidad completa sigue `En convivencia` hasta migrar sus
-adaptadores especializados, construir su interfaz Angular y completar la
-comparación visual y de permisos.
+genérica. La capacidad completa sigue `En convivencia` hasta migrar Plantillas
+anatómicas, construir su interfaz Angular y completar la comparación visual y
+de permisos.

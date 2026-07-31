@@ -31,6 +31,7 @@ public class ConfigurationJsonMapper {
       "descripcion",
       "active",
       "revision",
+      "expectedRevision",
       "reason");
 
   private final ObjectMapper mapper;
@@ -54,7 +55,11 @@ public class ConfigurationJsonMapper {
     return new UpdateCommand(
         kind,
         id,
-        input.has("revision") ? input.path("revision").asLong() : null,
+        input.has("revision")
+            ? input.path("revision").asLong()
+            : input.has("expectedRevision")
+                ? input.path("expectedRevision").asLong()
+                : null,
         text(input, "key", "itemKey", "slug"),
         text(input, "name", "displayName", "nombre"),
         input.has("description") ? input.path("description").asText("") : null,

@@ -123,6 +123,19 @@ $validation = & $launcherPath -Mode ValidateOnly | ConvertFrom-Json
 if ($validation.ok -ne $true) {
   throw "La validación estática del lanzador no fue satisfactoria."
 }
+$migrationValidation = & $launcherPath -Mode ValidateOnly -Channel Migration | ConvertFrom-Json
+if ($migrationValidation.ok -ne $true) {
+  throw "La validación estática del canal de migración no fue satisfactoria."
+}
+if ($migrationValidation.applicationImage -ne
+    "ghcr.io/marcolyto/hcop_jp:angular-hexagonal-migration") {
+  throw "El canal de migración no seleccionó su imagen aislada."
+}
+if ([int]$migrationValidation.defaultPort -ne 5181 -or
+    $migrationValidation.postgresVolume -ne "hcop_ajp_postgres" -or
+    $migrationValidation.storageVolume -ne "hcop_ajp_storage") {
+  throw "El canal de migración no aisló puerto y volúmenes."
+}
 
 [pscustomobject]@{
   ok = $true
@@ -133,4 +146,6 @@ if ($validation.ok -ne $true) {
   environmentSecretRoundTrip = $true
   shortPasswordRepair = $true
   staticValidation = $validation.ok
+  migrationStaticValidation = $migrationValidation.ok
+  migrationIsolation = $true
 } | ConvertTo-Json -Depth 5

@@ -190,3 +190,16 @@ Para verificar manualmente después de iniciar:
 - `http://localhost:5180/swagger-ui.html`: API documentada.
 
 Si eligió otro puerto, reemplácelo en esas direcciones.
+
+## Probar el canal Angular y hexagonal
+
+La rama migratoria tiene un canal Docker propio para poder evaluarla sin
+actualizar la instalación estable:
+
+```powershell
+$hcopScript = Join-Path $env:TEMP "EJECUTAR-DOCKER-DESDE-GITHUB.ps1"; Invoke-WebRequest "https://raw.githubusercontent.com/Marcolyto/HCOP_JP/codex/angular-hexagonal-migration/EJECUTAR-DOCKER-DESDE-GITHUB.ps1" -OutFile $hcopScript; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $hcopScript -Channel Migration
+```
+
+Se abre en <http://localhost:5181> y usa base, archivos e imagen independientes.
+La explicación completa está en
+[Probar la rama Angular y hexagonal](PRUEBA-RAMA-ANGULAR-HEXAGONAL.md).
