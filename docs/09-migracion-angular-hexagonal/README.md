@@ -23,6 +23,8 @@ frontend anterior sólo se retira cuando la matriz de paridad está completa.
   verificados automáticamente y kernel compartido.
 - [Migración de Configuración](MIGRACION-CONFIGURACION.md): primer corte
   vertical, estrategia de convivencia y evidencia de paridad.
+- [Migración de Protocolos](MIGRACION-PROTOCOLOS.md): unificación del catálogo
+  COIR, protocolos locales, drogas y administración versionada.
 - [ADR-0001](adr/ADR-0001-MONOLITO-MODULAR-HEXAGONAL.md): monolito modular
   hexagonal.
 - [ADR-0002](adr/ADR-0002-ANGULAR-Y-CONVIVENCIA.md): Angular y convivencia

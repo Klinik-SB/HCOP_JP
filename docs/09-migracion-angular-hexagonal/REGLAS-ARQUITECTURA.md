@@ -40,14 +40,20 @@ configuration
 
 El primer corte vertical ya reemplaza `ConfigurationController` y
 `ConfigurationRepository` mediante esta estructura. `ConfigurationService`
-permanece temporalmente como puente de compatibilidad para Protocolos, Guías y
-Plantillas anatómicas; delega en el caso de uso nuevo y no contiene reglas ni
-acceso a datos. Se retirará cuando esos tres consumidores completen su propia
+permanece temporalmente como puente de compatibilidad para Guías y Plantillas
+anatómicas; delega en el caso de uso nuevo y no contiene reglas ni acceso a
+datos. Se retirará cuando esos dos consumidores completen su propia
 migración.
 
 No se cambiaron rutas, códigos HTTP ni formas JSON durante la convivencia. La
 paridad se comprueba con pruebas unitarias, reglas ArchUnit y una prueba de
 contrato contra PostgreSQL real.
+
+`protocol` aplica el mismo patrón. Su servicio de aplicación combina la
+configuración local y el catálogo COIR mediante puertos explícitos; los
+adaptadores de catálogo son los únicos que conocen los servicios heredados de
+archivos y drogas. El controlador ya no contiene decisiones de combinación,
+duración, vínculo ni versionado.
 
 ## Kernel compartido
 

@@ -18,9 +18,10 @@ El caso de uso genérico administra estas clases de configuración:
 - formularios de investigación;
 - protocolos.
 
-Protocolos, Guías y Plantillas todavía conservan adaptadores especializados.
-Durante esa transición consumen el caso de uso nuevo a través de un puente de
-compatibilidad sin acceso directo a PostgreSQL.
+Protocolos ya consume el puerto de entrada de Configuración desde su propio
+caso de uso hexagonal. Guías y Plantillas todavía conservan adaptadores
+especializados y, durante esa transición, consumen el caso de uso nuevo a
+través de un puente de compatibilidad sin acceso directo a PostgreSQL.
 
 ## Flujo de dependencias
 
