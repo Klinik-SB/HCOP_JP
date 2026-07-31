@@ -38,9 +38,16 @@ configuration
     └── persistence
 ```
 
-La fase siguiente reemplaza progresivamente `ConfigurationController`,
-`ConfigurationService` y `ConfigurationRepository` mediante esta estructura.
-No se cambian sus rutas ni su JSON durante la convivencia.
+El primer corte vertical ya reemplaza `ConfigurationController` y
+`ConfigurationRepository` mediante esta estructura. `ConfigurationService`
+permanece temporalmente como puente de compatibilidad para Protocolos, Guías y
+Plantillas anatómicas; delega en el caso de uso nuevo y no contiene reglas ni
+acceso a datos. Se retirará cuando esos tres consumidores completen su propia
+migración.
+
+No se cambiaron rutas, códigos HTTP ni formas JSON durante la convivencia. La
+paridad se comprueba con pruebas unitarias, reglas ArchUnit y una prueba de
+contrato contra PostgreSQL real.
 
 ## Kernel compartido
 

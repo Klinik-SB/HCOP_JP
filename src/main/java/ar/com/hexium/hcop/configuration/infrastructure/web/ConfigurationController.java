@@ -1,6 +1,8 @@
-package ar.com.hexium.hcop.configuration;
+package ar.com.hexium.hcop.configuration.infrastructure.web;
 
 import ar.com.hexium.hcop.auth.AuthContext;
+import ar.com.hexium.hcop.configuration.application.port.in.ConfigurationManagementUseCase;
+import ar.com.hexium.hcop.sharedkernel.domain.UserId;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
@@ -18,11 +20,16 @@ import tools.jackson.databind.JsonNode;
 
 @RestController
 public class ConfigurationController {
-  private final ConfigurationService configurations;
+  private final ConfigurationManagementUseCase configurations;
+  private final ConfigurationJsonMapper json;
   private final AuthContext auth;
 
-  public ConfigurationController(ConfigurationService configurations, AuthContext auth) {
+  public ConfigurationController(
+      ConfigurationManagementUseCase configurations,
+      ConfigurationJsonMapper json,
+      AuthContext auth) {
     this.configurations = configurations;
+    this.json = json;
     this.auth = auth;
   }
 
@@ -32,7 +39,10 @@ public class ConfigurationController {
       @RequestParam(defaultValue = "0") int includeInactive,
       HttpServletRequest request) {
     auth.requirePermission(request, "section.configuration.view");
-    List<Map<String, Object>> items = configurations.list(kind, includeInactive == 1);
+    List<Map<String, Object>> items = configurations.list(kind, includeInactive == 1)
+        .stream()
+        .map(json::view)
+        .toList();
     return Map.of("ok", true, "items", items, "total", items.size());
   }
 
@@ -42,8 +52,10 @@ public class ConfigurationController {
       @RequestBody JsonNode body,
       HttpServletRequest request) {
     auth.requirePermission(request, "section.configuration.manage");
-    Map<String, Object> item = configurations.create(kind, body, auth.require(request).userId());
-    return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("ok", true, "item", item));
+    var item = configurations.create(
+        json.createCommand(kind, body, auth.require(request).userId()));
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(Map.of("ok", true, "item", json.view(item)));
   }
 
   @PutMapping("/api/clinical/configuration/{kind}/{id}")
@@ -53,7 +65,9 @@ public class ConfigurationController {
       @RequestBody JsonNode body,
       HttpServletRequest request) {
     auth.requirePermission(request, "section.configuration.manage");
-    return Map.of("ok", true, "item", configurations.update(kind, id, body, auth.require(request).userId()));
+    var item = configurations.update(
+        json.updateCommand(kind, id, body, auth.require(request).userId()));
+    return Map.of("ok", true, "item", json.view(item));
   }
 
   @DeleteMapping("/api/clinical/configuration/{kind}/{id}")
@@ -62,7 +76,8 @@ public class ConfigurationController {
       @PathVariable long id,
       HttpServletRequest request) {
     auth.requirePermission(request, "section.configuration.manage");
-    return Map.of("ok", true, "item", configurations.archive(kind, id, auth.require(request).userId()));
+    var item = configurations.archive(kind, id, UserId.of(auth.require(request).userId()));
+    return Map.of("ok", true, "item", json.view(item));
   }
 
   @GetMapping("/api/clinical/configuration/{kind}/{id}/versions")
@@ -71,7 +86,10 @@ public class ConfigurationController {
       @PathVariable long id,
       HttpServletRequest request) {
     auth.requirePermission(request, "section.configuration.view");
-    List<Map<String, Object>> versions = configurations.versions(kind, id);
+    List<Map<String, Object>> versions = configurations.versions(kind, id)
+        .stream()
+        .map(json::versionView)
+        .toList();
     return Map.of("ok", true, "versions", versions, "total", versions.size());
   }
 
@@ -82,6 +100,10 @@ public class ConfigurationController {
       @PathVariable long revision,
       HttpServletRequest request) {
     auth.requirePermission(request, "section.configuration.view");
-    return Map.of("ok", true, "version", configurations.version(kind, id, revision));
+    return Map.of(
+        "ok",
+        true,
+        "version",
+        json.versionView(configurations.version(kind, id, revision)));
   }
 }
