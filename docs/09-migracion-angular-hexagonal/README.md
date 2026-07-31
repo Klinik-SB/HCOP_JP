@@ -15,6 +15,14 @@ frontend anterior sólo se retira cuando la matriz de paridad está completa.
   de partida.
 - [Matriz de paridad](MATRIZ-DE-PARIDAD.md): capacidades que deben conservarse y
   criterio de aceptación de cada una.
+- [Arquitectura objetivo](ARQUITECTURA-OBJETIVO.md): módulos, capas, reglas de
+  dependencia, Angular e infraestructura.
+- [ADR-0001](adr/ADR-0001-MONOLITO-MODULAR-HEXAGONAL.md): monolito modular
+  hexagonal.
+- [ADR-0002](adr/ADR-0002-ANGULAR-Y-CONVIVENCIA.md): Angular y convivencia
+  progresiva.
+- [ADR-0003](adr/ADR-0003-CONTRATOS-DATOS-Y-ROLLBACK.md): contratos, datos y
+  rollback.
 
 ## Ciclo obligatorio por capacidad
 
