@@ -19,6 +19,8 @@ frontend anterior sólo se retira cuando la matriz de paridad está completa.
   dependencia, Angular e infraestructura.
 - [Contratos REST](CONTRATOS-REST.md): forma estable de respuestas, fechas,
   estados, concurrencia e idempotencia que consumirá Angular.
+- [Reglas de arquitectura](REGLAS-ARQUITECTURA.md): límites hexagonales
+  verificados automáticamente y kernel compartido.
 - [ADR-0001](adr/ADR-0001-MONOLITO-MODULAR-HEXAGONAL.md): monolito modular
   hexagonal.
 - [ADR-0002](adr/ADR-0002-ANGULAR-Y-CONVIVENCIA.md): Angular y convivencia
