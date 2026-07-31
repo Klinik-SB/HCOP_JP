@@ -56,6 +56,7 @@ Con el sistema iniciado también existe una versión navegable en
 ## 04 · Desarrollo
 
 - [Crear desde cero](04-desarrollo/CREAR-DESDE-CERO.md)
+- [Estructura del repositorio y ubicación de cada archivo](04-desarrollo/ESTRUCTURA-DEL-REPOSITORIO.md)
 - [Entorno local](04-desarrollo/ENTORNO-LOCAL.md)
 - [Pruebas](04-desarrollo/PRUEBAS.md)
 - [Contratos y convenciones de API](04-desarrollo/CONTRATOS-DE-API.md)

@@ -109,7 +109,7 @@ Assert-True (@($guide.tags).Count -eq 2) "No se conservaron las etiquetas."
 Assert-True ([string]$guide.configurationId -eq [string]$created.item.id) `
   "No se vinculo el archivo con su configuracion."
 
-$download = Join-Path $env:TEMP "hcop-guide-contract-$suffix.pdf"
+$download = Join-Path ([System.IO.Path]::GetTempPath()) "hcop-guide-contract-$suffix.pdf"
 try {
   Invoke-WebRequest -UseBasicParsing -Uri "$BaseUrl/api/guides/file?name=$encodedName" `
     -WebSession $script:Session -OutFile $download

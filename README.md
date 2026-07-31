@@ -146,6 +146,7 @@ Empiece por el [índice de documentación](docs/README.md).
 - [Mapa pantalla → API → base](docs/07-referencia/MAPA-FUNCIONAL.md)
 - [Variables de entorno](docs/05-operacion/VARIABLES-DE-ENTORNO.md)
 - [Crear el proyecto desde cero](docs/04-desarrollo/CREAR-DESDE-CERO.md)
+- [Dónde está cada archivo del frontend, backend y documentación](docs/04-desarrollo/ESTRUCTURA-DEL-REPOSITORIO.md)
 - [Recrear todo con buenas prácticas](docs/08-recrear-desde-cero/README.md)
 - [Checklist de producto final](docs/08-recrear-desde-cero/10-CHECKLIST-PRODUCTO-FINAL.md)
 - [Docker](docs/05-operacion/DOCKER.md)
