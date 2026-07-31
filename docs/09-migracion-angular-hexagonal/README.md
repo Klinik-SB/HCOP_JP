@@ -17,6 +17,8 @@ frontend anterior sólo se retira cuando la matriz de paridad está completa.
   criterio de aceptación de cada una.
 - [Arquitectura objetivo](ARQUITECTURA-OBJETIVO.md): módulos, capas, reglas de
   dependencia, Angular e infraestructura.
+- [Contratos REST](CONTRATOS-REST.md): forma estable de respuestas, fechas,
+  estados, concurrencia e idempotencia que consumirá Angular.
 - [ADR-0001](adr/ADR-0001-MONOLITO-MODULAR-HEXAGONAL.md): monolito modular
   hexagonal.
 - [ADR-0002](adr/ADR-0002-ANGULAR-Y-CONVIVENCIA.md): Angular y convivencia

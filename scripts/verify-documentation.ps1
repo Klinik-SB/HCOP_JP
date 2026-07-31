@@ -120,8 +120,16 @@ foreach ($pathProperty in $openApi.paths.PSObject.Properties) {
       }
       if ($responseProperty.Name -match '^[45]\d\d$') {
         $errorSchema = $responseProperty.Value.content.'application/json'.schema
-        if ([string]$errorSchema.'$ref' -ne '#/components/schemas/ApiError') {
-          throw "$operationLabel no usa ApiError en la respuesta $($responseProperty.Name)."
+        $isProtectedUnauthorized =
+          $responseProperty.Name -eq "401" -and
+          [string]$operation.'x-hcop-authentication' -ne "public"
+        $expectedErrorSchema = if ($isProtectedUnauthorized) {
+          "#/components/schemas/AuthenticationRequired"
+        } else {
+          "#/components/schemas/ApiError"
+        }
+        if ([string]$errorSchema.'$ref' -ne $expectedErrorSchema) {
+          throw "$operationLabel no usa $expectedErrorSchema en la respuesta $($responseProperty.Name)."
         }
       }
     }
@@ -153,6 +161,9 @@ if ($null -eq $openApi.components.securitySchemes.sessionCookie) {
 }
 if ($null -eq $openApi.components.schemas.ApiError) {
   throw "OpenAPI no publica el esquema uniforme ApiError."
+}
+if ($null -eq $openApi.components.schemas.AuthenticationRequired) {
+  throw "OpenAPI no publica el esquema AuthenticationRequired."
 }
 
 $createdOperations = @(
