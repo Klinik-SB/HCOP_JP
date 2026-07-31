@@ -2,8 +2,8 @@
 
 Este es el índice maestro del producto. La documentación se mantiene junto al
 código y describe la aplicación, la API, PostgreSQL, Docker, seguridad,
-operación y mantenimiento. No es necesario conocer Docker ni Java para usar el
-sistema.
+operación y mantenimiento. Está organizada por recorridos clínicos, operativos
+y técnicos para localizar rápidamente la referencia correspondiente.
 
 ## Elegir un recorrido
 
@@ -88,6 +88,12 @@ Con el sistema iniciado también existe una versión navegable en
 - [Matriz reproducible de 100 casos](08-auditoria/HOSPITAL-DIA-100-CASOS.md)
 - [Resultado final: 100 PASS, 0 FAIL, 0 NO_DATA y 0 MANUAL](08-auditoria/resultados/hospital-dia-100-casos-20260730-100711.md)
 - [Cómo ejecutar el arnés QA](08-auditoria/README.md)
+
+## 09 · Migración Angular y arquitectura hexagonal
+
+- [Programa de migración](09-migracion-angular-hexagonal/README.md)
+- [Línea base verificada](09-migracion-angular-hexagonal/BASELINE-2026-07-30.md)
+- [Matriz de paridad funcional](09-migracion-angular-hexagonal/MATRIZ-DE-PARIDAD.md)
 
 ## Fuentes de verdad
 
