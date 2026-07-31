@@ -709,15 +709,22 @@ function Get-HttpResponse([string]$Path, [int]$Attempts = 1) {
 
 function Test-ApplicationHealth([int]$Attempts = 12) {
   $response = Get-HttpResponse "/actuator/health" $Attempts
+  $content = if ($null -eq $response) {
+    ""
+  } elseif ($response.Content -is [byte[]]) {
+    [System.Text.Encoding]::UTF8.GetString([byte[]]$response.Content)
+  } else {
+    [string]$response.Content
+  }
   return (
     $null -ne $response -and
     $response.StatusCode -eq 200 -and
-    $response.Content -match '"status"\s*:\s*"UP"')
+    $content -match '"status"\s*:\s*"UP"')
 }
 
 function Assert-ApplicationSmoke {
-  $home = Get-HttpResponse "/"
-  if ($null -eq $home -or $home.StatusCode -ne 200 -or [string]::IsNullOrWhiteSpace($home.Content)) {
+  $homeResponse = Get-HttpResponse "/"
+  if ($null -eq $homeResponse -or $homeResponse.StatusCode -ne 200 -or [string]::IsNullOrWhiteSpace($homeResponse.Content)) {
     throw "La página principal no respondió correctamente."
   }
 
