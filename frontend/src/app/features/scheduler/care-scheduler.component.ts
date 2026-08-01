@@ -6,6 +6,8 @@ import { FormsModule } from '@angular/forms';
 type JsonObject = Record<string, unknown>;
 interface ScheduleSettings { chairCount: number; slotMinutes: number; startTime: string; endTime: string; }
 interface ScheduleSlot { row: number; minutes: number; label: string; }
+interface ScheduleDrag { type: 'candidate' | 'infusion'; item: JsonObject; }
+interface SchedulePlacement { chair: number; slotIndex: number; span: number; valid: boolean; time: string; }
 
 @Component({ selector: 'app-care-scheduler', imports: [CommonModule, FormsModule], templateUrl: './care-scheduler.component.html', styleUrl: './care-scheduler.component.scss' })
 export class CareSchedulerComponent implements OnChanges {
@@ -21,6 +23,11 @@ export class CareSchedulerComponent implements OnChanges {
   readonly settings = signal<ScheduleSettings>({ chairCount: 6, slotMinutes: 10, startTime: '08:00', endTime: '16:00' });
   readonly search = signal('');
   readonly filter = signal('prescribed');
+  readonly selectedCandidateId = signal('');
+  readonly drag = signal<ScheduleDrag | null>(null);
+  readonly dropTarget = signal<SchedulePlacement | null>(null);
+  readonly busy = signal(false);
+  readonly actionMessage = signal('');
   readonly chairOffset = signal(0);
   readonly visibleChairCount = signal(6);
   readonly visibleChairs = computed(() => {
@@ -54,6 +61,7 @@ export class CareSchedulerComponent implements OnChanges {
   });
   readonly weekday = computed(() => new Intl.DateTimeFormat('es-AR', { weekday: 'long', timeZone: 'UTC' }).format(new Date(`${this.date()}T12:00:00Z`)).replace(/^./, value => value.toUpperCase()));
   readonly chairRange = computed(() => { const chairs = this.visibleChairs(); return chairs.length ? `Sillones ${chairs[0]}–${chairs[chairs.length - 1]}` : 'Sin sillones configurados'; });
+  readonly selectedCandidate = computed(() => this.candidates().find(item => this.itemId(item) === this.selectedCandidateId()) || null);
 
   ngOnChanges(changes: SimpleChanges): void { if (changes['open']?.currentValue) this.refresh(); }
   close(): void { this.closed.emit(); }
@@ -71,6 +79,72 @@ export class CareSchedulerComponent implements OnChanges {
   today(): void { this.date.set(this.localDate()); this.refresh(); }
   shiftChairs(direction: number): void { const step = Math.max(1, this.visibleChairCount() - 1); const maximum = Math.max(0, this.settings().chairCount - this.visibleChairCount()); this.chairOffset.set(Math.max(0, Math.min(maximum, this.chairOffset() + direction * step))); }
   zoom(direction: number): void { const total = this.settings().chairCount; this.visibleChairCount.set(Math.max(1, Math.min(total, this.visibleChairCount() + direction))); this.chairOffset.set(Math.min(this.chairOffset(), Math.max(0, total - this.visibleChairCount()))); }
+  selectCandidate(item: JsonObject): void {
+    const reason = this.blockedReason(item);
+    if (reason) { this.actionMessage.set(reason); this.selectedCandidateId.set(''); return; }
+    const id = this.itemId(item);
+    this.selectedCandidateId.set(this.selectedCandidateId() === id ? '' : id);
+    this.actionMessage.set(this.selectedCandidateId() ? `${item['patientName'] || 'Paciente'} · ${this.durationLabel(item)} · lugares disponibles en celeste` : '');
+  }
+  beginCandidateDrag(event: DragEvent, item: JsonObject): void {
+    const reason = this.blockedReason(item);
+    if (reason || this.busy()) { event.preventDefault(); this.actionMessage.set(reason || 'La agenda está guardando otro cambio.'); return; }
+    this.drag.set({ type: 'candidate', item }); this.selectedCandidateId.set(this.itemId(item)); this.dropTarget.set(null);
+    if (event.dataTransfer) { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', this.itemId(item)); }
+  }
+  beginInfusionDrag(event: DragEvent, item: JsonObject): void {
+    if (this.busy()) { event.preventDefault(); return; }
+    this.drag.set({ type: 'infusion', item }); this.dropTarget.set(null);
+    if (event.dataTransfer) { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', this.itemId(item)); }
+  }
+  dragOver(event: DragEvent, slot: ScheduleSlot, chair: number): void {
+    const drag = this.drag(); if (!drag) return;
+    event.preventDefault();
+    const target = this.placement(drag.item, drag.type, chair, slot.row - 2);
+    this.dropTarget.set(target);
+    if (event.dataTransfer) event.dataTransfer.dropEffect = target.valid ? 'move' : 'none';
+  }
+  clearDrag(): void { this.drag.set(null); this.dropTarget.set(null); }
+  drop(event: DragEvent): void {
+    event.preventDefault();
+    const drag = this.drag(); const target = this.dropTarget();
+    this.clearDrag();
+    if (!drag || !target?.valid || this.busy()) return;
+    const previousInfusions = this.infusions(); const previousCandidates = this.candidates();
+    const scheduledAt = `${this.date()}T${target.time}:00-03:00`;
+    const durationMinutes = this.duration(drag.item);
+    this.busy.set(true); this.actionMessage.set('Guardando turno...');
+    if (drag.type === 'candidate') {
+      const optimistic: JsonObject = { ...drag.item, id: `optimistic:${Date.now()}`, scheduledAt, chair: String(target.chair), durationMinutes, clinicalStatus: 'planned', appointmentConfirmed: false, optimistic: true };
+      this.candidates.set(previousCandidates.filter(item => this.itemId(item) !== this.itemId(drag.item)));
+      this.infusions.set([...previousInfusions, optimistic]);
+      const body = {
+        patientId: drag.item['patientId'], treatmentId: drag.item['treatmentId'], cycleNumber: drag.item['cycleNumber'],
+        applicationDay: Number(drag.item['applicationDay'] || 1), scheduledAt, chair: String(target.chair), durationMinutes,
+        clinicalStatus: 'planned', pharmacyStatus: 'pending', administrationStatus: 'not_started', appointmentConfirmed: false,
+        notes: 'Turno asignado desde el turnero Angular por sillón', medications: drag.item['applicationDrugs'] || drag.item['medications'] || [],
+        sourceRef: { scheduler: { scheme: drag.item['scheme'] || '', drugScheme: drag.item['drugScheme'] || drag.item['scheme'] || '', applicationDay: Number(drag.item['applicationDay'] || 1), durationSource: drag.item['durationSource'] || '', timeBasis: 'local-wall-clock-v2', prescriptionConfirmed: this.flag(drag.item, 'prescriptionConfirmed'), medicationReceived: this.flag(drag.item, 'medicationReceived'), medicationWithPatient: this.flag(drag.item, 'medicationWithPatient'), appointmentConfirmed: false } }
+      };
+      this.http.post('/api/clinical/infusions', body, { withCredentials: true }).subscribe({
+        next: () => this.completePlacement('Turno asignado.'),
+        error: response => this.rollbackPlacement(previousInfusions, previousCandidates, response)
+      });
+    } else {
+      this.infusions.set(previousInfusions.map(item => this.itemId(item) === this.itemId(drag.item) ? { ...item, scheduledAt, chair: String(target.chair), durationMinutes, optimistic: true } : item));
+      this.http.patch(`/api/clinical/infusions/${encodeURIComponent(this.itemId(drag.item))}`, { expectedVersion: drag.item['revision'] || drag.item['version'], scheduledAt, chair: String(target.chair), durationMinutes }, { withCredentials: true }).subscribe({
+        next: () => this.completePlacement('Turno reprogramado.'),
+        error: response => this.rollbackPlacement(previousInfusions, previousCandidates, response)
+      });
+    }
+  }
+  slotClass(slot: ScheduleSlot, chair: number): string {
+    const index = slot.row - 2; const target = this.dropTarget();
+    if (target && target.chair === chair && index >= target.slotIndex && index < target.slotIndex + target.span) return target.valid ? 'is-drag-target' : 'is-drag-invalid';
+    const candidate = this.selectedCandidate();
+    return candidate && this.placement(candidate, 'candidate', chair, index).valid ? 'is-candidate-fit' : '';
+  }
+  candidateSelected(item: JsonObject): boolean { return this.itemId(item) === this.selectedCandidateId(); }
+  candidateDisabled(item: JsonObject): boolean { return Boolean(this.blockedReason(item)); }
   candidateDate(item: JsonObject): string { return this.dateLabel(String(item['suggestedDate'] || '')); }
   candidateDays(item: JsonObject): string { const value = String(item['suggestedDate'] || ''); if (!value) return 'Sin fecha'; const difference = Math.ceil((new Date(`${value}T12:00:00Z`).getTime() - new Date(`${this.localDate()}T12:00:00Z`).getTime()) / 86400000); return difference <= 0 ? (difference === 0 ? 'Hoy' : `${Math.abs(difference)} d. vencido`) : `${difference} d.`; }
   candidateNear(item: JsonObject): boolean { const value = String(item['suggestedDate'] || ''); return Boolean(value) && (new Date(`${value}T12:00:00Z`).getTime() - new Date(`${this.localDate()}T12:00:00Z`).getTime()) / 86400000 < 5; }
@@ -95,6 +169,32 @@ export class CareSchedulerComponent implements OnChanges {
     this.settings.set(settings); this.visibleChairCount.set(Math.min(6, settings.chairCount)); this.chairOffset.set(0);
   }
   private searchText(item: JsonObject): string { return this.normalize([item['patientName'], item['patientDni'], item['dni'], item['scheme'], item['drugScheme'], item['diagnosis'], item['chair']].join(' ')); }
+  private placement(item: JsonObject, type: 'candidate' | 'infusion', chair: number, slotIndex: number): SchedulePlacement {
+    const span = Math.max(1, Math.ceil(this.duration(item) / this.settings().slotMinutes));
+    const start = this.slots()[slotIndex]?.minutes ?? this.clockMinutes(this.settings().startTime);
+    const end = start + span * this.settings().slotMinutes;
+    const conflict = this.infusions().some(infusion => {
+      if (type === 'infusion' && this.itemId(infusion) === this.itemId(item)) return false;
+      if (String(infusion['clinicalStatus'] || '') === 'cancelled' || Number(String(infusion['chair'] || '').replace(/\D/g, '')) !== chair || !infusion['scheduledAt']) return false;
+      const date = new Date(String(infusion['scheduledAt']));
+      const infusionStart = date.getHours() * 60 + date.getMinutes();
+      const infusionEnd = infusionStart + Math.ceil(this.duration(infusion) / this.settings().slotMinutes) * this.settings().slotMinutes;
+      return infusionStart < end && infusionEnd > start;
+    });
+    return { chair, slotIndex, span, valid: slotIndex >= 0 && slotIndex + span <= this.slots().length && !conflict, time: this.clockLabel(start) };
+  }
+  private completePlacement(message: string): void { this.busy.set(false); this.selectedCandidateId.set(''); this.actionMessage.set(message); this.refresh(); }
+  private rollbackPlacement(infusions: JsonObject[], candidates: JsonObject[], response: { error?: { error?: string; code?: string } }): void { this.infusions.set(infusions); this.candidates.set(candidates); this.busy.set(false); this.actionMessage.set(response?.error?.code === 'CHAIR_SCHEDULE_CONFLICT' ? 'Ese lugar acaba de ser ocupado. La agenda se actualizó.' : response?.error?.error || 'No se pudo guardar el turno.'); this.refresh(); }
+  private itemId(item: JsonObject): string { return String(item['id'] || `${item['patientId']}:${item['treatmentId']}:${item['cycleNumber']}:${item['applicationDay']}`); }
+  private duration(item: JsonObject): number { return Math.max(this.settings().slotMinutes, Number(item['durationMinutes'] || this.settings().slotMinutes)); }
+  private durationLabel(item: JsonObject): string { const minutes = this.duration(item); return minutes >= 60 && minutes % 60 === 0 ? `${minutes / 60} h` : `${minutes} min`; }
+  private blockedReason(item: JsonObject): string {
+    if (String(item['workflowStatus'] || item['continuityState'] || 'active') !== 'active') return 'El tratamiento está suspendido o discontinuado.';
+    if (!this.flag(item, 'prescriptionConfirmed')) return 'Falta confirmar la prescripción.';
+    if (!this.medicationAvailable(item)) return 'Falta confirmar la disponibilidad de la medicación.';
+    if (item['schedulingEligible'] === false) return 'Farmacia todavía no habilitó esta aplicación para recibir turno.';
+    return '';
+  }
   private medicationAvailable(item: JsonObject): boolean { return this.flag(item, 'medicationReceived') || this.flag(item, 'medicationWithPatient') || ['reserved', 'available'].includes(String(item['stockReservationStatus'] || '')); }
   private flag(item: JsonObject, key: string): boolean { return Boolean(item[key]); }
   private normalize(value: unknown): string { return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); }

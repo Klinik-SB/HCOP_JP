@@ -10,6 +10,8 @@ ejecucion del JavaScript legacy. Esta primera superficie conserva:
 - turnos existentes, azules sin confirmar y rojos confirmados;
 - busqueda simultanea en espera y agenda.
 
-La colocacion y el movimiento por arrastre se incorporan en el siguiente corte
-sobre los endpoints transaccionales existentes. PostgreSQL continua siendo la
-autoridad para rechazar superposiciones y cambios concurrentes.
+La seleccion marca en celeste solamente los inicios donde la aplicacion cabe.
+El arrastre pinta todo el bloque en verde, o rojo si el horario dejo de estar
+disponible. Tanto el alta como la reprogramacion usan los endpoints
+transaccionales existentes con revision optimista. PostgreSQL continua siendo
+la autoridad final para rechazar superposiciones y cambios concurrentes.

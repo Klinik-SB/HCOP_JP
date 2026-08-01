@@ -8,14 +8,24 @@
 .angular-chair-header { grid-row: 1; }
 .angular-time-label { grid-column: 1; z-index: 2; display: grid; place-items: center; color: #b2bac1; background: #fafbfc; border-radius: 5px; font-size: 14px; font-weight: 750; }
 .angular-empty-slot { background: #f3f5f6; border: 0; border-radius: 5px; min-height: 30px; }
+.angular-empty-slot.is-candidate-fit { background: #dceffb; box-shadow: inset 0 0 0 1px #9dcced; }
+.angular-empty-slot.is-drag-target { background: #9dddba; box-shadow: inset 0 0 0 2px #42a571; }
+.angular-empty-slot.is-drag-invalid { background: #f3c7cc; box-shadow: inset 0 0 0 2px #c84b59; }
 .angular-scheduled-appointment { z-index: 4; display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow: hidden; padding: 7px 9px; border: 0; border-radius: 8px; color: white; box-shadow: 0 2px 7px rgb(26 60 78 / 16%); }
 .angular-scheduled-appointment.is-pending { background: #277cc3; }
 .angular-scheduled-appointment.is-confirmed { background: #c93f4f; }
 .angular-scheduled-appointment strong, .angular-scheduled-appointment span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
 .angular-scheduled-appointment small { font-size: 11px; opacity: .88; }
 .angular-scheduled-appointment b { margin-top: auto; font-size: 12px; }
+.angular-scheduled-appointment.is-saving { opacity: .68; pointer-events: none; }
+.angular-appointment-heading { display: flex; align-items: center; justify-content: space-between; gap: 4px; min-width: 0; }
+.angular-appointment-heading strong { min-width: 0; }
+.angular-appointment-heading button { flex: 0 0 auto; display: grid; place-items: center; width: 25px; height: 25px; padding: 0; border: 0; border-radius: 4px; background: rgb(255 255 255 / 20%); color: inherit; font-size: 19px; line-height: 1; cursor: grab; }
+.angular-appointment-heading button:active { cursor: grabbing; }
 .angular-schedule-candidate { position: relative; gap: 3px; padding-left: 16px; border-radius: 7px; background: #f2f4f6; }
 .angular-schedule-candidate.is-near { background: #fff; }
+.angular-schedule-candidate.is-selected { box-shadow: inset 0 0 0 2px #54a3d5; }
+.angular-schedule-candidate.is-placement-disabled { opacity: .68; cursor: not-allowed; }
 .angular-candidate-medication { position: absolute; inset: 0 auto 0 0; width: 5px; background: #d14b58; border-radius: 7px 0 0 7px; }
 .angular-candidate-medication.is-ready { background: #3288c7; }
 .angular-candidate-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
