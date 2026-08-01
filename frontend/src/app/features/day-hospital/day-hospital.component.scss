@@ -22,6 +22,18 @@
 .care-workflow-step-grid article { display: grid; gap: 4px; border: 1px solid #dbe3e7; border-top: 3px solid #45aee2; background: #fff; padding: 9px; }
 .care-workflow-step-grid strong { color: #3f5058; font-size: 11px; }
 .care-workflow-step-grid small { color: #75838a; font-size: 9px; }
+.care-workflow-action-card { display: grid; gap: 11px; border: 1px solid #b8dff5; background: #fafdff; padding: 12px; }
+.care-workflow-action-card > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.care-workflow-action-card > header > div { display: grid; gap: 2px; }
+.care-workflow-action-card > header > div > span { color: #087fc4; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+.care-workflow-action-card > header strong { color: #35454d; font-size: 13px; }
+.care-workflow-action-card > header small { color: #718087; font-size: 10px; }
+.care-workflow-action-fields { display: grid; grid-template-columns: minmax(180px, .7fr) minmax(260px, 1.3fr); gap: 9px; }
+.care-workflow-action-fields label { display: grid; align-content: start; gap: 4px; color: #65747b; font-size: 9px; font-weight: 750; }
+.care-workflow-action-fields select, .care-workflow-action-fields textarea { width: 100%; border: 1px solid #cbd6dc; border-radius: 1px; background: #fff; padding: 7px 8px; color: #35454d; font: inherit; font-size: 10px; }
+.care-workflow-action-fields textarea { resize: vertical; }
+.care-workflow-action-card > footer { display: flex; justify-content: flex-end; gap: 7px; }
+.care-workflow-action-message { margin: 0; color: #2f718f; font-size: 10px; font-weight: 750; }
 .care-workflow-section { border: 1px solid #dbe3e7; background: #fff; padding: 11px; }
 .care-workflow-section > header { display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid #edf0f2; padding-bottom: 8px; }
 .care-workflow-section > header strong { color: #087fc4; font-size: 11px; }
@@ -37,4 +49,4 @@
 .care-workflow-audit strong { color: #3f5058; font-size: 10px; }
 .care-workflow-audit span { color: #718087; font-size: 9px; }
 @media (max-width: 700px) { .care-hierarchy-filters { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 760px) { .care-workflow-patient, .care-workflow-step-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 760px) { .care-workflow-patient, .care-workflow-step-grid, .care-workflow-action-fields { grid-template-columns: 1fr 1fr; } }

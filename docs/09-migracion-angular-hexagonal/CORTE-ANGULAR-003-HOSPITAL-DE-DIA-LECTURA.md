@@ -26,10 +26,24 @@ del sistema vigente y consume las mismas rutas auditables del backend Java.
   `GET /api/clinical/application-workflows/{patientId}/{treatmentId}/{cycleNumber}/{applicationDay}`
   y se cierra únicamente con su botón explícito.
 
+## Primera transición operativa migrada
+
+La cola de Farmacia permite abrir la aplicación y aprobar o rechazar la orden.
+Angular envía al backend:
+
+- revisión esperada del circuito;
+- clave única de idempotencia;
+- resultado de la validación;
+- procedencia o custodia de la medicación;
+- observación o motivo obligatorio del rechazo.
+
+La transición usa el endpoint `pharmacy-validation`; el servidor conserva la
+autoridad sobre drogas prescriptas, permisos, estados permitidos y auditoría.
+
 ## Límites deliberados de este corte
 
-Las transiciones operativas (validar Farmacia, reservar stock, PASS/FAIL de
-triaje, preparar, liberar y administrar) continúan en la interfaz estable
+Las transiciones restantes (reservar stock, PASS/FAIL de triaje, preparar,
+liberar y administrar) continúan en la interfaz estable
 mientras se migran como formularios Angular con revisión optimista,
 idempotencia y campos completos. No se agregaron botones sin efecto ni se
 alteró la lógica Java/PostgreSQL.

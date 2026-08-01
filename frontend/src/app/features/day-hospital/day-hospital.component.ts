@@ -67,6 +67,10 @@ export class DayHospitalComponent {
   readonly queueLoading = signal(false);
   readonly workflowLoading = signal(false);
   readonly selectedWorkflow = signal<JsonObject | null>(null);
+  readonly workflowActionLoading = signal(false);
+  readonly workflowActionMessage = signal('');
+  readonly medicationSource = signal('center_stock');
+  readonly pharmacyNotes = signal('');
   readonly loading = signal(false);
   readonly error = signal('');
 
@@ -146,18 +150,60 @@ export class DayHospitalComponent {
     this.workflowLoading.set(true); this.error.set('');
     const url = `/api/clinical/application-workflows/${encodeURIComponent(patientId)}/${encodeURIComponent(treatmentId)}/${cycle}/${day}`;
     this.http.get<{ workflow?: JsonObject }>(url, { withCredentials: true }).subscribe({
-      next: (response) => { this.selectedWorkflow.set(this.object(response.workflow)); this.workflowLoading.set(false); },
+      next: (response) => {
+        const workflow = this.object(response.workflow);
+        this.selectedWorkflow.set(workflow);
+        this.medicationSource.set(this.pick(workflow, 'medicationSource') || 'center_stock');
+        this.pharmacyNotes.set(this.pick(workflow, 'pharmacyValidationNotes'));
+        this.workflowActionMessage.set('');
+        this.workflowLoading.set(false);
+      },
       error: (response: { error?: { error?: string } }) => {
         this.workflowLoading.set(false); this.error.set(response?.error?.error || 'No se pudo abrir el circuito de la aplicación.');
       }
     });
   }
-  closeWorkflow(): void { this.selectedWorkflow.set(null); }
+  closeWorkflow(): void { this.selectedWorkflow.set(null); this.workflowActionMessage.set(''); }
+  validatePharmacy(validated: boolean): void {
+    const workflow = this.selectedWorkflow();
+    if (!workflow || this.workflowActionLoading()) return;
+    const notes = this.pharmacyNotes().trim();
+    if (!validated && notes.length < 3) {
+      this.workflowActionMessage.set('Para rechazar la orden debe documentar el motivo.');
+      return;
+    }
+    const url = `${this.workflowUrl(workflow)}/pharmacy-validation`;
+    const body = {
+      expectedRevision: this.number(this.pick(workflow, 'revision'), 0),
+      idempotencyKey: `pharmacy-validation-${Date.now()}-${crypto.randomUUID()}`,
+      validated,
+      medicationSource: this.medicationSource(),
+      notes
+    };
+    this.workflowActionLoading.set(true); this.workflowActionMessage.set('');
+    this.http.post<{ workflow?: JsonObject }>(url, body, { withCredentials: true }).subscribe({
+      next: (response) => {
+        const updated = this.object(response.workflow);
+        this.selectedWorkflow.set(updated);
+        this.workflowActionLoading.set(false);
+        this.workflowActionMessage.set(validated ? 'Orden validada por Farmacia.' : 'Orden rechazada y motivo registrado.');
+        this.loadQueue();
+      },
+      error: (response: { error?: { error?: string } }) => {
+        this.workflowActionLoading.set(false);
+        this.workflowActionMessage.set(response?.error?.error || 'No se pudo guardar la validación farmacéutica.');
+      }
+    });
+  }
   workflowAppointment(workflow: JsonObject): JsonObject { return this.object(workflow['appointment']); }
   workflowDrugs(workflow: JsonObject): JsonObject[] { return this.array(workflow['applicationDrugs']); }
   workflowReservations(workflow: JsonObject): JsonObject[] { return this.array(workflow['stockReservations']); }
   workflowAudit(workflow: JsonObject): JsonObject[] { return this.array(workflow['auditTrail']); }
   workflowField(workflow: JsonObject, ...keys: string[]): string { return this.pick(workflow, ...keys); }
+
+  private workflowUrl(workflow: JsonObject): string {
+    return `/api/clinical/application-workflows/${encodeURIComponent(this.pick(workflow, 'patientId'))}/${encodeURIComponent(this.pick(workflow, 'treatmentId'))}/${this.number(this.pick(workflow, 'cycleNumber'), 0)}/${this.number(this.pick(workflow, 'applicationDay'), 0)}`;
+  }
 
   private loadPatientCare(patientId: string): void {
     this.loading.set(true); this.error.set('');
