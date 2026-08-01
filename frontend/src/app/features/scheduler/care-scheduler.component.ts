@@ -2,14 +2,17 @@ import { CommonModule } from '@angular/common';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Component, OnChanges, SimpleChanges, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DayHospitalComponent } from '../day-hospital/day-hospital.component';
 
 type JsonObject = Record<string, unknown>;
 interface ScheduleSettings { chairCount: number; slotMinutes: number; startTime: string; endTime: string; }
 interface ScheduleSlot { row: number; minutes: number; label: string; }
 interface ScheduleDrag { type: 'candidate' | 'infusion'; item: JsonObject; }
 interface SchedulePlacement { chair: number; slotIndex: number; span: number; valid: boolean; time: string; }
+type HospitalMode = 'new-treatment' | 'pharmacy' | 'chairs' | 'triage' | 'preparation' | 'treatments';
+type EmbeddedCareView = 'treatments' | 'pharmacy' | 'triage' | 'preparation';
 
-@Component({ selector: 'app-care-scheduler', imports: [CommonModule, FormsModule], templateUrl: './care-scheduler.component.html', styleUrl: './care-scheduler.component.scss' })
+@Component({ selector: 'app-care-scheduler', imports: [CommonModule, FormsModule, DayHospitalComponent], templateUrl: './care-scheduler.component.html', styleUrl: './care-scheduler.component.scss' })
 export class CareSchedulerComponent implements OnChanges {
   readonly open = input(false);
   readonly closed = output<void>();
@@ -28,6 +31,7 @@ export class CareSchedulerComponent implements OnChanges {
   readonly dropTarget = signal<SchedulePlacement | null>(null);
   readonly busy = signal(false);
   readonly actionMessage = signal('');
+  readonly activeMode = signal<HospitalMode>('chairs');
   readonly detailOpen = signal(false);
   readonly detailLoading = signal(false);
   readonly detailItem = signal<JsonObject | null>(null);
@@ -69,9 +73,13 @@ export class CareSchedulerComponent implements OnChanges {
   readonly weekday = computed(() => new Intl.DateTimeFormat('es-AR', { weekday: 'long', timeZone: 'UTC' }).format(new Date(`${this.date()}T12:00:00Z`)).replace(/^./, value => value.toUpperCase()));
   readonly chairRange = computed(() => { const chairs = this.visibleChairs(); return chairs.length ? `Sillones ${chairs[0]}–${chairs[chairs.length - 1]}` : 'Sin sillones configurados'; });
   readonly selectedCandidate = computed(() => this.candidates().find(item => this.itemId(item) === this.selectedCandidateId()) || null);
+  readonly moduleView = computed<EmbeddedCareView>(() => ({
+    'new-treatment': 'treatments', pharmacy: 'pharmacy', triage: 'triage', preparation: 'preparation', treatments: 'treatments'
+  } as Record<Exclude<HospitalMode, 'chairs'>, EmbeddedCareView>)[this.activeMode() as Exclude<HospitalMode, 'chairs'>] || 'treatments');
 
   ngOnChanges(changes: SimpleChanges): void { if (changes['open']?.currentValue) this.refresh(); }
   close(): void { this.closed.emit(); }
+  selectMode(mode: HospitalMode): void { this.activeMode.set(mode); if (mode === 'chairs') this.refresh(); }
   refresh(): void {
     const requestVersion = ++this.requestVersion;
     this.loading.set(true); this.error.set('');

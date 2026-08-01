@@ -21,3 +21,9 @@ aplicacion, mover el turno y quitarlo. El detalle permite confirmar el turno o
 retirarlo con motivo; al retirarlo, Java registra el evento y la aplicacion
 vuelve a la lista de espera. Esta cancelacion tambien permanece disponible si
 el tratamiento esta suspendido, siempre que no haya comenzado la etapa clinica.
+
+Las pestañas superiores del modal dejaron de ser decorativas. Farmacia,
+Triaje, Preparacion y Tratamientos montan el mismo componente Angular operativo
+que la ficha lateral, con sus formularios, permisos, revisiones e idempotencia.
+Nuevo tratamiento abre directamente el formulario si hay un paciente activo;
+Turnos y sala sigue siendo una superficie global que no exige paciente.

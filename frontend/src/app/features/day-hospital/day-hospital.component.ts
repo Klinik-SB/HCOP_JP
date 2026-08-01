@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, OnChanges, SimpleChanges, computed, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth/auth.service';
 import { PatientWorkspaceService } from '../../core/patients/patient-workspace.service';
@@ -56,9 +56,13 @@ const STATUS_LABELS: Record<string, string> = {
   selector: 'app-day-hospital',
   imports: [FormsModule],
   templateUrl: './day-hospital.component.html',
-  styleUrl: './day-hospital.component.scss'
+  styleUrl: './day-hospital.component.scss',
+  host: { '[class.is-embedded]': 'embedded()' }
 })
-export class DayHospitalComponent {
+export class DayHospitalComponent implements OnChanges {
+  readonly embedded = input(false);
+  readonly initialView = input<CareView>('treatments');
+  readonly autoOpenNewTreatment = input(false);
   readonly workspace = inject(PatientWorkspaceService);
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
@@ -171,6 +175,14 @@ export class DayHospitalComponent {
       }
       this.loadPatientCare(patientId);
     });
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['initialView']) this.selectView(changes['initialView'].currentValue as CareView);
+    if (changes['autoOpenNewTreatment']) {
+      if (changes['autoOpenNewTreatment'].currentValue && this.activePatientId()) this.openNewTreatment();
+      else if (!changes['autoOpenNewTreatment'].currentValue && this.newTreatmentOpen()) this.closeNewTreatment();
+    }
   }
 
   selectView(view: CareView): void {

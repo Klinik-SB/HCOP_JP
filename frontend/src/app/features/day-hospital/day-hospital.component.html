@@ -1,15 +1,15 @@
 <section class="right-tab-panel active care-workspace" aria-label="Hospital de día">
-  @if (!workspace.workspace()) {
+  @if (!workspace.workspace() && view() === 'treatments') {
     <div class="right-empty-state"><strong>Abra un paciente</strong><span>El tratamiento, los ciclos y las aplicaciones se muestran desde la historia clínica activa.</span></div>
   } @else {
-    <nav class="care-view-tabs" role="tablist" aria-label="Hospital de día">
+    @if (!embedded()) { <nav class="care-view-tabs" role="tablist" aria-label="Hospital de día">
       <button type="button" [class.active]="view() === 'treatments'" [attr.aria-selected]="view() === 'treatments'" (click)="selectView('treatments')">Tratamiento</button>
       <button type="button" [class.active]="view() === 'applications'" [attr.aria-selected]="view() === 'applications'" (click)="selectView('applications')">Aplicaciones</button>
       <button type="button" [class.active]="view() === 'pharmacy'" [attr.aria-selected]="view() === 'pharmacy'" (click)="selectView('pharmacy')">Farmacia</button>
       <button type="button" [class.active]="view() === 'triage'" [attr.aria-selected]="view() === 'triage'" (click)="selectView('triage')">Triaje</button>
       <button type="button" [class.active]="view() === 'preparation'" [attr.aria-selected]="view() === 'preparation'" (click)="selectView('preparation')">Preparación</button>
       <button type="button" [class.active]="view() === 'administration'" [attr.aria-selected]="view() === 'administration'" (click)="selectView('administration')">Administración</button>
-    </nav>
+    </nav> }
 
     <div class="care-content">
       <header class="care-view-header">
