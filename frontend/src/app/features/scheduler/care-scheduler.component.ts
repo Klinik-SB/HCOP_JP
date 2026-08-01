@@ -28,6 +28,13 @@ export class CareSchedulerComponent implements OnChanges {
   readonly dropTarget = signal<SchedulePlacement | null>(null);
   readonly busy = signal(false);
   readonly actionMessage = signal('');
+  readonly detailOpen = signal(false);
+  readonly detailLoading = signal(false);
+  readonly detailItem = signal<JsonObject | null>(null);
+  readonly detailWorkflow = signal<JsonObject>({});
+  readonly detailMessage = signal('');
+  readonly removalRequested = signal(false);
+  readonly removalReason = signal('Turno retirado de la agenda');
   readonly chairOffset = signal(0);
   readonly visibleChairCount = signal(6);
   readonly visibleChairs = computed(() => {
@@ -145,6 +152,43 @@ export class CareSchedulerComponent implements OnChanges {
   }
   candidateSelected(item: JsonObject): boolean { return this.itemId(item) === this.selectedCandidateId(); }
   candidateDisabled(item: JsonObject): boolean { return Boolean(this.blockedReason(item)); }
+  openDetail(item: JsonObject, remove = false): void {
+    this.detailOpen.set(true); this.detailItem.set(item); this.detailWorkflow.set({});
+    this.detailMessage.set(''); this.removalRequested.set(remove); this.removalReason.set('Turno retirado de la agenda');
+    this.detailLoading.set(true);
+    const path = `/api/clinical/application-workflows/${encodeURIComponent(String(item['patientId'] || ''))}/${encodeURIComponent(String(item['treatmentId'] || ''))}/${Number(item['cycleNumber'] || 1)}/${Number(item['applicationDay'] || 1)}`;
+    this.http.get<{ workflow?: JsonObject }>(path, { withCredentials: true }).subscribe({
+      next: response => { this.detailWorkflow.set(response.workflow || {}); this.detailLoading.set(false); },
+      error: response => { this.detailLoading.set(false); this.detailMessage.set(response?.error?.error || 'Se muestran los datos disponibles del turno.'); }
+    });
+  }
+  closeDetail(): void { if (!this.busy()) { this.detailOpen.set(false); this.detailItem.set(null); this.removalRequested.set(false); } }
+  confirmAppointment(): void {
+    const item = this.detailItem(); if (!item || this.busy()) return;
+    this.busy.set(true); this.detailMessage.set('Confirmando turno...');
+    this.http.patch<{ infusion?: JsonObject }>(`/api/clinical/infusions/${encodeURIComponent(this.itemId(item))}`, { expectedVersion: item['revision'] || item['version'], appointmentConfirmed: true }, { withCredentials: true }).subscribe({
+      next: response => {
+        const updated = { ...item, ...(response.infusion || {}), appointmentConfirmed: true };
+        this.infusions.update(rows => rows.map(row => this.itemId(row) === this.itemId(item) ? updated : row));
+        this.detailItem.set(updated); this.busy.set(false); this.detailMessage.set('Turno confirmado.'); this.loadDetailWorkflow(updated);
+      },
+      error: response => { this.busy.set(false); this.detailMessage.set(response?.error?.error || 'No se pudo confirmar el turno.'); this.refresh(); }
+    });
+  }
+  removeAppointment(): void {
+    const item = this.detailItem(); const reason = this.removalReason().trim();
+    if (!item || this.busy()) return;
+    if (!reason) { this.detailMessage.set('Indique por qué se quita el turno.'); return; }
+    this.busy.set(true); this.detailMessage.set('Quitando turno...');
+    this.http.patch(`/api/clinical/infusions/${encodeURIComponent(this.itemId(item))}`, { expectedVersion: item['revision'] || item['version'], scheduledAt: null, chair: null, clinicalStatus: 'cancelled', reason }, { withCredentials: true }).subscribe({
+      next: () => { this.busy.set(false); this.detailOpen.set(false); this.detailItem.set(null); this.removalRequested.set(false); this.actionMessage.set('Turno quitado; la aplicación volvió a la lista de espera.'); this.refresh(); },
+      error: response => { this.busy.set(false); this.detailMessage.set(response?.error?.error || 'No se pudo quitar el turno.'); this.refresh(); }
+    });
+  }
+  currentDetail(): JsonObject { return this.detailItem() || {}; }
+  detailAppointment(): JsonObject { const appointment = this.detailWorkflow()['appointment']; return appointment && typeof appointment === 'object' ? appointment as JsonObject : this.currentDetail(); }
+  detailDrugs(): JsonObject[] { const drugs = this.detailWorkflow()['applicationDrugs'] || this.currentDetail()['medications']; return Array.isArray(drugs) ? drugs as JsonObject[] : []; }
+  detailDrugLabel(item: JsonObject): string { return [item['drugName'] || item['name'] || item['nombre'], item['prescribedDoseText'] || item['dose'] || item['dosis'], item['route'] || item['via']].filter(Boolean).join(' · '); }
   candidateDate(item: JsonObject): string { return this.dateLabel(String(item['suggestedDate'] || '')); }
   candidateDays(item: JsonObject): string { const value = String(item['suggestedDate'] || ''); if (!value) return 'Sin fecha'; const difference = Math.ceil((new Date(`${value}T12:00:00Z`).getTime() - new Date(`${this.localDate()}T12:00:00Z`).getTime()) / 86400000); return difference <= 0 ? (difference === 0 ? 'Hoy' : `${Math.abs(difference)} d. vencido`) : `${difference} d.`; }
   candidateNear(item: JsonObject): boolean { const value = String(item['suggestedDate'] || ''); return Boolean(value) && (new Date(`${value}T12:00:00Z`).getTime() - new Date(`${this.localDate()}T12:00:00Z`).getTime()) / 86400000 < 5; }
@@ -194,6 +238,10 @@ export class CareSchedulerComponent implements OnChanges {
     if (!this.medicationAvailable(item)) return 'Falta confirmar la disponibilidad de la medicación.';
     if (item['schedulingEligible'] === false) return 'Farmacia todavía no habilitó esta aplicación para recibir turno.';
     return '';
+  }
+  private loadDetailWorkflow(item: JsonObject): void {
+    const path = `/api/clinical/application-workflows/${encodeURIComponent(String(item['patientId'] || ''))}/${encodeURIComponent(String(item['treatmentId'] || ''))}/${Number(item['cycleNumber'] || 1)}/${Number(item['applicationDay'] || 1)}`;
+    this.http.get<{ workflow?: JsonObject }>(path, { withCredentials: true }).subscribe({ next: response => this.detailWorkflow.set(response.workflow || {}), error: () => undefined });
   }
   private medicationAvailable(item: JsonObject): boolean { return this.flag(item, 'medicationReceived') || this.flag(item, 'medicationWithPatient') || ['reserved', 'available'].includes(String(item['stockReservationStatus'] || '')); }
   private flag(item: JsonObject, key: string): boolean { return Boolean(item[key]); }
