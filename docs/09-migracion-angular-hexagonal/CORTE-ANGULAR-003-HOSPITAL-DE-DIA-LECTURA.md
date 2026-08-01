@@ -79,10 +79,15 @@ motivo, dosis parcial, medidas adoptadas, condición del paciente y destino
 clínico. La acción pausa la aplicación, sincroniza el turno y agrega una
 evolución inmutable; no elimina ni sobrescribe el evento anterior.
 
+Una interrupción pendiente puede reanudarse bajo una decisión documentada o
+cerrarse sin completar, conservando la dosis total y condición del paciente.
+El servidor impide reanudar una mezcla vencida y vuelve a generar una evolución
+inmutable para la resolución.
+
 ## Límites deliberados de este corte
 
-Las transiciones restantes (resolver y cerrar la administración) continúan en
-la interfaz estable
+El cierre normal de una administración completada continúa en la interfaz
+estable hasta el siguiente corte.
 mientras se migran como formularios Angular con revisión optimista,
 idempotencia y campos completos. No se agregaron botones sin efecto ni se
 alteró la lógica Java/PostgreSQL.
