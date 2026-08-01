@@ -84,6 +84,7 @@ export class DayHospitalComponent {
   readonly triageToxicityNotes = signal('');
   readonly triageReason = signal('');
   readonly triageRescheduledDate = signal('');
+  readonly preparationNotes = signal('');
   readonly loading = signal(false);
   readonly error = signal('');
 
@@ -170,6 +171,7 @@ export class DayHospitalComponent {
         this.pharmacyNotes.set(this.pick(workflow, 'pharmacyValidationNotes'));
         this.stockNotes.set(this.pick(workflow, 'stockReservationNotes'));
         this.populateTriage(workflow);
+        this.preparationNotes.set('');
         this.workflowActionMessage.set('');
         this.workflowLoading.set(false);
       },
@@ -292,6 +294,28 @@ export class DayHospitalComponent {
       error: (response: { error?: { error?: string } }) => {
         this.workflowActionLoading.set(false);
         this.workflowActionMessage.set(response?.error?.error || 'No se pudo registrar el Triaje.');
+      }
+    });
+  }
+  updatePreparation(action: 'start' | 'release'): void {
+    const workflow = this.selectedWorkflow();
+    if (!workflow || this.workflowActionLoading()) return;
+    const body = {
+      expectedRevision: this.number(this.pick(workflow, 'revision'), 0),
+      idempotencyKey: `preparation-${action}-${Date.now()}-${crypto.randomUUID()}`,
+      notes: this.preparationNotes().trim()
+    };
+    this.workflowActionLoading.set(true); this.workflowActionMessage.set('');
+    this.http.post<{ workflow?: JsonObject }>(`${this.workflowUrl(workflow)}/preparation/${action}`, body, { withCredentials: true }).subscribe({
+      next: (response) => {
+        this.selectedWorkflow.set(this.object(response.workflow));
+        this.workflowActionLoading.set(false);
+        this.workflowActionMessage.set(action === 'start' ? 'Preparación estéril iniciada.' : 'Mezcla liberada a sala.');
+        this.loadQueue();
+      },
+      error: (response: { error?: { error?: string } }) => {
+        this.workflowActionLoading.set(false);
+        this.workflowActionMessage.set(response?.error?.error || 'No se pudo actualizar la preparación.');
       }
     });
   }

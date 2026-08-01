@@ -54,10 +54,17 @@ realiza sólo controles de completitud; los umbrales de neutrófilos, plaquetas,
 temperatura, saturación y toxicidad permanecen en Java. Un FAIL conserva la
 evolución inmutable y libera el turno y la reserva mediante el circuito actual.
 
+## Preparación estéril iniciada
+
+La cola de Preparación permite iniciar el trabajo y liberar la mezcla a sala.
+Ambas acciones usan revisión optimista e idempotencia. El servidor exige PASS,
+medicación asegurada y una preparación completa no vencida antes de liberar;
+Angular no permite declarar esos estados localmente.
+
 ## Límites deliberados de este corte
 
-Las transiciones restantes (preparar, liberar y administrar) continúan en la
-interfaz estable
+Las transiciones restantes (documentar lotes y completar la mezcla,
+administrar, interrumpir y cerrar) continúan en la interfaz estable
 mientras se migran como formularios Angular con revisión optimista,
 idempotencia y campos completos. No se agregaron botones sin efecto ni se
 alteró la lógica Java/PostgreSQL.
