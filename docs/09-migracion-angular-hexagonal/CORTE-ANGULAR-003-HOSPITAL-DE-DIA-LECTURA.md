@@ -46,10 +46,18 @@ que el servidor reconstruya y valide todos los componentes a partir de las
 drogas prescriptas. Para medicación del paciente o pendiente de proveedor no
 se crea una reserva ficticia del centro.
 
+## Triaje clínico migrado
+
+La cola de Triaje permite emitir PASS o FAIL con laboratorio, signos vitales,
+toxicidad, justificación clínica y fecha sugerida de reprogramación. Angular
+realiza sólo controles de completitud; los umbrales de neutrófilos, plaquetas,
+temperatura, saturación y toxicidad permanecen en Java. Un FAIL conserva la
+evolución inmutable y libera el turno y la reserva mediante el circuito actual.
+
 ## Límites deliberados de este corte
 
-Las transiciones restantes (PASS/FAIL de triaje, preparar, liberar y
-administrar) continúan en la interfaz estable
+Las transiciones restantes (preparar, liberar y administrar) continúan en la
+interfaz estable
 mientras se migran como formularios Angular con revisión optimista,
 idempotencia y campos completos. No se agregaron botones sin efecto ni se
 alteró la lógica Java/PostgreSQL.

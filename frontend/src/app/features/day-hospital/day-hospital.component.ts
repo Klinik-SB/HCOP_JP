@@ -72,6 +72,18 @@ export class DayHospitalComponent {
   readonly medicationSource = signal('center_stock');
   readonly pharmacyNotes = signal('');
   readonly stockNotes = signal('');
+  readonly triageLaboratoryDate = signal('');
+  readonly triageNeutrophils = signal('');
+  readonly triagePlatelets = signal('');
+  readonly triageCreatinine = signal('');
+  readonly triageWeight = signal('');
+  readonly triageTemperature = signal('');
+  readonly triageBloodPressure = signal('');
+  readonly triageOxygen = signal('');
+  readonly triageToxicityGrade = signal('0');
+  readonly triageToxicityNotes = signal('');
+  readonly triageReason = signal('');
+  readonly triageRescheduledDate = signal('');
   readonly loading = signal(false);
   readonly error = signal('');
 
@@ -157,6 +169,7 @@ export class DayHospitalComponent {
         this.medicationSource.set(this.pick(workflow, 'medicationSource') || 'center_stock');
         this.pharmacyNotes.set(this.pick(workflow, 'pharmacyValidationNotes'));
         this.stockNotes.set(this.pick(workflow, 'stockReservationNotes'));
+        this.populateTriage(workflow);
         this.workflowActionMessage.set('');
         this.workflowLoading.set(false);
       },
@@ -232,6 +245,56 @@ export class DayHospitalComponent {
       }
     });
   }
+  submitTriage(decision: 'PASS' | 'FAIL'): void {
+    const workflow = this.selectedWorkflow();
+    if (!workflow || this.workflowActionLoading()) return;
+    const requiredForPass = [
+      this.triageLaboratoryDate(), this.triageNeutrophils(), this.triagePlatelets(),
+      this.triageCreatinine(), this.triageWeight(), this.triageTemperature(),
+      this.triageBloodPressure(), this.triageToxicityGrade()
+    ];
+    if (decision === 'PASS' && requiredForPass.some((value) => !String(value).trim())) {
+      this.workflowActionMessage.set('Para autorizar complete laboratorio, peso, temperatura, presión arterial y toxicidad.');
+      return;
+    }
+    if (decision === 'FAIL' && this.triageReason().trim().length < 3) {
+      this.workflowActionMessage.set('Para postergar debe documentar el motivo clínico.');
+      return;
+    }
+    const laboratory = this.compactObject({
+      date: this.triageLaboratoryDate(), neutrophils: this.numeric(this.triageNeutrophils()),
+      platelets: this.numeric(this.triagePlatelets()), creatinine: this.numeric(this.triageCreatinine())
+    }, decision === 'FAIL');
+    const vitalSigns = this.compactObject({
+      weightKg: this.numeric(this.triageWeight()), temperatureC: this.numeric(this.triageTemperature()),
+      bloodPressure: this.triageBloodPressure(), oxygenSaturation: this.numeric(this.triageOxygen())
+    }, decision === 'FAIL');
+    const toxicity = this.compactObject({
+      grade: this.numeric(this.triageToxicityGrade()), notes: this.triageToxicityNotes()
+    }, decision === 'FAIL');
+    const body = {
+      expectedRevision: this.number(this.pick(workflow, 'revision'), 0),
+      idempotencyKey: `triage-${decision.toLowerCase()}-${Date.now()}-${crypto.randomUUID()}`,
+      decision, laboratory, vitalSigns, toxicity,
+      reason: this.triageReason().trim(),
+      rescheduledDate: decision === 'FAIL' && this.triageRescheduledDate() ? this.triageRescheduledDate() : null
+    };
+    this.workflowActionLoading.set(true); this.workflowActionMessage.set('');
+    this.http.post<{ workflow?: JsonObject }>(`${this.workflowUrl(workflow)}/clinical-authorization`, body, { withCredentials: true }).subscribe({
+      next: (response) => {
+        this.selectedWorkflow.set(this.object(response.workflow));
+        this.workflowActionLoading.set(false);
+        this.workflowActionMessage.set(decision === 'PASS' ? 'Aplicación autorizada clínicamente.' : 'Aplicación postergada; turno y reserva fueron liberados por el circuito.');
+        this.loadQueue();
+        const patientId = this.activePatientId();
+        if (patientId) this.workspace.load(patientId);
+      },
+      error: (response: { error?: { error?: string } }) => {
+        this.workflowActionLoading.set(false);
+        this.workflowActionMessage.set(response?.error?.error || 'No se pudo registrar el Triaje.');
+      }
+    });
+  }
   workflowAppointment(workflow: JsonObject): JsonObject { return this.object(workflow['appointment']); }
   workflowDrugs(workflow: JsonObject): JsonObject[] { return this.array(workflow['applicationDrugs']); }
   workflowReservations(workflow: JsonObject): JsonObject[] { return this.array(workflow['stockReservations']); }
@@ -240,6 +303,41 @@ export class DayHospitalComponent {
 
   private workflowUrl(workflow: JsonObject): string {
     return `/api/clinical/application-workflows/${encodeURIComponent(this.pick(workflow, 'patientId'))}/${encodeURIComponent(this.pick(workflow, 'treatmentId'))}/${this.number(this.pick(workflow, 'cycleNumber'), 0)}/${this.number(this.pick(workflow, 'applicationDay'), 0)}`;
+  }
+
+  private populateTriage(workflow: JsonObject): void {
+    const assessment = this.object(workflow['clinicalAssessment']);
+    const laboratory = this.object(assessment['laboratory']);
+    const vitalSigns = this.object(assessment['vitalSigns']);
+    const toxicity = this.object(assessment['toxicity']);
+    this.triageLaboratoryDate.set(this.pick(laboratory, 'date', 'sampleDate'));
+    this.triageNeutrophils.set(this.pick(laboratory, 'neutrophils'));
+    this.triagePlatelets.set(this.pick(laboratory, 'platelets'));
+    this.triageCreatinine.set(this.pick(laboratory, 'creatinine'));
+    this.triageWeight.set(this.pick(vitalSigns, 'weightKg'));
+    this.triageTemperature.set(this.pick(vitalSigns, 'temperatureC'));
+    this.triageBloodPressure.set(this.pick(vitalSigns, 'bloodPressure'));
+    this.triageOxygen.set(this.pick(vitalSigns, 'oxygenSaturation'));
+    this.triageToxicityGrade.set(this.pick(toxicity, 'grade') || '0');
+    this.triageToxicityNotes.set(this.pick(toxicity, 'notes'));
+    this.triageReason.set(this.pick(assessment, 'reason') || this.pick(workflow, 'clinicalAuthorizationReason'));
+    this.triageRescheduledDate.set(this.pick(assessment, 'rescheduledDate'));
+  }
+
+  private numeric(value: string): number | null {
+    const normalized = value.trim().replace(',', '.');
+    if (!normalized) return null;
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  private compactObject(source: Record<string, unknown>, preserveEmpty: boolean): JsonObject {
+    const result: JsonObject = {};
+    for (const [key, value] of Object.entries(source)) {
+      if (value !== null && value !== undefined && String(value).trim()) result[key] = value;
+    }
+    if (!Object.keys(result).length && preserveEmpty) result['notAvailable'] = true;
+    return result;
   }
 
   private loadPatientCare(patientId: string): void {
