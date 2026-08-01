@@ -1,0 +1,10 @@
+:host { display: block; min-height: 0; }
+
+.care-workspace { min-height: 100%; }
+.care-view-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.care-view-header > div { display: grid; gap: 2px; }
+.care-view-header span { color: #87939a; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+.care-view-header strong { color: var(--lira-ink, #32404a); font-size: 14px; }
+.care-hierarchy-cycle-appointment dd { white-space: normal; }
+.care-treatment-manager-table td small { display: block; margin-top: 2px; color: #7b878d; font-size: 9px; }
+@media (max-width: 700px) { .care-hierarchy-filters { grid-template-columns: 1fr 1fr; } }

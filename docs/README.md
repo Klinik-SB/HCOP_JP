@@ -104,6 +104,7 @@ Con el sistema iniciado también existe una versión navegable en
   [Guías](09-migracion-angular-hexagonal/MIGRACION-GUIAS.md)
 
 - [Corte Angular 002: Estudios, línea de tiempo y alta](09-migracion-angular-hexagonal/CORTE-ANGULAR-002-ESTUDIOS-TIMELINE-ALTA.md)
+- [Corte Angular 003: Hospital de Día](09-migracion-angular-hexagonal/CORTE-ANGULAR-003-HOSPITAL-DE-DIA-LECTURA.md)
 
 ## Fuentes de verdad
 

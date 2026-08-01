@@ -1,0 +1,91 @@
+<section class="right-tab-panel active care-workspace" aria-label="Hospital de día">
+  @if (!workspace.workspace()) {
+    <div class="right-empty-state"><strong>Abra un paciente</strong><span>El tratamiento, los ciclos y las aplicaciones se muestran desde la historia clínica activa.</span></div>
+  } @else {
+    <nav class="care-view-tabs" role="tablist" aria-label="Hospital de día">
+      <button type="button" [class.active]="view() === 'treatments'" [attr.aria-selected]="view() === 'treatments'" (click)="selectView('treatments')">Tratamiento</button>
+      <button type="button" [class.active]="view() === 'applications'" [attr.aria-selected]="view() === 'applications'" (click)="selectView('applications')">Aplicaciones</button>
+      <button type="button" [class.active]="view() === 'pharmacy'" [attr.aria-selected]="view() === 'pharmacy'" (click)="selectView('pharmacy')">Farmacia</button>
+      <button type="button" [class.active]="view() === 'triage'" [attr.aria-selected]="view() === 'triage'" (click)="selectView('triage')">Triaje</button>
+      <button type="button" [class.active]="view() === 'preparation'" [attr.aria-selected]="view() === 'preparation'" (click)="selectView('preparation')">Preparación</button>
+      <button type="button" [class.active]="view() === 'administration'" [attr.aria-selected]="view() === 'administration'" (click)="selectView('administration')">Administración</button>
+    </nav>
+
+    <div class="care-content">
+      <header class="care-view-header">
+        <div><span>Hospital de día</span><strong>{{ view() === 'treatments' ? 'Tratamientos, ciclos y aplicaciones' : selectedQueueLabel() }}</strong></div>
+        <button class="icon-button" type="button" title="Actualizar información" (click)="reload()">↻</button>
+      </header>
+
+      <div class="care-hierarchy-toolbar">
+        <div class="care-hierarchy-filters" role="search" aria-label="Filtros de Hospital de día">
+          <label><span>Buscar</span><span class="care-treatment-manager-search"><input type="search" [ngModel]="query()" (ngModelChange)="query.set($event)" (keyup.enter)="view() !== 'treatments' && loadQueue()" placeholder="Paciente, esquema, diagnóstico o droga" autocomplete="off"></span></label>
+          <label><span>Fecha</span><input type="date" [ngModel]="date()" (ngModelChange)="date.set($event)"></label>
+          @if (view() === 'treatments') { <label><span>Estado</span><select [ngModel]="status()" (ngModelChange)="status.set($event)"><option value="">Todos</option><option value="current">En seguimiento</option><option value="pending">Pendiente</option><option value="completed">Finalizado</option><option value="cancelled">Cancelado</option></select></label> }
+          <button class="tool-button" type="button" (click)="view() === 'treatments' ? reload() : loadQueue()"><span>Actualizar</span></button>
+        </div>
+      </div>
+
+      @if (error()) { <div class="care-empty-state is-error"><strong>No se pudo completar la consulta.</strong><span>{{ error() }}</span></div> }
+
+      @if (view() === 'treatments') {
+        <section class="care-treatment-hierarchy" aria-live="polite">
+          @if (loading()) { <div class="care-empty-state"><strong>Cargando tratamientos…</strong><span>Se están consultando ciclos y turnos registrados.</span></div> }
+          @else if (!cards().length) { <div class="care-empty-state"><strong>Sin tratamientos</strong><span>No hay tratamientos que coincidan con los filtros actuales.</span></div> }
+          @else { <div class="care-hierarchy-list">
+            @for (card of cards(); track card.id) {
+              <article class="care-hierarchy-treatment" [class.is-expanded]="isExpanded(card)">
+                <header class="care-hierarchy-treatment-summary">
+                  <button class="care-hierarchy-toggle" type="button" [attr.aria-expanded]="isExpanded(card)" [attr.title]="isExpanded(card) ? 'Ocultar ciclos y aplicaciones' : 'Mostrar ciclos y aplicaciones'" (click)="toggleTreatment(card.id)">{{ isExpanded(card) ? '−' : '+' }}</button>
+                  <div class="care-hierarchy-treatment-title"><strong>{{ card.scheme }}</strong><span>{{ card.type }} · {{ card.diagnosis }}</span><small>{{ card.oncologist }}</small></div>
+                  <div class="care-hierarchy-summary-value"><span>Estado</span><strong>{{ statusLabel(card.status) }}</strong></div>
+                  <div class="care-hierarchy-summary-value"><span>Ciclos</span><strong>{{ card.completedCycles }}/{{ card.cycleCount }}</strong></div>
+                  <div class="care-hierarchy-summary-value care-hierarchy-duration"><span>Duración</span><strong>◷ {{ card.duration }}</strong></div>
+                  <div class="care-hierarchy-summary-value care-hierarchy-date-range"><span>Primera</span><strong>{{ dateLabel(card.firstDate) }}</strong><span>Última</span><strong>{{ dateLabel(card.lastDate) }}</strong></div>
+                  <button class="care-hierarchy-view" type="button" title="Ver ciclos y aplicaciones" (click)="toggleTreatment(card.id)">◉</button>
+                </header>
+
+                @if (isExpanded(card)) {
+                  <section class="care-hierarchy-treatment-detail">
+                    @if (!detailReady(card)) { <div class="care-empty-state"><strong>Cargando detalle…</strong><span>Se recuperan las drogas, los días y los turnos de cada ciclo.</span></div> }
+                    @else {
+                      <div class="care-hierarchy-cycles">
+                        <div class="care-hierarchy-cycles-heading"><div><span>Seguimiento del tratamiento</span><strong>Ciclos y turnos reales</strong></div><b>{{ card.completedCycles }}/{{ card.cycleCount }} aplicados</b></div>
+                        @for (cycle of daysFor(card); track cycle.number) {
+                          <article class="care-hierarchy-cycle-row" [class]="'care-hierarchy-cycle-row care-cycle-' + cycle.state">
+                            <div class="care-hierarchy-cycle-number"><span>Ciclo</span><strong>{{ cycle.number }}</strong></div>
+                            <div class="care-hierarchy-cycle-body">
+                              <header><div><strong>{{ statusLabel(cycle.state) }}</strong><small>{{ cycle.days.length ? cycle.days.length + ' día(s) de aplicación' : 'Sin aplicación en Hospital de día' }}</small></div><span class="care-hierarchy-cycle-state">{{ statusLabel(cycle.state) }}</span></header>
+                              <dl class="care-hierarchy-cycle-dates"><div><dt>Fecha prevista</dt><dd>{{ dateLabel(cycle.plannedDate) }}</dd></div><div><dt>Turno real</dt><dd>{{ cycle.days.length ? dateLabel(cycle.days[0]['date'] || cycle.days[0]['plannedDate']) : 'Todavía sin turno' }}</dd></div></dl>
+                              @if (cycle.days.length) { <ol class="care-hierarchy-cycle-appointments">
+                                @for (day of cycle.days; track day['day']) {
+                                  <li class="care-hierarchy-cycle-appointment" [class]="'care-hierarchy-cycle-appointment care-cycle-' + (day['status'] || 'pending')">
+                                    <div class="care-hierarchy-cycle-appointment-date"><span>Día {{ day['day'] }}</span><strong>{{ dateLabel(day['date'] || day['plannedDate']) }}</strong><small>{{ applicationsFor(day).length ? 'Turno asignado' : 'Sin sillón asignado' }}</small></div>
+                                    <dl><div><dt>Estado</dt><dd><span class="care-status-badge">{{ statusLabel(day['status']) }}</span></dd></div><div><dt>Drogas</dt><dd>{{ dayMedications(day).length ? dayMedications(day).map(medicationLabel).join(' · ') : 'Sin drogas informadas' }}</dd></div><div><dt>Turno</dt><dd>{{ applicationsFor(day).length ? dateTimeLabel(applicationsFor(day)[0]['scheduledAt']) + ' · Sillón ' + (applicationsFor(day)[0]['chair'] || 'sin asignar') : 'Pendiente' }}</dd></div></dl>
+                                  </li>
+                                }
+                              </ol> }
+                              @if (cycle.homeMedications.length) { <p class="care-hierarchy-cycle-without-appointment"><span>Medicación domiciliaria: {{ cycle.homeMedications.map(medicationLabel).join(' · ') }}</span></p> }
+                            </div>
+                          </article>
+                        }
+                      </div>
+                    }
+                  </section>
+                }
+              </article>
+            }
+          </div> }
+        </section>
+      } @else {
+        <section class="care-treatment-inline care-infusion-inline">
+          <div class="care-treatment-manager-body">
+            @if (queueLoading()) { <div class="care-empty-state"><strong>Cargando {{ selectedQueueLabel().toLocaleLowerCase('es-AR') }}…</strong></div> }
+            @else if (!queueItems().length) { <div class="care-empty-state"><strong>Sin aplicaciones en esta cola</strong><span>Los cambios del circuito aparecerán aquí sin crear datos duplicados.</span></div> }
+            @else { <div class="care-treatment-manager-table-shell"><table class="care-treatment-manager-table care-infusion-table"><thead><tr><th>Fecha y hora</th><th>Ciclo</th><th>Paciente</th><th>Día</th><th>Esquema</th><th>Estado</th></tr></thead><tbody>@for (item of queueItems(); track trackId($index, item)) { <tr><td>{{ queueDate(item) }}</td><td>{{ item['cycleNumber'] || '—' }}</td><td>{{ item['patientName'] || 'Paciente' }}<small>{{ item['dni'] || item['patientDni'] || '' }}</small></td><td>{{ item['applicationDay'] || '—' }}</td><td>{{ item['scheme'] || item['drugScheme'] || 'Sin esquema' }}</td><td><span class="care-status-badge">{{ queueStatus(item) }}</span></td></tr> }</tbody></table></div> }
+          </div>
+        </section>
+      }
+    </div>
+  }
+</section>

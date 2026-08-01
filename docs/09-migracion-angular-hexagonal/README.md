@@ -38,6 +38,9 @@ frontend anterior sólo se retira cuando la matriz de paridad está completa.
 
 - [Corte Angular 002](CORTE-ANGULAR-002-ESTUDIOS-TIMELINE-ALTA.md): alta de
   paciente, estudios con persistencia y línea de tiempo Angular.
+- [Corte Angular 003](CORTE-ANGULAR-003-HOSPITAL-DE-DIA-LECTURA.md): Hospital
+  de Día Angular con tratamientos, ciclos, días, drogas, turnos y lectura de
+  las colas operativas.
 
 ## Ciclo obligatorio por capacidad
 
