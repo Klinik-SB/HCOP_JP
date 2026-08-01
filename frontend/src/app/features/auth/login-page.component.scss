@@ -1,0 +1,6 @@
+:host { display: block; height: 100%; }
+.angular-login-page { align-items: center; background: var(--page); display: grid; min-height: 100vh; padding: 24px; place-items: center; }
+.angular-login-card { display: grid; gap: 14px; width: min(410px, 100%); background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow); padding: 22px; }
+.angular-login-card .brand-block { margin-bottom: 8px; }.angular-login-card h1 { font-size: 18px; }.angular-login-card p { color: var(--muted); font-size: 12px; margin: 2px 0 0; }
+.angular-login-card label { display: grid; gap: 5px; }.angular-login-card label span { color: var(--muted); font-size: 12px; font-weight: 650; }
+.angular-login-card button { width: 100%; }.login-error { color: var(--accent); font-size: 12px; margin: 0; }
