@@ -100,6 +100,15 @@ export class DayHospitalComponent {
     const currentId = String(this.auth.session()?.user?.id || '');
     return this.preparationUsers().filter((user) => this.pick(user, 'id') !== currentId);
   });
+  readonly administrationUsers = signal<JsonObject[]>([]);
+  readonly administrationDoubleCheckBy = signal('');
+  readonly administrationPatientVerified = signal(false);
+  readonly administrationLabelVerified = signal(false);
+  readonly administrationNotes = signal('');
+  readonly eligibleAdministrationUsers = computed(() => {
+    const currentId = String(this.auth.session()?.user?.id || '');
+    return this.administrationUsers().filter((user) => this.pick(user, 'id') !== currentId);
+  });
   readonly loading = signal(false);
   readonly error = signal('');
 
@@ -125,6 +134,7 @@ export class DayHospitalComponent {
     this.view.set(view);
     if (view !== 'treatments') this.loadQueue();
     if (view === 'preparation') this.loadPreparationUsers();
+    if (view === 'administration') this.loadAdministrationUsers();
   }
 
   reload(): void {
@@ -190,6 +200,8 @@ export class DayHospitalComponent {
         this.preparationNotes.set('');
         this.populatePreparation(workflow);
         if (this.view() === 'preparation') this.loadPreparationUsers();
+        this.populateAdministration(workflow);
+        if (this.view() === 'administration') this.loadAdministrationUsers();
         this.workflowActionMessage.set('');
         this.workflowLoading.set(false);
       },
@@ -389,6 +401,42 @@ export class DayHospitalComponent {
       }
     });
   }
+  startAdministration(): void {
+    const workflow = this.selectedWorkflow();
+    if (!workflow || this.workflowActionLoading()) return;
+    if (!this.administrationPatientVerified() || !this.administrationLabelVerified()) {
+      this.workflowActionMessage.set('Confirme la identidad del paciente y la coincidencia con la etiqueta/QR.');
+      return;
+    }
+    if (!this.administrationDoubleCheckBy()) {
+      this.workflowActionMessage.set('Seleccione el segundo profesional que realizó el doble chequeo.');
+      return;
+    }
+    const body = {
+      expectedRevision: this.number(this.pick(workflow, 'revision'), 0),
+      idempotencyKey: `administration-start-${Date.now()}-${crypto.randomUUID()}`,
+      patientVerified: true,
+      labelVerified: true,
+      doubleCheckBy: this.administrationDoubleCheckBy(),
+      startedAt: new Date().toISOString(),
+      notes: this.administrationNotes().trim()
+    };
+    this.workflowActionLoading.set(true); this.workflowActionMessage.set('');
+    this.http.post<{ workflow?: JsonObject }>(`${this.workflowUrl(workflow)}/administration/start`, body, { withCredentials: true }).subscribe({
+      next: (response) => {
+        const updated = this.object(response.workflow);
+        this.selectedWorkflow.set(updated);
+        this.populateAdministration(updated);
+        this.workflowActionLoading.set(false);
+        this.workflowActionMessage.set('Administración iniciada con doble chequeo registrado.');
+        this.loadQueue();
+      },
+      error: (response: { error?: { error?: string } }) => {
+        this.workflowActionLoading.set(false);
+        this.workflowActionMessage.set(response?.error?.error || 'No se pudo iniciar la administración.');
+      }
+    });
+  }
   workflowAppointment(workflow: JsonObject): JsonObject { return this.object(workflow['appointment']); }
   workflowDrugs(workflow: JsonObject): JsonObject[] { return this.array(workflow['applicationDrugs']); }
   workflowReservations(workflow: JsonObject): JsonObject[] { return this.array(workflow['stockReservations']); }
@@ -447,6 +495,20 @@ export class DayHospitalComponent {
     this.http.get<{ items?: JsonObject[] }>('/api/clinical/users', {
       params: new HttpParams().set('capability', 'application.preparation.manage'), withCredentials: true
     }).subscribe({ next: (response) => this.preparationUsers.set(this.array(response.items)), error: () => this.preparationUsers.set([]) });
+  }
+
+  private populateAdministration(workflow: JsonObject): void {
+    const data = this.object(workflow['administrationData']);
+    this.administrationDoubleCheckBy.set(this.pick(data, 'doubleCheckByUserId', 'doubleCheckBy'));
+    this.administrationPatientVerified.set(Boolean(data['patientVerified']));
+    this.administrationLabelVerified.set(Boolean(data['labelVerified']));
+    this.administrationNotes.set(this.pick(data, 'notes'));
+  }
+
+  private loadAdministrationUsers(): void {
+    this.http.get<{ items?: JsonObject[] }>('/api/clinical/users', {
+      params: new HttpParams().set('capability', 'application.administration.manage'), withCredentials: true
+    }).subscribe({ next: (response) => this.administrationUsers.set(this.array(response.items)), error: () => this.administrationUsers.set([]) });
   }
 
   private firstNumber(value: string): string {

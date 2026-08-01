@@ -67,10 +67,17 @@ concentración y TTL. El segundo verificador se elige entre usuarios habilitados
 y no puede ser el preparador. El backend resuelve la correspondencia con cada
 reserva, consume el stock y calcula la vigencia mínima de la mezcla.
 
+## Inicio de administración migrado
+
+La cola de Administración exige confirmar paciente y etiqueta/QR, y seleccionar
+un segundo profesional habilitado distinto del usuario activo. La transición
+registra la hora real y usa revisión optimista e idempotencia. El servidor
+rechaza el inicio si la preparación no fue liberada o falta el doble chequeo.
+
 ## Límites deliberados de este corte
 
-Las transiciones restantes (administrar, interrumpir y cerrar) continúan en la
-interfaz estable
+Las transiciones restantes (interrumpir, resolver y cerrar la administración)
+continúan en la interfaz estable
 mientras se migran como formularios Angular con revisión optimista,
 idempotencia y campos completos. No se agregaron botones sin efecto ni se
 alteró la lógica Java/PostgreSQL.
