@@ -13,7 +13,7 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8m10-3v6m3-3h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         <span>Nuevo paciente</span>
       </button>
-      <button class="tool-button lira-import-button" type="button" title="Buscar y abrir un paciente de la base clínica" (click)="legacyFallback()">
+      <button class="tool-button lira-import-button" type="button" title="Buscar y abrir un paciente de la base clínica" (click)="openPatient()">
         <svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" fill="none" stroke="currentColor" stroke-width="2"/></svg>
         <span>Abrir paciente</span>
       </button>
@@ -50,22 +50,16 @@
       <div class="paper-toolbar">
         <div class="paper-identity">
           <div class="paper-identity-title-row"><span>Historia clinica oncologica</span><button class="lira-patient-refresh-button" type="button" title="Actualizar información" disabled>↻</button></div>
-          <strong>{{ auth.session()?.activePatientId ? 'Paciente activo' : 'Hoja clínica' }}</strong>
+          <strong>{{ patientWorkspace.workspace()?.patient?.fullName || 'Hoja clínica' }}</strong>
         </div>
         <div class="paper-highlight-actions" aria-label="Acciones de la historia clínica">
           <div class="paper-clinical-search" [class.open]="searchExpanded()"><button class="icon-button clinical-search-toggle" type="button" title="Buscar en la historia" (click)="searchExpanded.set(!searchExpanded())">⌕</button>@if (searchExpanded()) { <input type="search" placeholder="Buscar en la historia..." aria-label="Buscar en la historia clínica"> }</div>
           <button class="icon-button clinical-highlighter-button" type="button" title="Resaltar texto" (click)="legacyFallback()">▰</button>
           <button class="icon-button clinical-unhighlight-button" type="button" title="Quitar resaltado" (click)="legacyFallback()">⌫</button>
-          <button class="icon-button clinical-close-patient-button" type="button" title="Cerrar paciente" [disabled]="!auth.session()?.activePatientId" (click)="legacyFallback()">×</button>
+          <button class="icon-button clinical-close-patient-button" type="button" title="Cerrar paciente" [disabled]="!patientWorkspace.workspace()" (click)="closePatient()">×</button>
         </div>
       </div>
-      <div class="panel-scroll paper-area">
-        <article class="paper-sheet angular-empty-sheet">
-          <section class="section-title"><div><span>Espacio clínico Angular</span><h3>La hoja conservará la presentación y los datos de la historia vigente</h3></div></section>
-          <p>Esta rama comienza desde la interfaz clínica estable. La migración trasladará cada sección y cada acción a componentes Angular, manteniendo PostgreSQL y las mismas APIs como autoridad.</p>
-          <button class="tool-button primary" type="button" (click)="legacyFallback()"><span>Abrir la interfaz estable mientras se completa este corte</span></button>
-        </article>
-      </div>
+      <div class="panel-scroll paper-area"><app-clinical-workspace /></div>
     </section>
 
     <div class="splitter-shell" aria-hidden="true"><div class="splitter"><span class="splitter-line"></span></div><div class="splitter-presets"><button class="splitter-preset" type="button">«</button><button class="splitter-preset" type="button">▯</button><button class="splitter-preset" type="button">»</button></div></div>

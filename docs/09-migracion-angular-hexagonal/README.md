@@ -33,6 +33,8 @@ frontend anterior sólo se retira cuando la matriz de paridad está completa.
   progresiva.
 - [ADR-0003](adr/ADR-0003-CONTRATOS-DATOS-Y-ROLLBACK.md): contratos, datos y
   rollback.
+- [Corte Angular 001](CORTE-ANGULAR-001-ESPACIO-CLINICO.md): base de Angular,
+  sesión, paciente activo y lectura de la hoja clínica.
 
 ## Ciclo obligatorio por capacidad
 
