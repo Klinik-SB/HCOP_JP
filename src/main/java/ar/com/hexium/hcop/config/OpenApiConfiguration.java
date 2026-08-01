@@ -237,6 +237,8 @@ public class OpenApiConfiguration {
       permission("PatientWorkspaceController.activate", "section.history.view"),
       permission("PatientWorkspaceController.workspace", "section.history.view"),
       permission("LegacyCatalogController.medicationSearch", "section.prescriptions.view"),
+      permission("LegacyCatalogController.protocols", "section.protocols.view"),
+      permission("LegacyCatalogController.protocolDetail", "section.protocols.view"),
       permission("ProtocolController.list", "section.protocols.view"),
       permission("ProtocolController.get", "section.protocols.view"),
       permission("ProtocolController.create", "section.protocols.edit"),

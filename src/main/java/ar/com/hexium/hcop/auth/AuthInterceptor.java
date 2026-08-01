@@ -55,13 +55,19 @@ public class AuthInterceptor implements HandlerInterceptor {
   }
 
   /**
-   * Endpoints cuyo cuerpo puede ser costoso se autorizan antes de que Spring/Jackson lo
-   * materialice. El controlador conserva el mismo control como segunda barrera.
+   * Endpoints sensibles se autorizan antes de llegar al controlador. Para solicitudes con
+   * cuerpo, esto además evita materializar entradas no autorizadas. El controlador conserva
+   * el mismo control como segunda barrera.
    */
   private String earlyPermission(String path, String method) {
-    return "POST".equalsIgnoreCase(method) && "/api/agent/chat".equals(path)
-        ? "section.agent.view"
-        : "";
+    if ("POST".equalsIgnoreCase(method) && "/api/agent/chat".equals(path)) {
+      return "section.agent.view";
+    }
+    if ("GET".equalsIgnoreCase(method)
+        && ("/api/protocols".equals(path) || "/api/protocols/detail".equals(path))) {
+      return "section.protocols.view";
+    }
+    return "";
   }
 
   private boolean isPublic(String path) {

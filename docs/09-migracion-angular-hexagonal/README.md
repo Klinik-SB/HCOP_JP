@@ -47,6 +47,8 @@ frontend anterior sólo se retira cuando la matriz de paridad está completa.
   solicitudes, texto libre y formularios sistémicos con permisos efectivos.
 - [Corte Angular 006](CORTE-ANGULAR-006-AGENTE.md): Agente clínico, estado LLM,
   conversación segura, artefactos y navegación sobre la hoja.
+- [Corte Angular 007](CORTE-ANGULAR-007-PROTOCOLOS.md): explorador de protocolos
+  clínicos COIR/locales y referencia SEER*Rx con permisos efectivos.
 
 ## Ciclo obligatorio por capacidad
 

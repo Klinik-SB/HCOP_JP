@@ -16,7 +16,7 @@ la implementación anterior.
 | Diagnóstico | Modal desde la hoja | Diagnósticos, SNOMED, CIE-10 y AJCC | Selección obligatoria, TNM/estadio, varios diagnósticos y evolución resultante | Pendiente | Pendiente |
 | Estudios | Solapa Estudios | `/api/media/**`, `clinical_files` | Carga múltiple, pegado, plantillas, orden, edición, dibujo, descarga y eliminación de sesión | Pendiente | Pendiente |
 | Prescripción general | Solapa Prescripción | APIs de prescripción y hoja | Medicamentos, prácticas, estudios y documentos con datos de cobertura completos | Validada | En convivencia |
-| Protocolos | Solapa y Configuración | `/api/config/protocols/**` | Búsqueda, detalle, drogas, dosis, preparación, tiempos, edición y versionado | Pendiente | En convivencia |
+| Protocolos | Solapa y Configuración | `/api/clinical/protocols/**` y catálogo SEER*Rx | Búsqueda, detalle, drogas, dosis, preparación, tiempos, edición y versionado | En convivencia | En convivencia |
 | Nuevo tratamiento | Hospital de Día | `/api/clinical/patients/{id}/treatments` | Diagnóstico existente, protocolo, antropometría, dosis, requisitos, ciclos y evolución atómica | Pendiente | Pendiente |
 | Tratamiento | Lista y detalle | APIs de tratamientos | Tarjetas, documentos, estado, consentimiento, drogas y árbol ciclo–día–aplicación | Pendiente | Pendiente |
 | Farmacia | Hospital de Día | Cola `pharmacy` y comandos farmacéuticos | Búsqueda, filtros, auditoría, procedencia, recepción, reserva, liberación, rechazo y QR | Pendiente | Pendiente |

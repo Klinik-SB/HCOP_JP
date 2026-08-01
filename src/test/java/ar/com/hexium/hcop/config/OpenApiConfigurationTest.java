@@ -2,6 +2,7 @@ package ar.com.hexium.hcop.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import ar.com.hexium.hcop.catalog.LegacyCatalogController;
 import ar.com.hexium.hcop.integration.LlmController;
 import ar.com.hexium.hcop.integration.LlmController.AgentChatRequest;
 import io.swagger.v3.oas.models.Operation;
@@ -112,6 +113,34 @@ class OpenApiConfigurationTest {
     assertThat(operation.getResponses().get("200").getContent()
         .get("application/json").getSchema().get$ref())
         .isEqualTo("#/components/schemas/LlmStatusResponse");
+  }
+
+  @Test
+  void documentaElPermisoDeLosDosContratosCompatiblesDeProtocolos() throws Exception {
+    LegacyCatalogController controller = new LegacyCatalogController(null, null, null, null);
+    HandlerMethod list = new HandlerMethod(
+        controller,
+        LegacyCatalogController.class.getDeclaredMethod(
+            "protocols", String.class, HttpServletRequest.class));
+    HandlerMethod detail = new HandlerMethod(
+        controller,
+        LegacyCatalogController.class.getDeclaredMethod(
+            "protocolDetail", String.class, String.class, HttpServletRequest.class));
+
+    Operation listOperation = operationWithSuccess();
+    Operation detailOperation = operationWithSuccess();
+    OpenApiConfiguration configuration = new OpenApiConfiguration();
+    configuration.documentedOperations().customize(listOperation, list);
+    configuration.documentedOperations().customize(detailOperation, detail);
+
+    assertThat(listOperation.getSummary()).isEqualTo("Listar protocolos compatibles");
+    assertThat(detailOperation.getSummary()).isEqualTo("Abrir protocolo compatible");
+    assertThat(listOperation.getExtensions().get("x-hcop-permission"))
+        .isEqualTo("section.protocols.view");
+    assertThat(detailOperation.getExtensions().get("x-hcop-permission"))
+        .isEqualTo("section.protocols.view");
+    assertThat(listOperation.getSecurity()).isNotEmpty();
+    assertThat(detailOperation.getSecurity()).isNotEmpty();
   }
 
   private Operation operationWithSuccess() {

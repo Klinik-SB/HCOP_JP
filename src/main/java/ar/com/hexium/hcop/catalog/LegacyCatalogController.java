@@ -28,14 +28,19 @@ public class LegacyCatalogController {
   }
 
   @GetMapping("/api/protocols")
-  Map<String, Object> protocols(@RequestParam(defaultValue = "coir") String source) {
+  Map<String, Object> protocols(
+      @RequestParam(defaultValue = "coir") String source,
+      HttpServletRequest request) {
+    auth.requirePermission(request, "section.protocols.view");
     return protocols.list(source);
   }
 
   @GetMapping("/api/protocols/detail")
   Map<String, Object> protocolDetail(
       @RequestParam String id,
-      @RequestParam(defaultValue = "coir") String source) {
+      @RequestParam(defaultValue = "coir") String source,
+      HttpServletRequest request) {
+    auth.requirePermission(request, "section.protocols.view");
     return protocols.detail(id, source);
   }
 

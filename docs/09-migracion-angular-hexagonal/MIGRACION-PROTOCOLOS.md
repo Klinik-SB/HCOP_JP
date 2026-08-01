@@ -91,5 +91,7 @@ confirma que el catálogo migrado continúa permitiendo prescribir, preparar y
 administrar tratamientos.
 
 La capacidad queda `En convivencia`: el backend ya está en el límite
-hexagonal, pero su interfaz Angular y la comparación visual todavía están
-pendientes.
+hexagonal y la solapa de consulta está gobernada por Angular. La edición
+administrativa permanece en Configuración y la capacidad sólo pasará a
+`Validada` cuando esa interfaz, los recorridos E2E y la comparación visual
+completa también estén cerrados.

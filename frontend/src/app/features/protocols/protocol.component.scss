@@ -1,0 +1,69 @@
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
+svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.protocol-reference-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border: 1px solid #c9d7e8;
+  border-left: 4px solid #667fa2;
+  background: #f5f8fc;
+  padding: 9px 10px;
+  color: #4f637e;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.protocol-reference-notice svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+}
+
+.protocol-reference-notice span {
+  display: block;
+}
+
+.protocol-reference-notice strong {
+  display: block;
+  margin-bottom: 1px;
+}
+
+.protocol-summary--reference {
+  border-left-color: #667fa2;
+}
+
+.protocol-empty .tool-button {
+  margin-top: 5px;
+}
+
+.protocol-error svg {
+  width: 20px;
+  color: #b94a55;
+}
+
+.protocol-summary > p + p {
+  margin-top: 5px;
+}
+
+.protocol-drug-strip button svg {
+  width: 15px;
+  height: 15px;
+}
+
+@media (max-width: 780px) {
+  .protocol-summary-metrics {
+    grid-template-columns: 1fr;
+  }
+}

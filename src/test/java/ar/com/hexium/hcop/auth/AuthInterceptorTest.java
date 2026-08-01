@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import tools.jackson.databind.JsonNode;
@@ -68,8 +70,43 @@ class AuthInterceptorTest {
     assertThat(body.path("code").asText()).isEqualTo("AUTHENTICATION_REQUIRED");
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {"/api/protocols", "/api/protocols/detail"})
+  void rechazaCatalogosCompatiblesAntesDelControladorSinPermiso(String path)
+      throws Exception {
+    MockHttpServletRequest request = authenticatedRequest("GET", path);
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    when(auth.authenticate("token-low-role")).thenReturn(Optional.of(principal(Set.of())));
+
+    boolean allowed = interceptor.preHandle(request, response, new Object());
+
+    assertThat(allowed).isFalse();
+    assertThat(response.getStatus()).isEqualTo(403);
+    JsonNode body = mapper.readTree(response.getContentAsByteArray());
+    assertThat(body.path("code").asText()).isEqualTo("PERMISSION_DENIED");
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"/api/protocols", "/api/protocols/detail"})
+  void permiteCatalogosCompatiblesConLecturaDeProtocolos(String path) throws Exception {
+    MockHttpServletRequest request = authenticatedRequest("GET", path);
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    when(auth.authenticate("token-low-role"))
+        .thenReturn(Optional.of(principal(Set.of("section.protocols.view"))));
+
+    boolean allowed = interceptor.preHandle(request, response, new Object());
+
+    assertThat(allowed).isTrue();
+    assertThat(request.getAttribute(AuthContext.PRINCIPAL_ATTRIBUTE))
+        .isInstanceOf(SessionPrincipal.class);
+  }
+
   private MockHttpServletRequest agentRequest() {
-    MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/agent/chat");
+    return authenticatedRequest("POST", "/api/agent/chat");
+  }
+
+  private MockHttpServletRequest authenticatedRequest(String method, String path) {
+    MockHttpServletRequest request = new MockHttpServletRequest(method, path);
     request.setCookies(new Cookie("HCOP_SESSION", "token-low-role"));
     return request;
   }
