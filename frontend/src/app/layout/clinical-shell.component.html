@@ -74,7 +74,7 @@
           <button class="right-tab" [class.active]="selectedPane() === 'research'" type="button" role="tab" [attr.aria-selected]="selectedPane() === 'research'" (click)="selectPane('research')">Investigacion</button>
           <button class="right-tab" [class.active]="selectedPane() === 'timeline'" type="button" role="tab" [attr.aria-selected]="selectedPane() === 'timeline'" (click)="selectPane('timeline')">Linea del tiempo</button>
           @if (auth.hasPermission('section.protocols.view')) { <button class="right-tab" id="rightTabProtocols" [class.active]="selectedPane() === 'protocols'" type="button" role="tab" aria-controls="rightPanelProtocols" [attr.aria-selected]="selectedPane() === 'protocols'" (click)="selectPane('protocols')">Protocolos</button> }
-          <button class="right-tab" [class.active]="selectedPane() === 'tools'" type="button" role="tab" [attr.aria-selected]="selectedPane() === 'tools'" (click)="selectPane('tools')">Herramientas</button>
+          @if (auth.hasPermission('section.tools.view')) { <button class="right-tab" id="rightTabTools" [class.active]="selectedPane() === 'tools'" type="button" role="tab" aria-controls="rightPanelTools" [attr.aria-selected]="selectedPane() === 'tools'" (click)="selectPane('tools')">Herramientas</button> }
         </nav>
       </div>
       <div class="right-panel-body">
@@ -84,6 +84,7 @@
         @else if (selectedPane() === 'agent') { <app-agent /> }
         @else if (selectedPane() === 'timeline') { <app-timeline-panel /> }
         @else if (selectedPane() === 'protocols') { <app-protocol-explorer /> }
+        @else if (selectedPane() === 'tools') { <app-tools /> }
         @else {
         <section class="right-empty-state"><strong>{{ selectedPane() === 'care' ? 'Hospital de día' : selectedPane() === 'studies' ? 'Estudios' : 'Módulo clínico' }}</strong><span>Este panel conserva la geometría y los estilos de la versión vigente. Su contenido se migra con su mismo flujo y permisos.</span><button class="tool-button" type="button" (click)="legacyFallback()"><span>Usar módulo estable</span></button></section>
         }

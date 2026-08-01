@@ -2,6 +2,7 @@ package ar.com.hexium.hcop.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import ar.com.hexium.hcop.catalog.AjccCatalogController;
 import ar.com.hexium.hcop.catalog.LegacyCatalogController;
 import ar.com.hexium.hcop.integration.LlmController;
 import ar.com.hexium.hcop.integration.LlmController.AgentChatRequest;
@@ -141,6 +142,41 @@ class OpenApiConfigurationTest {
         .isEqualTo("section.protocols.view");
     assertThat(listOperation.getSecurity()).isNotEmpty();
     assertThat(detailOperation.getSecurity()).isNotEmpty();
+  }
+
+  @Test
+  void documentaLosPermisosDiferenciadosDelCatalogoYCalculoAjcc() throws Exception {
+    AjccCatalogController controller = new AjccCatalogController(null, null);
+    OpenApiConfiguration configuration = new OpenApiConfiguration();
+
+    HandlerMethod list = new HandlerMethod(
+        controller,
+        AjccCatalogController.class.getDeclaredMethod("list", HttpServletRequest.class));
+    HandlerMethod detail = new HandlerMethod(
+        controller,
+        AjccCatalogController.class.getDeclaredMethod(
+            "detail", String.class, HttpServletRequest.class));
+    HandlerMethod stage = new HandlerMethod(
+        controller,
+        AjccCatalogController.class.getDeclaredMethod(
+            "stage", java.util.Map.class, HttpServletRequest.class));
+    Operation listOperation = operationWithSuccess();
+    Operation detailOperation = operationWithSuccess();
+    Operation stageOperation = operationWithSuccess();
+
+    configuration.documentedOperations().customize(listOperation, list);
+    configuration.documentedOperations().customize(detailOperation, detail);
+    configuration.documentedOperations().customize(stageOperation, stage);
+
+    assertThat(listOperation.getExtensions().get("x-hcop-permission"))
+        .isEqualTo("section.tools.view");
+    assertThat(detailOperation.getExtensions().get("x-hcop-permission"))
+        .isEqualTo("section.tools.view");
+    assertThat(stageOperation.getExtensions().get("x-hcop-permission"))
+        .isEqualTo("section.tools.use");
+    assertThat(listOperation.getSecurity()).isNotEmpty();
+    assertThat(detailOperation.getSecurity()).isNotEmpty();
+    assertThat(stageOperation.getSecurity()).isNotEmpty();
   }
 
   private Operation operationWithSuccess() {

@@ -27,13 +27,17 @@ la implementación anterior.
 | Administración | QR y Sala | Comandos `administration/**` | Escaneo, identidad, doble chequeo, inicio, dosis real, reacción, interrupción, reanudación y cierre | Pendiente | Pendiente |
 | Suspensión y continuidad | Tratamiento y espera | `/api/clinical/treatments/**/workflow/**` | Solicitudes, responsables, motivos, suspensión temporal/definitiva, nueva prescripción y evolución | Pendiente | Pendiente |
 | Configuración H. de Día | Configuración | Ajustes de sillones | Sillones, fracción 5/10/15/20/30, jornada y efecto inmediato controlado sobre agenda | Pendiente | En convivencia |
-| Guías | Configuración y Herramientas | `/api/guides/**` | Carga, metadatos, activación, búsqueda, apertura y conservación del archivo | Pendiente | En convivencia |
-| Calculadoras | Configuración y Herramientas | Configuración versionada | Crear fórmula/score sin programar, variables, reglas, rangos, vista previa, activar y ejecutar | Pendiente | En convivencia |
+| Guías | Configuración y Herramientas | `/api/guides/**` | Carga, metadatos, activación, búsqueda, apertura y conservación del archivo | En convivencia | En convivencia |
+| AJCC/TNM | Herramientas | `/api/ajcc8/**` y catálogos locales | Sitio, ejes T/N/M y factores propios, cálculo determinístico, fuentes, permisos y errores equivalentes | En convivencia | En convivencia |
+| Calculadoras | Configuración y Herramientas | Configuración versionada | Migrar y comparar individualmente las 57 calculadoras/scores; crear fórmula sin programar, variables, reglas, rangos, vista previa, activar y ejecutar | Pendiente | En convivencia |
 | Investigación | Configuración e Investigación | Formularios versionados y hoja | Constructor, orden, etiquetas, tipos, obligatoriedad, versión aplicada y recuperación de respuestas | Pendiente | En convivencia |
 | Plantillas anatómicas | Configuración y Estudios | `/api/study-templates/**` | Catálogo, miniaturas, derechos, alta, baja, selección, marcado e incorporación al estudio | Pendiente | Pendiente |
 | Agente y línea temporal | Solapas derechas | `/api/llm/**` y hoja | Configuración local/remota, errores claros, paciente activo, resaltado y ausencia de pérdida de foco | En convivencia | En convivencia |
 | Ayuda y documentación | Cabecera y páginas de ayuda | Recursos estáticos | Índice, manuales, diagramas, videos y enlaces accesibles desde la interfaz final | Pendiente | No aplica |
 | Instalación y actualización | Lanzador y Docker | GHCR, Compose, Flyway | Primer inicio, actualización conservando datos, respaldo, restauración, healthcheck y un solo comando | Pendiente | Pendiente |
+
+Las 57 calculadoras y scores continúan en transición y se mantienen
+explícitamente `Pendiente`; Guías y AJCC/TNM no modifican ese estado.
 
 ## Evidencia requerida para marcar `Validada`
 

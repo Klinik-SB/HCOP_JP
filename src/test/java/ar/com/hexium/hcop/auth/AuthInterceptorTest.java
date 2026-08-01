@@ -101,6 +101,63 @@ class AuthInterceptorTest {
         .isInstanceOf(SessionPrincipal.class);
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {"/api/ajcc8", "/api/ajcc8/detail"})
+  void rechazaAjccAntesDelControladorSinLecturaDeHerramientas(String path) throws Exception {
+    MockHttpServletRequest request = authenticatedRequest("GET", path);
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    when(auth.authenticate("token-low-role")).thenReturn(Optional.of(principal(Set.of())));
+
+    boolean allowed = interceptor.preHandle(request, response, new Object());
+
+    assertThat(allowed).isFalse();
+    assertThat(response.getStatus()).isEqualTo(403);
+    assertThat(mapper.readTree(response.getContentAsByteArray()).path("code").asText())
+        .isEqualTo("PERMISSION_DENIED");
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"/api/ajcc8", "/api/ajcc8/detail"})
+  void permiteAjccConLecturaDeHerramientas(String path) throws Exception {
+    MockHttpServletRequest request = authenticatedRequest("GET", path);
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    when(auth.authenticate("token-low-role"))
+        .thenReturn(Optional.of(principal(Set.of("section.tools.view"))));
+
+    boolean allowed = interceptor.preHandle(request, response, new Object());
+
+    assertThat(allowed).isTrue();
+  }
+
+  @Test
+  void rechazaCalculoAjccAntesDeMaterializarElBodySinPermisoDeUso() throws Exception {
+    MockHttpServletRequest request = authenticatedRequest("POST", "/api/ajcc8/stage");
+    request.setContentType("application/json");
+    request.setContent("{contenido-invalido".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    when(auth.authenticate("token-low-role"))
+        .thenReturn(Optional.of(principal(Set.of("section.tools.view"))));
+
+    boolean allowed = interceptor.preHandle(request, response, new Object());
+
+    assertThat(allowed).isFalse();
+    assertThat(response.getStatus()).isEqualTo(403);
+    assertThat(mapper.readTree(response.getContentAsByteArray()).path("code").asText())
+        .isEqualTo("PERMISSION_DENIED");
+  }
+
+  @Test
+  void permiteCalculoAjccConPermisoDeUsoDeHerramientas() throws Exception {
+    MockHttpServletRequest request = authenticatedRequest("POST", "/api/ajcc8/stage");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    when(auth.authenticate("token-low-role"))
+        .thenReturn(Optional.of(principal(Set.of("section.tools.use"))));
+
+    boolean allowed = interceptor.preHandle(request, response, new Object());
+
+    assertThat(allowed).isTrue();
+  }
+
   private MockHttpServletRequest agentRequest() {
     return authenticatedRequest("POST", "/api/agent/chat");
   }

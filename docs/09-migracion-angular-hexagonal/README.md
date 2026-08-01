@@ -49,6 +49,9 @@ frontend anterior sólo se retira cuando la matriz de paridad está completa.
   conversación segura, artefactos y navegación sobre la hoja.
 - [Corte Angular 007](CORTE-ANGULAR-007-PROTOCOLOS.md): explorador de protocolos
   clínicos COIR/locales y referencia SEER*Rx con permisos efectivos.
+- [Corte Angular 008](CORTE-ANGULAR-008-HERRAMIENTAS-GUIAS-TNM.md): biblioteca
+  de Guías PDF y estadificación AJCC/TNM nativas, con las 57 calculadoras
+  registradas como deuda de transición.
 
 ## Ciclo obligatorio por capacidad
 

@@ -1,0 +1,141 @@
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
+:host .tools-workspace {
+  height: 100%;
+  min-height: 0;
+}
+
+:host .tools-tabs {
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+}
+
+:host .tool-pane[hidden] {
+  display: none !important;
+}
+
+:host .tool-pane.active {
+  height: 100%;
+  min-height: 0;
+}
+
+:host svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tools-access-denied {
+  min-height: 180px;
+}
+
+.tools-access-denied > svg {
+  width: 26px;
+  height: 26px;
+  color: #71859a;
+}
+
+.guide-library .icon-button svg,
+.protocol-loading svg,
+.tnm-notice > svg {
+  width: 17px;
+  height: 17px;
+}
+
+.guide-card > svg {
+  height: 15px;
+}
+
+.guide-card-icon svg {
+  height: 17px;
+}
+
+.tools-error-state {
+  gap: 7px;
+}
+
+.tools-error-state > span {
+  color: #64736f;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.tools-error-state .tool-button {
+  justify-self: start;
+}
+
+.tnm-form > .protocol-loading,
+.tnm-form > .protocol-empty {
+  margin: 0;
+}
+
+.tnm-specific-factors h4 {
+  margin: 0;
+}
+
+.tnm-result[aria-busy="true"] {
+  opacity: .78;
+}
+
+.guide-modal-backdrop {
+  align-items: center;
+  justify-content: center;
+}
+
+.guide-pdf-modal {
+  min-height: 0;
+}
+
+.guide-pdf-modal .modal-header h2,
+.guide-pdf-modal .modal-header p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.guide-pdf-modal .modal-header .icon-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.guide-pdf-body {
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.guide-pdf-object {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
+}
+
+.guide-pdf-fallback {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  min-height: 240px;
+  padding: 24px;
+  background: #fff;
+  color: #314956;
+  text-align: center;
+}
+
+.is-spinning {
+  animation: tools-spin .85s linear infinite;
+}
+
+@keyframes tools-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-spinning { animation: none; }
+}

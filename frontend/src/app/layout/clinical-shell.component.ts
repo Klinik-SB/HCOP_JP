@@ -11,12 +11,13 @@ import { CareSchedulerComponent } from '../features/scheduler/care-scheduler.com
 import { PrescriptionComponent } from '../features/prescription/prescription.component';
 import { AgentComponent } from '../features/agent/agent.component';
 import { ProtocolExplorerComponent } from '../features/protocols/protocol-explorer.component';
+import { ToolsComponent } from '../features/tools/tools.component';
 
 type RightPane = 'studies' | 'care' | 'prescription' | 'agent' | 'research' | 'timeline' | 'protocols' | 'tools';
 
 @Component({
   selector: 'app-clinical-shell',
-  imports: [ClinicalWorkspaceComponent, StudyPanelComponent, TimelinePanelComponent, DayHospitalComponent, NewPatientModalComponent, CareSchedulerComponent, PrescriptionComponent, AgentComponent, ProtocolExplorerComponent],
+  imports: [ClinicalWorkspaceComponent, StudyPanelComponent, TimelinePanelComponent, DayHospitalComponent, NewPatientModalComponent, CareSchedulerComponent, PrescriptionComponent, AgentComponent, ProtocolExplorerComponent, ToolsComponent],
   templateUrl: './clinical-shell.component.html',
   styleUrl: './clinical-shell.component.scss'
 })
@@ -52,6 +53,7 @@ export class ClinicalShellComponent implements OnInit {
     if (pane === 'prescription') return this.auth.hasPermission('section.prescriptions.view');
     if (pane === 'agent') return this.auth.hasPermission('section.agent.view');
     if (pane === 'protocols') return this.auth.hasPermission('section.protocols.view');
+    if (pane === 'tools') return this.auth.hasPermission('section.tools.view');
     return true;
   }
 }
