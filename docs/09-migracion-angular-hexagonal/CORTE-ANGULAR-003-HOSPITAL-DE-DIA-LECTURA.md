@@ -84,10 +84,15 @@ cerrarse sin completar, conservando la dosis total y condición del paciente.
 El servidor impide reanudar una mezcla vencida y vuelve a generar una evolución
 inmutable para la resolución.
 
+El cierre normal registra hora real, dosis efectivamente administrada,
+reacción/incidencia y condición final. Una reacción exige descripción; las
+interrupciones previas también se incorporan al resumen. Al completar, la
+aplicación se vuelve inmutable, se sincroniza como completada y sale de la cola.
+
 ## Límites deliberados de este corte
 
-El cierre normal de una administración completada continúa en la interfaz
-estable hasta el siguiente corte.
+El circuito operativo de siete pasos ya posee transiciones Angular. Los cortes
+siguientes se concentran en turnero, nuevo tratamiento y paridad visual final.
 mientras se migran como formularios Angular con revisión optimista,
 idempotencia y campos completos. No se agregaron botones sin efecto ni se
 alteró la lógica Java/PostgreSQL.

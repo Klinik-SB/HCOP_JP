@@ -113,6 +113,10 @@ export class DayHospitalComponent {
   readonly resolutionNotes = signal('');
   readonly resolutionActualDose = signal('');
   readonly resolutionPatientCondition = signal('');
+  readonly completionActualDose = signal('');
+  readonly completionReactionOccurred = signal(false);
+  readonly completionReactionDescription = signal('');
+  readonly completionObservation = signal('');
   readonly eligibleAdministrationUsers = computed(() => {
     const currentId = String(this.auth.session()?.user?.id || '');
     return this.administrationUsers().filter((user) => this.pick(user, 'id') !== currentId);
@@ -518,6 +522,44 @@ export class DayHospitalComponent {
       }
     });
   }
+  completeAdministration(): void {
+    const workflow = this.selectedWorkflow();
+    if (!workflow || this.workflowActionLoading()) return;
+    if (this.completionActualDose().trim().length < 2 || this.completionObservation().trim().length < 3) {
+      this.workflowActionMessage.set('Registre la dosis efectivamente administrada y la condición final del paciente.');
+      return;
+    }
+    if (this.completionReactionOccurred() && this.completionReactionDescription().trim().length < 3) {
+      this.workflowActionMessage.set('Describa la reacción y las medidas adoptadas.');
+      return;
+    }
+    const body = {
+      expectedRevision: this.number(this.pick(workflow, 'revision'), 0),
+      idempotencyKey: `administration-complete-${Date.now()}-${crypto.randomUUID()}`,
+      completedAt: new Date().toISOString(),
+      actualDose: this.completionActualDose().trim(),
+      reactionOccurred: this.completionReactionOccurred(),
+      reactionDescription: this.completionReactionDescription().trim(),
+      observation: this.completionObservation().trim()
+    };
+    this.workflowActionLoading.set(true); this.workflowActionMessage.set('');
+    this.http.post<{ workflow?: JsonObject }>(`${this.workflowUrl(workflow)}/administration/complete`, body, { withCredentials: true }).subscribe({
+      next: (response) => {
+        const updated = this.object(response.workflow);
+        this.selectedWorkflow.set(updated);
+        this.populateAdministration(updated);
+        this.workflowActionLoading.set(false);
+        this.workflowActionMessage.set('Aplicación completada y documentada en la historia clínica.');
+        this.loadQueue();
+        const patientId = this.activePatientId();
+        if (patientId) this.workspace.load(patientId);
+      },
+      error: (response: { error?: { error?: string } }) => {
+        this.workflowActionLoading.set(false);
+        this.workflowActionMessage.set(response?.error?.error || 'No se pudo cerrar la administración.');
+      }
+    });
+  }
   workflowAppointment(workflow: JsonObject): JsonObject { return this.object(workflow['appointment']); }
   workflowDrugs(workflow: JsonObject): JsonObject[] { return this.array(workflow['applicationDrugs']); }
   workflowReservations(workflow: JsonObject): JsonObject[] { return this.array(workflow['stockReservations']); }
@@ -592,6 +634,10 @@ export class DayHospitalComponent {
     this.resolutionNotes.set(this.pick(data, 'interruptionResolutionNotes'));
     this.resolutionActualDose.set(this.pick(data, 'actualDose'));
     this.resolutionPatientCondition.set(this.pick(data, 'interruptionResolutionPatientCondition') || this.pick(data, 'interruptionPatientCondition'));
+    this.completionActualDose.set(this.pick(data, 'actualDose'));
+    this.completionReactionOccurred.set(Boolean(data['reactionOccurred']));
+    this.completionReactionDescription.set(this.pick(data, 'reactionDescription'));
+    this.completionObservation.set(this.pick(data, 'observation'));
   }
 
   private loadAdministrationUsers(): void {
