@@ -40,10 +40,16 @@ Angular envía al backend:
 La transición usa el endpoint `pharmacy-validation`; el servidor conserva la
 autoridad sobre drogas prescriptas, permisos, estados permitidos y auditoría.
 
+También se migró la reserva y liberación manual de stock del centro. La
+interfaz exige una constatación documentada, envía la revisión esperada y deja
+que el servidor reconstruya y valide todos los componentes a partir de las
+drogas prescriptas. Para medicación del paciente o pendiente de proveedor no
+se crea una reserva ficticia del centro.
+
 ## Límites deliberados de este corte
 
-Las transiciones restantes (reservar stock, PASS/FAIL de triaje, preparar,
-liberar y administrar) continúan en la interfaz estable
+Las transiciones restantes (PASS/FAIL de triaje, preparar, liberar y
+administrar) continúan en la interfaz estable
 mientras se migran como formularios Angular con revisión optimista,
 idempotencia y campos completos. No se agregaron botones sin efecto ni se
 alteró la lógica Java/PostgreSQL.

@@ -31,6 +31,7 @@
 .care-workflow-action-fields { display: grid; grid-template-columns: minmax(180px, .7fr) minmax(260px, 1.3fr); gap: 9px; }
 .care-workflow-action-fields label { display: grid; align-content: start; gap: 4px; color: #65747b; font-size: 9px; font-weight: 750; }
 .care-workflow-action-fields select, .care-workflow-action-fields textarea { width: 100%; border: 1px solid #cbd6dc; border-radius: 1px; background: #fff; padding: 7px 8px; color: #35454d; font: inherit; font-size: 10px; }
+.care-workflow-action-fields input { width: 100%; border: 1px solid #d6dfe3; border-radius: 1px; background: #f4f7f8; padding: 7px 8px; color: #526169; font: inherit; font-size: 10px; }
 .care-workflow-action-fields textarea { resize: vertical; }
 .care-workflow-action-card > footer { display: flex; justify-content: flex-end; gap: 7px; }
 .care-workflow-action-message { margin: 0; color: #2f718f; font-size: 10px; font-weight: 750; }

@@ -71,6 +71,7 @@ export class DayHospitalComponent {
   readonly workflowActionMessage = signal('');
   readonly medicationSource = signal('center_stock');
   readonly pharmacyNotes = signal('');
+  readonly stockNotes = signal('');
   readonly loading = signal(false);
   readonly error = signal('');
 
@@ -155,6 +156,7 @@ export class DayHospitalComponent {
         this.selectedWorkflow.set(workflow);
         this.medicationSource.set(this.pick(workflow, 'medicationSource') || 'center_stock');
         this.pharmacyNotes.set(this.pick(workflow, 'pharmacyValidationNotes'));
+        this.stockNotes.set(this.pick(workflow, 'stockReservationNotes'));
         this.workflowActionMessage.set('');
         this.workflowLoading.set(false);
       },
@@ -192,6 +194,41 @@ export class DayHospitalComponent {
       error: (response: { error?: { error?: string } }) => {
         this.workflowActionLoading.set(false);
         this.workflowActionMessage.set(response?.error?.error || 'No se pudo guardar la validación farmacéutica.');
+      }
+    });
+  }
+  updateStockReservation(reserved: boolean): void {
+    const workflow = this.selectedWorkflow();
+    if (!workflow || this.workflowActionLoading()) return;
+    const notes = this.stockNotes().trim();
+    if (reserved && this.medicationSource() !== 'center_stock') {
+      this.workflowActionMessage.set('Esta procedencia no utiliza reserva de stock del centro.');
+      return;
+    }
+    if (reserved && notes.length < 10) {
+      this.workflowActionMessage.set('La constatación manual requiere una nota de al menos 10 caracteres.');
+      return;
+    }
+    const body = {
+      expectedRevision: this.number(this.pick(workflow, 'revision'), 0),
+      idempotencyKey: `stock-${reserved ? 'reserve' : 'release'}-${Date.now()}-${crypto.randomUUID()}`,
+      reserved,
+      medicationSource: this.medicationSource(),
+      verificationMethod: 'manual',
+      notes,
+      components: []
+    };
+    this.workflowActionLoading.set(true); this.workflowActionMessage.set('');
+    this.http.post<{ workflow?: JsonObject }>(`${this.workflowUrl(workflow)}/stock-reservation`, body, { withCredentials: true }).subscribe({
+      next: (response) => {
+        this.selectedWorkflow.set(this.object(response.workflow));
+        this.workflowActionLoading.set(false);
+        this.workflowActionMessage.set(reserved ? 'Stock reservado para esta aplicación.' : 'Reserva liberada y stock devuelto a disponibilidad.');
+        this.loadQueue();
+      },
+      error: (response: { error?: { error?: string } }) => {
+        this.workflowActionLoading.set(false);
+        this.workflowActionMessage.set(response?.error?.error || 'No se pudo actualizar la reserva de stock.');
       }
     });
   }
