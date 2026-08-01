@@ -7,12 +7,13 @@ import { StudyPanelComponent } from '../features/studies/study-panel.component';
 import { TimelinePanelComponent } from '../features/timeline/timeline-panel.component';
 import { NewPatientModalComponent } from '../features/patients/new-patient-modal.component';
 import { DayHospitalComponent } from '../features/day-hospital/day-hospital.component';
+import { CareSchedulerComponent } from '../features/scheduler/care-scheduler.component';
 
 type RightPane = 'studies' | 'care' | 'prescription' | 'agent' | 'research' | 'timeline' | 'protocols' | 'tools';
 
 @Component({
   selector: 'app-clinical-shell',
-  imports: [ClinicalWorkspaceComponent, StudyPanelComponent, TimelinePanelComponent, DayHospitalComponent, NewPatientModalComponent],
+  imports: [ClinicalWorkspaceComponent, StudyPanelComponent, TimelinePanelComponent, DayHospitalComponent, NewPatientModalComponent, CareSchedulerComponent],
   templateUrl: './clinical-shell.component.html',
   styleUrl: './clinical-shell.component.scss'
 })
@@ -23,6 +24,7 @@ export class ClinicalShellComponent implements OnInit {
   readonly selectedPane = signal<RightPane>('studies');
   readonly searchExpanded = signal(false);
   readonly newPatientOpen = signal(false);
+  readonly careSchedulerOpen = signal(false);
 
   ngOnInit(): void {
     this.auth.load().subscribe({
