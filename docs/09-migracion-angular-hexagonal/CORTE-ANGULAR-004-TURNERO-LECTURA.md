@@ -27,3 +27,8 @@ Triaje, Preparacion y Tratamientos montan el mismo componente Angular operativo
 que la ficha lateral, con sus formularios, permisos, revisiones e idempotencia.
 Nuevo tratamiento abre directamente el formulario si hay un paciente activo;
 Turnos y sala sigue siendo una superficie global que no exige paciente.
+
+Dentro de Turnos y sala, `Sala de hoy` abre la cola Angular real de
+Administracion, ordenada por horario y sillon. Cada fila abre el circuito
+completo y permite doble chequeo, inicio, interrupcion, resolucion y cierre con
+la trazabilidad que ya controla Java.

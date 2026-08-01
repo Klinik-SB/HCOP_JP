@@ -10,7 +10,7 @@ interface ScheduleSlot { row: number; minutes: number; label: string; }
 interface ScheduleDrag { type: 'candidate' | 'infusion'; item: JsonObject; }
 interface SchedulePlacement { chair: number; slotIndex: number; span: number; valid: boolean; time: string; }
 type HospitalMode = 'new-treatment' | 'pharmacy' | 'chairs' | 'triage' | 'preparation' | 'treatments';
-type EmbeddedCareView = 'treatments' | 'pharmacy' | 'triage' | 'preparation';
+type EmbeddedCareView = 'treatments' | 'pharmacy' | 'triage' | 'preparation' | 'administration';
 
 @Component({ selector: 'app-care-scheduler', imports: [CommonModule, FormsModule, DayHospitalComponent], templateUrl: './care-scheduler.component.html', styleUrl: './care-scheduler.component.scss' })
 export class CareSchedulerComponent implements OnChanges {
@@ -32,6 +32,7 @@ export class CareSchedulerComponent implements OnChanges {
   readonly busy = signal(false);
   readonly actionMessage = signal('');
   readonly activeMode = signal<HospitalMode>('chairs');
+  readonly chairSurface = signal<'agenda' | 'room'>('agenda');
   readonly detailOpen = signal(false);
   readonly detailLoading = signal(false);
   readonly detailItem = signal<JsonObject | null>(null);
