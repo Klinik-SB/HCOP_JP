@@ -74,10 +74,15 @@ un segundo profesional habilitado distinto del usuario activo. La transición
 registra la hora real y usa revisión optimista e idempotencia. El servidor
 rechaza el inicio si la preparación no fue liberada o falta el doble chequeo.
 
+Durante una administración en curso se puede registrar una interrupción con
+motivo, dosis parcial, medidas adoptadas, condición del paciente y destino
+clínico. La acción pausa la aplicación, sincroniza el turno y agrega una
+evolución inmutable; no elimina ni sobrescribe el evento anterior.
+
 ## Límites deliberados de este corte
 
-Las transiciones restantes (interrumpir, resolver y cerrar la administración)
-continúan en la interfaz estable
+Las transiciones restantes (resolver y cerrar la administración) continúan en
+la interfaz estable
 mientras se migran como formularios Angular con revisión optimista,
 idempotencia y campos completos. No se agregaron botones sin efecto ni se
 alteró la lógica Java/PostgreSQL.

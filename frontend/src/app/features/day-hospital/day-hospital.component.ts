@@ -105,6 +105,11 @@ export class DayHospitalComponent {
   readonly administrationPatientVerified = signal(false);
   readonly administrationLabelVerified = signal(false);
   readonly administrationNotes = signal('');
+  readonly interruptionReason = signal('');
+  readonly interruptionActualDose = signal('');
+  readonly interruptionMeasures = signal('');
+  readonly interruptionPatientCondition = signal('');
+  readonly interruptionDisposition = signal('observation');
   readonly eligibleAdministrationUsers = computed(() => {
     const currentId = String(this.auth.session()?.user?.id || '');
     return this.administrationUsers().filter((user) => this.pick(user, 'id') !== currentId);
@@ -437,6 +442,41 @@ export class DayHospitalComponent {
       }
     });
   }
+  interruptAdministration(): void {
+    const workflow = this.selectedWorkflow();
+    if (!workflow || this.workflowActionLoading()) return;
+    if ([this.interruptionReason(), this.interruptionActualDose(), this.interruptionMeasures(), this.interruptionPatientCondition()].some((value) => value.trim().length < 2)) {
+      this.workflowActionMessage.set('Complete motivo, dosis administrada, medidas y condición actual del paciente.');
+      return;
+    }
+    const body = {
+      expectedRevision: this.number(this.pick(workflow, 'revision'), 0),
+      idempotencyKey: `administration-interrupt-${Date.now()}-${crypto.randomUUID()}`,
+      interruptedAt: new Date().toISOString(),
+      reason: this.interruptionReason().trim(),
+      actualDose: this.interruptionActualDose().trim(),
+      measures: this.interruptionMeasures().trim(),
+      patientCondition: this.interruptionPatientCondition().trim(),
+      disposition: this.interruptionDisposition()
+    };
+    this.workflowActionLoading.set(true); this.workflowActionMessage.set('');
+    this.http.post<{ workflow?: JsonObject }>(`${this.workflowUrl(workflow)}/administration/interrupt`, body, { withCredentials: true }).subscribe({
+      next: (response) => {
+        const updated = this.object(response.workflow);
+        this.selectedWorkflow.set(updated);
+        this.populateAdministration(updated);
+        this.workflowActionLoading.set(false);
+        this.workflowActionMessage.set('Administración interrumpida; incidencia y evolución registradas.');
+        this.loadQueue();
+        const patientId = this.activePatientId();
+        if (patientId) this.workspace.load(patientId);
+      },
+      error: (response: { error?: { error?: string } }) => {
+        this.workflowActionLoading.set(false);
+        this.workflowActionMessage.set(response?.error?.error || 'No se pudo registrar la interrupción.');
+      }
+    });
+  }
   workflowAppointment(workflow: JsonObject): JsonObject { return this.object(workflow['appointment']); }
   workflowDrugs(workflow: JsonObject): JsonObject[] { return this.array(workflow['applicationDrugs']); }
   workflowReservations(workflow: JsonObject): JsonObject[] { return this.array(workflow['stockReservations']); }
@@ -503,6 +543,11 @@ export class DayHospitalComponent {
     this.administrationPatientVerified.set(Boolean(data['patientVerified']));
     this.administrationLabelVerified.set(Boolean(data['labelVerified']));
     this.administrationNotes.set(this.pick(data, 'notes'));
+    this.interruptionReason.set(this.pick(data, 'interruptionReason'));
+    this.interruptionActualDose.set(this.pick(data, 'actualDoseAtInterruption'));
+    this.interruptionMeasures.set(this.pick(data, 'interruptionMeasures'));
+    this.interruptionPatientCondition.set(this.pick(data, 'interruptionPatientCondition'));
+    this.interruptionDisposition.set(this.pick(data, 'interruptionDisposition') || 'observation');
   }
 
   private loadAdministrationUsers(): void {
