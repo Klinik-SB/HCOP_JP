@@ -82,11 +82,17 @@ export class PatientWorkspaceService {
   }
 
   saveState(nextState: ClinicalState): Observable<ClinicalSaveResponse> {
+    const startedFrom = this.workspace();
+    const patientId = startedFrom?.patientId || '';
+    const revisionAtStart = startedFrom?.revision || 0;
     return this.http.put<ClinicalSaveResponse>('/api/hc', nextState, { withCredentials: true }).pipe(
       tap((response) => {
         const current = this.workspace();
         const revision = Number(response.unified?.revision);
-        if (!current || response.unified?.persisted !== true || !Number.isSafeInteger(revision) || revision < 1) {
+        if (!current || current.patientId !== patientId || current.revision !== revisionAtStart) {
+          throw new Error('El paciente o la versión de la historia cambió durante el guardado. La respuesta anterior fue descartada.');
+        }
+        if (response.unified?.persisted !== true || !Number.isSafeInteger(revision) || revision < 1) {
           throw new Error('La base clínica no confirmó el guardado de la historia.');
         }
         const savedState = structuredClone(nextState);

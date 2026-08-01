@@ -69,7 +69,7 @@
         <nav class="right-panel-tabs" role="tablist" aria-label="Panel derecho">
           <button class="right-tab" [class.active]="selectedPane() === 'studies'" type="button" role="tab" [attr.aria-selected]="selectedPane() === 'studies'" (click)="selectPane('studies')">Estudios</button>
           <button class="right-tab right-tab--care" [class.active]="selectedPane() === 'care'" type="button" role="tab" [attr.aria-selected]="selectedPane() === 'care'" (click)="selectPane('care')">H. de día</button>
-          <button class="right-tab" [class.active]="selectedPane() === 'prescription'" type="button" role="tab" [attr.aria-selected]="selectedPane() === 'prescription'" (click)="selectPane('prescription')">Prescripcion</button>
+          @if (auth.hasPermission('section.prescriptions.view')) { <button class="right-tab" [class.active]="selectedPane() === 'prescription'" type="button" role="tab" [attr.aria-selected]="selectedPane() === 'prescription'" (click)="selectPane('prescription')">Prescripcion</button> }
           <button class="right-tab" [class.active]="selectedPane() === 'agent'" type="button" role="tab" [attr.aria-selected]="selectedPane() === 'agent'" (click)="selectPane('agent')">Agente</button>
           <button class="right-tab" [class.active]="selectedPane() === 'research'" type="button" role="tab" [attr.aria-selected]="selectedPane() === 'research'" (click)="selectPane('research')">Investigacion</button>
           <button class="right-tab" [class.active]="selectedPane() === 'timeline'" type="button" role="tab" [attr.aria-selected]="selectedPane() === 'timeline'" (click)="selectPane('timeline')">Linea del tiempo</button>
@@ -80,6 +80,7 @@
       <div class="right-panel-body">
         @if (selectedPane() === 'studies') { <app-study-panel /> }
         @else if (selectedPane() === 'care') { <app-day-hospital /> }
+        @else if (selectedPane() === 'prescription') { <app-prescription /> }
         @else if (selectedPane() === 'timeline') { <app-timeline-panel /> }
         @else {
         <section class="right-empty-state"><strong>{{ selectedPane() === 'care' ? 'Hospital de día' : selectedPane() === 'studies' ? 'Estudios' : 'Módulo clínico' }}</strong><span>Este panel conserva la geometría y los estilos de la versión vigente. Su contenido se migra con su mismo flujo y permisos.</span><button class="tool-button" type="button" (click)="legacyFallback()"><span>Usar módulo estable</span></button></section>

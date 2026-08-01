@@ -23,18 +23,25 @@ import tools.jackson.databind.JsonNode;
 public class ClinicalDocumentController {
   private final PatientDocumentService documents;
   private final AuthContext auth;
+  private final ClinicalDocumentAccessPolicy accessPolicy;
 
-  public ClinicalDocumentController(PatientDocumentService documents, AuthContext auth) {
+  public ClinicalDocumentController(
+      PatientDocumentService documents,
+      AuthContext auth,
+      ClinicalDocumentAccessPolicy accessPolicy) {
     this.documents = documents;
     this.auth = auth;
+    this.accessPolicy = accessPolicy;
   }
 
   @GetMapping
   ResponseEntity<JsonNode> get(HttpServletRequest request) {
+    auth.requirePermission(request, "section.history.view");
     SessionPrincipal principal = auth.require(request);
     JsonNode state = principal.activePatientId() == null
         ? documents.blankTemplate()
         : documents.state(documents.require(principal.activePatientId()));
+    state = accessPolicy.visibleState(state, principal);
     return ResponseEntity.ok()
         .cacheControl(CacheControl.noStore())
         .header(HttpHeaders.PRAGMA, "no-cache")
@@ -50,13 +57,15 @@ public class ClinicalDocumentController {
     if (principal.activePatientId() == null) {
       throw new ApiException(HttpStatus.CONFLICT, "Abra un paciente antes de guardar.");
     }
+    StoredDocument current = documents.require(principal.activePatientId());
+    JsonNode stateToSave = accessPolicy.writableState(state, current.document(), principal);
     long expected = state.path("meta").path("persistenceRevision").asLong(0);
     if (expected < 1) {
       throw new ApiException(HttpStatus.CONFLICT, "Falta la revisión de la historia clínica.");
     }
     StoredDocument saved = documents.save(
         principal.activePatientId(),
-        state,
+        stateToSave,
         expected,
         principal.userId());
     return ResponseEntity.ok()

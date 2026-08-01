@@ -25,4 +25,8 @@ export class AuthService {
       tap((session) => this.session.set(session))
     );
   }
+
+  hasPermission(permission: string): boolean {
+    return Boolean(this.session()?.user?.permissions?.includes(permission));
+  }
 }

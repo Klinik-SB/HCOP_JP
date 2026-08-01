@@ -41,6 +41,10 @@ frontend anterior sólo se retira cuando la matriz de paridad está completa.
 - [Corte Angular 003](CORTE-ANGULAR-003-HOSPITAL-DE-DIA-LECTURA.md): Hospital
   de Día Angular con tratamientos, ciclos, días, drogas, turnos y lectura de
   las colas operativas.
+- [Corte Angular 004](CORTE-ANGULAR-004-TURNERO-LECTURA.md): agenda por sillón,
+  lista de espera, filtros y lectura operativa Angular.
+- [Corte Angular 005](CORTE-ANGULAR-005-PRESCRIPCION.md): recetas, certificados,
+  solicitudes, texto libre y formularios sistémicos con permisos efectivos.
 
 ## Ciclo obligatorio por capacidad
 

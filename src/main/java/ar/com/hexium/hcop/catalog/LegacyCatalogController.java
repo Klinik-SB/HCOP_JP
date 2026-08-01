@@ -1,5 +1,7 @@
 package ar.com.hexium.hcop.catalog;
 
+import ar.com.hexium.hcop.auth.AuthContext;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,14 +14,17 @@ public class LegacyCatalogController {
   private final LegacyProtocolCatalogService protocols;
   private final SeerTnmCatalogService tnm;
   private final DrugCatalogService drugs;
+  private final AuthContext auth;
 
   public LegacyCatalogController(
       LegacyProtocolCatalogService protocols,
       SeerTnmCatalogService tnm,
-      DrugCatalogService drugs) {
+      DrugCatalogService drugs,
+      AuthContext auth) {
     this.protocols = protocols;
     this.tnm = tnm;
     this.drugs = drugs;
+    this.auth = auth;
   }
 
   @GetMapping("/api/protocols")
@@ -35,7 +40,10 @@ public class LegacyCatalogController {
   }
 
   @GetMapping("/api/medications/search")
-  Map<String, Object> medicationSearch(@RequestParam(defaultValue = "") String q) {
+  Map<String, Object> medicationSearch(
+      @RequestParam(defaultValue = "") String q,
+      HttpServletRequest request) {
+    auth.requirePermission(request, "section.prescriptions.view");
     var results = drugs.search(q).stream().map(item -> Map.<String, Object>of(
         "id", item.getOrDefault("id", ""),
         "generic", item.getOrDefault("genericName", item.getOrDefault("name", "")),

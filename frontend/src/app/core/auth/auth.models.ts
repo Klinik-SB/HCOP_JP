@@ -4,6 +4,7 @@ export interface AuthenticatedUser {
   email?: string;
   displayName?: string;
   specialty?: string;
+  licenseNumber?: string;
   roles: string[];
   permissions: string[];
 }

@@ -30,16 +30,19 @@ public class PatientController {
   private final PatientDocumentService documents;
   private final AuthContext authContext;
   private final AuthService auth;
+  private final ClinicalDocumentAccessPolicy accessPolicy;
 
   public PatientController(
       PatientService patients,
       PatientDocumentService documents,
       AuthContext authContext,
-      AuthService auth) {
+      AuthService auth,
+      ClinicalDocumentAccessPolicy accessPolicy) {
     this.patients = patients;
     this.documents = documents;
     this.authContext = authContext;
     this.auth = auth;
+    this.accessPolicy = accessPolicy;
   }
 
   @GetMapping({"/api/clinical/patients", "/api/lira/patients"})
@@ -57,7 +60,7 @@ public class PatientController {
     SessionPrincipal actor = authContext.require(request);
     try {
       Creation creation = patients.create(body.toDomain(), actor, authContext.token(request));
-      JsonNode state = documents.state(creation.document());
+      JsonNode state = accessPolicy.visibleState(documents.state(creation.document()), actor);
       Map<String, Object> result = new LinkedHashMap<>();
       result.put("ok", true);
       result.put("created", true);
@@ -91,12 +94,13 @@ public class PatientController {
       @PathVariable long patientId,
       HttpServletRequest request) {
     authContext.requirePermission(request, "section.history.view");
+    SessionPrincipal principal = authContext.require(request);
     Patient patient = patients.require(patientId);
     StoredDocument document = documents.require(patientId);
     auth.setActivePatient(authContext.token(request), patientId);
     return Map.of(
         "ok", true,
-        "state", documents.state(document),
+        "state", accessPolicy.visibleState(documents.state(document), principal),
         "counts", patients.counts(document.document()),
         "completeness", patients.completeness(),
         "warnings", List.of(),

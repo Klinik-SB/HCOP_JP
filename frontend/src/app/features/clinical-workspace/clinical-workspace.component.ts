@@ -46,5 +46,62 @@ export class ClinicalWorkspaceComponent implements OnInit {
   studyHeading(record: ClinicalRecord): string { return this.join(this.date(record.date), this.text(record.type), this.text(record.title)); }
   treatmentHeading(record: ClinicalRecord): string { return this.join(this.date(record.date), this.text(record.scheme)); }
   evolutionHeading(record: ClinicalRecord): string { return this.join(this.date(record.date), this.text(record.author) || this.text(record.reason)); }
+  activityRecords(): ClinicalRecord[] {
+    return [...this.records('evolutions'), ...this.records('prescriptions')]
+      .sort((left, right) => {
+        const leftKey = [left.date || String(left.createdAt || '').slice(0, 10), left.createdAt || left.updatedAt || ''].join('|');
+        const rightKey = [right.date || String(right.createdAt || '').slice(0, 10), right.createdAt || right.updatedAt || ''].join('|');
+        return leftKey.localeCompare(rightKey);
+      });
+  }
+  activityHeading(record: ClinicalRecord): string {
+    const type = this.text(record.type);
+    const label = ({ medication: 'Receta médica', certificate: 'Certificado médico', study: 'Solicitud de estudio', free: 'Indicación médica', systemic: 'Formulario sistémico' } as Record<string, string>)[type];
+    return this.join(this.date(record.date), label || this.text(record.author) || this.text(record.reason), this.text(record.title));
+  }
+  prescriptionDetails(record: ClinicalRecord): string[] {
+    const data = record['data'] && typeof record['data'] === 'object' ? record['data'] as Record<string, unknown> : {};
+    const value = (key: string): string => this.text(data[key]);
+    if (record.type === 'medication') return [
+      this.join(value('generic'), value('brand')),
+      [value('presentation'), value('form'), value('quantity')].filter(Boolean).join(' - '),
+      [value('dose'), value('route'), value('frequency'), value('duration')].filter(Boolean).join(' - '),
+      value('indication') ? `Indicación: ${value('indication')}` : '',
+      value('instructions') ? `Instrucciones: ${value('instructions')}` : ''
+    ].filter(Boolean);
+    if (record.type === 'certificate') return [
+      [value('from') ? `Desde ${this.date(value('from'))}` : '', value('to') ? `hasta ${this.date(value('to'))}` : ''].filter(Boolean).join(' '),
+      value('text'), data['includeDiagnosis'] === true ? 'Incluye diagnóstico' : ''
+    ].filter(Boolean);
+    if (record.type === 'study') return [
+      [value('category'), value('priority')].filter(Boolean).join(' - '), value('name'),
+      value('indication') ? `Indicación clínica: ${value('indication')}` : '',
+      value('notes') ? `Preparación / observaciones: ${value('notes')}` : ''
+    ].filter(Boolean);
+    if (record.type === 'systemic') {
+      const fields = Array.isArray(data['fields']) ? data['fields'] as Array<Record<string, unknown>> : [];
+      const seen = new Set<string>();
+      const clinicalLines = fields.map((field) => {
+        if (field['kind'] === 'checkbox') return field['value'] === true ? this.text(field['label']) : '';
+        const fieldValue = this.text(field['value']);
+        const localKey = this.text(field['localKey']);
+        if (!fieldValue || /^(patient|professional|exam)\./.test(localKey)
+            || ['today', 'todayWithCity', 'mendozaToday', 'alwaysTrue', 'currentYear', 'blank'].includes(localKey)) return '';
+        return `${this.text(field['label'])}: ${fieldValue}`;
+      }).filter((line) => {
+        const key = line.toLocaleLowerCase('es-AR').replace(/\s+/g, ' ').trim();
+        if (!key || seen.has(key)) return false;
+        seen.add(key); return true;
+      });
+      const pages = Array.isArray(data['pages']) ? data['pages'].length : 0;
+      return [value('formTitle') || this.text(record.title), ...clinicalLines, `${pages} ${pages === 1 ? 'página' : 'páginas'}`].filter(Boolean);
+    }
+    return [value('title'), value('text'), this.recordBody(record)].filter(Boolean);
+  }
+  activityAudit(record: ClinicalRecord): string {
+    const audit = record['audit'] && typeof record['audit'] === 'object' ? record['audit'] as Record<string, unknown> : {};
+    const author = [this.text(audit['lastName']) || this.text(record.author), this.text(audit['license']) ? `Mat. ${this.text(audit['license'])}` : ''].filter(Boolean).join(' · ');
+    return author ? `${this.text(audit['action']) || 'cargado'} por ${author}` : '';
+  }
   private join(...values: string[]): string { return values.filter((value) => Boolean(value)).join(' · '); }
 }

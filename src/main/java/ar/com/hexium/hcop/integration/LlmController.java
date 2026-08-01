@@ -174,7 +174,8 @@ public class LlmController {
         Respondé SOLO un objeto JSON cuyas claves sean exactamente las del manifiesto.
         Para casillas usá true/false. Si falta un dato usá cadena vacía. No inventes.
         MANIFIESTO:
-        """ + manifest + "\nTEXTO CLÍNICO:\n" + limited(body.path("clinicalText").asText(""));
+        """ + manifest + "\nTEXTO CLÍNICO:\n" + limited(body.path("clinicalText").asText(""))
+        + "\nINDICACIÓN ADICIONAL DEL PROFESIONAL:\n" + limited(body.path("notes").asText(""));
     Completion response = llm.complete(
         configuration.internal(),
         List.of(new Message("system", "Sos un extractor de formularios clínicos."),

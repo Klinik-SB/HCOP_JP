@@ -8,12 +8,13 @@ import { TimelinePanelComponent } from '../features/timeline/timeline-panel.comp
 import { NewPatientModalComponent } from '../features/patients/new-patient-modal.component';
 import { DayHospitalComponent } from '../features/day-hospital/day-hospital.component';
 import { CareSchedulerComponent } from '../features/scheduler/care-scheduler.component';
+import { PrescriptionComponent } from '../features/prescription/prescription.component';
 
 type RightPane = 'studies' | 'care' | 'prescription' | 'agent' | 'research' | 'timeline' | 'protocols' | 'tools';
 
 @Component({
   selector: 'app-clinical-shell',
-  imports: [ClinicalWorkspaceComponent, StudyPanelComponent, TimelinePanelComponent, DayHospitalComponent, NewPatientModalComponent, CareSchedulerComponent],
+  imports: [ClinicalWorkspaceComponent, StudyPanelComponent, TimelinePanelComponent, DayHospitalComponent, NewPatientModalComponent, CareSchedulerComponent, PrescriptionComponent],
   templateUrl: './clinical-shell.component.html',
   styleUrl: './clinical-shell.component.scss'
 })
