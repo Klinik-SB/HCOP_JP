@@ -1,6 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../core/auth/auth.service';
 import { PatientWorkspaceService } from '../../core/patients/patient-workspace.service';
 
 type JsonObject = Record<string, unknown>;
@@ -36,6 +37,12 @@ interface CareCard {
   cycles: CareCycle[];
 }
 
+interface PreparationDraft {
+  componentKey: string; drugId: string; drugName: string; lot: string; expiryDate: string;
+  quantity: string; quantityText: string; unit: string; diluent: string; finalVolume: string;
+  concentration: string; ttlMinutes: string; reservationId: string; inventoryLotId: string;
+}
+
 const STATUS_LABELS: Record<string, string> = {
   planned: 'Pendiente', pending: 'Pendiente', current: 'En seguimiento', partial: 'Parcial',
   scheduled: 'Turno registrado', completed: 'Aplicación finalizada', cancelled: 'Cancelado',
@@ -54,6 +61,7 @@ const STATUS_LABELS: Record<string, string> = {
 export class DayHospitalComponent {
   readonly workspace = inject(PatientWorkspaceService);
   private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
 
   readonly view = signal<CareView>('treatments');
   readonly treatments = signal<JsonObject[]>([]);
@@ -85,6 +93,13 @@ export class DayHospitalComponent {
   readonly triageReason = signal('');
   readonly triageRescheduledDate = signal('');
   readonly preparationNotes = signal('');
+  readonly preparationVerifiedBy = signal('');
+  readonly preparationDrafts = signal<PreparationDraft[]>([]);
+  readonly preparationUsers = signal<JsonObject[]>([]);
+  readonly eligiblePreparationUsers = computed(() => {
+    const currentId = String(this.auth.session()?.user?.id || '');
+    return this.preparationUsers().filter((user) => this.pick(user, 'id') !== currentId);
+  });
   readonly loading = signal(false);
   readonly error = signal('');
 
@@ -109,6 +124,7 @@ export class DayHospitalComponent {
   selectView(view: CareView): void {
     this.view.set(view);
     if (view !== 'treatments') this.loadQueue();
+    if (view === 'preparation') this.loadPreparationUsers();
   }
 
   reload(): void {
@@ -172,6 +188,8 @@ export class DayHospitalComponent {
         this.stockNotes.set(this.pick(workflow, 'stockReservationNotes'));
         this.populateTriage(workflow);
         this.preparationNotes.set('');
+        this.populatePreparation(workflow);
+        if (this.view() === 'preparation') this.loadPreparationUsers();
         this.workflowActionMessage.set('');
         this.workflowLoading.set(false);
       },
@@ -319,6 +337,58 @@ export class DayHospitalComponent {
       }
     });
   }
+  updatePreparationDraft(index: number, field: keyof PreparationDraft, value: string): void {
+    this.preparationDrafts.update((current) => current.map((draft, position) => position === index ? { ...draft, [field]: String(value ?? '') } : draft));
+  }
+  completePreparation(): void {
+    const workflow = this.selectedWorkflow();
+    if (!workflow || this.workflowActionLoading()) return;
+    if (!this.preparationVerifiedBy()) {
+      this.workflowActionMessage.set('Seleccione un segundo profesional para verificar la mezcla.');
+      return;
+    }
+    const drafts = this.preparationDrafts();
+    if (!drafts.length || drafts.some((draft) => !draft.drugName || !draft.lot || !draft.expiryDate || !draft.quantity || !draft.unit || !draft.diluent || !draft.finalVolume || !draft.concentration || !draft.ttlMinutes)) {
+      this.workflowActionMessage.set('Complete lote, vencimiento, cantidad, unidad, diluyente, volumen, concentración y TTL para cada droga.');
+      return;
+    }
+    const preparations = drafts.map((draft) => ({
+      componentKey: draft.componentKey || null,
+      drugName: draft.drugName,
+      lot: draft.lot.trim(),
+      expiryDate: draft.expiryDate,
+      quantity: this.numeric(draft.quantity),
+      quantityText: draft.quantityText || `${draft.quantity} ${draft.unit}`.trim(),
+      unit: draft.unit.trim(),
+      diluent: draft.diluent.trim(),
+      finalVolume: draft.finalVolume.trim(),
+      concentration: draft.concentration.trim(),
+      ttlMinutes: this.numeric(draft.ttlMinutes),
+      reservationId: draft.reservationId || null,
+      inventoryLotId: draft.inventoryLotId ? Number(draft.inventoryLotId) : null
+    }));
+    const body = {
+      expectedRevision: this.number(this.pick(workflow, 'revision'), 0),
+      idempotencyKey: `preparation-complete-${Date.now()}-${crypto.randomUUID()}`,
+      verifiedBy: this.preparationVerifiedBy(), preparations,
+      notes: this.preparationNotes().trim()
+    };
+    this.workflowActionLoading.set(true); this.workflowActionMessage.set('');
+    this.http.post<{ workflow?: JsonObject }>(`${this.workflowUrl(workflow)}/preparation/complete`, body, { withCredentials: true }).subscribe({
+      next: (response) => {
+        const updated = this.object(response.workflow);
+        this.selectedWorkflow.set(updated);
+        this.populatePreparation(updated);
+        this.workflowActionLoading.set(false);
+        this.workflowActionMessage.set('Mezcla completada con trazabilidad y TTL registrados.');
+        this.loadQueue();
+      },
+      error: (response: { error?: { error?: string } }) => {
+        this.workflowActionLoading.set(false);
+        this.workflowActionMessage.set(response?.error?.error || 'No se pudo completar la preparación.');
+      }
+    });
+  }
   workflowAppointment(workflow: JsonObject): JsonObject { return this.object(workflow['appointment']); }
   workflowDrugs(workflow: JsonObject): JsonObject[] { return this.array(workflow['applicationDrugs']); }
   workflowReservations(workflow: JsonObject): JsonObject[] { return this.array(workflow['stockReservations']); }
@@ -346,6 +416,42 @@ export class DayHospitalComponent {
     this.triageToxicityNotes.set(this.pick(toxicity, 'notes'));
     this.triageReason.set(this.pick(assessment, 'reason') || this.pick(workflow, 'clinicalAuthorizationReason'));
     this.triageRescheduledDate.set(this.pick(assessment, 'rescheduledDate'));
+  }
+
+  private populatePreparation(workflow: JsonObject): void {
+    const reservations = this.workflowReservations(workflow);
+    const data = this.object(workflow['preparationData']);
+    const existing = this.array(data['preparations']);
+    this.preparationNotes.set(this.pick(data, 'notes'));
+    this.preparationVerifiedBy.set(this.pick(workflow, 'preparationVerifiedByUserId'));
+    this.preparationDrafts.set(this.workflowDrugs(workflow).map((drug, index) => {
+      const name = this.pick(drug, 'drugName', 'name', 'nombre');
+      const componentKey = this.pick(drug, 'sourceItemRef', 'componentKey');
+      const current = existing.find((item) => (componentKey && this.pick(item, 'componentKey') === componentKey) || this.pick(item, 'drugName').toLocaleLowerCase('es-AR') === name.toLocaleLowerCase('es-AR')) || {};
+      const reservation = reservations.find((item) => (componentKey && this.pick(item, 'componentKey') === componentKey) || this.pick(item, 'drugName').toLocaleLowerCase('es-AR') === name.toLocaleLowerCase('es-AR')) || {};
+      const quantityText = this.pick(drug, 'calculatedDoseText', 'prescribedDoseText', 'totalDoseText', 'calculatedDose', 'dose', 'dosis');
+      return {
+        componentKey, drugId: this.pick(drug, 'drugId', 'idDroga', 'id'), drugName: name || `Droga ${index + 1}`,
+        lot: this.pick(current, 'lot'), expiryDate: this.pick(current, 'expiryDate'),
+        quantity: this.pick(current, 'quantity') || this.pick(reservation, 'requestedQuantity') || this.firstNumber(quantityText),
+        quantityText: this.pick(current, 'quantityText') || this.pick(reservation, 'requestedQuantityText') || quantityText,
+        unit: this.pick(current, 'unit') || this.pick(reservation, 'unit') || this.pick(drug, 'doseUnit', 'unidadDosis', 'unidad'),
+        diluent: this.pick(current, 'diluent'), finalVolume: this.pick(current, 'finalVolume'),
+        concentration: this.pick(current, 'concentration'), ttlMinutes: this.pick(current, 'ttlMinutes') || '240',
+        reservationId: this.pick(reservation, 'id'), inventoryLotId: this.pick(reservation, 'inventoryLotId')
+      };
+    }));
+  }
+
+  private loadPreparationUsers(): void {
+    this.http.get<{ items?: JsonObject[] }>('/api/clinical/users', {
+      params: new HttpParams().set('capability', 'application.preparation.manage'), withCredentials: true
+    }).subscribe({ next: (response) => this.preparationUsers.set(this.array(response.items)), error: () => this.preparationUsers.set([]) });
+  }
+
+  private firstNumber(value: string): string {
+    const match = value.replace(',', '.').match(/-?\d+(?:\.\d+)?/);
+    return match?.[0] || '';
   }
 
   private numeric(value: string): number | null {

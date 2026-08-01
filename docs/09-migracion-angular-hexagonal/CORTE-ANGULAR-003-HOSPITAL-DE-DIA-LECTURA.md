@@ -61,10 +61,16 @@ Ambas acciones usan revisión optimista e idempotencia. El servidor exige PASS,
 medicación asegurada y una preparación completa no vencida antes de liberar;
 Angular no permite declarar esos estados localmente.
 
+Cuando la preparación está iniciada, Angular genera una ficha por componente
+prescripto y solicita lote, vencimiento, cantidad, unidad, diluyente, volumen,
+concentración y TTL. El segundo verificador se elige entre usuarios habilitados
+y no puede ser el preparador. El backend resuelve la correspondencia con cada
+reserva, consume el stock y calcula la vigencia mínima de la mezcla.
+
 ## Límites deliberados de este corte
 
-Las transiciones restantes (documentar lotes y completar la mezcla,
-administrar, interrumpir y cerrar) continúan en la interfaz estable
+Las transiciones restantes (administrar, interrumpir y cerrar) continúan en la
+interfaz estable
 mientras se migran como formularios Angular con revisión optimista,
 idempotencia y campos completos. No se agregaron botones sin efecto ni se
 alteró la lógica Java/PostgreSQL.

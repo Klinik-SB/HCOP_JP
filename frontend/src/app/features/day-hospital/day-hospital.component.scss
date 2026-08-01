@@ -41,6 +41,17 @@
 .care-triage-groups label { display: grid; min-width: 0; align-content: start; gap: 3px; color: #65747b; font-size: 9px; font-weight: 750; }
 .care-triage-groups input, .care-triage-groups select, .care-triage-groups textarea { width: 100%; min-width: 0; border: 1px solid #cbd6dc; border-radius: 1px; background: #fff; padding: 6px 7px; color: #35454d; font: inherit; font-size: 10px; }
 .care-triage-groups textarea { resize: vertical; }
+.care-preparation-verifier label { display: grid; max-width: 420px; gap: 4px; color: #65747b; font-size: 9px; font-weight: 750; }
+.care-preparation-verifier select { width: 100%; border: 1px solid #cbd6dc; border-radius: 1px; background: #fff; padding: 7px 8px; color: #35454d; font-size: 10px; }
+.care-preparation-components { display: grid; gap: 8px; }
+.care-preparation-components > article { border: 1px solid #dbe3e7; background: #fff; padding: 9px; }
+.care-preparation-components > article > header { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 7px; border-bottom: 1px solid #edf0f2; padding-bottom: 7px; }
+.care-preparation-components > article > header span { color: #087fc4; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+.care-preparation-components > article > header strong { color: #35454d; font-size: 11px; }
+.care-preparation-components > article > header small { color: #718087; font-size: 9px; }
+.care-preparation-components > article > div { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; margin-top: 8px; }
+.care-preparation-components label { display: grid; min-width: 0; gap: 3px; color: #65747b; font-size: 9px; font-weight: 750; }
+.care-preparation-components input { width: 100%; min-width: 0; border: 1px solid #cbd6dc; border-radius: 1px; background: #fff; padding: 6px 7px; color: #35454d; font-size: 10px; }
 .care-workflow-section { border: 1px solid #dbe3e7; background: #fff; padding: 11px; }
 .care-workflow-section > header { display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid #edf0f2; padding-bottom: 8px; }
 .care-workflow-section > header strong { color: #087fc4; font-size: 11px; }
@@ -57,4 +68,5 @@
 .care-workflow-audit span { color: #718087; font-size: 9px; }
 @media (max-width: 700px) { .care-hierarchy-filters { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 920px) { .care-triage-groups { grid-template-columns: 1fr; } }
+@media (max-width: 920px) { .care-preparation-components > article > div { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 760px) { .care-workflow-patient, .care-workflow-step-grid, .care-workflow-action-fields { grid-template-columns: 1fr 1fr; } }
