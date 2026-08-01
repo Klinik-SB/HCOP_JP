@@ -1,11 +1,14 @@
-import { Component, OnInit, effect, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, effect, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { ClinicalFocusRequest, ClinicalFocusService } from '../../core/clinical/clinical-focus.service';
 import { PatientWorkspaceService } from '../../core/patients/patient-workspace.service';
 import { ClinicalPatient, ClinicalRecord, ClinicalState } from '../../core/patients/patient-workspace.models';
 
 @Component({ selector: 'app-clinical-workspace', imports: [ReactiveFormsModule], templateUrl: './clinical-workspace.component.html', styleUrl: './clinical-workspace.component.scss' })
 export class ClinicalWorkspaceComponent implements OnInit {
   readonly workspaceService = inject(PatientWorkspaceService);
+  private readonly clinicalFocus = inject(ClinicalFocusService);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   readonly query = new FormControl('', { nonNullable: true });
   readonly results = signal<ClinicalPatient[]>([]);
   readonly searching = signal(false);
@@ -14,6 +17,11 @@ export class ClinicalWorkspaceComponent implements OnInit {
   constructor() {
     effect(() => {
       if (this.workspaceService.pickerOpen() && this.workspaceService.pickerRequest() > 0) this.search();
+    });
+    effect(() => {
+      const request = this.clinicalFocus.request();
+      if (!request.id) return;
+      queueMicrotask(() => this.applyClinicalFocus(request));
     });
   }
 
@@ -104,4 +112,40 @@ export class ClinicalWorkspaceComponent implements OnInit {
     return author ? `${this.text(audit['action']) || 'cargado'} por ${author}` : '';
   }
   private join(...values: string[]): string { return values.filter((value) => Boolean(value)).join(' · '); }
+
+  private applyClinicalFocus(request: ClinicalFocusRequest): void {
+    const root = this.host.nativeElement;
+    const colors = ['study', 'pathology', 'chemotherapy', 'evolution', 'hormone', 'systemic', 'radiotherapy', 'surgery', 'immunotherapy', 'targeted'];
+    root.querySelectorAll<HTMLElement>('.agent-navigation-focus, .agent-highlight').forEach((element) => {
+      element.classList.remove('agent-navigation-focus', 'agent-highlight', ...colors.map((color) => `agent-highlight--${color}`));
+    });
+    const candidates = [...root.querySelectorAll<HTMLElement>('[data-clinical-date], .doc-entry, .doc-section')];
+    let first: HTMLElement | undefined;
+    for (const highlight of request.highlights || []) {
+      const terms = highlight.terms.map((term) => this.normalizeSearch(term)).filter((term) => term.length >= 3);
+      if (!terms.length) continue;
+      const color = colors.includes(String(highlight.color)) ? String(highlight.color) : 'study';
+      for (const candidate of candidates) {
+        const content = this.normalizeSearch(candidate.textContent || '');
+        if (!terms.some((term) => content.includes(term))) continue;
+        candidate.classList.add('agent-highlight', `agent-highlight--${color}`);
+        first ||= candidate;
+      }
+    }
+    if (request.date) first = candidates.find((candidate) => candidate.dataset['clinicalDate'] === request.date) || first;
+    if (!first && request.text) {
+      const words = this.normalizeSearch(request.text).split(/\s+/).filter((word) => word.length >= 5);
+      first = candidates.find((candidate) => {
+        const content = this.normalizeSearch(candidate.textContent || '');
+        return words.some((word) => content.includes(word));
+      });
+    }
+    if (!first) return;
+    first.classList.add('agent-navigation-focus');
+    first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  private normalizeSearch(value: string): string {
+    return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es-AR').replace(/\s+/g, ' ').trim();
+  }
 }

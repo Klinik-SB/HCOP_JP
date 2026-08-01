@@ -1,0 +1,12 @@
+:host { display: block; height: 100%; min-height: 0; }
+[data-right-panel="agent"] { display: block; height: 100%; min-height: 0; overflow: hidden; }
+.agent-status-dot { background: #aeb7bd; box-shadow: 0 0 0 3px rgb(174 183 189 / 14%); }
+.agent-status-dot.is-ready { background: #0e9aef; box-shadow: 0 0 0 3px rgb(14 154 239 / 14%); }
+.agent-status-dot.is-offline { background: #d06b62; box-shadow: 0 0 0 3px rgb(208 107 98 / 14%); }
+.clinical-agent-head .icon-button svg, .agent-avatar svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.agent-message--error .agent-message-content { border-color: #efc4bf; background: #fff7f6; color: #893c35; }
+.agent-suggestions button:disabled { opacity: .48; cursor: default; }
+.agent-chart-axis { fill: none; stroke: #d6dde2; stroke-width: 1; }
+.agent-chart circle, .agent-chart rect { cursor: pointer; outline: none; }
+.agent-chart circle:focus, .agent-chart rect:focus { filter: drop-shadow(0 0 3px rgb(14 154 239 / 80%)); }
+.agent-composer textarea:disabled { cursor: not-allowed; opacity: .72; }

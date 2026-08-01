@@ -1,6 +1,7 @@
 package ar.com.hexium.hcop.auth;
 
 import ar.com.hexium.hcop.common.api.AuthenticationRequiredResponse;
+import ar.com.hexium.hcop.common.api.ApiErrorResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -32,12 +33,35 @@ public class AuthInterceptor implements HandlerInterceptor {
     });
 
     if (!path.startsWith("/api/") || isPublic(path) || path.equals("/api/auth/me")) return true;
-    if (principal.isPresent()) return true;
+    if (principal.isPresent()) {
+      String earlyPermission = earlyPermission(path, request.getMethod());
+      if (earlyPermission.isBlank() || principal.get().hasPermission(earlyPermission)) return true;
+      response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+      response.setContentType("application/json");
+      response.setCharacterEncoding("UTF-8");
+      mapper.writeValue(
+          response.getOutputStream(),
+          ApiErrorResponse.of(
+              HttpServletResponse.SC_FORBIDDEN,
+              "No tiene permiso para realizar esta acción.",
+              "PERMISSION_DENIED"));
+      return false;
+    }
     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     response.setContentType("application/json");
     response.setCharacterEncoding("UTF-8");
     mapper.writeValue(response.getOutputStream(), AuthenticationRequiredResponse.required());
     return false;
+  }
+
+  /**
+   * Endpoints cuyo cuerpo puede ser costoso se autorizan antes de que Spring/Jackson lo
+   * materialice. El controlador conserva el mismo control como segunda barrera.
+   */
+  private String earlyPermission(String path, String method) {
+    return "POST".equalsIgnoreCase(method) && "/api/agent/chat".equals(path)
+        ? "section.agent.view"
+        : "";
   }
 
   private boolean isPublic(String path) {

@@ -2,8 +2,15 @@ package ar.com.hexium.hcop.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import ar.com.hexium.hcop.integration.LlmController;
+import ar.com.hexium.hcop.integration.LlmController.AgentChatRequest;
+import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.responses.ApiResponse;
+import io.swagger.v3.oas.models.responses.ApiResponses;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
+import org.springframework.web.method.HandlerMethod;
 
 class OpenApiConfigurationTest {
 
@@ -25,5 +32,97 @@ class OpenApiConfigurationTest {
             "error",
             "code",
             "status");
+  }
+
+  @Test
+  void registraLosContratosTipadosDelAgenteClinico() {
+    OpenAPI openApi = new OpenAPI();
+
+    new OpenApiConfiguration().reusableSchemas().customise(openApi);
+
+    assertThat(openApi.getComponents().getSchemas())
+        .containsKeys(
+            "AgentHistoryMessage",
+            "AgentChatRequest",
+            "AgentTableArtifact",
+            "AgentChartPoint",
+            "AgentChartSeries",
+            "AgentChartArtifact",
+            "AgentArtifact",
+            "AgentHighlight",
+            "AgentChatResponse",
+            "LlmStatusResponse");
+    var request = openApi.getComponents().getSchemas().get("AgentChatRequest");
+    assertThat(request.getRequired()).containsExactly("message");
+    assertThat(((io.swagger.v3.oas.models.media.Schema<?>)
+        request.getProperties().get("message")).getMaxLength()).isEqualTo(8_000);
+    assertThat(((io.swagger.v3.oas.models.media.Schema<?>)
+        request.getProperties().get("clinicalText")).getMaxLength()).isEqualTo(350_000);
+    assertThat(request.getProperties()).containsKeys(
+        "history", "timelineEvents", "consultAgents");
+    assertThat(openApi.getComponents().getSchemas().get("AgentChatResponse").getRequired())
+        .containsExactlyInAnyOrder(
+            "ok", "answer", "model", "artifacts", "followUps", "highlights");
+    var response = openApi.getComponents().getSchemas().get("AgentChatResponse");
+    assertThat(((io.swagger.v3.oas.models.media.ArraySchema)
+        response.getProperties().get("artifacts")).getMaxItems()).isEqualTo(8);
+    assertThat(((io.swagger.v3.oas.models.media.ArraySchema)
+        response.getProperties().get("artifacts")).getItems().get$ref())
+        .isEqualTo("#/components/schemas/AgentArtifact");
+    assertThat(((io.swagger.v3.oas.models.media.ArraySchema)
+        response.getProperties().get("followUps")).getMaxItems()).isEqualTo(8);
+    assertThat(((io.swagger.v3.oas.models.media.ArraySchema)
+        response.getProperties().get("highlights")).getMaxItems()).isEqualTo(20);
+    assertThat(openApi.getComponents().getSchemas().get("AgentArtifact").getOneOf())
+        .extracting(item -> ((io.swagger.v3.oas.models.media.Schema<?>) item).get$ref())
+        .containsExactly(
+            "#/components/schemas/AgentTableArtifact",
+            "#/components/schemas/AgentChartArtifact");
+    assertThat(openApi.getComponents().getSchemas().get("LlmStatusResponse").getRequired())
+        .containsExactlyInAnyOrder("ok", "enabled", "model", "provider", "configured");
+  }
+
+  @Test
+  void aplicaEnSwaggerLosContratosYElPermisoDelAgente() throws Exception {
+    Operation operation = operationWithSuccess();
+    HandlerMethod handler = handler(
+        "agent", AgentChatRequest.class, HttpServletRequest.class);
+
+    new OpenApiConfiguration().documentedOperations().customize(operation, handler);
+
+    assertThat(operation.getExtensions().get("x-hcop-permission"))
+        .isEqualTo("section.agent.view");
+    assertThat(operation.getRequestBody().getContent()
+        .get("application/json").getSchema().get$ref())
+        .isEqualTo("#/components/schemas/AgentChatRequest");
+    assertThat(operation.getResponses().get("200").getContent()
+        .get("application/json").getSchema().get$ref())
+        .isEqualTo("#/components/schemas/AgentChatResponse");
+  }
+
+  @Test
+  void aplicaEnSwaggerElContratoYElPermisoDelEstadoLlm() throws Exception {
+    Operation operation = operationWithSuccess();
+    HandlerMethod handler = handler("status", HttpServletRequest.class);
+
+    new OpenApiConfiguration().documentedOperations().customize(operation, handler);
+
+    assertThat(operation.getExtensions().get("x-hcop-permission"))
+        .isEqualTo("section.agent.view");
+    assertThat(operation.getResponses().get("200").getContent()
+        .get("application/json").getSchema().get$ref())
+        .isEqualTo("#/components/schemas/LlmStatusResponse");
+  }
+
+  private Operation operationWithSuccess() {
+    return new Operation().responses(new ApiResponses()
+        .addApiResponse("200", new ApiResponse().description("OK")));
+  }
+
+  private HandlerMethod handler(String name, Class<?>... parameterTypes) throws Exception {
+    LlmController controller = new LlmController(null, null, null, null, null);
+    return new HandlerMethod(
+        controller,
+        LlmController.class.getDeclaredMethod(name, parameterTypes));
   }
 }

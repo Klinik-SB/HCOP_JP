@@ -45,6 +45,8 @@ frontend anterior sólo se retira cuando la matriz de paridad está completa.
   lista de espera, filtros y lectura operativa Angular.
 - [Corte Angular 005](CORTE-ANGULAR-005-PRESCRIPCION.md): recetas, certificados,
   solicitudes, texto libre y formularios sistémicos con permisos efectivos.
+- [Corte Angular 006](CORTE-ANGULAR-006-AGENTE.md): Agente clínico, estado LLM,
+  conversación segura, artefactos y navegación sobre la hoja.
 
 ## Ciclo obligatorio por capacidad
 

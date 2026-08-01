@@ -1,0 +1,63 @@
+<section class="right-tab-panel active" data-right-panel="agent">
+  <section class="clinical-agent" aria-label="Agente clínico">
+    <header class="clinical-agent-head">
+      <div>
+        <span class="agent-status-dot" [class.is-ready]="status()?.enabled && status()?.configured" [class.is-offline]="status() && (!status()?.enabled || !status()?.configured)" [title]="statusText()"></span>
+        <div><strong>Agente clínico</strong><small>{{ statusText() }}</small></div>
+      </div>
+      <button class="icon-button" type="button" title="Limpiar conversación" aria-label="Limpiar conversación" (click)="clearConversation()">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 15H6L5 6M10 11v6M14 11v6"/></svg>
+      </button>
+    </header>
+
+    <div class="agent-suggestions" aria-label="Consultas sugeridas">
+      <button type="button" [disabled]="busy() || !workspace.workspace()" (click)="useSuggestion('Resumí la evolución oncológica y la respuesta al tratamiento.')">Resumen dirigido</button>
+      <button type="button" [disabled]="busy() || !workspace.workspace()" (click)="useSuggestion('Armá una tabla cronológica de tratamientos y respuesta.')">Tabla de tratamientos</button>
+      <button type="button" [disabled]="busy() || !workspace.workspace()" (click)="useSuggestion('Graficá todos los valores de marcadores tumorales por fecha.')">Gráfico de marcadores</button>
+      <button type="button" [disabled]="busy() || !workspace.workspace()" (click)="useSuggestion('Buscá y resaltá todos los hallazgos patológicos relevantes de la historia clínica y la línea de tiempo, incluyendo laboratorio, anatomía patológica, imágenes, examen clínico, evoluciones, complicaciones y toxicidades.')">Resaltar hallazgos</button>
+    </div>
+
+    <div class="agent-chat-messages" #messages aria-live="polite" aria-relevant="additions text">
+      @for (message of conversation(); track message.id) {
+        <article class="agent-message" [class.agent-message--assistant]="message.role === 'assistant'" [class.agent-message--user]="message.role === 'user'" [class.agent-message--error]="message.error">
+          <div class="agent-avatar" aria-hidden="true">
+            @if (message.role === 'assistant') { <svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M9 11h.01M15 11h.01M9 15h6M12 3v4"/></svg> }
+            @else { <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg> }
+          </div>
+          <div class="agent-message-content">
+            <p>{{ message.content }}</p>
+            @for (artifact of message.artifacts; track $index) {
+              @if (isTable(artifact)) {
+                <section class="agent-artifact"><h4>{{ artifact.title || 'Tabla clínica' }}</h4><div class="agent-table-wrap"><table class="agent-table"><thead><tr>@for (column of artifact.columns; track $index) { <th scope="col">{{ column }}</th> }</tr></thead><tbody>@for (row of artifact.rows; track $index) { <tr tabindex="0" title="Ubicar en la historia" (click)="navigate(row.join(' '))" (keydown.enter)="navigate(row.join(' '))">@for (cell of row; track $index) { <td>{{ cell }}</td> }</tr> }</tbody></table></div></section>
+              } @else if (isChart(artifact)) {
+                <section class="agent-artifact"><h4>{{ artifact.title || 'Gráfico clínico' }}</h4><div class="agent-chart">
+                  <svg viewBox="0 0 300 190" role="img" [attr.aria-label]="artifact.title || 'Gráfico clínico'">
+                    <path class="agent-chart-axis" d="M20 20V170H285"/>
+                    @for (series of artifact.series; track $index; let seriesIndex = $index) {
+                      @if (artifact.chartType !== 'bar') { <polyline fill="none" [attr.stroke]="chartColor(series, seriesIndex)" stroke-width="2.5" [attr.points]="chartLine(series, artifact)"/> }
+                      @for (point of series.points; track $index; let pointIndex = $index) {
+                        @if (artifact.chartType === 'bar') { <rect [attr.x]="chartX(pointIndex, series.points.length) - barWidth(series) / 2" [attr.y]="chartY(point.y, artifact)" [attr.width]="barWidth(series)" [attr.height]="170 - chartY(point.y, artifact)" [attr.fill]="chartColor(series, seriesIndex)" tabindex="0" (click)="navigate(point.label || point.x.toString())"><title>{{ point.label || point.x }}: {{ point.y }}</title></rect> }
+                        @else { <circle [attr.cx]="chartX(pointIndex, series.points.length)" [attr.cy]="chartY(point.y, artifact)" r="4" [attr.fill]="chartColor(series, seriesIndex)" tabindex="0" (click)="navigate(point.label || point.x.toString())"><title>{{ point.label || point.x }}: {{ point.y }}</title></circle> }
+                      }
+                    }
+                  </svg>
+                  <div class="agent-chart-legend">@for (series of artifact.series; track $index; let seriesIndex = $index) { <span [style.--legend-color]="chartColor(series, seriesIndex)">{{ series.name || 'Serie ' + (seriesIndex + 1) }}</span> }</div>
+                </div></section>
+              }
+            }
+            @if (message.followUps.length) { <div class="agent-followups">@for (prompt of message.followUps; track prompt) { <button type="button" (click)="useFollowUp(prompt)">{{ prompt }}</button> }</div> }
+            @if (!message.greeting) { <div class="agent-message-meta"><span>{{ time(message.createdAt) }}</span>@if (message.model) { <span>{{ message.model }}</span> }</div> }
+          </div>
+        </article>
+      }
+      @if (busy()) {
+        <article class="agent-message agent-message--assistant" role="status" aria-label="El Agente está respondiendo"><div class="agent-avatar" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M9 11h.01M15 11h.01M9 15h6M12 3v4"/></svg></div><div class="agent-message-content"><span class="agent-typing"><span></span><span></span><span></span></span></div></article>
+      }
+    </div>
+
+    <form class="agent-composer" (submit)="$event.preventDefault(); send()">
+      <textarea #agentInput rows="2" [ngModel]="input()" (ngModelChange)="input.set($event)" name="agentInput" [disabled]="busy() || !workspace.workspace()" [placeholder]="workspace.workspace() ? 'Pregunta sobre la historia clínica…' : 'Abra un paciente para consultar…'" autocomplete="off" maxlength="4000" (keydown)="onComposerKeydown($event)"></textarea>
+      <button class="agent-send-button" type="submit" [disabled]="busy() || !workspace.workspace() || !input().trim()" title="Enviar consulta" aria-label="Enviar consulta"><svg class="agent-send-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 19.2 21 12 17.3 4.8 21 12 2.5Z"></path></svg></button>
+    </form>
+  </section>
+</section>
