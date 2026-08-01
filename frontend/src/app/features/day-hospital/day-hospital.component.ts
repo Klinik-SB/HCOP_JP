@@ -123,6 +123,37 @@ export class DayHospitalComponent {
   });
   readonly loading = signal(false);
   readonly error = signal('');
+  readonly newTreatmentOpen = signal(false);
+  readonly newTreatmentLoading = signal(false);
+  readonly newTreatmentMessage = signal('');
+  readonly treatmentOptions = signal<JsonObject>({});
+  readonly treatmentRequirements = signal<JsonObject>({});
+  readonly treatmentDiagnosisId = signal('');
+  readonly treatmentSchemeId = signal('');
+  readonly treatmentType = signal('Quimioterapia');
+  readonly treatmentIntent = signal('Paliativo');
+  readonly treatmentCycles = signal('1');
+  readonly treatmentInitialCycle = signal('1');
+  readonly treatmentCycleDays = signal('');
+  readonly treatmentCreatedDate = signal(new Date().toISOString().slice(0, 10));
+  readonly treatmentFirstCycleDate = signal(new Date().toISOString().slice(0, 10));
+  readonly treatmentConsent = signal('Pendiente');
+  readonly treatmentWeight = signal('');
+  readonly treatmentHeight = signal('');
+  readonly treatmentCreatinine = signal('');
+  readonly treatmentGfr = signal('');
+  readonly treatmentTargetAuc = signal('');
+  readonly treatmentCalcium = signal('');
+  readonly treatmentAlbumin = signal('');
+  readonly treatmentNotes = signal('');
+  readonly treatmentRequirementsConfirmed = signal(false);
+  readonly treatmentMismatchConfirmed = signal(false);
+  readonly treatmentMismatchReason = signal('');
+  readonly diagnosisOptions = computed(() => this.array(this.treatmentOptions()['diagnoses']));
+  readonly schemeOptions = computed(() => this.array(this.treatmentOptions()['schemes']));
+  readonly treatmentTypeOptions = computed(() => this.array(this.treatmentOptions()['treatmentTypes']));
+  readonly treatmentIntentOptions = computed(() => this.array(this.treatmentOptions()['characters']));
+  readonly treatmentConsentOptions = computed(() => this.array(this.treatmentOptions()['consentStates']));
 
   readonly cards = computed(() => this.filteredCards());
   readonly activePatientId = computed(() => this.workspace.workspace()?.patientId || '');
@@ -160,6 +191,60 @@ export class DayHospitalComponent {
     this.expandedId.set(id);
     if (!this.details()[id]) this.loadDetail(id);
   }
+  openNewTreatment(): void {
+    const patientId = this.activePatientId();
+    if (!patientId) return;
+    this.newTreatmentOpen.set(true); this.newTreatmentLoading.set(true); this.newTreatmentMessage.set('');
+    this.http.get<{ options?: JsonObject }>(`/api/clinical/patients/${encodeURIComponent(patientId)}/treatment-options`, { withCredentials: true }).subscribe({
+      next: (response) => { this.treatmentOptions.set(this.object(response.options)); this.newTreatmentLoading.set(false); },
+      error: (response: { error?: { error?: string } }) => { this.newTreatmentLoading.set(false); this.newTreatmentMessage.set(response?.error?.error || 'No se pudieron cargar las opciones del tratamiento.'); }
+    });
+  }
+  closeNewTreatment(): void { if (!this.newTreatmentLoading()) this.newTreatmentOpen.set(false); }
+  selectTreatmentScheme(schemeId: string): void {
+    this.treatmentSchemeId.set(schemeId); this.treatmentRequirements.set({}); this.treatmentRequirementsConfirmed.set(false);
+    const scheme = this.schemeOptions().find((item) => this.pick(item, 'id') === schemeId);
+    if (scheme) this.treatmentCycleDays.set(this.pick(scheme, 'cycleDays', 'duracionCiclo'));
+    const patientId = this.activePatientId();
+    if (!patientId || !schemeId) return;
+    this.http.get<{ requirements?: JsonObject }>(`/api/clinical/patients/${encodeURIComponent(patientId)}/treatment-requirements/${encodeURIComponent(schemeId)}`, { withCredentials: true }).subscribe({
+      next: (response) => this.treatmentRequirements.set(this.object(response.requirements)),
+      error: (response: { error?: { error?: string } }) => this.newTreatmentMessage.set(response?.error?.error || 'No se pudieron cargar los requisitos del esquema.')
+    });
+  }
+  createTreatment(): void {
+    const patientId = this.activePatientId();
+    if (!patientId || this.newTreatmentLoading()) return;
+    if (!this.treatmentDiagnosisId() || !this.treatmentSchemeId()) {
+      this.newTreatmentMessage.set('Seleccione un diagnóstico guardado y un protocolo.'); return;
+    }
+    if (!this.treatmentRequirementsConfirmed()) {
+      this.newTreatmentMessage.set('Confirme los requisitos y datos de cálculo antes de prescribir.'); return;
+    }
+    const body = {
+      diagnostico: this.treatmentDiagnosisId(), esquema: this.treatmentSchemeId(),
+      tipoOncologico: this.treatmentType(), caracter: this.treatmentIntent(),
+      cantidadCiclos: this.number(this.treatmentCycles(), 1), cicloInicial: this.number(this.treatmentInitialCycle(), 1),
+      duracionCiclo: this.number(this.treatmentCycleDays(), 0), fechaCreacion: this.treatmentCreatedDate(),
+      fechaPrimerCiclo: this.treatmentFirstCycleDate(), estadoConsentimiento: this.treatmentConsent(),
+      peso: this.numeric(this.treatmentWeight()), talla: this.numeric(this.treatmentHeight()),
+      creatinina: this.numeric(this.treatmentCreatinine()), tfg: this.numeric(this.treatmentGfr()),
+      targetAUC: this.numeric(this.treatmentTargetAuc()), calcio: this.numeric(this.treatmentCalcium()),
+      albumina: this.numeric(this.treatmentAlbumin()), observaciones: this.treatmentNotes().trim(),
+      requirementsConfirmed: true, protocolMismatchConfirmed: this.treatmentMismatchConfirmed(),
+      protocolMismatchReason: this.treatmentMismatchReason().trim()
+    };
+    this.newTreatmentLoading.set(true); this.newTreatmentMessage.set('');
+    this.http.post(`/api/clinical/patients/${encodeURIComponent(patientId)}/treatments`, body, { withCredentials: true }).subscribe({
+      next: () => {
+        this.newTreatmentLoading.set(false); this.newTreatmentOpen.set(false); this.resetTreatmentForm();
+        this.loadPatientCare(patientId); this.workspace.load(patientId);
+      },
+      error: (response: { error?: { error?: string } }) => { this.newTreatmentLoading.set(false); this.newTreatmentMessage.set(response?.error?.error || 'No se pudo crear el tratamiento.'); }
+    });
+  }
+  requirementEnabled(key: string): boolean { return Boolean(this.treatmentRequirements()[key]); }
+  optionLabel(option: JsonObject): string { return this.pick(option, 'nombre', 'name', 'label', 'displayName') || this.pick(option, 'id'); }
 
   isExpanded(card: CareCard): boolean { return this.expandedId() === card.id; }
   detailReady(card: CareCard): boolean { return Boolean(this.details()[card.id]); }
@@ -680,6 +765,17 @@ export class DayHospitalComponent {
         this.loading.set(false); this.error.set(response?.error?.error || 'No se pudieron cargar los tratamientos.');
       }
     });
+  }
+
+  private resetTreatmentForm(): void {
+    this.treatmentDiagnosisId.set(''); this.treatmentSchemeId.set(''); this.treatmentRequirements.set({});
+    this.treatmentType.set('Quimioterapia'); this.treatmentIntent.set('Paliativo');
+    this.treatmentCycles.set('1'); this.treatmentInitialCycle.set('1'); this.treatmentCycleDays.set('');
+    const today = new Date().toISOString().slice(0, 10);
+    this.treatmentCreatedDate.set(today); this.treatmentFirstCycleDate.set(today); this.treatmentConsent.set('Pendiente');
+    this.treatmentWeight.set(''); this.treatmentHeight.set(''); this.treatmentCreatinine.set(''); this.treatmentGfr.set('');
+    this.treatmentTargetAuc.set(''); this.treatmentCalcium.set(''); this.treatmentAlbumin.set(''); this.treatmentNotes.set('');
+    this.treatmentRequirementsConfirmed.set(false); this.treatmentMismatchConfirmed.set(false); this.treatmentMismatchReason.set('');
   }
 
   private loadInfusions(patientId: string): void {

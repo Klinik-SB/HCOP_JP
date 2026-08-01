@@ -93,6 +93,15 @@ aplicación se vuelve inmutable, se sincroniza como completada y sale de la cola
 
 El circuito operativo de siete pasos ya posee transiciones Angular. Los cortes
 siguientes se concentran en turnero, nuevo tratamiento y paridad visual final.
+
+## Nuevo tratamiento
+
+La jerarquía incorpora un formulario Angular que consulta diagnósticos
+guardados, protocolos, tipos, intenciones y consentimientos desde el backend.
+Al elegir protocolo recupera sus requisitos de peso, talla, Calvert o
+calcio/albúmina. La prescripción confirma los datos clínicos, conserva la
+excepción diagnóstico–protocolo documentada y delega a Java la dosificación,
+evolución, ciclos y días reales de aplicación.
 mientras se migran como formularios Angular con revisión optimista,
 idempotencia y campos completos. No se agregaron botones sin efecto ni se
 alteró la lógica Java/PostgreSQL.
