@@ -1,0 +1,7 @@
+:host { display: block; min-height: 0; }
+.angular-study-panel { min-height: 100%; }
+.angular-study-search { display: block; margin: 0 0 8px; }
+.angular-study-search input { box-sizing: border-box; width: 100%; }
+.study-upload-zone input { cursor: pointer; }
+.study-upload-zone.dragging { outline: 2px solid var(--accent, #3197c8); outline-offset: -4px; }
+.study-card { cursor: pointer; }

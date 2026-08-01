@@ -17,7 +17,7 @@
         @if (records('diagnoses').length) {
           <div class="diagnosis-record-summary-list">
             @for (record of records('diagnoses'); track record.id ?? $index) {
-              <section class="diagnosis-record-summary"><header><strong>{{ recordTitle(record) }}</strong>@if (record.date) { <time>{{ date(record.date) }}</time> }</header>@if (recordBody(record)) { <p>{{ recordBody(record) }}</p> }</section>
+              <section class="diagnosis-record-summary" [attr.data-clinical-date]="record.date"><header><strong>{{ recordTitle(record) }}</strong>@if (record.date) { <time>{{ date(record.date) }}</time> }</header>@if (recordBody(record)) { <p>{{ recordBody(record) }}</p> }</section>
             }
           </div>
         } @else if (oncology('diagnosis') || oncology('topography') || oncology('histology') || oncology('stage')) {
@@ -36,21 +36,21 @@
         @if (narrative('backgroundClinical') || narrative('currentMedication') || narrative('familyOncology') || narrative('gynecology')) { <div class="clinical-facts-stack">@if (narrative('backgroundClinical')) { <p><strong>Clínicos / quirúrgicos:</strong> {{ narrative('backgroundClinical') }}</p> }@if (narrative('currentMedication')) { <p><strong>Medicación habitual:</strong> {{ narrative('currentMedication') }}</p> }@if (narrative('familyOncology')) { <p><strong>Oncofamiliares:</strong> {{ narrative('familyOncology') }}</p> }@if (narrative('gynecology')) { <p><strong>Gineco-obstétricos:</strong> {{ narrative('gynecology') }}</p> }</div> } @else { <p class="section-free-text">Sin antecedentes personales cargados.</p> }
       </section>
       <section class="doc-section"><div class="section-heading"><h3>Estudios complementarios</h3></div>
-        @if (records('studies').length) { @for (record of records('studies'); track record.id ?? $index) { <article class="doc-entry flush-entry study-entry"><p><strong>{{ studyHeading(record) }}</strong></p>@if (recordBody(record)) { <p>{{ recordBody(record) }}</p> }</article> } } @else { <p class="section-free-text">Sin estudios complementarios cargados.</p> }
+        @if (records('studies').length) { @for (record of records('studies'); track record.id ?? $index) { <article class="doc-entry flush-entry study-entry" [attr.data-clinical-date]="record.date"><p><strong>{{ studyHeading(record) }}</strong></p>@if (recordBody(record)) { <p>{{ recordBody(record) }}</p> }</article> } } @else { <p class="section-free-text">Sin estudios complementarios cargados.</p> }
       </section>
       <section class="doc-section"><div class="section-heading"><h3>Examen físico</h3></div>
         @if (exam('weightKg') || exam('heightM')) { <div class="inline-facts">@if (exam('weightKg')) { <span><strong>Peso:</strong> {{ exam('weightKg') }} kg</span> }@if (exam('heightM')) { <span><strong>Talla:</strong> {{ exam('heightM') }} cm</span> }</div> }
         <p class="section-free-text">{{ narrative('physicalExam') || 'Sin examen físico cargado.' }}</p>
       </section>
       <section class="doc-section"><div class="section-heading"><h3>Tratamientos sistémicos</h3></div>
-        @if (records('treatments').length) { @for (record of records('treatments'); track record.id ?? $index) { <article class="doc-entry treatment-entry"><p><strong>{{ treatmentHeading(record) }}</strong> {{ recordBody(record) }}</p></article> } } @else { <p class="section-free-text">Sin tratamientos sistémicos registrados.</p> }
+        @if (records('treatments').length) { @for (record of records('treatments'); track record.id ?? $index) { <article class="doc-entry treatment-entry" [attr.data-clinical-date]="record.date"><p><strong>{{ treatmentHeading(record) }}</strong> {{ recordBody(record) }}</p></article> } } @else { <p class="section-free-text">Sin tratamientos sistémicos registrados.</p> }
       </section>
       <section class="doc-section"><div class="section-heading"><h3>Cirugías oncológicas</h3></div><p class="section-free-text">Sin cirugías oncológicas registradas.</p></section>
       <section class="doc-section"><div class="section-heading"><h3>Conclusión / resumen</h3></div>
         @if (narrative('summary') || narrative('plan')) { <div class="clinical-facts-stack">@if (narrative('summary')) { <p><strong>Conclusión / resumen:</strong> {{ narrative('summary') }}</p> }@if (narrative('plan')) { <p><strong>Conducta / plan:</strong> {{ narrative('plan') }}</p> }</div> } @else { <p class="section-free-text">Sin conclusión o resumen cargado.</p> }
       </section>
       <section class="doc-section"><div class="section-heading"><h3>Actividad clínica cronológica</h3></div>
-        @if (records('evolutions').length) { @for (record of records('evolutions'); track record.id ?? $index) { <article class="doc-entry evolution-entry" [class.evolution-entry--deleted]="record.deleted"><p><strong>{{ evolutionHeading(record) }}</strong></p><p>{{ recordBody(record) }}</p></article> } } @else { <p class="section-free-text">Sin evoluciones cargadas.</p> }
+        @if (records('evolutions').length) { @for (record of records('evolutions'); track record.id ?? $index) { <article class="doc-entry evolution-entry" [class.evolution-entry--deleted]="record.deleted" [attr.data-clinical-date]="record.date"><p><strong>{{ evolutionHeading(record) }}</strong></p><p>{{ recordBody(record) }}</p></article> } } @else { <p class="section-free-text">Sin evoluciones cargadas.</p> }
       </section>
     </article>
   } @else {

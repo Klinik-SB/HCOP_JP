@@ -1,0 +1,43 @@
+<section class="right-tab-panel active angular-study-panel" aria-label="Estudios complementarios">
+  <div class="study-upload-bar">
+    <div class="study-upload-actions">
+      <button class="tool-button primary" type="button" title="Subir archivos o pegar una imagen con Ctrl+V" [disabled]="!workspace.workspace()" (click)="openUpload()"><span aria-hidden="true">▣</span><span>Subir estudios</span></button>
+      <button class="tool-button" type="button" disabled title="Las plantillas anatómicas se incorporan en el próximo corte Angular"><span aria-hidden="true">▧</span><span>Cargar plantilla</span></button>
+    </div>
+    <span aria-live="polite">{{ studies().length ? studies().length + (studies().length === 1 ? ' estudio' : ' estudios') : 'Sin estudios cargados' }}</span>
+  </div>
+
+  <label class="angular-study-search"><span class="visually-hidden">Buscar estudios</span><input type="search" [formControl]="term" placeholder="Buscar estudios"></label>
+  @if (!workspace.workspace()) {
+    <div class="viewer-empty">Abra un paciente para consultar o cargar estudios.</div>
+  } @else if (!studies().length) {
+    <button class="study-empty-upload" type="button" (click)="openUpload()"><span aria-hidden="true">⇧</span><strong>Sin estudios cargados</strong><span>Seleccione archivos, arrástrelos o pegue una imagen con Ctrl+V</span><small>Imágenes, DICOM, PDF, Word, PowerPoint y video</small></button>
+  } @else {
+    <div class="study-list pangea-study-list" tabindex="-1">
+      @for (record of studies(); track record.id ?? $index) {
+        <article class="study-card pangea-study-card" [class.active]="selectedId() === record.id" (click)="select(record)">
+          <div class="study-row-main"><span class="study-row-file-icon" aria-hidden="true">{{ fileIcon(record) }}</span><span class="study-row-date">{{ date(record.date) }}</span><span class="study-title">{{ title(record) }}</span><span class="study-type">{{ fileKind(record) }}</span><span class="study-row-source">{{ source(record) }}@if (size(record)) { · {{ size(record) }} }</span></div>
+          <div class="study-actions">@if (fileUrl(record)) { <a class="tiny-button" [href]="fileUrl(record)" target="_blank" rel="noopener" (click)="$event.stopPropagation()"><span aria-hidden="true">◉</span><span>Abrir archivo</span></a> } @if (canDelete(record)) { <button class="tiny-button study-session-delete" type="button" [disabled]="busy()" title="Eliminar esta imagen cargada en la sesión actual" (click)="$event.stopPropagation(); removeStudy(record)"><span aria-hidden="true">×</span><span>Eliminar</span></button> }</div>
+        </article>
+      }
+    </div>
+  }
+  @if (message()) { <p class="study-upload-error" role="alert">{{ message() }}</p> }
+</section>
+
+@if (uploadOpen()) {
+  <div class="modal-backdrop study-upload-backdrop open" aria-hidden="false">
+    <section class="modal-card study-upload-modal" role="dialog" aria-modal="true" aria-labelledby="angularStudyUploadTitle">
+      <header class="modal-header"><div><span class="sheet-kicker">Estudios</span><h2 id="angularStudyUploadTitle">Subir archivos</h2><p>Seleccione varios archivos, arrástrelos al recuadro o pegue imágenes con Ctrl+V.</p></div><button class="icon-button" type="button" [disabled]="busy()" title="Cerrar" (click)="closeUpload()">×</button></header>
+      <section class="study-upload-modal-body">
+        <label class="study-upload-zone" [class.dragging]="dragActive()" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)"><span aria-hidden="true">⇧</span><strong>Seleccionar archivos</strong><span>o arrastrar y soltar aquí</span><small>Imágenes, DICOM, PDF, Word, PowerPoint y video · selección, arrastre o Ctrl+V</small><input class="visually-hidden" type="file" multiple accept="image/*,.dcm,.pdf,.doc,.docx,.rtf,.odt,.ppt,.pps,.pptx,.ppsx,.odp,video/*,.mkv,.avi,.wmv,.flv" [disabled]="busy()" (change)="onFileInput($event)"></label>
+        <div class="study-upload-queue" aria-live="polite">
+          @if (!uploads().length) { <div class="study-upload-queue-empty"><span aria-hidden="true">▤</span><span>Los archivos seleccionados aparecerán aquí.</span></div> }
+          @for (item of uploads(); track item.id) { <article class="study-upload-item" [class.is-error]="item.status === 'error'" [class.is-uploading]="item.status === 'uploading'"><span class="study-upload-file-icon" aria-hidden="true">{{ item.status === 'uploading' ? '…' : '▱' }}</span><div class="study-upload-file-copy"><strong>{{ item.file.name }}</strong><small>{{ formatSize(item.file.size) }} · {{ queueKind(item) }}</small><em>{{ queueLabel(item) }}</em></div>@if (item.status === 'error') { <button class="icon-button" type="button" [disabled]="busy()" title="Reintentar" (click)="retryUpload(item.id)">↻</button> }@if (item.status === 'ready' || item.status === 'error') { <button class="icon-button" type="button" [disabled]="busy()" title="Quitar" (click)="removeUpload(item.id)">×</button> }</article> }
+        </div>
+        @if (message()) { <p class="study-upload-error" role="alert">{{ message() }}</p> }
+      </section>
+      <footer class="modal-actions"><button class="tool-button" type="button" [disabled]="busy()" (click)="closeUpload()"><span>Cerrar</span></button><button class="tool-button primary" type="button" [disabled]="busy() || !uploads().some((item) => item.status === 'ready')" (click)="upload()"><span>{{ busy() ? 'Subiendo…' : 'Subir archivos' }}</span></button></footer>
+    </section>
+  </div>
+}

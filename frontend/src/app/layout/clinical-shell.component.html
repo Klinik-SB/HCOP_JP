@@ -9,7 +9,7 @@
     </div>
 
     <div class="header-actions">
-      <button class="tool-button new-patient-button" type="button" title="Crear una historia clínica nueva y vacía" (click)="legacyFallback()">
+      <button class="tool-button new-patient-button" type="button" title="Crear una historia clínica nueva y vacía" (click)="openNewPatient()">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8m10-3v6m3-3h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         <span>Nuevo paciente</span>
       </button>
@@ -78,8 +78,13 @@
         </nav>
       </div>
       <div class="right-panel-body">
+        @if (selectedPane() === 'studies') { <app-study-panel /> }
+        @else if (selectedPane() === 'timeline') { <app-timeline-panel /> }
+        @else {
         <section class="right-empty-state"><strong>{{ selectedPane() === 'care' ? 'Hospital de día' : selectedPane() === 'studies' ? 'Estudios' : 'Módulo clínico' }}</strong><span>Este panel conserva la geometría y los estilos de la versión vigente. Su contenido se migra con su mismo flujo y permisos.</span><button class="tool-button" type="button" (click)="legacyFallback()"><span>Usar módulo estable</span></button></section>
+        }
       </div>
     </aside>
   </main>
+  <app-new-patient-modal [open]="newPatientOpen()" (closed)="newPatientOpen.set(false)" />
 </div>

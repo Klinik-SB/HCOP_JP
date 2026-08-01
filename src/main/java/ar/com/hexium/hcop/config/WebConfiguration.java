@@ -27,6 +27,7 @@ public class WebConfiguration implements WebMvcConfigurer {
     // Angular se sirve como una SPA propia en /app. La interfaz legacy continúa
     // en / mientras cada recorrido alcanza paridad y puede retirarse con seguridad.
     registry.addRedirectViewController("/app", "/app/");
+    registry.addViewController("/app/").setViewName("forward:/app/index.html");
     registry.addRedirectViewController("/configuration", "/configuration/index.html");
     registry.addRedirectViewController("/configuration/", "/configuration/index.html");
     registry.addRedirectViewController("/herramientas", "/herramientas/index.html");

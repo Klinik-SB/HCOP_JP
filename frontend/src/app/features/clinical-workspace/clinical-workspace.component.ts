@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, effect, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { PatientWorkspaceService } from '../../core/patients/patient-workspace.service';
 import { ClinicalPatient, ClinicalRecord, ClinicalState } from '../../core/patients/patient-workspace.models';
@@ -11,11 +11,17 @@ export class ClinicalWorkspaceComponent implements OnInit {
   readonly searching = signal(false);
   readonly searchError = signal('');
 
+  constructor() {
+    effect(() => {
+      if (this.workspaceService.pickerOpen() && this.workspaceService.pickerRequest() > 0) this.search();
+    });
+  }
+
   ngOnInit(): void {
     this.query.valueChanges.subscribe(() => this.search());
   }
 
-  openPicker(): void { this.workspaceService.pickerOpen.set(true); this.search(); }
+  openPicker(): void { this.workspaceService.openPicker(); }
   closePicker(): void { this.workspaceService.pickerOpen.set(false); this.searchError.set(''); }
   search(): void {
     this.searching.set(true); this.searchError.set('');

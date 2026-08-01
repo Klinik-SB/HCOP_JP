@@ -103,6 +103,8 @@ Con el sistema iniciado también existe una versión navegable en
   [Protocolos](09-migracion-angular-hexagonal/MIGRACION-PROTOCOLOS.md) y
   [Guías](09-migracion-angular-hexagonal/MIGRACION-GUIAS.md)
 
+- [Corte Angular 002: Estudios, línea de tiempo y alta](09-migracion-angular-hexagonal/CORTE-ANGULAR-002-ESTUDIOS-TIMELINE-ALTA.md)
+
 ## Fuentes de verdad
 
 Cuando dos documentos difieran, prevalecen en este orden:
