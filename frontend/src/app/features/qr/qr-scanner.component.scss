@@ -1,0 +1,9 @@
+:host { display: contents; }
+.care-qr-scanner-backdrop { z-index: 2200; }
+.care-qr-scanner-modal { width: min(1180px, 97vw); max-width: none; max-height: 96vh; }
+.angular-qr-status-icon { display: grid; width: 22px; height: 22px; place-items: center; border-radius: 50%; background: #e5f2fa; color: #1479ad; font-size: 13px; font-weight: 900; }
+.care-qr-status.is-error .angular-qr-status-icon { background: #fae6e8; color: #b53040; }
+.care-qr-status.is-success .angular-qr-status-icon { background: #dff1fa; color: #087fc4; }
+.angular-qr-result { display: grid; }
+.care-qr-file-button { position: relative; overflow: hidden; }
+.care-qr-file-button input { position: absolute; width: 1px; height: 1px; opacity: 0; }

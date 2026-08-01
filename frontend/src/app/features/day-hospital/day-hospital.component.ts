@@ -63,6 +63,7 @@ export class DayHospitalComponent implements OnChanges {
   readonly embedded = input(false);
   readonly initialView = input<CareView>('treatments');
   readonly autoOpenNewTreatment = input(false);
+  readonly workflowRequest = input<JsonObject | null>(null);
   readonly workspace = inject(PatientWorkspaceService);
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
@@ -182,6 +183,10 @@ export class DayHospitalComponent implements OnChanges {
     if (changes['autoOpenNewTreatment']) {
       if (changes['autoOpenNewTreatment'].currentValue && this.activePatientId()) this.openNewTreatment();
       else if (!changes['autoOpenNewTreatment'].currentValue && this.newTreatmentOpen()) this.closeNewTreatment();
+    }
+    if (changes['workflowRequest']?.currentValue) {
+      this.view.set('administration');
+      this.openWorkflow(changes['workflowRequest'].currentValue as JsonObject);
     }
   }
 

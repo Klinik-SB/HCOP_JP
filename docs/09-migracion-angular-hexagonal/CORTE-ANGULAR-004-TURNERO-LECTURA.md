@@ -32,3 +32,13 @@ Dentro de Turnos y sala, `Sala de hoy` abre la cola Angular real de
 Administracion, ordenada por horario y sillon. Cada fila abre el circuito
 completo y permite doble chequeo, inicio, interrupcion, resolucion y cierre con
 la trazabilidad que ya controla Java.
+
+## Identificacion por QR
+
+El lector QR tambien es Angular. Permite camara, imagen y contenido pegado,
+usa `BarcodeDetector` cuando el navegador lo ofrece y el decodificador local
+empaquetado como alternativa. El navegador no interpreta ni confia en los
+campos: envia el codigo completo a Java, que verifica la firma HMAC, resuelve la
+aplicacion local y registra una evolucion inmutable e idempotente. Tras revisar
+nombre, DNI, esquema, ciclo, dia, turno y sillon, abre directamente la ficha de
+Administracion y actualiza la historia activa.

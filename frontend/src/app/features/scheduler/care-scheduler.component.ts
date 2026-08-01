@@ -3,6 +3,8 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Component, OnChanges, SimpleChanges, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DayHospitalComponent } from '../day-hospital/day-hospital.component';
+import { QrScannerComponent } from '../qr/qr-scanner.component';
+import { PatientWorkspaceService } from '../../core/patients/patient-workspace.service';
 
 type JsonObject = Record<string, unknown>;
 interface ScheduleSettings { chairCount: number; slotMinutes: number; startTime: string; endTime: string; }
@@ -12,11 +14,12 @@ interface SchedulePlacement { chair: number; slotIndex: number; span: number; va
 type HospitalMode = 'new-treatment' | 'pharmacy' | 'chairs' | 'triage' | 'preparation' | 'treatments';
 type EmbeddedCareView = 'treatments' | 'pharmacy' | 'triage' | 'preparation' | 'administration';
 
-@Component({ selector: 'app-care-scheduler', imports: [CommonModule, FormsModule, DayHospitalComponent], templateUrl: './care-scheduler.component.html', styleUrl: './care-scheduler.component.scss' })
+@Component({ selector: 'app-care-scheduler', imports: [CommonModule, FormsModule, DayHospitalComponent, QrScannerComponent], templateUrl: './care-scheduler.component.html', styleUrl: './care-scheduler.component.scss' })
 export class CareSchedulerComponent implements OnChanges {
   readonly open = input(false);
   readonly closed = output<void>();
   private readonly http = inject(HttpClient);
+  private readonly workspace = inject(PatientWorkspaceService);
   private requestVersion = 0;
   readonly date = signal(this.localDate());
   readonly loading = signal(false);
@@ -38,6 +41,8 @@ export class CareSchedulerComponent implements OnChanges {
   readonly detailItem = signal<JsonObject | null>(null);
   readonly detailWorkflow = signal<JsonObject>({});
   readonly detailMessage = signal('');
+  readonly qrOpen = signal(false);
+  readonly qrWorkflowRequest = signal<JsonObject | null>(null);
   readonly removalRequested = signal(false);
   readonly removalReason = signal('Turno retirado de la agenda');
   readonly chairOffset = signal(0);
@@ -81,6 +86,14 @@ export class CareSchedulerComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void { if (changes['open']?.currentValue) this.refresh(); }
   close(): void { this.closed.emit(); }
   selectMode(mode: HospitalMode): void { this.activeMode.set(mode); if (mode === 'chairs') this.refresh(); }
+  openQrAdministration(payload: JsonObject): void {
+    const patient = this.object(payload['patient']); const treatment = this.object(payload['treatment']); const infusion = this.object(payload['infusion']);
+    const patientId = String(patient['id'] || infusion['patientId'] || ''); const treatmentId = String(treatment['id'] || infusion['treatmentId'] || '');
+    if (!patientId || !treatmentId || Number(infusion['cycleNumber'] || 0) < 1 || Number(infusion['applicationDay'] || 0) < 1) { this.actionMessage.set('El QR no devolvió una aplicación completa.'); return; }
+    this.qrOpen.set(false); this.activeMode.set('chairs'); this.chairSurface.set('room');
+    this.qrWorkflowRequest.set({ ...infusion, patientId, treatmentId });
+    this.workspace.activateById(patientId); this.refresh();
+  }
   refresh(): void {
     const requestVersion = ++this.requestVersion;
     this.loading.set(true); this.error.set('');
@@ -254,6 +267,7 @@ export class CareSchedulerComponent implements OnChanges {
   }
   private medicationAvailable(item: JsonObject): boolean { return this.flag(item, 'medicationReceived') || this.flag(item, 'medicationWithPatient') || ['reserved', 'available'].includes(String(item['stockReservationStatus'] || '')); }
   private flag(item: JsonObject, key: string): boolean { return Boolean(item[key]); }
+  private object(value: unknown): JsonObject { return value && typeof value === 'object' && !Array.isArray(value) ? value as JsonObject : {}; }
   private normalize(value: unknown): string { return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); }
   private clockMinutes(value: string): number { const [hours, minutes] = value.split(':').map(Number); return (hours || 0) * 60 + (minutes || 0); }
   private clockLabel(minutes: number): string { return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`; }

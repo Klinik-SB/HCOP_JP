@@ -50,6 +50,14 @@ export class PatientWorkspaceService {
     ).subscribe({ error: (response: { error?: { error?: string } }) => this.error.set(response?.error?.error || 'No se pudo activar el paciente.') });
   }
 
+  activateById(patientId: string): void {
+    this.loading.set(true); this.error.set('');
+    this.http.post<PatientWorkspace>(`/api/clinical/patients/${encodeURIComponent(patientId)}/activate`, {}, { withCredentials: true }).pipe(
+      tap((workspace) => { this.workspace.set(workspace); this.pickerOpen.set(false); this.auth.load().subscribe(); }),
+      finalize(() => this.loading.set(false))
+    ).subscribe({ error: (response: { error?: { error?: string } }) => this.error.set(response?.error?.error || 'No se pudo activar el paciente identificado por QR.') });
+  }
+
   close(): void {
     this.loading.set(true); this.error.set('');
     this.http.put('/api/auth/active-patient', { patientId: null }, { withCredentials: true }).pipe(
