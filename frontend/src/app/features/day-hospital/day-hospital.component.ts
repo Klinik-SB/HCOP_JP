@@ -65,6 +65,8 @@ export class DayHospitalComponent {
   readonly status = signal('');
   readonly queueItems = signal<JsonObject[]>([]);
   readonly queueLoading = signal(false);
+  readonly workflowLoading = signal(false);
+  readonly selectedWorkflow = signal<JsonObject | null>(null);
   readonly loading = signal(false);
   readonly error = signal('');
 
@@ -132,6 +134,30 @@ export class DayHospitalComponent {
     return this.dateTimeLabel(this.pick(appointment, 'scheduledAt') || this.pick(item, 'plannedDate'));
   }
   trackId(index: number, item: JsonObject): string { return this.pick(item, 'id', 'treatmentId', 'applicationId') || String(index); }
+  openWorkflow(item: JsonObject): void {
+    const patientId = this.pick(item, 'patientId');
+    const treatmentId = this.pick(item, 'treatmentId');
+    const cycle = this.number(this.pick(item, 'cycleNumber'), 0);
+    const day = this.number(this.pick(item, 'applicationDay'), 0);
+    if (!patientId || !treatmentId || cycle < 1 || day < 1) {
+      this.error.set('La aplicación no contiene una referencia clínica completa.');
+      return;
+    }
+    this.workflowLoading.set(true); this.error.set('');
+    const url = `/api/clinical/application-workflows/${encodeURIComponent(patientId)}/${encodeURIComponent(treatmentId)}/${cycle}/${day}`;
+    this.http.get<{ workflow?: JsonObject }>(url, { withCredentials: true }).subscribe({
+      next: (response) => { this.selectedWorkflow.set(this.object(response.workflow)); this.workflowLoading.set(false); },
+      error: (response: { error?: { error?: string } }) => {
+        this.workflowLoading.set(false); this.error.set(response?.error?.error || 'No se pudo abrir el circuito de la aplicación.');
+      }
+    });
+  }
+  closeWorkflow(): void { this.selectedWorkflow.set(null); }
+  workflowAppointment(workflow: JsonObject): JsonObject { return this.object(workflow['appointment']); }
+  workflowDrugs(workflow: JsonObject): JsonObject[] { return this.array(workflow['applicationDrugs']); }
+  workflowReservations(workflow: JsonObject): JsonObject[] { return this.array(workflow['stockReservations']); }
+  workflowAudit(workflow: JsonObject): JsonObject[] { return this.array(workflow['auditTrail']); }
+  workflowField(workflow: JsonObject, ...keys: string[]): string { return this.pick(workflow, ...keys); }
 
   private loadPatientCare(patientId: string): void {
     this.loading.set(true); this.error.set('');

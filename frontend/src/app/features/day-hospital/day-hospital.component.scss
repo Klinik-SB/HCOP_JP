@@ -7,4 +7,34 @@
 .care-view-header strong { color: var(--lira-ink, #32404a); font-size: 14px; }
 .care-hierarchy-cycle-appointment dd { white-space: normal; }
 .care-treatment-manager-table td small { display: block; margin-top: 2px; color: #7b878d; font-size: 9px; }
+.care-treatment-manager-table tbody tr[role='button'] { cursor: pointer; }
+.care-treatment-manager-table tbody tr[role='button']:hover { background: #eef8fe; }
+.care-workflow-open { color: #087fc4; font-size: 16px; text-align: center; }
+.care-workflow-modal-overlay { z-index: 2000; }
+.care-workflow-modal { width: min(1120px, 96vw); max-width: none; max-height: 94vh; }
+.care-workflow-modal-body { display: grid; gap: 12px; overflow: auto; padding: 14px; }
+.care-workflow-patient { display: grid; grid-template-columns: 1fr 1.3fr 1.3fr 1fr; gap: 1px; background: #dfe5e8; }
+.care-workflow-patient > div { display: grid; align-content: start; gap: 3px; min-width: 0; background: #fff; padding: 10px; }
+.care-workflow-patient span, .care-workflow-step-grid span, .care-workflow-section > header span { color: #7d8a91; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+.care-workflow-patient strong { overflow-wrap: anywhere; color: #35454d; font-size: 12px; }
+.care-workflow-patient small { color: #718087; font-size: 10px; }
+.care-workflow-step-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.care-workflow-step-grid article { display: grid; gap: 4px; border: 1px solid #dbe3e7; border-top: 3px solid #45aee2; background: #fff; padding: 9px; }
+.care-workflow-step-grid strong { color: #3f5058; font-size: 11px; }
+.care-workflow-step-grid small { color: #75838a; font-size: 9px; }
+.care-workflow-section { border: 1px solid #dbe3e7; background: #fff; padding: 11px; }
+.care-workflow-section > header { display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid #edf0f2; padding-bottom: 8px; }
+.care-workflow-section > header strong { color: #087fc4; font-size: 11px; }
+.care-workflow-section p { margin: 10px 0 0; color: #718087; font-size: 10px; }
+.care-workflow-drugs { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 6px; margin-top: 9px; }
+.care-workflow-drugs article { display: grid; gap: 2px; border-left: 3px solid #45aee2; background: #f7fbfe; padding: 8px; }
+.care-workflow-drugs strong { color: #3f5058; font-size: 11px; }
+.care-workflow-drugs span { color: #718087; font-size: 9px; }
+.care-workflow-audit { display: grid; gap: 0; margin: 9px 0 0; padding: 0; list-style: none; }
+.care-workflow-audit li { display: grid; grid-template-columns: 125px minmax(0, 1fr); gap: 9px; border-top: 1px solid #edf0f2; padding: 7px 0; }
+.care-workflow-audit time { color: #718087; font-size: 9px; }
+.care-workflow-audit div { display: grid; gap: 1px; }
+.care-workflow-audit strong { color: #3f5058; font-size: 10px; }
+.care-workflow-audit span { color: #718087; font-size: 9px; }
 @media (max-width: 700px) { .care-hierarchy-filters { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 760px) { .care-workflow-patient, .care-workflow-step-grid { grid-template-columns: 1fr 1fr; } }

@@ -20,6 +20,11 @@ del sistema vigente y consume las mismas rutas auditables del backend Java.
 - Las subpestañas **Aplicaciones**, **Farmacia**, **Triaje**, **Preparación** y
   **Administración** leen las colas existentes de
   `GET /api/clinical/application-workflows`.
+- Cada fila abre un detalle Angular que reúne identidad, turno, drogas,
+  reservas de stock, estado de los cinco pasos y auditoría por revisión.
+- El detalle se recupera de
+  `GET /api/clinical/application-workflows/{patientId}/{treatmentId}/{cycleNumber}/{applicationDay}`
+  y se cierra únicamente con su botón explícito.
 
 ## Límites deliberados de este corte
 
