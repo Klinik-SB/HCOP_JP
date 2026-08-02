@@ -38,7 +38,7 @@ export class PatientWorkspaceService {
   readonly conflictLatestLoading = signal(false);
   readonly conflictLatestError = signal('');
   readonly hasPendingClinicalWork = computed(() => Boolean(
-    this.activeSaveConflictDraft() || this.saving() || this.clinicalDrafts.hasDirty()
+    this.activeSaveConflictDraft() || this.saving() || this.clinicalDrafts.hasActive()
   ));
   private readonly pendingSaveConflict = signal<ClinicalSaveConflictDraft | null>(null);
   private readonly conflictComparisonAuthorized = signal(true);
@@ -373,7 +373,7 @@ export class PatientWorkspaceService {
       targetPatientId,
       this.saving(),
       this.loading(),
-      this.clinicalDrafts.hasDirty()
+      this.clinicalDrafts.hasActive()
     );
     if (!code) return null;
     return new ClinicalSaveFailure(
@@ -403,9 +403,9 @@ export class PatientWorkspaceService {
         409
       );
     }
-    if (this.clinicalDrafts.hasDirty()) {
+    if (this.clinicalDrafts.hasActive()) {
       return new ClinicalSaveFailure(
-        'Hay cambios clínicos sin guardar. Guárdelos o descártelos antes de modificar archivos.',
+        'Hay un editor clínico abierto. Guárdelo o ciérrelo antes de modificar archivos.',
         'PENDING_LOCAL_DRAFT',
         409
       );

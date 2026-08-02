@@ -1,10 +1,18 @@
-import { expect, test, type APIResponse, type BrowserContext, type Page, type Request } from '@playwright/test';
+import {
+  expect,
+  test,
+  type APIResponse,
+  type BrowserContext,
+  type Page,
+  type Request,
+  type Response
+} from '@playwright/test';
 
 const origin = (process.env['HCOP_E2E_BASE_URL'] || 'http://127.0.0.1:5182').replace(/\/$/, '');
 const username = process.env['HCOP_E2E_USERNAME'] || 'qa_conflict';
 const password = process.env['HCOP_E2E_PASSWORD'] || '';
 
-async function expectStatus(response: APIResponse, expected: number): Promise<void> {
+async function expectStatus(response: APIResponse | Response, expected: number): Promise<void> {
   if (response.status() === expected) return;
   let detail = '';
   try { detail = await response.text(); } catch { detail = 'sin cuerpo disponible'; }
@@ -37,7 +45,7 @@ async function fillFreePrescription(page: Page, title: string, text: string): Pr
   await page.locator('textarea[name="freeText"]').fill(text);
 }
 
-async function putAfterClick(page: Page): Promise<APIResponse> {
+async function putAfterClick(page: Page): Promise<Response> {
   const response = page.waitForResponse((candidate) =>
     candidate.request().method() === 'PUT' && new URL(candidate.url()).pathname === '/api/hc');
   await page.getByRole('button', { name: 'Prescribir', exact: true }).click();
@@ -314,5 +322,221 @@ test('edita conclusión y plan con borrador protegido, auditoría y versiones re
     expect(final.state?.meta?.sectionAudit?.summaryPlan?.action).toBe('modificado');
   } finally {
     await context.close();
+  }
+});
+
+test('edita motivo de consulta con foco contenido, reintento seguro y auditoría canónica', async ({ browser }) => {
+  const suffix = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+  const initialComplaint = `Dolor abdominal de tres semanas ${suffix}`;
+  const changedComplaint = `Dolor abdominal con náuseas de cuatro semanas ${suffix}`;
+  const modificationReason = 'Actualización del cuadro referida en el control';
+  const competingNote = `Cambio concurrente ganador ${suffix}`;
+  const context = await browser.newContext();
+  const competingContext = await browser.newContext();
+
+  try {
+    await login(context);
+    const created = await context.request.post(`${origin}/api/clinical/patients`, {
+      data: {
+        firstName: `Paciente ${suffix}`,
+        lastName: 'Motivo QA',
+        dni: `97${Date.now().toString().slice(-6)}`,
+        medicalRecord: `QA-MOT-${suffix}`,
+        birthDate: '1978-04-05',
+        sex: 'No especificado',
+        insurance: 'Cobertura sintética QA',
+        affiliateNumber: `QA-MOT-${suffix}`,
+        phone: '', email: '', address: ''
+      }
+    });
+    await expectStatus(created, 201);
+    const body = await created.json() as {
+      patientId: string;
+      revision: number;
+      patient: { fullName: string };
+    };
+
+    const page = await context.newPage();
+    await page.goto('./');
+    await expect(page.getByText(body.patient.fullName, { exact: true }).first()).toBeVisible();
+
+    const loadTrigger = page.getByRole('button', { name: 'Cargar motivo de consulta', exact: true });
+    await loadTrigger.click();
+    let editor = page.getByRole('dialog', { name: 'Motivo de consulta', exact: true });
+    const initialField = editor.getByLabel('Motivo de consulta', { exact: true });
+    const initialSaveButton = editor.getByRole('button', { name: 'Cargar en historia', exact: true });
+    const initialCloseButton = editor.getByRole('button', { name: 'Cerrar editor de motivo de consulta', exact: true });
+    await expect(editor).toBeVisible();
+    await expect(initialField).toBeFocused();
+    await expect(initialSaveButton).toBeVisible();
+
+    await page.keyboard.press('Shift+Tab');
+    await expect(initialCloseButton).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(initialSaveButton).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(initialCloseButton).toBeFocused();
+    await page.locator('.chief-complaint-editor-backdrop').click({ position: { x: 4, y: 4 } });
+    await page.keyboard.press('Escape');
+    await expect(editor).toBeVisible();
+
+    await initialField.fill(`  ${initialComplaint}  `);
+    await expect(page.getByRole('button', { name: 'Nuevo paciente', exact: true })).toBeDisabled();
+    await expect(page.locator('.configuration-button')).toBeDisabled();
+    page.once('dialog', (dialog) => dialog.dismiss());
+    await initialCloseButton.click();
+    await expect(editor).toBeVisible();
+
+    const clinicalPath = '**/api/hc';
+    await page.route(clinicalPath, async (route) => {
+      if (route.request().method() === 'PUT') {
+        await route.fulfill({
+          status: 503,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            ok: false,
+            status: 503,
+            code: 'QA_TRANSIENT',
+            error: 'Falla transitoria sintética del motivo de consulta'
+          })
+        });
+        return;
+      }
+      await route.continue();
+    });
+    const transientPut = page.waitForResponse((candidate) =>
+      candidate.request().method() === 'PUT' && new URL(candidate.url()).pathname === '/api/hc');
+    await initialSaveButton.click();
+    await expectStatus(await transientPut, 503);
+    await expect(editor).toBeVisible();
+    await expect(editor.getByRole('alert')).toContainText('Falla transitoria sintética del motivo de consulta');
+    await expect(initialField).toHaveValue(`  ${initialComplaint}  `);
+    await page.unroute(clinicalPath);
+
+    const initialPut = page.waitForResponse((candidate) =>
+      candidate.request().method() === 'PUT' && new URL(candidate.url()).pathname === '/api/hc');
+    await initialSaveButton.click();
+    await expectStatus(await initialPut, 200);
+    await expect(editor).toHaveCount(0);
+    await expect(page.locator('.doc-section').filter({ hasText: initialComplaint })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Nuevo paciente', exact: true })).toBeEnabled();
+
+    const modifyTrigger = page.getByRole('button', { name: 'Modificar sección Motivo de consulta', exact: true });
+    await modifyTrigger.click();
+    editor = page.getByRole('dialog', { name: 'Motivo de consulta', exact: true });
+    const modificationField = editor.getByLabel('Motivo de consulta', { exact: true });
+    const reasonField = editor.getByLabel('Motivo de la modificación', { exact: true });
+    await expect(editor.getByRole('button', { name: 'Guardar modificación', exact: true })).toBeVisible();
+    await expect(modificationField).toHaveValue(initialComplaint);
+    await modificationField.fill(changedComplaint);
+    await reasonField.fill(modificationReason);
+
+    await login(competingContext);
+    await activate(competingContext, body.patientId);
+    const competingWorkspaceResponse = await competingContext.request.get(
+      `${origin}/api/clinical/patients/${body.patientId}/workspace`
+    );
+    await expectStatus(competingWorkspaceResponse, 200);
+    const competingWorkspace = await competingWorkspaceResponse.json() as {
+      revision: number;
+      state: Record<string, unknown> & {
+        narrative?: Record<string, unknown>;
+        meta?: Record<string, unknown>;
+      };
+    };
+    const competingState = structuredClone(competingWorkspace.state);
+    competingState.narrative = { ...(competingState.narrative || {}), currentIllness: competingNote };
+    competingState.meta = {
+      ...(competingState.meta || {}),
+      persistenceRevision: competingWorkspace.revision
+    };
+    const competingPut = await competingContext.request.put(`${origin}/api/hc`, { data: competingState });
+    await expectStatus(competingPut, 200);
+
+    const conflictPut = page.waitForResponse((candidate) =>
+      candidate.request().method() === 'PUT' && new URL(candidate.url()).pathname === '/api/hc');
+    await editor.getByRole('button', { name: 'Guardar modificación', exact: true }).click();
+    const conflictResponse = await conflictPut;
+    await expectStatus(conflictResponse, 409);
+    const conflictBody = await conflictResponse.json() as { code?: string };
+    expect(conflictBody.code).toBe('VERSION_CONFLICT');
+    await expect(editor).toHaveCount(0);
+
+    const conflictBanner = page.locator('.clinical-save-conflict-banner');
+    await expect(conflictBanner).toContainText('Hay cambios sin guardar.');
+    await expect(conflictBanner).toBeFocused();
+    await conflictBanner.getByRole('button', { name: 'Comparar cambios', exact: true }).click();
+    const comparison = page.getByRole('dialog', { name: 'Comparar cambios de la historia' });
+    await expect(comparison).toContainText(changedComplaint);
+    await expect(comparison).toContainText(competingNote);
+    await comparison.getByRole('button', { name: 'Cerrar', exact: true }).last().click();
+    page.once('dialog', (dialog) => dialog.accept());
+    await conflictBanner.getByRole('button', {
+      name: 'Descartar borrador y recuperar historia',
+      exact: true
+    }).click();
+    await expect(conflictBanner).toHaveCount(0);
+    await expect(page.locator('.doc-section').filter({ hasText: initialComplaint })).toBeVisible();
+
+    await modifyTrigger.click();
+    editor = page.getByRole('dialog', { name: 'Motivo de consulta', exact: true });
+    await editor.getByLabel('Motivo de consulta', { exact: true }).fill(changedComplaint);
+    await editor.getByLabel('Motivo de la modificación', { exact: true }).fill(modificationReason);
+    const modificationPut = page.waitForResponse((candidate) =>
+      candidate.request().method() === 'PUT' && new URL(candidate.url()).pathname === '/api/hc');
+    await editor.getByRole('button', { name: 'Guardar modificación', exact: true }).click();
+    await expectStatus(await modificationPut, 200);
+    await expect(editor).toHaveCount(0);
+    await expect(page.locator('.doc-section').filter({ hasText: changedComplaint })).toBeVisible();
+
+    const workspace = await context.request.get(`${origin}/api/clinical/patients/${body.patientId}/workspace`);
+    await expectStatus(workspace, 200);
+    const final = await workspace.json() as {
+      revision: number;
+      state?: {
+        narrative?: { chiefComplaint?: string };
+        meta?: {
+          sectionFormModes?: { chiefComplaint?: string };
+          sectionVersions?: {
+            chiefComplaint?: Array<{
+              id?: string;
+              author?: string;
+              license?: string;
+              createdAt?: string;
+              reason?: string;
+              content?: string;
+              audit?: { action?: string; lastName?: string; license?: string; at?: string };
+            }>;
+          };
+          sectionAudit?: {
+            chiefComplaint?: { action?: string; lastName?: string; license?: string; at?: string };
+          };
+          sectionChangeRequests?: { chiefComplaint?: unknown };
+        };
+      };
+    };
+    expect(final.revision).toBe(body.revision + 3);
+    expect(final.state?.narrative?.chiefComplaint).toBe(changedComplaint);
+    expect(final.state?.meta?.sectionFormModes?.chiefComplaint).toBe('structured');
+    expect(final.state?.meta?.sectionChangeRequests?.chiefComplaint).toBeUndefined();
+    const versions = final.state?.meta?.sectionVersions?.chiefComplaint || [];
+    expect(versions).toHaveLength(2);
+    expect(versions[0]?.id).toMatch(/^sec-chiefComplaint-/);
+    expect(versions[0]?.reason).toBe('Carga inicial');
+    expect(versions[0]?.content).toBe(initialComplaint);
+    expect(versions[0]?.audit?.action).toBe('cargado');
+    expect(versions[1]?.id).toMatch(/^sec-chiefComplaint-/);
+    expect(versions[1]?.reason).toBe(modificationReason);
+    expect(versions[1]?.content).toBe(changedComplaint);
+    expect(versions[1]?.audit?.action).toBe('modificado');
+    expect(versions[1]?.author).toBeTruthy();
+    expect(versions[1]?.license).toBeTruthy();
+    expect(versions[1]?.createdAt).toBeTruthy();
+    expect(versions[1]?.createdAt).toBe(versions[1]?.audit?.at);
+    expect(versions[1]?.author).toBe(versions[1]?.audit?.lastName);
+    expect(versions[1]?.license).toBe(versions[1]?.audit?.license);
+    expect(final.state?.meta?.sectionAudit?.chiefComplaint).toEqual(versions[1]?.audit);
+  } finally {
+    await Promise.all([context.close(), competingContext.close()]);
   }
 });

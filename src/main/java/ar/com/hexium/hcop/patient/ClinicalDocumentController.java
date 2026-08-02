@@ -6,6 +6,7 @@ import ar.com.hexium.hcop.common.ApiException;
 import ar.com.hexium.hcop.patient.PatientDocumentRepository.StoredDocument;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -26,18 +27,32 @@ public class ClinicalDocumentController {
   private final ClinicalDocumentAccessPolicy accessPolicy;
   private final ClinicalDocumentChangeValidator changeValidator;
   private final ClinicalSummaryPlanAuthority summaryPlanAuthority;
+  private final ClinicalChiefComplaintAuthority chiefComplaintAuthority;
 
+  @Autowired
+  public ClinicalDocumentController(
+      PatientDocumentService documents,
+      AuthContext auth,
+      ClinicalDocumentAccessPolicy accessPolicy,
+      ClinicalDocumentChangeValidator changeValidator,
+      ClinicalSummaryPlanAuthority summaryPlanAuthority,
+      ClinicalChiefComplaintAuthority chiefComplaintAuthority) {
+    this.documents = documents;
+    this.auth = auth;
+    this.accessPolicy = accessPolicy;
+    this.changeValidator = changeValidator;
+    this.summaryPlanAuthority = summaryPlanAuthority;
+    this.chiefComplaintAuthority = chiefComplaintAuthority;
+  }
+
+  /** Backward-compatible constructor retained for focused controller tests. */
   public ClinicalDocumentController(
       PatientDocumentService documents,
       AuthContext auth,
       ClinicalDocumentAccessPolicy accessPolicy,
       ClinicalDocumentChangeValidator changeValidator,
       ClinicalSummaryPlanAuthority summaryPlanAuthority) {
-    this.documents = documents;
-    this.auth = auth;
-    this.accessPolicy = accessPolicy;
-    this.changeValidator = changeValidator;
-    this.summaryPlanAuthority = summaryPlanAuthority;
+    this(documents, auth, accessPolicy, changeValidator, summaryPlanAuthority, null);
   }
 
   @GetMapping
@@ -77,6 +92,12 @@ public class ClinicalDocumentController {
     }
     changeValidator.validate(stateToSave, current.document());
     stateToSave = summaryPlanAuthority.canonicalize(stateToSave, current.document(), principal);
+    if (chiefComplaintAuthority != null) {
+      stateToSave = chiefComplaintAuthority.canonicalize(
+          stateToSave,
+          current.document(),
+          principal);
+    }
     StoredDocument saved = documents.save(
         principal.activePatientId(),
         stateToSave,

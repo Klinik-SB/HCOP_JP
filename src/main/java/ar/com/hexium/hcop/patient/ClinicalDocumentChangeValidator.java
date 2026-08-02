@@ -14,6 +14,12 @@ public class ClinicalDocumentChangeValidator {
     validateTextChange(
         incoming,
         stored,
+        "chiefComplaint",
+        "El motivo de consulta",
+        "CLINICAL_CHIEF_COMPLAINT");
+    validateTextChange(
+        incoming,
+        stored,
         "summary",
         "La conclusión / resumen",
         "CLINICAL_SUMMARY");

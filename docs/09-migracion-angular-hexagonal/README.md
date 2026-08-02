@@ -136,6 +136,9 @@ configuración institucional y cerrar la paridad visual/E2E integrada.
 - [Corte Angular 034](CORTE-ANGULAR-034-EDITOR-CONCLUSION-RESUMEN.md): primer
   formulario completo de la hoja en Angular, con borrador previo al `PUT`,
   motivo, versiones, auditoría, validación Java y E2E real.
+- [Corte Angular 035](CORTE-ANGULAR-035-EDITOR-MOTIVO-CONSULTA.md): Motivo de
+  consulta con el diseño original, contexto bloqueado desde la apertura,
+  autoridad narrativa Java reutilizable y conflicto concurrente E2E.
 
 ## Ciclo obligatorio por capacidad
 

@@ -17,6 +17,9 @@ class ClinicalDocumentChangeValidatorTest {
   @Test
   void acceptsUnchangedInvalidLegacyNarrativeValues() {
     ObjectNode stored = mapper.createObjectNode();
+    stored.withObject("/narrative").set(
+        "chiefComplaint",
+        mapper.createObjectNode().put("legacy", true));
     stored.withObject("/narrative").set("summary", mapper.createObjectNode().put("legacy", true));
     stored.withObject("/narrative").set("plan", mapper.createArrayNode().add("legacy"));
 
@@ -47,6 +50,28 @@ class ClinicalDocumentChangeValidatorTest {
     incoming.withObject("/narrative").set("summary", mapper.createObjectNode());
 
     assertFailure(incoming, stored, "CLINICAL_SUMMARY_INVALID");
+  }
+
+  @Test
+  void rejectsChangedNonTextChiefComplaint() {
+    ObjectNode stored = narrative("Anterior", "Plan");
+    stored.withObject("/narrative").put("chiefComplaint", "Consulta anterior");
+    ObjectNode incoming = stored.deepCopy();
+    incoming.withObject("/narrative").set("chiefComplaint", mapper.createArrayNode());
+
+    assertFailure(incoming, stored, "CLINICAL_CHIEF_COMPLAINT_INVALID");
+  }
+
+  @Test
+  void rejectsChangedOversizedChiefComplaint() {
+    ObjectNode stored = narrative("Anterior", "Plan");
+    stored.withObject("/narrative").put("chiefComplaint", "Consulta anterior");
+    ObjectNode incoming = stored.deepCopy();
+    incoming.withObject("/narrative").put(
+        "chiefComplaint",
+        "m".repeat(ClinicalDocumentChangeValidator.MAX_NARRATIVE_FIELD_CHARS + 1));
+
+    assertFailure(incoming, stored, "CLINICAL_CHIEF_COMPLAINT_TOO_LONG");
   }
 
   @Test

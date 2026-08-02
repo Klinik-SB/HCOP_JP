@@ -38,7 +38,12 @@
         } @else { <p class="section-free-text">Sin diagnóstico oncológico cargado.</p> }
       </section>
 
-      <section class="doc-section" [class.clinical-print-empty]="!printHas('chiefComplaint')"><div class="section-heading"><h3>Motivo de consulta</h3></div><p class="section-free-text">{{ narrative('chiefComplaint') || 'Sin motivo de consulta cargado.' }}</p></section>
+      <section class="doc-section" [class.clinical-print-empty]="!printHas('chiefComplaint')">
+        <div class="section-heading"><h3>Motivo de consulta</h3>@if (canEditChiefComplaint() && narrative('chiefComplaint')) { <div class="section-actions"><button class="section-action-button" type="button" title="Modificar sección" aria-label="Modificar sección Motivo de consulta" [disabled]="workspaceService.hasPendingClinicalWork()" (click)="openChiefComplaintEditor($event)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div> }</div>
+        @if (narrative('chiefComplaint')) { <p class="section-free-text">{{ narrative('chiefComplaint') }}</p> }
+        @else if (canEditChiefComplaint()) { <div class="clinical-section-empty"><span>Sin motivo de consulta cargado.</span><button class="ghost-button" type="button" [attr.aria-label]="chiefComplaintIsInitial() ? 'Cargar motivo de consulta' : 'Modificar motivo de consulta'" [disabled]="workspaceService.hasPendingClinicalWork()" (click)="openChiefComplaintEditor($event)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>{{ chiefComplaintIsInitial() ? 'Cargar' : 'Modificar' }}</span></button></div> }
+        @else { <p class="section-free-text">Sin motivo de consulta cargado.</p> }
+      </section>
       <section class="doc-section" [class.clinical-print-empty]="!printHas('currentIllness')"><div class="section-heading"><h3>Antecedentes de enfermedad actual</h3></div><p class="section-free-text">{{ narrative('currentIllness') || 'Sin antecedentes de enfermedad actual cargados.' }}</p></section>
       <section class="doc-section" [class.clinical-print-empty]="!printHas('personalHistory')"><div class="section-heading"><h3>Antecedentes personales</h3></div>
         @if (narrative('backgroundClinical') || narrative('currentMedication') || narrative('familyOncology') || narrative('gynecology')) { <div class="clinical-facts-stack">@if (narrative('backgroundClinical')) { <p><strong>Clínicos / quirúrgicos:</strong> {{ narrative('backgroundClinical') }}</p> }@if (narrative('currentMedication')) { <p><strong>Medicación habitual:</strong> {{ narrative('currentMedication') }}</p> }@if (narrative('familyOncology')) { <p><strong>Oncofamiliares:</strong> {{ narrative('familyOncology') }}</p> }@if (narrative('gynecology')) { <p><strong>Gineco-obstétricos:</strong> {{ narrative('gynecology') }}</p> }</div> } @else { <p class="section-free-text">Sin antecedentes personales cargados.</p> }
@@ -106,6 +111,31 @@
           </div>
         </div>
         <footer class="modal-actions"><button class="tool-button" type="button" [disabled]="summaryPlanBusy()" (click)="closeSummaryPlanEditor()"><span>Cancelar</span></button><button class="tool-button primary" type="button" [disabled]="summaryPlanBusy()" (click)="saveSummaryPlan()"><span>{{ summaryPlanBusy() ? 'Guardando…' : summaryPlanInitial() ? 'Cargar en historia' : 'Guardar modificación' }}</span></button></footer>
+      </section>
+    </div>
+  }
+
+  @if (chiefComplaintOpen()) {
+    <div class="modal-backdrop summary-plan-editor-backdrop chief-complaint-editor-backdrop open" aria-hidden="false">
+      <section class="modal-card section-modal-card summary-plan-editor-modal" role="dialog" aria-modal="true" aria-labelledby="chiefComplaintEditorTitle" aria-describedby="chiefComplaintEditorDescription" tabindex="-1" (keydown)="trapSummaryPlanFocus($event)">
+        <header class="modal-header">
+          <div><span class="sheet-kicker">{{ chiefComplaintInitial() ? 'Cargar sección' : 'Modificar sección' }}</span><h2 id="chiefComplaintEditorTitle">Motivo de consulta</h2><p id="chiefComplaintEditorDescription">Registre el motivo que origina la consulta actual. Cada modificación queda versionada y auditada.</p></div>
+          <button class="icon-button" type="button" title="Cerrar" aria-label="Cerrar editor de motivo de consulta" [disabled]="chiefComplaintBusy()" (click)="closeChiefComplaintEditor()">×</button>
+        </header>
+        <div class="modal-body summary-plan-editor-body">
+          <div class="section-structured-editor">
+            <p class="section-structured-intro">Registre el motivo que origina la consulta actual.</p>
+            <div class="section-structured-fields">
+              <label class="section-structured-field is-wide" for="chiefComplaintNarrative"><span>Motivo de consulta</span><textarea id="chiefComplaintNarrative" aria-label="Motivo de consulta" rows="5" [formControl]="chiefComplaintControl" [maxlength]="maxChiefComplaintChars" [disabled]="chiefComplaintBusy()" [attr.aria-invalid]="chiefComplaintErrorTarget() === 'content' ? 'true' : null" [attr.aria-describedby]="chiefComplaintErrorTarget() === 'content' ? 'chiefComplaintEditorError' : null"></textarea><small>{{ chiefComplaintCount() }} / {{ maxChiefComplaintChars }}</small></label>
+            </div>
+            @if (!chiefComplaintInitial()) {
+              <label class="section-structured-field section-edit-reason" for="chiefComplaintReason"><span>Motivo de la modificación</span><input id="chiefComplaintReason" aria-label="Motivo de la modificación" autocomplete="off" [maxlength]="maxChiefComplaintChars" [formControl]="chiefComplaintReasonControl" [disabled]="chiefComplaintBusy()" [attr.aria-invalid]="chiefComplaintErrorTarget() === 'reason' ? 'true' : null" [attr.aria-describedby]="chiefComplaintErrorTarget() === 'reason' ? 'chiefComplaintEditorError' : null" placeholder="Explique brevemente por qué se modifica esta sección"><small>Obligatorio para conservar una trazabilidad clínica comprensible.</small></label>
+            }
+            @if (chiefComplaintInitial()) { <p class="summary-plan-editor-note">Esta es la carga inicial de la sección. Debe completar el motivo de consulta.</p> }
+            @if (chiefComplaintError()) { <p class="summary-plan-editor-error" id="chiefComplaintEditorError" role="alert">{{ chiefComplaintError() }}</p> }
+          </div>
+        </div>
+        <footer class="modal-actions"><button class="tool-button" type="button" [disabled]="chiefComplaintBusy()" (click)="closeChiefComplaintEditor()"><span>Cancelar</span></button><button class="tool-button primary" type="button" [disabled]="chiefComplaintBusy()" (click)="saveChiefComplaint()"><span>{{ chiefComplaintBusy() ? 'Guardando…' : chiefComplaintInitial() ? 'Cargar en historia' : 'Guardar modificación' }}</span></button></footer>
       </section>
     </div>
   }

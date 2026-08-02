@@ -1,38 +1,33 @@
 import type { ClinicalState } from '../patients/patient-workspace.models';
 
-export const CLINICAL_SUMMARY_PLAN_TEXT_LIMIT = 50_000;
-/** Stable UI-facing alias retained by the clinical workspace. */
-export const MAX_CLINICAL_NARRATIVE_CHARS = CLINICAL_SUMMARY_PLAN_TEXT_LIMIT;
+export const CLINICAL_CHIEF_COMPLAINT_TEXT_LIMIT = 50_000;
 
-export type ClinicalSummaryPlanEditErrorCode =
-  | 'STRUCTURED_SUMMARY_PLAN_UNSUPPORTED'
-  | 'EMPTY_SUMMARY_PLAN'
-  | 'SUMMARY_TOO_LONG'
-  | 'PLAN_TOO_LONG'
+export type ClinicalChiefComplaintEditErrorCode =
+  | 'STRUCTURED_CHIEF_COMPLAINT_UNSUPPORTED'
+  | 'EMPTY_CHIEF_COMPLAINT'
+  | 'CHIEF_COMPLAINT_TOO_LONG'
   | 'REASON_REQUIRED'
   | 'REASON_TOO_LONG'
   | 'NO_CHANGES';
 
-export interface ClinicalSummaryPlanActor {
+export interface ClinicalChiefComplaintActor {
   readonly userId: string | number;
   readonly username: string;
   readonly displayName: string;
   readonly licenseNumber: string;
 }
 
-export interface ClinicalSummaryPlanBaseline {
-  readonly summary: string;
-  readonly plan: string;
+export interface ClinicalChiefComplaintBaseline {
+  readonly chiefComplaint: string;
   readonly initial: boolean;
 }
 
-export interface StructuredSummaryPlanEdit {
-  readonly summary: string;
-  readonly plan: string;
+export interface StructuredChiefComplaintEdit {
+  readonly chiefComplaint: string;
   readonly reason?: string;
   readonly at?: string;
   readonly id?: string;
-  readonly actor: ClinicalSummaryPlanActor;
+  readonly actor: ClinicalChiefComplaintActor;
 }
 
 interface SectionAudit extends Record<string, unknown> {
@@ -52,103 +47,93 @@ interface SectionVersion extends Record<string, unknown> {
   audit: SectionAudit;
 }
 
-export class ClinicalSummaryPlanEditError extends Error {
+export class ClinicalChiefComplaintEditError extends Error {
   constructor(
-    readonly code: ClinicalSummaryPlanEditErrorCode,
+    readonly code: ClinicalChiefComplaintEditErrorCode,
     message: string
   ) {
     super(message);
-    this.name = 'ClinicalSummaryPlanEditError';
+    this.name = 'ClinicalChiefComplaintEditError';
   }
 }
 
-/** Matches the structured/form compatibility decision used by the legacy client. */
-export function supportsStructuredSummaryPlan(state: ClinicalState): boolean {
+/** Reproduce la decisión de compatibilidad del editor estructurado legacy. */
+export function supportsStructuredChiefComplaint(state: ClinicalState): boolean {
   const narrative = record(state.narrative);
-  if (!isStructuredTextValue(narrative['summary']) || !isStructuredTextValue(narrative['plan'])) {
-    return false;
-  }
+  if (!isStructuredTextValue(narrative['chiefComplaint'])) return false;
 
   const meta = record(state.meta);
   const formModes = record(meta['sectionFormModes']);
-  if (formModes['summaryPlan'] === 'structured') return true;
+  if (formModes['chiefComplaint'] === 'structured') return true;
 
   const liraImport = record(meta['liraImport']);
   if (text(liraImport['origin']) !== 'local') return false;
 
-  const versions = record(meta['sectionVersions'])['summaryPlan'];
+  const versions = record(meta['sectionVersions'])['chiefComplaint'];
   return !Array.isArray(versions) || versions.length === 0;
 }
 
-export function summaryPlanBaseline(state: ClinicalState): ClinicalSummaryPlanBaseline {
-  const narrative = record(state.narrative);
-  const summary = text(narrative['summary']);
-  const plan = text(narrative['plan']);
-  const versions = summaryPlanVersions(state);
+export function chiefComplaintBaseline(state: ClinicalState): ClinicalChiefComplaintBaseline {
+  const chiefComplaint = text(record(state.narrative)['chiefComplaint']);
   return {
-    summary,
-    plan,
-    initial: !summaryPlanSnapshot(summary, plan) && versions.length === 0
+    chiefComplaint,
+    initial: !chiefComplaint.trim() && chiefComplaintVersions(state).length === 0
   };
 }
 
-/** Stable, explicit alias used by structured section editors. */
-export const structuredSummaryPlanBaseline = summaryPlanBaseline;
+/** Alias explícito para consumidores de editores clínicos estructurados. */
+export const structuredChiefComplaintBaseline = chiefComplaintBaseline;
 
 /**
- * Applies one structured summary/plan edit without mutating the supplied state.
- * Validation failures and no-op attempts are reported as typed errors.
+ * Aplica una edición pura e inmutable de Motivo de consulta.
+ * `meta.sectionChangeRequests.chiefComplaint` es el comando transitorio que
+ * el backend consume para construir la auditoría canónica.
  */
-export function applyStructuredSummaryPlanEdit(
+export function applyStructuredChiefComplaintEdit(
   state: ClinicalState,
-  edit: StructuredSummaryPlanEdit
+  edit: StructuredChiefComplaintEdit
 ): ClinicalState {
-  if (!supportsStructuredSummaryPlan(state)) {
-    fail('STRUCTURED_SUMMARY_PLAN_UNSUPPORTED', 'Esta historia conserva el editor de texto compatible con su formato anterior.');
+  if (!supportsStructuredChiefComplaint(state)) {
+    fail(
+      'STRUCTURED_CHIEF_COMPLAINT_UNSUPPORTED',
+      'Esta historia conserva el editor de texto compatible con su formato anterior.'
+    );
   }
 
-  const summary = text(edit.summary);
-  const plan = text(edit.plan);
+  const chiefComplaint = text(edit.chiefComplaint);
   const reasonInput = text(edit.reason);
-  const baseline = summaryPlanBaseline(state);
-  if (summary !== baseline.summary) {
-    assertLength(summary, 'SUMMARY_TOO_LONG', 'La conclusión o resumen');
+  const baseline = chiefComplaintBaseline(state);
+  if (chiefComplaint !== baseline.chiefComplaint) {
+    assertLength(chiefComplaint, 'CHIEF_COMPLAINT_TOO_LONG', 'El motivo de consulta');
   }
-  if (plan !== baseline.plan) {
-    assertLength(plan, 'PLAN_TOO_LONG', 'La conducta o plan');
-  }
-  assertLength(reasonInput, 'REASON_TOO_LONG', 'El motivo');
-  if (baseline.initial && !summary && !plan) {
-    fail('EMPTY_SUMMARY_PLAN', 'Complete al menos un campo.');
+  assertLength(reasonInput, 'REASON_TOO_LONG', 'El motivo de la modificación');
+  if (baseline.initial && !chiefComplaint) {
+    fail('EMPTY_CHIEF_COMPLAINT', 'Complete el motivo de consulta.');
   }
   if (!baseline.initial && !reasonInput) {
     fail('REASON_REQUIRED', 'Indique el motivo de la modificación.');
   }
-
-  const content = summaryPlanSnapshot(summary, plan);
-  if (summary === baseline.summary && plan === baseline.plan) {
+  if (chiefComplaint === baseline.chiefComplaint) {
     fail('NO_CHANGES', 'No hay cambios para guardar.');
   }
 
-  const previousContent = summaryPlanSnapshot(baseline.summary, baseline.plan);
-
   const at = text(edit.at) || new Date().toISOString();
-  const mainId = text(edit.id) || createVersionId('sec-summaryPlan');
+  const mainId = text(edit.id) || createVersionId('sec-chiefComplaint');
   const sourceMeta = record(state.meta);
   const sourceNarrative = record(state.narrative);
   const sourceProfessional = record(sourceMeta['currentProfessional']);
   const actor = normalizedActor(edit.actor, sourceMeta, sourceProfessional);
   const action = baseline.initial ? 'cargado' : 'modificado';
   const audit = auditStamp(action, actor.displayName, actor.license, at);
-  const existingVersions = summaryPlanVersions(state);
+  const existingVersions = chiefComplaintVersions(state);
   const versions = [...existingVersions];
 
   if (!baseline.initial && !versions.some(isInitialVersion)) {
     const initialAt = text(sourceMeta['createdAt']) || text(sourceMeta['updatedAt']) || at;
     const initialAudit = auditStamp('cargado', actor.displayName, actor.license, initialAt);
     const firstContent = versions.length > 0
-      ? text(record(versions[0])['content']) || previousContent
-      : previousContent;
+      ? text(record(versions[0])['content']) || baseline.chiefComplaint
+      : baseline.chiefComplaint;
     versions.unshift(sectionVersion(
       `${mainId}-initial`,
       'Carga inicial',
@@ -160,27 +145,27 @@ export function applyStructuredSummaryPlanEdit(
   versions.push(sectionVersion(
     mainId,
     baseline.initial ? 'Carga inicial' : reasonInput,
-    content || 'Sin datos cargados.',
+    chiefComplaint || 'Sin datos cargados.',
     audit
   ));
 
   const sectionVersions = {
     ...record(sourceMeta['sectionVersions']),
-    summaryPlan: versions
+    chiefComplaint: versions
   };
   const sectionAudit = {
     ...record(sourceMeta['sectionAudit']),
-    summaryPlan: audit
+    chiefComplaint: audit
   };
   const sectionFormModes = {
     ...record(sourceMeta['sectionFormModes']),
-    summaryPlan: 'structured'
+    chiefComplaint: 'structured'
   };
   const sourceSectionChangeRequests = record(sourceMeta['sectionChangeRequests']);
   const sectionChangeRequests = {
     ...sourceSectionChangeRequests,
-    summaryPlan: {
-      ...record(sourceSectionChangeRequests['summaryPlan']),
+    chiefComplaint: {
+      ...record(sourceSectionChangeRequests['chiefComplaint']),
       reason: baseline.initial ? 'Carga inicial' : reasonInput
     }
   };
@@ -196,8 +181,7 @@ export function applyStructuredSummaryPlanEdit(
     ...state,
     narrative: {
       ...sourceNarrative,
-      summary,
-      plan
+      chiefComplaint
     },
     meta: {
       ...sourceMeta,
@@ -212,22 +196,13 @@ export function applyStructuredSummaryPlanEdit(
   };
 }
 
-function summaryPlanSnapshot(summary: unknown, plan: unknown): string {
-  return [
-    labeledText('Conclusion / resumen', summary),
-    labeledText('Conducta / plan', plan)
-  ].filter(Boolean).join('\n').trim();
-}
-
-function summaryPlanVersions(state: ClinicalState): unknown[] {
-  const value = record(record(state.meta)['sectionVersions'])['summaryPlan'];
+function chiefComplaintVersions(state: ClinicalState): unknown[] {
+  const value = record(record(state.meta)['sectionVersions'])['chiefComplaint'];
   return Array.isArray(value) ? value : [];
 }
 
 function isInitialVersion(value: unknown): boolean {
-  const version = record(value);
-  const audit = record(version['audit']);
-  return text(audit['action']) === 'cargado';
+  return text(record(record(value)['audit'])['action']) === 'cargado';
 }
 
 function sectionVersion(
@@ -257,7 +232,7 @@ function auditStamp(
 }
 
 function normalizedActor(
-  actor: ClinicalSummaryPlanActor,
+  actor: ClinicalChiefComplaintActor,
   meta: Record<string, unknown>,
   professional: Record<string, unknown>
 ): { displayName: string; license: string } {
@@ -275,17 +250,12 @@ function normalizedActor(
 
 function assertLength(
   value: string,
-  code: Extract<ClinicalSummaryPlanEditErrorCode, 'SUMMARY_TOO_LONG' | 'PLAN_TOO_LONG' | 'REASON_TOO_LONG'>,
+  code: Extract<ClinicalChiefComplaintEditErrorCode, 'CHIEF_COMPLAINT_TOO_LONG' | 'REASON_TOO_LONG'>,
   label: string
 ): void {
-  if (value.length > CLINICAL_SUMMARY_PLAN_TEXT_LIMIT) {
-    fail(code, `${label} no puede superar los ${CLINICAL_SUMMARY_PLAN_TEXT_LIMIT.toLocaleString('es-AR')} caracteres.`);
+  if (value.length > CLINICAL_CHIEF_COMPLAINT_TEXT_LIMIT) {
+    fail(code, `${label} no puede superar los ${CLINICAL_CHIEF_COMPLAINT_TEXT_LIMIT.toLocaleString('es-AR')} caracteres.`);
   }
-}
-
-function labeledText(label: string, value: unknown): string {
-  const normalized = scalarText(value);
-  return normalized.trim() ? `${label}: ${normalized}` : '';
 }
 
 function scalarText(value: unknown): string {
@@ -306,8 +276,8 @@ function record(value: unknown): Record<string, unknown> {
     : {};
 }
 
-function fail(code: ClinicalSummaryPlanEditErrorCode, message: string): never {
-  throw new ClinicalSummaryPlanEditError(code, message);
+function fail(code: ClinicalChiefComplaintEditErrorCode, message: string): never {
+  throw new ClinicalChiefComplaintEditError(code, message);
 }
 
 function createVersionId(prefix: string): string {

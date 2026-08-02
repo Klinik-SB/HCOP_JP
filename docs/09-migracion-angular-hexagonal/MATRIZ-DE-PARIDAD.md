@@ -82,6 +82,13 @@ formas legacy no textuales, respuesta canónica y dos recorridos Chrome contra
 PostgreSQL efímero. La fila continúa `Pendiente` porque los demás editores de la
 hoja y el historial visible equivalente aún no alcanzaron paridad.
 
+El corte 035 migra **Motivo de consulta** con el recuadro `+ Cargar` y el lápiz
+del diseño original, modal Angular nativo, borrador protegido, primera carga,
+modificación con motivo, límite de 50.000 caracteres y auditoría canónica. Java
+generaliza la autoridad de secciones narrativas sin cambiar el contrato ya
+validado de Conclusión / resumen. La fila Hoja clínica continúa `Pendiente`
+hasta migrar los restantes editores e historial visible.
+
 ## Evidencia requerida para marcar `Validada`
 
 1. Prueba automática de la regla o del contrato.

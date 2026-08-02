@@ -7,30 +7,23 @@ import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-/**
- * Makes the server the sole authority for the audit trail of conclusion/summary and plan.
- * Client-generated audit metadata is treated as an optimistic preview and is never trusted.
- */
+/** Server authority for the structured chief-complaint section and its clinical audit trail. */
 @Component
-public class ClinicalSummaryPlanAuthority {
+public class ClinicalChiefComplaintAuthority {
   static final int MAX_REASON_CHARS = ClinicalNarrativeSectionAuthority.MAX_REASON_CHARS;
-  static final String SECTION_KEY = "summaryPlan";
+  static final String SECTION_KEY = "chiefComplaint";
 
   private static final ClinicalNarrativeSectionAuthority.SectionDefinition DEFINITION =
       new ClinicalNarrativeSectionAuthority.SectionDefinition(
           SECTION_KEY,
-          "CLINICAL_SUMMARY_PLAN",
-          "Complete al menos la conclusi\u00f3n / resumen o la conducta / plan.",
-          false,
-          List.of(
-              new ClinicalNarrativeSectionAuthority.NarrativeField(
-                  "summary", "Conclusion / resumen"),
-              new ClinicalNarrativeSectionAuthority.NarrativeField(
-                  "plan", "Conducta / plan")));
+          "CLINICAL_CHIEF_COMPLAINT",
+          "Complete el motivo de consulta.",
+          true,
+          List.of(new ClinicalNarrativeSectionAuthority.NarrativeField("chiefComplaint", "")));
 
   private final ClinicalNarrativeSectionAuthority authority;
 
-  public ClinicalSummaryPlanAuthority(ObjectMapper mapper, Clock clock) {
+  public ClinicalChiefComplaintAuthority(ObjectMapper mapper, Clock clock) {
     this.authority = new ClinicalNarrativeSectionAuthority(mapper, clock);
   }
 

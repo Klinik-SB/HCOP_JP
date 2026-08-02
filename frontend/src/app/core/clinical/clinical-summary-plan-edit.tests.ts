@@ -120,6 +120,14 @@ test('expone el baseline directo y calcula primera carga con texto y versiones',
   equal(existing.summary, 'Resumen anterior');
   equal(existing.plan, '7');
   equal(existing.initial, false);
+  const spaced = localState({
+    narrative: { summary: '  Resumen heredado  ', plan: '  Plan heredado  ' }
+  });
+  equal(summaryPlanBaseline(spaced).summary, 'Resumen heredado');
+  equal(summaryPlanBaseline(spaced).plan, 'Plan heredado');
+  errorCode(() => edit(spaced, {
+    summary: 'Resumen heredado', plan: 'Plan heredado', reason: 'No corresponde'
+  }), 'NO_CHANGES');
   const clearedWithHistory = summaryPlanBaseline(localState({
     narrative: { summary: '', plan: '' },
     meta: {

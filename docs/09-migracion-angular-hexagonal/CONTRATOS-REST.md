@@ -137,6 +137,28 @@ Un `409` sin código se conserva como `UNKNOWN_CLINICAL_CONFLICT`, nunca se
 convierte en conflicto de revisión leyendo el mensaje destinado al usuario y
 tampoco se reintenta automáticamente.
 
+Para el campo estructurado **Motivo de consulta**, `PUT /api/hc` compara
+`narrative.chiefComplaint` contra el documento confirmado. Sólo valida el
+campo cuando cambió, de modo que una forma legacy atípica sin cambios no
+bloquee otra edición:
+
+| Código `400` | Condición |
+|---|---|
+| `CLINICAL_CHIEF_COMPLAINT_INVALID` | El nuevo valor no es texto. |
+| `CLINICAL_CHIEF_COMPLAINT_TOO_LONG` | El nuevo texto supera 50.000 caracteres. |
+| `CLINICAL_CHIEF_COMPLAINT_EMPTY` | La primera carga está vacía. |
+| `CLINICAL_CHIEF_COMPLAINT_REASON_REQUIRED` | Una modificación no incluye motivo. |
+| `CLINICAL_CHIEF_COMPLAINT_REASON_INVALID` | El motivo transitorio no es texto. |
+| `CLINICAL_CHIEF_COMPLAINT_REASON_TOO_LONG` | El motivo supera 50.000 caracteres. |
+
+Una modificación posterior puede vaciar el campo para documentar la ausencia
+actual, pero debe incluir motivo y genera una nueva versión. El motivo viaja
+únicamente en `meta.sectionChangeRequests.chiefComplaint.reason`; Java lo
+consume, lo retira antes de persistir y reconstruye
+`meta.sectionVersions.chiefComplaint`, `meta.sectionAudit.chiefComplaint` y
+`meta.sectionFormModes.chiefComplaint` desde PostgreSQL, la sesión autenticada
+y el reloj del servidor.
+
 Para los campos estructurados de **Conclusión / resumen**, `PUT /api/hc`
 compara cada valor entrante contra el documento confirmado. Sólo valida un
 campo cuando realmente cambió, para que una forma legacy atípica no impida

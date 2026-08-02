@@ -46,17 +46,18 @@ npm run build
 ```
 
 La suite pura cubre proyecciones, normalización del workspace, edición
-estructurada de Conclusión / resumen, registro de borradores sin contenido
+estructurada de Motivo de consulta y Conclusión / resumen, registro de borradores sin contenido
 clínico, códigos de conflicto y comparación de revisiones. La compilación usa
 la configuración de producción y aplica sus presupuestos de tamaño.
 
-Las pruebas Java de `ClinicalSummaryPlanAuthority` demuestran que actor, fecha,
-motivo y versiones provienen del servidor, que un cliente no puede reescribir
-la cadena confirmada y que el valor legacy no textual se conserva. El contrato
+Las pruebas Java de `ClinicalChiefComplaintAuthority` y
+`ClinicalSummaryPlanAuthority` demuestran que actor, fecha, motivo y versiones
+provienen del servidor, que un cliente no puede reescribir la cadena confirmada
+y que el valor legacy no textual se conserva. El contrato
 MVC comprueba además que `PUT /api/hc` devuelve el estado canónico con la nueva
 revisión y sin el comando transitorio.
 
-El recorrido concurrente y el primer editor de la hoja se validan contra Java
+El recorrido concurrente y los editores migrados de la hoja se validan contra Java
 y PostgreSQL reales en un entorno Docker efímero:
 
 ```powershell
@@ -66,11 +67,13 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-clinical-
 El lanzador reserva `127.0.0.1:5182`, genera credenciales y secretos efímeros,
 ejecuta dos sesiones Chrome independientes y elimina pacientes, contenedores,
 redes y volúmenes tanto ante éxito como ante fallo. No reutiliza la base estable
-ni la instancia QA ordinaria. El recorrido del editor también verifica foco
-inicial, contención por teclado, ausencia de cierre por fondo/Escape y retorno
-al disparador.
-También intercepta un primer guardado con `503` y comprueba que el diálogo y
-ambos valores editables permanezcan disponibles para reintentar.
+ni la instancia QA ordinaria. Los recorridos de Conclusión / resumen y Motivo
+de consulta verifican foco inicial, contención por teclado, ausencia de cierre
+por fondo/Escape, retorno al disparador, bloqueo del contexto y auditoría
+recuperada desde PostgreSQL. También interceptan un primer guardado con `503`
+y comprueban que el diálogo y los valores editables permanezcan disponibles
+para reintentar. Motivo de consulta agrega además un `VERSION_CONFLICT` real
+con una segunda sesión.
 
 En la aceptación final del 30/07/2026, la suite Java terminó con **101/101
 pruebas aprobadas**. El E2E utilizó una aplicación de cuatro drogas, interrumpió

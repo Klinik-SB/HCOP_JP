@@ -27,6 +27,7 @@ interface ClinicalDraftEntry extends ClinicalDraftHandle {
 export class ClinicalDraftRegistryService {
   private readonly entries = signal<ReadonlyMap<string, ClinicalDraftEntry>>(new Map());
 
+  readonly hasActive = computed(() => this.entries().size > 0);
   readonly hasDirty = computed(() => [...this.entries().values()].some((entry) => entry.dirty));
 
   acquire(registration: ClinicalDraftRegistration): ClinicalDraftHandle {

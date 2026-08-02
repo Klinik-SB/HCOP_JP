@@ -7,12 +7,14 @@ const check = (actual: unknown, expected: unknown, message?: string): void => {
 };
 
 const registry = new ClinicalDraftRegistryService();
+check(registry.hasActive(), false, 'empieza sin editores activos');
 check(registry.hasDirty(), false, 'empieza sin borradores sucios');
 
 throws(() => registry.acquire({ patientId: '', label: 'Resumen' })); assertions += 1;
 throws(() => registry.acquire({ patientId: '42', label: '' })); assertions += 1;
 
 const first = registry.acquire({ patientId: ' 42 ', label: ' Conclusión / resumen ' });
+check(registry.hasActive(), true, 'un editor limpio también queda registrado');
 check(first.patientId, '42');
 check(first.label, 'Conclusión / resumen');
 check(Object.isFrozen(first), true);
@@ -42,6 +44,7 @@ registry.setDirty(second, true);
 check(registry.isDirty(second), false, 'un handle invalidado por paciente queda inerte');
 
 const publicKeys = Object.keys(registry.acquire({ patientId: '8', label: 'Examen físico' })).sort();
+check(registry.hasActive(), true);
 deepStrictEqual(publicKeys, ['label', 'patientId', 'token']); assertions += 1;
 
 console.log(`OK · ${assertions} aserciones · registro clínico sucio sin contenido`);
