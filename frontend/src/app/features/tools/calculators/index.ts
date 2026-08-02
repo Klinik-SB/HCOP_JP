@@ -10,4 +10,5 @@ export * from './legacy-calculators-20-23.definitions';
 export * from './legacy-calculators-24-27.definitions';
 export * from './legacy-calculators-28-31.definitions';
 export * from './legacy-calculators-32-35.definitions';
+export * from './legacy-calculators-36-39.definitions';
 export * from './ported-calculator.registry';

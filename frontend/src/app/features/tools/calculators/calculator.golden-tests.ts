@@ -49,6 +49,12 @@ import {
   PEPI_BREAST_CALCULATOR,
   RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR
 } from './legacy-calculators-32-35.definitions';
+import {
+  INTERNATIONAL_PROGNOSTIC_INDEX_CALCULATOR,
+  MONARCHE_COHORT_1_CALCULATOR,
+  OLYMPIA_CPSEG_CALCULATOR,
+  R2_ISS_MYELOMA_CALCULATOR
+} from './legacy-calculators-36-39.definitions';
 import { PORTED_CALCULATORS } from './ported-calculator.registry';
 import { CalculatorOrigin } from './calculator.models';
 
@@ -73,21 +79,23 @@ test('inventory contains the exact 57 unique legacy tools in stable order', () =
   }
 });
 
-test('only the first thirty-five calculators are marked as ported', () => {
+test('only the first thirty-nine calculators are marked as ported', () => {
   deepEqual(CALCULATOR_INVENTORY.filter((entry) => entry.migrationStatus === 'ported').map((entry) => entry.id),
     ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk',
       'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude', 'nmibc', 'cystectomy', 'cisplatin', 'utuc',
       'renal-complexity', 'leibovich', 'imdc', 'igcccg', 'renal-function-oncology', 'anc-ctcae-v6',
       'khorana-vte', 'mascc-febrile-neutropenia', 'cisne-febrile-neutropenia',
       'palliative-prognostic-index', 'bed-eqd2', 'qtc-fridericia',
-      'nottingham-prognostic-index', 'residual-cancer-burden-experimental', 'pepi-breast', 'cts5-breast']);
+      'nottingham-prognostic-index', 'residual-cancer-burden-experimental', 'pepi-breast', 'cts5-breast',
+      'monarche-cohort-1', 'olympia-cpseg', 'international-prognostic-index', 'r2-iss-myeloma']);
   deepEqual(PORTED_CALCULATORS.map((entry) => entry.id),
     ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk',
       'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude', 'nmibc', 'cystectomy', 'cisplatin', 'utuc',
       'renal-complexity', 'leibovich', 'imdc', 'igcccg', 'renal-function-oncology', 'anc-ctcae-v6',
       'khorana-vte', 'mascc-febrile-neutropenia', 'cisne-febrile-neutropenia',
       'palliative-prognostic-index', 'bed-eqd2', 'qtc-fridericia',
-      'nottingham-prognostic-index', 'residual-cancer-burden-experimental', 'pepi-breast', 'cts5-breast']);
+      'nottingham-prognostic-index', 'residual-cancer-burden-experimental', 'pepi-breast', 'cts5-breast',
+      'monarche-cohort-1', 'olympia-cpseg', 'international-prognostic-index', 'r2-iss-myeloma']);
 });
 
 test('BSA opens blank and keeps legacy values only as examples', () => {
@@ -2630,6 +2638,372 @@ test('ported 32 to 35 enforce declared validation and contain no raw markup', ()
   for (const current of results) assertNoRawMarkup(current.notes);
 });
 
+test('ported 36 to 39 preserve canonical metadata and field order', () => {
+  deepEqual([
+    MONARCHE_COHORT_1_CALCULATOR,
+    OLYMPIA_CPSEG_CALCULATOR,
+    INTERNATIONAL_PROGNOSTIC_INDEX_CALCULATOR,
+    R2_ISS_MYELOMA_CALCULATOR
+  ].map((definition) => ({
+    id: definition.id,
+    title: definition.title,
+    category: definition.category,
+    subtitle: definition.subtitle,
+    source: definition.source,
+    fieldIds: definition.fields.map((field) => field.id)
+  })), [
+    {
+      id: 'monarche-cohort-1', title: 'monarchE — criterios de cohorte 1',
+      category: 'mama', subtitle: 'Reconstrucción de criterios clínico-patológicos del ensayo.',
+      source: 'monarchE cohort 1',
+      fieldIds: ['monarche_hr_positive', 'monarche_her2_negative', 'monarche_early',
+        'monarche_nodes', 'monarche_size', 'monarche_grade']
+    },
+    {
+      id: 'olympia-cpseg', title: 'OlympiA y CPS+EG', category: 'mama',
+      subtitle: 'Criterios de alto riesgo según escenario neoadyuvante o adyuvante.',
+      source: 'OlympiA / CPS+EG',
+      fieldIds: ['olympia_scope', 'scenario', 'olympia_gbrca', 'olympia_her2_negative',
+        'olympia_residual', 'olympia_c_stage', 'olympia_p_stage', 'olympia_er',
+        'olympia_nuclear_grade', 'olympia_nodes_tnbc', 'olympia_size', 'olympia_nodes_hr']
+    },
+    {
+      id: 'international-prognostic-index', title: 'International Prognostic Index — IPI',
+      category: 'hematologia', subtitle: 'Índice clínico clásico para linfomas agresivos.',
+      source: 'International Prognostic Index',
+      fieldIds: ['ipi_age', 'ipi_stage', 'ipi_ldh', 'ipi_ecog', 'ipi_extranodal']
+    },
+    {
+      id: 'r2-iss-myeloma', title: 'R2-ISS — mieloma múltiple', category: 'hematologia',
+      subtitle: 'Revised 2nd International Staging System.',
+      source: 'European Myeloma Network R2-ISS',
+      fieldIds: ['r2iss_beta2', 'r2iss_albumin', 'r2iss_del17p', 'r2iss_high_ldh',
+        'r2iss_t414', 'r2iss_1q']
+    }
+  ]);
+});
+
+test('ported 36 to 39 preserve blank forms, examples and the real Olympia default scenario', () => {
+  deepEqual(evaluateCalculator(MONARCHE_COHORT_1_CALCULATOR).issues
+    .map((issue) => issue.fieldId), ['monarche_nodes', 'monarche_size', 'monarche_grade']);
+  const olympia = evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR);
+  equal(olympia.values['scenario'], 'neo_hr');
+  deepEqual(olympia.issues.map((issue) => issue.fieldId),
+    ['olympia_c_stage', 'olympia_p_stage', 'olympia_er', 'olympia_nuclear_grade']);
+  deepEqual(evaluateCalculator(INTERNATIONAL_PROGNOSTIC_INDEX_CALCULATOR).issues
+    .map((issue) => issue.fieldId), ['ipi_age', 'ipi_stage', 'ipi_ecog', 'ipi_extranodal']);
+  deepEqual(evaluateCalculator(R2_ISS_MYELOMA_CALCULATOR).issues
+    .map((issue) => issue.fieldId), ['r2iss_beta2', 'r2iss_albumin']);
+
+  deepEqual(MONARCHE_COHORT_1_CALCULATOR.fields.map((field) =>
+    field.kind === 'number' || field.kind === 'select' ? field.exampleValue
+      : field.kind === 'checkbox' ? field.initialValue : null), [false, false, false, 1, 30, '2']);
+  deepEqual(INTERNATIONAL_PROGNOSTIC_INDEX_CALCULATOR.fields.map((field) =>
+    field.kind === 'number' || field.kind === 'select' ? field.exampleValue
+      : field.kind === 'checkbox' ? field.initialValue : null), [60, '2', false, '1', 0]);
+  deepEqual(R2_ISS_MYELOMA_CALCULATOR.fields.map((field) =>
+    field.kind === 'number' || field.kind === 'select' ? field.exampleValue
+      : field.kind === 'checkbox' ? field.initialValue : null), [3, 4, false, false, false, false]);
+});
+
+test('monarchE golden negative case preserves cohort language and Ki-67 result', () => {
+  const evaluation = evaluateCalculator(MONARCHE_COHORT_1_CALCULATOR, monarcheInput());
+  deepEqual(evaluation.result, {
+    title: 'No coincide con cohorte 1',
+    detail: 'Falta alcance biológico, anatomía de alto riesgo o ambos.',
+    badge: 'criterios de ensayo', score: 0, showScore: false, severity: 'warn',
+    metrics: [
+      { label: 'Alcance biológico', value: 'No' },
+      { label: 'Anatomía de alto riesgo', value: 'No' },
+      { label: 'Ki-67 requerido por cohorte 1', value: 'No' }
+    ],
+    notes: [
+      'Criterio anatómico: ≥4 ganglios, o 1–3 ganglios con grado 3 o tumor ≥50 mm.',
+      'Esta pantalla reproduce criterios de cohorte, no toda la elegibilidad regulatoria, temporal o clínica.',
+      'Coincidir con el ensayo no constituye una indicación automática de tratamiento.'
+    ]
+  });
+});
+
+test('monarchE requires all three biologic checks independently of high-risk anatomy', () => {
+  const anatomyOnly = monarcheInput({ monarche_nodes: 4 });
+  equal(evaluateCalculator(MONARCHE_COHORT_1_CALCULATOR, anatomyOnly).result.metrics[1]?.value, 'Sí');
+  for (const omitted of ['monarche_hr_positive', 'monarche_her2_negative', 'monarche_early']) {
+    const evaluation = evaluateCalculator(MONARCHE_COHORT_1_CALCULATOR,
+      monarcheInput({ monarche_nodes: 4, monarche_hr_positive: true,
+        monarche_her2_negative: true, monarche_early: true, [omitted]: false }));
+    equal(evaluation.result.title, 'No coincide con cohorte 1');
+    equal(evaluation.result.metrics[0]?.value, 'No');
+    equal(evaluation.result.metrics[1]?.value, 'Sí');
+  }
+});
+
+test('monarchE preserves nodal, size and grade anatomy boundaries', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{ monarche_nodes: 0, monarche_size: 50, monarche_grade: '3' }, 'No'],
+    [{ monarche_nodes: 1, monarche_size: 49.9, monarche_grade: '2' }, 'No'],
+    [{ monarche_nodes: 1, monarche_size: 50, monarche_grade: '2' }, 'Sí'],
+    [{ monarche_nodes: 1, monarche_size: 49.9, monarche_grade: '3' }, 'Sí'],
+    [{ monarche_nodes: 3, monarche_size: 50, monarche_grade: '2' }, 'Sí'],
+    [{ monarche_nodes: 4, monarche_size: 0.1, monarche_grade: '1' }, 'Sí']
+  ];
+  for (const [overrides, expected] of cases) {
+    const evaluation = evaluateCalculator(MONARCHE_COHORT_1_CALCULATOR,
+      monarcheInput(overrides));
+    equal(evaluation.result.metrics[1]?.value, expected);
+  }
+  const complete = evaluateCalculator(MONARCHE_COHORT_1_CALCULATOR,
+    monarcheInput({ monarche_nodes: 4, monarche_hr_positive: true,
+      monarche_her2_negative: true, monarche_early: true }));
+  equal(complete.result.title, 'Coincide con cohorte 1');
+  equal(complete.result.severity, 'info');
+});
+
+test('OlympiA neo-HR golden CPS+EG three case preserves reconstructed-trial warnings', () => {
+  const evaluation = evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR, olympiaNeoHrInput());
+  deepEqual(evaluation.result, {
+    title: 'Coincide con criterios reconstruidos', detail: 'CPS+EG calculado: 3.',
+    badge: 'criterios de ensayo', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'gBRCA + HER2 negativo', value: 'Sí' },
+      { label: 'Criterio de alto riesgo', value: 'Sí' },
+      { label: 'CPS+EG', value: 3 }
+    ],
+    notes: [
+      'Neoadyuvancia HR positiva: requiere enfermedad invasiva residual y CPS+EG ≥3 en la reconstrucción del ensayo.',
+      'Los otros escenarios utilizan definiciones anatómicas específicas; verificar subtipo, estadio, tratamiento previo, temporalidad y genética.',
+      'Coincidir con criterios históricos del ensayo no constituye una indicación automática de tratamiento.'
+    ]
+  });
+});
+
+test('OlympiA neo-HR preserves CPS+EG two/three threshold and six without residual disease', () => {
+  const two = evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR,
+    olympiaNeoHrInput({ olympia_er: 'positive' }));
+  equal(two.result.detail, 'CPS+EG calculado: 2.');
+  equal(two.result.metrics[1]?.value, 'No');
+  const three = evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR, olympiaNeoHrInput());
+  equal(three.result.detail, 'CPS+EG calculado: 3.');
+  equal(three.result.metrics[1]?.value, 'Sí');
+  const sixWithoutResidual = evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR,
+    olympiaNeoHrInput({ olympia_c_stage: 'iiib_iiic', olympia_p_stage: 'iiic',
+      olympia_er: 'negative', olympia_nuclear_grade: '3', olympia_residual: false }));
+  equal(sixWithoutResidual.result.detail, 'CPS+EG calculado: 6.');
+  equal(sixWithoutResidual.result.metrics[1]?.value, 'No');
+  equal(sixWithoutResidual.result.title, 'No coincide con criterios reconstruidos');
+});
+
+test('OlympiA preserves every CPS+EG component weight and both base-scope gates', () => {
+  const base = {
+    olympia_c_stage: 'i_iia', olympia_p_stage: 'zero_i',
+    olympia_er: 'positive', olympia_nuclear_grade: '2'
+  };
+  const cases: readonly [Readonly<Record<string, unknown>>, number][] = [
+    [{}, 0], [{ olympia_c_stage: 'iib_iiia' }, 1],
+    [{ olympia_c_stage: 'iiib_iiic' }, 2], [{ olympia_p_stage: 'iia_iiib' }, 1],
+    [{ olympia_p_stage: 'iiic' }, 2], [{ olympia_er: 'negative' }, 1],
+    [{ olympia_nuclear_grade: '3' }, 1]
+  ];
+  for (const [overrides, expected] of cases) {
+    equal(evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR,
+      olympiaNeoHrInput({ ...base, ...overrides })).result.metrics[2]?.value, expected);
+  }
+  for (const omitted of ['olympia_gbrca', 'olympia_her2_negative']) {
+    const evaluation = evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR,
+      olympiaNeoHrInput({ [omitted]: false }));
+    equal(evaluation.result.metrics[0]?.value, 'No');
+    equal(evaluation.result.metrics[1]?.value, 'Sí');
+    equal(evaluation.result.title, 'No coincide con criterios reconstruidos');
+  }
+});
+
+test('OlympiA validates only the active scenario fields', () => {
+  const neoTnbc = evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR, {
+    scenario: 'neo_tnbc', olympia_gbrca: true, olympia_her2_negative: true,
+    olympia_residual: true, olympia_c_stage: 'invalid', olympia_p_stage: 'invalid',
+    olympia_er: 'invalid', olympia_nuclear_grade: 'invalid',
+    olympia_nodes_tnbc: -1, olympia_size: -1, olympia_nodes_hr: -1
+  });
+  equal(neoTnbc.status, 'calculated');
+  equal(neoTnbc.result.title, 'Coincide con criterios reconstruidos');
+  equal(neoTnbc.result.detail, 'El escenario seleccionado no utiliza CPS+EG.');
+  equal(neoTnbc.result.metrics[2]?.value, 'No aplica');
+
+  const incompleteAdj = evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR, {
+    scenario: 'adj_tnbc', olympia_gbrca: true, olympia_her2_negative: true
+  });
+  deepEqual(incompleteAdj.issues.map((issue) => issue.fieldId),
+    ['olympia_nodes_tnbc', 'olympia_size']);
+});
+
+test('OlympiA preserves neo-TNBC, adjuvant TNBC and adjuvant HR boundaries', () => {
+  for (const residual of [false, true]) {
+    const evaluation = evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR, {
+      scenario: 'neo_tnbc', olympia_gbrca: true, olympia_her2_negative: true,
+      olympia_residual: residual
+    });
+    equal(evaluation.result.metrics[1]?.value, residual ? 'Sí' : 'No');
+  }
+  const adjTnbcCases: readonly [number, number, string][] = [
+    [0, 1.91, 'No'], [0, 2.01, 'Sí'], [1, 0.01, 'Sí']
+  ];
+  for (const [nodes, size, expected] of adjTnbcCases) {
+    const evaluation = evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR,
+      olympiaAdjTnbcInput({ olympia_nodes_tnbc: nodes, olympia_size: size }));
+    equal(evaluation.result.metrics[1]?.value, expected);
+  }
+  for (const [nodes, expected] of [[3, 'No'], [4, 'Sí']] as const) {
+    const evaluation = evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR, {
+      scenario: 'adj_hr', olympia_gbrca: true, olympia_her2_negative: true,
+      olympia_residual: false, olympia_nodes_hr: nodes
+    });
+    equal(evaluation.result.metrics[1]?.value, expected);
+  }
+});
+
+test('OlympiA preserves the adjuvant TNBC minimum-step conflict at the exact two-centimeter threshold', () => {
+  const exact = evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR,
+    olympiaAdjTnbcInput({ olympia_nodes_tnbc: 0, olympia_size: 2 }));
+  equal(exact.status, 'invalid');
+  deepEqual(exact.issues.map((issue) => [issue.fieldId, issue.code]),
+    [['olympia_size', 'step-mismatch']]);
+  equal(evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR,
+    olympiaAdjTnbcInput({ olympia_size: 1.91 })).result.metrics[1]?.value, 'No');
+  equal(evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR,
+    olympiaAdjTnbcInput({ olympia_size: 2.01 })).result.metrics[1]?.value, 'Sí');
+});
+
+test('IPI golden zero case preserves all output and population limitations', () => {
+  const evaluation = evaluateCalculator(INTERNATIONAL_PROGNOSTIC_INDEX_CALCULATOR, ipiInput());
+  deepEqual(evaluation.result, {
+    title: 'IPI 0/5 · bajo', detail: 'Grupo del IPI internacional clásico.',
+    badge: 'linfoma agresivo', score: 0, showScore: false, severity: 'good',
+    metrics: [
+      { label: 'Puntaje', value: '0/5' }, { label: 'Grupo', value: 'bajo' },
+      { label: 'Factores presentes', value: 0 }
+    ],
+    notes: [
+      'Población original: linfomas no Hodgkin agresivos; la calibración absoluta cambia con subtipo y era terapéutica.',
+      'No reemplaza índices específicos como NCCN-IPI, CNS-IPI ni la clasificación biológica del linfoma.',
+      'El IPI es pronóstico y no selecciona automáticamente un régimen.'
+    ]
+  });
+});
+
+test('IPI preserves each strict factor boundary including accepted age zero', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, number][] = [
+    [{ ipi_age: 0 }, 0], [{ ipi_age: 60 }, 0], [{ ipi_age: 61 }, 1],
+    [{ ipi_stage: '2' }, 0], [{ ipi_stage: '3' }, 1],
+    [{ ipi_ecog: '1' }, 0], [{ ipi_ecog: '2' }, 1],
+    [{ ipi_extranodal: 1 }, 0], [{ ipi_extranodal: 2 }, 1],
+    [{ ipi_ldh: true }, 1]
+  ];
+  for (const [overrides, expected] of cases) {
+    equal(evaluateCalculator(INTERNATIONAL_PROGNOSTIC_INDEX_CALCULATOR,
+      ipiInput(overrides)).result.metrics[2]?.value, expected);
+  }
+});
+
+test('IPI preserves all score groups, severities and maximum five', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string][] = [
+    [{}, 'IPI 0/5 · bajo', 'good'],
+    [{ ipi_age: 61 }, 'IPI 1/5 · bajo', 'good'],
+    [{ ipi_age: 61, ipi_stage: '3' }, 'IPI 2/5 · bajo-intermedio', 'warn'],
+    [{ ipi_age: 61, ipi_stage: '3', ipi_ldh: true }, 'IPI 3/5 · alto-intermedio', 'warn'],
+    [{ ipi_age: 61, ipi_stage: '3', ipi_ldh: true, ipi_ecog: '2' }, 'IPI 4/5 · alto', 'bad'],
+    [{ ipi_age: 61, ipi_stage: '3', ipi_ldh: true, ipi_ecog: '2', ipi_extranodal: 2 },
+      'IPI 5/5 · alto', 'bad']
+  ];
+  for (const [overrides, title, severity] of cases) {
+    const evaluation = evaluateCalculator(INTERNATIONAL_PROGNOSTIC_INDEX_CALCULATOR,
+      ipiInput(overrides));
+    equal(evaluation.result.title, title);
+    equal(evaluation.result.severity, severity);
+  }
+});
+
+test('R2-ISS golden ISS-I case preserves output and FISH limitations', () => {
+  const evaluation = evaluateCalculator(R2_ISS_MYELOMA_CALCULATOR, r2IssInput());
+  deepEqual(evaluation.result, {
+    title: 'R2-ISS I · 0.0 puntos', detail: 'ISS basal derivado: estadio 1.',
+    badge: 'mieloma múltiple', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'R2-ISS', value: 'R2-ISS I' }, { label: 'Puntaje', value: '0.0' },
+      { label: 'ISS derivado', value: 1 }
+    ],
+    notes: [
+      'Población: mieloma múltiple recién diagnosticado con estudios citogenéticos adecuados.',
+      'La calidad y sensibilidad de FISH, el umbral de del(17p) y la disponibilidad de 1q deben documentarse.',
+      'R2-ISS es pronóstico poblacional; no define por sí solo tratamiento, trasplante ni mantenimiento.'
+    ]
+  });
+});
+
+test('R2-ISS preserves beta-2-microglobulin and albumin ISS boundaries', () => {
+  const cases: readonly [number, number, number][] = [
+    [3.49, 3.49, 2], [3.49, 3.5, 1], [3.5, 3.5, 2],
+    [5.49, 4, 2], [5.5, 4, 3]
+  ];
+  for (const [beta2, albumin, expectedIss] of cases) {
+    const evaluation = evaluateCalculator(R2_ISS_MYELOMA_CALCULATOR,
+      r2IssInput({ r2iss_beta2: beta2, r2iss_albumin: albumin }));
+    equal(evaluation.result.metrics[2]?.value, expectedIss);
+  }
+});
+
+test('R2-ISS preserves stage boundaries zero, half, one, one-and-half, 2.5 and 3', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string][] = [
+    [{}, 'R2-ISS I · 0.0 puntos', 'info'],
+    [{ r2iss_1q: true }, 'R2-ISS II · 0.5 puntos', 'info'],
+    [{ r2iss_del17p: true }, 'R2-ISS II · 1.0 puntos', 'info'],
+    [{ r2iss_beta2: 5.5 }, 'R2-ISS III · 1.5 puntos', 'warn'],
+    [{ r2iss_beta2: 5.5, r2iss_del17p: true }, 'R2-ISS III · 2.5 puntos', 'warn'],
+    [{ r2iss_beta2: 5.5, r2iss_del17p: true, r2iss_1q: true },
+      'R2-ISS IV · 3.0 puntos', 'bad']
+  ];
+  for (const [overrides, title, severity] of cases) {
+    const evaluation = evaluateCalculator(R2_ISS_MYELOMA_CALCULATOR,
+      r2IssInput(overrides));
+    equal(evaluation.result.title, title);
+    equal(evaluation.result.severity, severity);
+  }
+  const maximum = evaluateCalculator(R2_ISS_MYELOMA_CALCULATOR,
+    r2IssInput({ r2iss_beta2: 5.5, r2iss_del17p: true, r2iss_high_ldh: true,
+      r2iss_t414: true, r2iss_1q: true }));
+  equal(maximum.result.title, 'R2-ISS IV · 5.0 puntos');
+});
+
+test('R2-ISS preserves the ISS and individual laboratory or cytogenetic weights', () => {
+  equal(evaluateCalculator(R2_ISS_MYELOMA_CALCULATOR,
+    r2IssInput({ r2iss_beta2: 3.5 })).result.metrics[1]?.value, '1.0');
+  const cases: readonly [string, string][] = [
+    ['r2iss_del17p', '1.0'], ['r2iss_high_ldh', '1.0'],
+    ['r2iss_t414', '1.0'], ['r2iss_1q', '0.5']
+  ];
+  for (const [fieldId, expected] of cases) {
+    equal(evaluateCalculator(R2_ISS_MYELOMA_CALCULATOR,
+      r2IssInput({ [fieldId]: true })).result.metrics[1]?.value, expected);
+  }
+});
+
+test('ported 36 to 39 reject invalid inputs and contain typed text only', () => {
+  deepEqual(evaluateCalculator(MONARCHE_COHORT_1_CALCULATOR,
+    monarcheInput({ monarche_nodes: 1.5 })).issues.map((issue) => issue.code), ['step-mismatch']);
+  deepEqual(evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR,
+    { scenario: 'other' }).issues.map((issue) => issue.code), ['unknown-option']);
+  deepEqual(evaluateCalculator(INTERNATIONAL_PROGNOSTIC_INDEX_CALCULATOR,
+    ipiInput({ ipi_ecog: '5' })).issues.map((issue) => issue.code), ['unknown-option']);
+  deepEqual(evaluateCalculator(R2_ISS_MYELOMA_CALCULATOR,
+    r2IssInput({ r2iss_beta2: 0 })).issues.map((issue) => issue.code), ['below-minimum']);
+  const results = [
+    evaluateCalculator(MONARCHE_COHORT_1_CALCULATOR, monarcheInput()).result,
+    evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR, olympiaNeoHrInput()).result,
+    evaluateCalculator(INTERNATIONAL_PROGNOSTIC_INDEX_CALCULATOR, ipiInput()).result,
+    evaluateCalculator(R2_ISS_MYELOMA_CALCULATOR, r2IssInput()).result
+  ];
+  for (const current of results) assertNoRawMarkup(current.notes);
+});
+
 test('structured note factories reject unsafe links and malformed tables', () => {
   throws(() => externalLink('inseguro', 'http://example.test'), 'El enlace externo debe usar HTTPS');
   throws(() => tableNote('invalida', ['una'], [['a', 'b']]), 'cantidad de celdas invalida');
@@ -2850,6 +3224,42 @@ function pepiInput(overrides: Readonly<Record<string, unknown>> = {}): Record<st
 
 function cts5Input(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
   return { cts5_age: 60, cts5_size: 20, cts5_grade: '2', cts5_nodes: 0, ...overrides };
+}
+
+function monarcheInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    monarche_hr_positive: false, monarche_her2_negative: false, monarche_early: false,
+    monarche_nodes: 1, monarche_size: 30, monarche_grade: '2', ...overrides
+  };
+}
+
+function olympiaNeoHrInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'neo_hr', olympia_gbrca: true, olympia_her2_negative: true,
+    olympia_residual: true, olympia_c_stage: 'iib_iiia', olympia_p_stage: 'iia_iiib',
+    olympia_er: 'negative', olympia_nuclear_grade: '2', ...overrides
+  };
+}
+
+function olympiaAdjTnbcInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'adj_tnbc', olympia_gbrca: true, olympia_her2_negative: true,
+    olympia_residual: false, olympia_nodes_tnbc: 0, olympia_size: 2.01, ...overrides
+  };
+}
+
+function ipiInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    ipi_age: 60, ipi_stage: '2', ipi_ldh: false, ipi_ecog: '1',
+    ipi_extranodal: 0, ...overrides
+  };
+}
+
+function r2IssInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    r2iss_beta2: 3, r2iss_albumin: 4, r2iss_del17p: false, r2iss_high_ldh: false,
+    r2iss_t414: false, r2iss_1q: false, ...overrides
+  };
 }
 
 function assertNoRawMarkup(value: unknown): void {
