@@ -64,6 +64,9 @@ frontend anterior sólo se retira cuando la matriz de paridad está completa.
 - [Corte Angular 012](CORTE-ANGULAR-012-NOMOGRAMAS-Y-CINETICA-PROSTATICA.md):
   MSKCC, PBCG, cinética de PSA/BCR y CHAARTED/LATITUDE portados con
   escenarios, series temporales y salidas estructuradas seguras.
+- [Corte Angular 013](CORTE-ANGULAR-013-UROTELIO-Y-APTITUD-PLATINO.md): NMIBC
+  EAU/EORTC/CUETO, post-cistectomía, aptitud para cisplatino/platinum y UTUC
+  portados con cohortes, fronteras y limitaciones heredadas verificadas.
 
 ## Ciclo obligatorio por capacidad
 

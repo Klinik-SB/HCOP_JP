@@ -19,6 +19,12 @@ import {
   MSKCC_PROSTATE_CALCULATOR,
   PSA_KINETICS_CALCULATOR
 } from './legacy-calculators-12-15.definitions';
+import {
+  CISPLATIN_CALCULATOR,
+  CYSTECTOMY_CALCULATOR,
+  NMIBC_CALCULATOR,
+  UTUC_CALCULATOR
+} from './legacy-calculators-16-19.definitions';
 import { PORTED_CALCULATORS } from './ported-calculator.registry';
 import { CalculatorOrigin } from './calculator.models';
 
@@ -43,13 +49,13 @@ test('inventory contains the exact 57 unique legacy tools in stable order', () =
   }
 });
 
-test('only the first fifteen calculators are marked as ported', () => {
+test('only the first nineteen calculators are marked as ported', () => {
   deepEqual(CALCULATOR_INVENTORY.filter((entry) => entry.migrationStatus === 'ported').map((entry) => entry.id),
     ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk',
-      'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude']);
+      'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude', 'nmibc', 'cystectomy', 'cisplatin', 'utuc']);
   deepEqual(PORTED_CALCULATORS.map((entry) => entry.id),
     ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk',
-      'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude']);
+      'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude', 'nmibc', 'cystectomy', 'cisplatin', 'utuc']);
 });
 
 test('BSA opens blank and keeps legacy values only as examples', () => {
@@ -939,6 +945,350 @@ test('ported 12 to 15 results never contain raw HTML notes', () => {
   for (const current of results) assertNoRawMarkup(current.notes);
 });
 
+test('calculators 16 to 19 preserve blank legacy forms and scenario-only validation', () => {
+  const nmibc = evaluateCalculator(NMIBC_CALCULATOR);
+  equal(nmibc.status, 'invalid');
+  equal(nmibc.values['scenario'], 'eau');
+  deepEqual(nmibc.issues.map((issue) => issue.fieldId), [
+    'eauPrimary', 'eauAge', 'eauCount', 'eauSize', 'eauStage', 'eauSystem', 'eauGrade'
+  ]);
+  equal(NMIBC_CALCULATOR.fields.filter((field) =>
+    (field.kind === 'number' || field.kind === 'select') && field.id !== 'scenario'
+  ).every((field) => field.initialValue === ''), true);
+
+  const eortc = evaluateCalculator(NMIBC_CALCULATOR, { scenario: 'eortc' });
+  deepEqual(eortc.issues.map((issue) => issue.fieldId), ['number', 'size', 'prior', 'grade']);
+  const cueto = evaluateCalculator(NMIBC_CALCULATOR, { scenario: 'cueto' });
+  deepEqual(cueto.issues.map((issue) => issue.fieldId), ['cuetoSex', 'cuetoAge', 'cuetoGrade']);
+
+  deepEqual(evaluateCalculator(CYSTECTOMY_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['m', 'pt', 'pn', 'perioperative', 'cisStatus']);
+  deepEqual(evaluateCalculator(CISPLATIN_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['ecog', 'renalMethod', 'gfr', 'hearing', 'neuro', 'nyha']);
+  deepEqual(evaluateCalculator(UTUC_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['utucM', 'size', 'focality', 'cytology', 'biopsy', 'ctAssessment']);
+});
+
+test('EAU NMIBC golden low-risk case preserves population probabilities', () => {
+  const evaluation = evaluateCalculator(NMIBC_CALCULATOR, nmibcEauInput());
+  equal(evaluation.status, 'calculated');
+  deepEqual(evaluation.result, {
+    title: 'EAU: riesgo bajo',
+    detail: 'Probabilidades poblacionales para tumores primarios incluidos en el modelo.',
+    badge: 'EAU 2021/2026',
+    score: 0,
+    showScore: false,
+    severity: 'good',
+    metrics: [
+      { label: 'Grupo EAU', value: 'bajo' },
+      { label: 'Factores clínicos', value: '0/3' },
+      { label: 'Progresión 1 año', value: '0.06%' },
+      { label: 'Progresión 5 años', value: '0.9%' },
+      { label: 'Progresión 10 años', value: '3.7%' }
+    ],
+    notes: ['No combinar este grupo con EORTC o CUETO.']
+  });
+});
+
+test('EAU NMIBC factor thresholds are strict for age and count and inclusive for size', () => {
+  const boundaries: readonly [Readonly<Record<string, unknown>>, string, string][] = [
+    [{ eauAge: 70, eauCount: 1, eauSize: 2.9 }, 'EAU: riesgo bajo', '0/3'],
+    [{ eauAge: 71, eauCount: 1, eauSize: 2.9 }, 'EAU: riesgo bajo', '1/3'],
+    [{ eauAge: 70, eauCount: 2, eauSize: 2.9 }, 'EAU: riesgo bajo', '1/3'],
+    [{ eauAge: 70, eauCount: 1, eauSize: 3 }, 'EAU: riesgo bajo', '1/3'],
+    [{ eauAge: 71, eauCount: 2, eauSize: 2.9 }, 'EAU: riesgo intermedio', '2/3'],
+    [{ eauAge: 71, eauCount: 2, eauSize: 3 }, 'EAU: riesgo alto', '3/3']
+  ];
+  for (const [override, expectedTitle, expectedFactors] of boundaries) {
+    const evaluation = evaluateCalculator(NMIBC_CALCULATOR, nmibcEauInput(override));
+    equal(evaluation.result.title, expectedTitle);
+    equal(evaluation.result.metrics[1]?.value, expectedFactors);
+  }
+});
+
+test('EAU NMIBC rejects incompatible grade systems and separates special/recurrent outputs', () => {
+  const incompatible = evaluateCalculator(NMIBC_CALCULATOR, nmibcEauInput({
+    eauSystem: 'who2004', eauGrade: 'g1'
+  }));
+  equal(incompatible.result.title, 'EAU NMIBC no calculable');
+  equal(incompatible.result.detail,
+    'Completar sistema de grado, grado compatible, presentación, edad, tamaño, focalidad y estadio');
+
+  const recurrent = evaluateCalculator(NMIBC_CALCULATOR, nmibcEauInput({ eauPrimary: 'no' }));
+  equal(recurrent.result.title, 'EAU: riesgo intermedio');
+  equal(recurrent.result.metrics.length, 2);
+  equal(recurrent.result.detail,
+    'Grupo asignado; la tabla no ofrece probabilidades válidas para este contexto.');
+
+  const pureCis = evaluateCalculator(NMIBC_CALCULATOR, nmibcEauInput({ eauPureCis: true }));
+  equal(pureCis.result.title, 'EAU: riesgo alto');
+  equal(pureCis.result.metrics.length, 2);
+  const lvi = evaluateCalculator(NMIBC_CALCULATOR, nmibcEauInput({ eauLvi: true }));
+  equal(lvi.result.title, 'EAU: riesgo muy alto');
+  equal(lvi.result.metrics.length, 2);
+});
+
+test('EAU NMIBC preserves the independent WHO 1973 probability table', () => {
+  const low = evaluateCalculator(NMIBC_CALCULATOR, nmibcEauInput({
+    eauSystem: 'who1973', eauGrade: 'g1'
+  }));
+  equal(low.result.title, 'EAU: riesgo bajo');
+  deepEqual(low.result.metrics.slice(2), [
+    { label: 'Progresión 1 año', value: '0.12%' },
+    { label: 'Progresión 5 años', value: '0.6%' },
+    { label: 'Progresión 10 años', value: '3.0%' }
+  ]);
+
+  const veryHigh = evaluateCalculator(NMIBC_CALCULATOR, nmibcEauInput({
+    eauAge: 71, eauStage: 't1', eauCis: true, eauSystem: 'who1973', eauGrade: 'g3'
+  }));
+  equal(veryHigh.result.title, 'EAU: riesgo muy alto');
+  deepEqual(veryHigh.result.metrics.slice(2), [
+    { label: 'Progresión 1 año', value: '20.00%' },
+    { label: 'Progresión 5 años', value: '44.0%' },
+    { label: 'Progresión 10 años', value: '59.0%' }
+  ]);
+});
+
+test('EORTC NMIBC golden endpoints preserve historical score tables', () => {
+  const minimum = evaluateCalculator(NMIBC_CALCULATOR, nmibcEortcInput());
+  deepEqual(minimum.result.metrics, [
+    { label: 'Recurrencia 1/5 años', value: '15% / 31%' },
+    { label: 'Progresión 1/5 años', value: '0.2% / 0.8%' }
+  ]);
+  equal(minimum.result.detail, 'Recurrencia 0; progresión 0.');
+
+  const maximum = evaluateCalculator(NMIBC_CALCULATOR, nmibcEortcInput({
+    number: '6', size: '3', prior: '4', t1: true, cis: true, grade: '2'
+  }));
+  equal(maximum.result.detail, 'Recurrencia 17; progresión 23.');
+  deepEqual(maximum.result.metrics, [
+    { label: 'Recurrencia 1/5 años', value: '61% / 78%' },
+    { label: 'Progresión 1/5 años', value: '17% / 45%' }
+  ]);
+});
+
+test('EORTC NMIBC keeps every recurrence and progression probability band', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string][] = [
+    [{ t1: true }, '24% / 46%', '1% / 6%'],
+    [{ number: '3', prior: '2' }, '38% / 62%', '1% / 6%'],
+    [{ size: '3', t1: true }, '24% / 46%', '5% / 17%'],
+    [{ number: '6', size: '3', t1: true }, '61% / 78%', '5% / 17%'],
+    [{ number: '6', size: '3', prior: '4', t1: true, cis: true, grade: '2' },
+      '61% / 78%', '17% / 45%']
+  ];
+  for (const [overrides, recurrence, progression] of cases) {
+    const evaluation = evaluateCalculator(NMIBC_CALCULATOR, nmibcEortcInput(overrides));
+    equal(evaluation.result.metrics[0]?.value, recurrence);
+    equal(evaluation.result.metrics[1]?.value, progression);
+  }
+});
+
+test('CUETO requires cohort confirmation and preserves age/tier boundaries', () => {
+  const unconfirmed = evaluateCalculator(NMIBC_CALCULATOR, nmibcCuetoInput());
+  equal(unconfirmed.result.title, 'Confirmar aplicabilidad CUETO');
+  equal(unconfirmed.result.metrics.length, 0);
+
+  const age70 = evaluateCalculator(NMIBC_CALCULATOR, nmibcCuetoInput({
+    cuetoAge: 70, cuetoConfirmed: true
+  }));
+  equal(age70.result.detail, 'Recurrencia 1; progresión 0.');
+  const age71 = evaluateCalculator(NMIBC_CALCULATOR, nmibcCuetoInput({
+    cuetoAge: 71, cuetoConfirmed: true
+  }));
+  equal(age71.result.detail, 'Recurrencia 2; progresión 2.');
+
+  const maximum = evaluateCalculator(NMIBC_CALCULATOR, nmibcCuetoInput({
+    cuetoSex: 'female', cuetoAge: 71, cuetoMoreThree: true, cuetoRecurrent: true,
+    cuetoT1: true, cuetoCis: true, cuetoGrade: 'g3', cuetoConfirmed: true
+  }));
+  equal(maximum.result.detail, 'Recurrencia 16; progresión 14.');
+  deepEqual(maximum.result.metrics, [
+    { label: 'Recurrencia 1/5 años', value: '42% / 68%' },
+    { label: 'Progresión 1/5 años', value: '14% / 34%' }
+  ]);
+});
+
+test('CUETO preserves all historical risk-table bands', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string][] = [
+    [{ cuetoGrade: 'g3' }, '8% / 21%', '3% / 12%'],
+    [{ cuetoSex: 'female', cuetoAge: 71 }, '12% / 36%', '1% / 4%'],
+    [{ cuetoAge: 71, cuetoMoreThree: true, cuetoRecurrent: true }, '25% / 48%', '3% / 12%'],
+    [{ cuetoAge: 71, cuetoMoreThree: true, cuetoRecurrent: true, cuetoT1: true, cuetoCis: true },
+      '42% / 68%', '6% / 21%'],
+    [{ cuetoSex: 'female', cuetoAge: 71, cuetoMoreThree: true, cuetoRecurrent: true,
+      cuetoT1: true, cuetoCis: true, cuetoGrade: 'g3' }, '42% / 68%', '14% / 34%']
+  ];
+  for (const [overrides, recurrence, progression] of cases) {
+    const evaluation = evaluateCalculator(NMIBC_CALCULATOR, nmibcCuetoInput({
+      cuetoConfirmed: true,
+      ...overrides
+    }));
+    equal(evaluation.result.metrics[0]?.value, recurrence);
+    equal(evaluation.result.metrics[1]?.value, progression);
+  }
+});
+
+test('post-cystectomy separates out-of-scope, incomplete and no-trigger cases', () => {
+  const metastatic = evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput({ m: 'm1' }));
+  equal(metastatic.result.title, 'Fuera de alcance adyuvante');
+  equal(metastatic.result.detail, 'Enfermedad M1: fuera del módulo adyuvante post-cistectomía');
+
+  const unknownM = evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput({ m: 'mx' }));
+  equal(unknownM.result.title, 'Datos incompletos');
+  const unknownNodes = evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput({ pn: 'nx' }));
+  equal(unknownNodes.result.title, 'Datos incompletos');
+
+  const noTrigger = evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput());
+  equal(noTrigger.result.title, 'Revisión adyuvante post-cistectomía');
+  equal(noTrigger.result.detail,
+    'No cumple un disparador adyuvante EAU por estadio con los datos ingresados');
+});
+
+test('post-cystectomy preserves chemotherapy, nivolumab and radiotherapy gates', () => {
+  const chemotherapy = evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput({ pt: '3' }));
+  equal(chemotherapy.result.detail, 'Ofrecer quimioterapia adyuvante combinada basada en cisplatino');
+
+  const afterNac = evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput({
+    pt: '2', perioperative: 'nac'
+  }));
+  equal(afterNac.result.detail, 'Evaluar nivolumab adyuvante en comité multidisciplinario');
+
+  const declined = evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput({
+    pt: '3', cisStatus: 'declined'
+  }));
+  equal(declined.result.detail, 'Evaluar nivolumab adyuvante en comité multidisciplinario');
+
+  const thresholdBelow = evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput({ pt: '3' }));
+  equal(thresholdBelow.result.detail.includes('radioterapia'), false);
+  const threshold = evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput({ pt: '3.5' }));
+  equal(threshold.result.detail.includes('Considerar radioterapia adyuvante'), true);
+  const margin = evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput({ margin: true }));
+  equal(margin.result.detail.includes('Considerar radioterapia adyuvante'), true);
+  const nodes = evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput({ pn: 'nplus' }));
+  equal(nodes.result.detail.includes('Considerar radioterapia adyuvante'), true);
+
+  const modern = evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput({
+    pt: '4', perioperative: 'modern'
+  }));
+  equal(modern.result.detail.startsWith(
+    'Aplicar el protocolo perioperatorio moderno y evitar apilar adyuvancias automáticamente'), true);
+  equal(modern.result.detail.includes('Ofrecer quimioterapia'), false);
+});
+
+test('cisplatin golden eligible case and renal boundaries match legacy', () => {
+  const eligible = evaluateCalculator(CISPLATIN_CALCULATOR, cisplatinInput());
+  deepEqual(eligible.result, {
+    title: 'Apto probable para cisplatino convencional',
+    detail: 'No se detectan criterios conservadores de no aptitud.',
+    badge: 'cisplatino probable',
+    score: 0,
+    showScore: false,
+    severity: 'good',
+    metrics: [
+      { label: 'Función renal', value: '65 ml/min' },
+      { label: 'Método', value: 'measured_gfr' },
+      { label: 'Criterios', value: 0 }
+    ],
+    notes: [
+      'Edad sola no contraindica cisplatino.',
+      'Aplicar la ficha y el protocolo específicos del régimen elegido.',
+      'Regímenes perioperatorios modernos pueden tener umbrales propios; esos criterios prevalecen.'
+    ]
+  });
+
+  const sixty = evaluateCalculator(CISPLATIN_CALCULATOR, cisplatinInput({ gfr: 60 }));
+  equal(sixty.result.title, 'No apto para cisplatino convencional; posible carboplatino');
+  equal(sixty.result.detail, 'Criterios presentes: GFR ≤60 ml/min.');
+  equal(sixty.result.notes[1],
+    'GFR 40–60: zona renal limítrofe; considerar medición isotópica/formal. Split-dose no se recomienda automáticamente.');
+  const thirty = evaluateCalculator(CISPLATIN_CALCULATOR, cisplatinInput({ gfr: 30 }));
+  equal(thirty.result.title, 'No apto para cisplatino convencional; posible carboplatino');
+  const belowThirty = evaluateCalculator(CISPLATIN_CALCULATOR, cisplatinInput({ gfr: 29.9 }));
+  equal(belowThirty.result.title, 'No apto para platinum');
+});
+
+test('cisplatin preserves performance/comorbidity gates and renal method as display-only', () => {
+  const ecogAtSixty = evaluateCalculator(CISPLATIN_CALCULATOR, cisplatinInput({ ecog: '2', gfr: 60 }));
+  equal(ecogAtSixty.result.title, 'No apto para cisplatino convencional; posible carboplatino');
+  const ecogBelowSixty = evaluateCalculator(CISPLATIN_CALCULATOR, cisplatinInput({ ecog: '2', gfr: 59.9 }));
+  equal(ecogBelowSixty.result.title, 'No apto para platinum');
+  equal(evaluateCalculator(CISPLATIN_CALCULATOR, cisplatinInput({ ecog: '3' })).result.title,
+    'No apto para platinum');
+  equal(evaluateCalculator(CISPLATIN_CALCULATOR, cisplatinInput({ severeComorbidity: true })).result.title,
+    'No apto para platinum');
+
+  const complications = evaluateCalculator(CISPLATIN_CALCULATOR, cisplatinInput({
+    hearing: '2', neuro: '2', nyha: '3'
+  }));
+  equal(complications.result.title, 'No apto para cisplatino convencional; posible carboplatino');
+  equal(complications.result.detail,
+    'Criterios presentes: hipoacusia audiometrica ≥G2, neuropatia ≥G2, insuficiencia cardiaca NYHA III/IV.');
+
+  const measured = evaluateCalculator(CISPLATIN_CALCULATOR, cisplatinInput({ renalMethod: 'measured_gfr' }));
+  const estimated = evaluateCalculator(CISPLATIN_CALCULATOR, cisplatinInput({ renalMethod: 'egfr' }));
+  equal(measured.result.title, estimated.result.title);
+  equal(estimated.result.metrics[1]?.value, 'egfr');
+});
+
+test('UTUC golden low-risk and weak-factor boundaries remain distinct', () => {
+  const low = evaluateCalculator(UTUC_CALCULATOR, utucInput());
+  equal(low.result.title, 'Bajo riesgo probable');
+  equal(low.result.detail,
+    'Unifocal, <2 cm, citología negativa para high-grade, biopsia low-grade y TC no invasiva.');
+  equal(low.result.badge, 'bajo riesgo');
+  equal(low.result.severity, 'good');
+
+  equal(evaluateCalculator(UTUC_CALCULATOR, utucInput({ size: 1.9 })).result.title,
+    'Bajo riesgo probable');
+  const weak = evaluateCalculator(UTUC_CALCULATOR, utucInput({
+    size: 2, focality: 'multifocal', hydro: true
+  }));
+  equal(weak.result.title, 'Sin criterio fuerte; sólo factores débiles');
+  equal(weak.result.detail,
+    'Factores débiles: tamaño ≥2 cm, multifocalidad, hidroureteronefrosis. Decisión compartida.');
+  equal(weak.result.metrics[3]?.value, 3);
+});
+
+test('UTUC strong criteria precede missing data and metastatic disease remains out of scope', () => {
+  const uncertain = evaluateCalculator(UTUC_CALCULATOR, utucInput({
+    size: 0, focality: 'missing', cytology: 'missing', biopsy: 'nondiagnostic', ctAssessment: 'missing'
+  }));
+  equal(uncertain.result.title, 'Información insuficiente para clasificar');
+  equal(uncertain.result.detail,
+    'Faltan: tamaño tumoral, focalidad, citología, biopsia low-grade confiable, evaluación de invasión en TC.');
+
+  const strong = evaluateCalculator(UTUC_CALCULATOR, utucInput({
+    size: 0, focality: 'missing', cytology: 'high', biopsy: 'missing', ctAssessment: 'missing'
+  }));
+  equal(strong.result.title, 'Alto riesgo: criterio fuerte');
+  equal(strong.result.detail, 'Criterios fuertes: citología de alto grado.');
+
+  const allStrong = evaluateCalculator(UTUC_CALCULATOR, utucInput({
+    cytology: 'high', biopsy: 'high', ctAssessment: 'invasive', variant: true
+  }));
+  equal(allStrong.result.detail,
+    'Criterios fuertes: citología de alto grado, biopsia de alto grado, invasión local en TC, variante histologica agresiva.');
+  equal(allStrong.result.metrics[2]?.value, 4);
+
+  const metastatic = evaluateCalculator(UTUC_CALCULATOR, utucInput({ utucM: 'm1' }));
+  equal(metastatic.result.title, 'Fuera de alcance: enfermedad metastásica');
+  equal(metastatic.result.badge, 'fuera de alcance');
+});
+
+test('ported 16 to 19 results contain typed text only and reject unknown selectors', () => {
+  const results = [
+    evaluateCalculator(NMIBC_CALCULATOR, nmibcEauInput()).result,
+    evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput()).result,
+    evaluateCalculator(CISPLATIN_CALCULATOR, cisplatinInput()).result,
+    evaluateCalculator(UTUC_CALCULATOR, utucInput()).result
+  ];
+  for (const current of results) assertNoRawMarkup(current.notes);
+  const unknown = evaluateCalculator(NMIBC_CALCULATOR, nmibcEauInput({ scenario: 'combined' }));
+  equal(unknown.status, 'invalid');
+  deepEqual(unknown.issues.map((issue) => issue.code), ['unknown-option']);
+});
+
 test('structured note factories reject unsafe links and malformed tables', () => {
   throws(() => externalLink('inseguro', 'http://example.test'), 'El enlace externo debe usar HTTPS');
   throws(() => tableNote('invalida', ['una'], [['a', 'b']]), 'cantidad de celdas invalida');
@@ -1005,6 +1355,51 @@ function psaKineticsInput(overrides: Readonly<Record<string, unknown>> = {}): Re
     nadir: '',
     confirmed: false,
     ...overrides
+  };
+}
+
+function nmibcEauInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'eau', eauPrimary: 'yes', eauAge: 70, eauCount: 1, eauSize: 2,
+    eauStage: 'ta', eauCis: false, eauPureCis: false, eauSystem: 'who2004',
+    eauGrade: 'low', eauLvi: false, eauProstaticCis: false, eauVariant: false,
+    ...overrides
+  };
+}
+
+function nmibcEortcInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'eortc', number: '0', size: '0', prior: '0', t1: false, cis: false, grade: '0',
+    ...overrides
+  };
+}
+
+function nmibcCuetoInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'cueto', cuetoSex: 'male', cuetoAge: 65, cuetoMoreThree: false,
+    cuetoRecurrent: false, cuetoT1: false, cuetoCis: false, cuetoGrade: 'g1',
+    cuetoConfirmed: false, ...overrides
+  };
+}
+
+function cystectomyInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    m: 'm0', pt: '2', pn: 'n0', margin: false, perioperative: 'none', cisStatus: 'eligible',
+    ...overrides
+  };
+}
+
+function cisplatinInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    ecog: '1', renalMethod: 'measured_gfr', gfr: 65, hearing: '0', neuro: '0',
+    nyha: '1', severeComorbidity: false, ...overrides
+  };
+}
+
+function utucInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    utucM: 'm0', size: 1.5, focality: 'unifocal', cytology: 'negative', biopsy: 'low',
+    ctAssessment: 'noninvasive', hydro: false, variant: false, ...overrides
   };
 }
 
