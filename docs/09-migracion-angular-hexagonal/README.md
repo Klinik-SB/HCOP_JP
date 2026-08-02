@@ -127,6 +127,9 @@ configuración institucional y cerrar la paridad visual/E2E integrada.
 - [Corte Angular 031](CORTE-ANGULAR-031-CONFLICTOS-DE-GUARDADO.md):
   errores `409` inequívocos, borrador clínico conservado en memoria y recarga
   explícita sin sobrescritura ni mezcla automática.
+- [Corte Angular 032](CORTE-ANGULAR-032-COMPARACION-DE-CONFLICTOS.md):
+  comparación de sólo lectura entre base, borrador y revisión vigente, aislada
+  del paciente activo y protegida contra respuestas tardías.
 
 ## Ciclo obligatorio por capacidad
 

@@ -11,6 +11,7 @@ export type ClinicalSaveErrorCode =
   | string;
 
 export interface ClinicalSaveConflictDraft {
+  readonly conflictId: string;
   readonly patientId: string;
   readonly baseRevision: number;
   readonly baseState: ClinicalState;
@@ -18,6 +19,20 @@ export interface ClinicalSaveConflictDraft {
   readonly code: ClinicalSaveErrorCode;
   readonly message: string;
   readonly detectedAt: string;
+  readonly latestState?: ClinicalState;
+  readonly latestRevision?: number;
+  readonly latestLoadedAt?: string;
+}
+
+export interface ClinicalSaveConflictView {
+  readonly conflictId: string;
+  readonly patientId: string;
+  readonly baseRevision: number;
+  readonly code: ClinicalSaveErrorCode;
+  readonly message: string;
+  readonly detectedAt: string;
+  readonly latestRevision?: number;
+  readonly latestLoadedAt?: string;
 }
 
 export class ClinicalSaveFailure extends Error {
@@ -69,9 +84,11 @@ export function captureClinicalSaveConflict(
   attemptedState: ClinicalState,
   detectedAt = new Date().toISOString(),
   code: ClinicalSaveErrorCode = 'VERSION_CONFLICT',
-  message = friendlyMessage(code) || 'El guardado entró en conflicto y el borrador quedó conservado.'
+  message = friendlyMessage(code) || 'El guardado entró en conflicto y el borrador quedó conservado.',
+  conflictId = createConflictId()
 ): ClinicalSaveConflictDraft {
   return {
+    conflictId,
     patientId,
     baseRevision,
     baseState: structuredClone(baseState),
@@ -79,6 +96,19 @@ export function captureClinicalSaveConflict(
     code,
     message,
     detectedAt
+  };
+}
+
+export function clinicalSaveConflictView(conflict: ClinicalSaveConflictDraft): ClinicalSaveConflictView {
+  return {
+    conflictId: conflict.conflictId,
+    patientId: conflict.patientId,
+    baseRevision: conflict.baseRevision,
+    code: conflict.code,
+    message: conflict.message,
+    detectedAt: conflict.detectedAt,
+    latestRevision: conflict.latestRevision,
+    latestLoadedAt: conflict.latestLoadedAt
   };
 }
 
@@ -107,4 +137,9 @@ function positiveInteger(value: unknown): number {
 
 function text(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+function createConflictId(): string {
+  return globalThis.crypto?.randomUUID?.()
+    || `clinical-conflict-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }

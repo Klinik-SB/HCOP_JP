@@ -11,6 +11,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.http.CacheControl;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -53,11 +56,14 @@ public class PatientWorkspaceController {
   }
 
   @GetMapping("/api/clinical/patients/{patientId}/workspace")
-  Map<String, Object> workspace(
+  ResponseEntity<Map<String, Object>> workspace(
       @PathVariable long patientId,
       HttpServletRequest request) {
     auth.requirePermission(request, "section.history.view");
-    return workspace(patientId, auth.require(request));
+    return ResponseEntity.ok()
+        .cacheControl(CacheControl.noStore())
+        .header(HttpHeaders.PRAGMA, "no-cache")
+        .body(workspace(patientId, auth.require(request)));
   }
 
   private Map<String, Object> workspace(long patientId, SessionPrincipal principal) {

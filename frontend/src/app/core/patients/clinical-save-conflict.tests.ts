@@ -2,6 +2,7 @@ import {
   ClinicalSaveFailure,
   captureClinicalSaveConflict,
   clinicalConflictCode,
+  clinicalSaveConflictView,
   clinicalTransitionBlockCode,
   clinicalSaveFailure
 } from './clinical-save-conflict';
@@ -58,7 +59,7 @@ test('captura base e intento como copias inmutables independientes', () => {
   const base = { narrative: { summary: 'Base' } };
   const attempted = { narrative: { summary: 'Borrador' } };
   const conflict = captureClinicalSaveConflict(
-    '42', 7, base, attempted, '2026-08-02T16:00:00Z', 'VERSION_CONFLICT', 'Conflicto seguro'
+    '42', 7, base, attempted, '2026-08-02T16:00:00Z', 'VERSION_CONFLICT', 'Conflicto seguro', 'conflict-test'
   );
   base.narrative.summary = 'Base mutada';
   attempted.narrative.summary = 'Borrador mutado';
@@ -69,6 +70,20 @@ test('captura base e intento como copias inmutables independientes', () => {
   equal(conflict.code, 'VERSION_CONFLICT');
   equal(conflict.message, 'Conflicto seguro');
   equal(conflict.detectedAt, '2026-08-02T16:00:00Z');
+  equal(conflict.conflictId, 'conflict-test');
+});
+
+test('la vista pública no expone los estados clínicos capturados', () => {
+  const conflict = captureClinicalSaveConflict(
+    '42', 9, { narrative: { summary: 'Base privada' } },
+    { narrative: { summary: 'Borrador privado' } },
+    '2026-08-02T17:20:00Z', 'VERSION_CONFLICT', 'Conflicto', 'conflict-private'
+  );
+  const view = clinicalSaveConflictView(conflict);
+  equal(view.conflictId, 'conflict-private');
+  equal(view.baseRevision, 9);
+  equal('baseState' in view, false);
+  equal('attemptedState' in view, false);
 });
 
 for (const item of tests) item.run();

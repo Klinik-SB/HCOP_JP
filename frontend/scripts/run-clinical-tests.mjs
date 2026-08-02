@@ -9,7 +9,8 @@ const suites = [
   'src/app/core/clinical/clinical-treatment-projection.tests.ts',
   'src/app/core/clinical/clinical-print-projection.tests.ts',
   'src/app/core/patients/patient-workspace.normalization.tests.ts',
-  'src/app/core/patients/clinical-save-conflict.tests.ts'
+  'src/app/core/patients/clinical-save-conflict.tests.ts',
+  'src/app/core/patients/clinical-conflict-comparison.tests.ts'
 ];
 
 try {

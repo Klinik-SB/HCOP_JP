@@ -3,10 +3,20 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, catchError, defer, finalize, map, tap, throwError } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import {
+  ClinicalConflictComparison,
+  acceptsLatestClinicalWorkspace,
+  attachLatestClinicalState,
+  compareClinicalConflict,
+  conflictLatestRequestIdentity,
+  detachLatestClinicalState
+} from './clinical-conflict-comparison';
+import {
   ClinicalSaveConflictDraft,
+  ClinicalSaveConflictView,
   ClinicalSaveFailure,
   captureClinicalSaveConflict,
   clinicalConflictCode,
+  clinicalSaveConflictView,
   clinicalSaveFailure,
   clinicalTransitionBlockCode
 } from './clinical-save-conflict';
@@ -23,12 +33,24 @@ export class PatientWorkspaceService {
   readonly loading = signal(false);
   readonly error = signal('');
   readonly saving = signal(false);
-  readonly pendingSaveConflict = signal<ClinicalSaveConflictDraft | null>(null);
+  readonly conflictLatestLoading = signal(false);
+  readonly conflictLatestError = signal('');
+  private readonly pendingSaveConflict = signal<ClinicalSaveConflictDraft | null>(null);
+  private readonly conflictComparisonAuthorized = signal(true);
+  private conflictLatestRequest = 0;
   readonly workingWorkspace = computed<PatientWorkspace | null>(() => {
     const workspace = this.workspace();
     const conflict = this.pendingSaveConflict();
     if (!workspace || conflict?.patientId !== workspace.patientId || conflict.code === 'CLINICAL_PATIENT_MISMATCH') return workspace;
     return { ...workspace, state: structuredClone(conflict.attemptedState) };
+  });
+  readonly activeConflictComparison = computed<ClinicalConflictComparison | null>(() => {
+    const conflict = this.activeSaveConflictDraft();
+    return conflict?.code === 'VERSION_CONFLICT'
+      && this.conflictComparisonAuthorized()
+      && this.auth.hasPermission('section.history.view')
+      ? compareClinicalConflict(conflict)
+      : null;
   });
 
   search(query: string): Observable<PatientSearchResponse> {
@@ -61,48 +83,66 @@ export class PatientWorkspaceService {
   load(patientId: string, discardPendingConflict = false): void {
     const transitionFailure = this.transitionFailure(patientId);
     if (transitionFailure) { this.error.set(transitionFailure.message); return; }
+    if (this.pendingSaveConflict()?.patientId === patientId) {
+      this.invalidateConflictLatest('La historia se está actualizando. Espere para volver a comparar.');
+    }
     this.loading.set(true); this.error.set('');
     this.http.get<PatientWorkspace>(`/api/clinical/patients/${encodeURIComponent(patientId)}/workspace`, { withCredentials: true }).pipe(
       map(normalizePatientWorkspace),
       finalize(() => this.loading.set(false))
     ).subscribe({
       next: (workspace) => {
-        if (discardPendingConflict && this.pendingSaveConflict()?.patientId === patientId) {
-          this.pendingSaveConflict.set(null);
-        }
-        this.workspace.set(workspace);
+        this.installLoadedWorkspace(workspace, discardPendingConflict);
       },
-      error: (response: { error?: { error?: string } }) => this.error.set(response?.error?.error || 'No se pudo abrir la historia clínica.')
+      error: (response: { error?: { error?: string } }) => {
+        this.error.set(response?.error?.error || 'No se pudo abrir la historia clínica.');
+        if (this.pendingSaveConflict()?.patientId === patientId) {
+          this.conflictLatestError.set('No se pudo actualizar la historia. Puede volver a intentar la comparación.');
+        }
+      }
     });
   }
 
   activate(patient: ClinicalPatient): void {
     const transitionFailure = this.transitionFailure(patient.id);
     if (transitionFailure) { this.error.set(transitionFailure.message); return; }
+    if (this.pendingSaveConflict()?.patientId === patient.id) {
+      this.invalidateConflictLatest('La historia se está actualizando. Espere para volver a comparar.');
+    }
     this.loading.set(true); this.error.set('');
     this.http.post<PatientWorkspace>(`/api/clinical/patients/${encodeURIComponent(patient.id)}/activate`, {}, { withCredentials: true }).pipe(
       map(normalizePatientWorkspace),
-      tap((workspace) => { this.workspace.set(workspace); this.pickerOpen.set(false); this.auth.load().subscribe(); }),
+      tap((workspace) => { this.installLoadedWorkspace(workspace, false); this.pickerOpen.set(false); this.auth.load().subscribe(); }),
       finalize(() => this.loading.set(false))
-    ).subscribe({ error: (response: { error?: { error?: string } }) => this.error.set(response?.error?.error || 'No se pudo activar el paciente.') });
+    ).subscribe({ error: (response: { error?: { error?: string } }) => {
+      this.error.set(response?.error?.error || 'No se pudo activar el paciente.');
+      if (this.pendingSaveConflict()?.patientId === patient.id) {
+        this.conflictLatestError.set('No se pudo actualizar la historia. Puede volver a intentar la comparación.');
+      }
+    } });
   }
 
   activateById(patientId: string, discardPendingConflict = false): void {
     const transitionFailure = this.transitionFailure(patientId);
     if (transitionFailure) { this.error.set(transitionFailure.message); return; }
+    if (this.pendingSaveConflict()?.patientId === patientId) {
+      this.invalidateConflictLatest('La historia se está actualizando. Espere para volver a comparar.');
+    }
     this.loading.set(true); this.error.set('');
     this.http.post<PatientWorkspace>(`/api/clinical/patients/${encodeURIComponent(patientId)}/activate`, {}, { withCredentials: true }).pipe(
       map(normalizePatientWorkspace),
       tap((workspace) => {
-        if (discardPendingConflict && this.pendingSaveConflict()?.patientId === patientId) {
-          this.pendingSaveConflict.set(null);
-        }
-        this.workspace.set(workspace);
+        this.installLoadedWorkspace(workspace, discardPendingConflict);
         this.pickerOpen.set(false);
         this.auth.load().subscribe();
       }),
       finalize(() => this.loading.set(false))
-    ).subscribe({ error: (response: { error?: { error?: string } }) => this.error.set(response?.error?.error || 'No se pudo activar el paciente identificado por QR.') });
+    ).subscribe({ error: (response: { error?: { error?: string } }) => {
+      this.error.set(response?.error?.error || 'No se pudo activar el paciente identificado por QR.');
+      if (this.pendingSaveConflict()?.patientId === patientId) {
+        this.conflictLatestError.set('No se pudo actualizar la historia. Puede volver a intentar la comparación.');
+      }
+    } });
   }
 
   close(): void {
@@ -164,6 +204,15 @@ export class PatientWorkspaceService {
     const stateToSave = structuredClone(nextState);
     stateToSave.meta = { ...(stateToSave.meta || {}), persistenceRevision: revisionAtStart };
     return defer(() => {
+      const currentAtSubscription = this.workspace();
+      if (!currentAtSubscription
+          || currentAtSubscription.patientId !== patientId
+          || currentAtSubscription.revision !== revisionAtStart) {
+        return throwError(() => new ClinicalSaveFailure(
+          'El paciente o la versión de la historia cambió antes de iniciar el guardado.',
+          'CLINICAL_CONTEXT_CHANGED'
+        ));
+      }
       if (this.loading()) {
         return throwError(() => new ClinicalSaveFailure(
           'El contexto del paciente se está actualizando. Espere a que termine.',
@@ -188,7 +237,13 @@ export class PatientWorkspaceService {
         catchError((error: unknown) => {
           const failure = clinicalSaveFailure(error, 'No se pudo guardar la historia clínica.');
           const conflictCode = clinicalConflictCode(failure);
-          if (conflictCode) {
+          const current = this.workspace();
+          if (conflictCode
+              && !this.pendingSaveConflict()
+              && current?.patientId === patientId
+              && current.revision === revisionAtStart) {
+            this.conflictComparisonAuthorized.set(true);
+            this.conflictLatestError.set('');
             this.pendingSaveConflict.set(captureClinicalSaveConflict(
               patientId,
               revisionAtStart,
@@ -219,16 +274,89 @@ export class PatientWorkspaceService {
     });
   }
 
-  activeSaveConflict(): ClinicalSaveConflictDraft | null {
+  activeSaveConflict(): ClinicalSaveConflictView | null {
+    const conflict = this.activeSaveConflictDraft();
+    return conflict ? clinicalSaveConflictView(conflict) : null;
+  }
+
+  private activeSaveConflictDraft(): ClinicalSaveConflictDraft | null {
     const conflict = this.pendingSaveConflict();
     return conflict?.patientId === this.workspace()?.patientId ? conflict : null;
   }
 
   discardConflictAndReload(): void {
-    const conflict = this.activeSaveConflict();
+    const conflict = this.activeSaveConflictDraft();
     if (!conflict) return;
     if (conflict.code === 'ACTIVE_PATIENT_REQUIRED') this.activateById(conflict.patientId, true);
     else this.load(conflict.patientId, true);
+  }
+
+  refreshConflictLatest(): void {
+    const conflict = this.activeSaveConflictDraft();
+    if (!conflict || conflict.code !== 'VERSION_CONFLICT') return;
+    if (this.loading()) {
+      this.conflictLatestError.set('La historia se está actualizando. Espere para volver a comparar.');
+      return;
+    }
+    if (!this.auth.hasPermission('section.history.view')) {
+      this.conflictComparisonAuthorized.set(false);
+      this.conflictLatestError.set('La sesión actual no permite consultar esta historia.');
+      return;
+    }
+    this.conflictComparisonAuthorized.set(true);
+    const requestId = ++this.conflictLatestRequest;
+    const identity = conflictLatestRequestIdentity(
+      conflict,
+      requestId,
+      this.workspace()?.revision || conflict.baseRevision + 1
+    );
+    this.conflictLatestLoading.set(true);
+    this.conflictLatestError.set('');
+    this.http.get<PatientWorkspace>(
+      `/api/clinical/patients/${encodeURIComponent(conflict.patientId)}/workspace`,
+      { withCredentials: true }
+    ).pipe(
+      map(normalizePatientWorkspace),
+      finalize(() => {
+        if (this.conflictLatestRequest === requestId) this.conflictLatestLoading.set(false);
+      })
+    ).subscribe({
+      next: (latestWorkspace) => {
+        const activeConflict = this.activeSaveConflictDraft();
+        if (!acceptsLatestClinicalWorkspace(
+          activeConflict,
+          identity,
+          latestWorkspace,
+          this.conflictLatestRequest
+        )) {
+          if (this.conflictLatestRequest === requestId && activeConflict?.conflictId === identity.conflictId) {
+            this.conflictLatestError.set('La revisión recibida no corresponde al conflicto vigente. No se utilizó para comparar.');
+          }
+          return;
+        }
+        this.pendingSaveConflict.set(attachLatestClinicalState(
+          activeConflict!,
+          latestWorkspace.state,
+          latestWorkspace.revision
+        ));
+      },
+      error: (response: { status?: number; error?: { error?: string } }) => {
+        const activeConflict = this.activeSaveConflictDraft();
+        if (this.conflictLatestRequest === requestId && activeConflict?.conflictId === identity.conflictId) {
+          if (response?.status === 401 || response?.status === 403) {
+            this.conflictComparisonAuthorized.set(false);
+            if (activeConflict.latestState) {
+              this.pendingSaveConflict.set(detachLatestClinicalState(activeConflict));
+            }
+          }
+          this.conflictLatestError.set(
+            response?.status === 401 || response?.status === 403
+              ? 'La sesión actual no permite consultar esta historia.'
+              : response?.error?.error || 'No se pudo recuperar la última revisión confirmada.'
+          );
+        }
+      }
+    });
   }
 
   private transitionFailure(targetPatientId: string | null): ClinicalSaveFailure | null {
@@ -265,5 +393,27 @@ export class PatientWorkspaceService {
       );
     }
     return null;
+  }
+
+  private installLoadedWorkspace(workspace: PatientWorkspace, discardPendingConflict: boolean): void {
+    const conflict = this.pendingSaveConflict();
+    if (conflict?.patientId === workspace.patientId) {
+      this.invalidateConflictLatest(
+        discardPendingConflict ? '' : 'La historia visible se actualizó. Actualice la comparación para usar esa revisión.'
+      );
+      if (discardPendingConflict) {
+        this.conflictComparisonAuthorized.set(true);
+        this.pendingSaveConflict.set(null);
+      }
+    }
+    this.workspace.set(workspace);
+  }
+
+  private invalidateConflictLatest(message = ''): void {
+    this.conflictLatestRequest += 1;
+    this.conflictLatestLoading.set(false);
+    this.conflictLatestError.set(message);
+    const conflict = this.pendingSaveConflict();
+    if (conflict?.latestState) this.pendingSaveConflict.set(detachLatestClinicalState(conflict));
   }
 }

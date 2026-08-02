@@ -119,6 +119,10 @@ coincide:
 
 Nunca se reintenta automáticamente un `409` clínico.
 
+La relectura de `GET /api/clinical/patients/{id}/workspace` devuelve
+`Cache-Control: no-store` y `Pragma: no-cache`. Un comparador de conflictos debe
+realizar esa lectura sin activar al paciente ni reemplazar el workspace visible.
+
 Para `PUT /api/hc`, los conflictos poseen códigos inequívocos:
 
 | Código | Condición |

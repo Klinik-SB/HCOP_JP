@@ -18,6 +18,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ObjectNode;
@@ -25,7 +28,7 @@ import tools.jackson.databind.node.ObjectNode;
 class PatientWorkspaceControllerPermissionTest {
 
   @Test
-  void noExponePrescripcionesEnElWorkspaceSinPermisoDeLectura() {
+  void noExponePrescripcionesYMarcaElWorkspaceComoNoAlmacenable() {
     PatientService patients = mock(PatientService.class);
     PatientDocumentService documents = mock(PatientDocumentService.class);
     TreatmentService treatments = mock(TreatmentService.class);
@@ -58,7 +61,12 @@ class PatientWorkspaceControllerPermissionTest {
         patients, documents, treatments, infusions, authService, auth,
         new ClinicalDocumentAccessPolicy());
 
-    Map<String, Object> response = controller.workspace(42L, request);
+    ResponseEntity<Map<String, Object>> http = controller.workspace(42L, request);
+    assertThat(http.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(http.getHeaders().getFirst(HttpHeaders.CACHE_CONTROL)).isEqualTo("no-store");
+    assertThat(http.getHeaders().getFirst(HttpHeaders.PRAGMA)).isEqualTo("no-cache");
+    Map<String, Object> response = http.getBody();
+    assertThat(response).isNotNull();
     JsonNode state = (JsonNode) response.get("state");
     @SuppressWarnings("unchecked")
     Map<String, Object> document = (Map<String, Object>) response.get("document");

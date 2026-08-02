@@ -1,6 +1,7 @@
-import { Component, HostListener, OnInit, inject, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../core/auth/auth.service';
+import { ClinicalConflictComparison } from '../core/patients/clinical-conflict-comparison';
 import { PatientWorkspaceService } from '../core/patients/patient-workspace.service';
 import { ClinicalWorkspaceComponent } from '../features/clinical-workspace/clinical-workspace.component';
 import { StudyPanelComponent } from '../features/studies/study-panel.component';
@@ -30,6 +31,9 @@ export class ClinicalShellComponent implements OnInit {
   readonly newPatientOpen = signal(false);
   readonly careSchedulerOpen = signal(false);
   readonly printTimestamp = signal('');
+  readonly conflictReviewOpen = signal(false);
+  @ViewChild('conflictReviewClose') private conflictReviewClose?: ElementRef<HTMLButtonElement>;
+  private conflictReviewReturnFocus: HTMLElement | null = null;
 
   ngOnInit(): void {
     this.auth.load().subscribe({
@@ -76,7 +80,25 @@ export class ClinicalShellComponent implements OnInit {
   resolvePendingConflict(): void {
     if (!this.hasPendingConflict()) return;
     if (!window.confirm('¿Descartar este borrador no guardado y recuperar la última versión confirmada?')) return;
+    this.conflictReviewOpen.set(false);
     this.patientWorkspace.discardConflictAndReload();
+  }
+  openConflictReview(): void {
+    const conflict = this.patientWorkspace.activeSaveConflict();
+    if (!conflict || conflict.code !== 'VERSION_CONFLICT' || !this.auth.hasPermission('section.history.view')) return;
+    this.conflictReviewReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    this.conflictReviewOpen.set(true);
+    this.patientWorkspace.refreshConflictLatest();
+    window.setTimeout(() => this.conflictReviewClose?.nativeElement.focus(), 0);
+  }
+  closeConflictReview(): void {
+    this.conflictReviewOpen.set(false);
+    const returnFocus = this.conflictReviewReturnFocus;
+    this.conflictReviewReturnFocus = null;
+    window.setTimeout(() => returnFocus?.focus(), 0);
+  }
+  conflictComparison(): ClinicalConflictComparison | null {
+    return this.patientWorkspace.activeConflictComparison();
   }
   initial(): string { return (this.auth.session()?.user?.displayName || this.auth.session()?.user?.username || 'U').slice(0, 1).toUpperCase(); }
   private canOpen(pane: RightPane): boolean {

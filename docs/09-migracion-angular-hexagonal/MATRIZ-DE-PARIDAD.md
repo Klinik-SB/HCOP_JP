@@ -68,8 +68,10 @@ El corte 031 tipa las cuatro causas de `409` de la hoja y conserva en memoria
 copias profundas de la base y del intento. El borrador sólo se proyecta sobre el
 mismo paciente; la interfaz bloquea nuevos guardados y salidas que podrían
 perderlo hasta descartar y recargar explícitamente. La fila continúa
-`Pendiente`: falta comparación de diferencias, merge humano por campo y el
-recorrido E2E concurrente con dos sesiones.
+`Pendiente`: el corte 032 ya agrega una comparación conservadora de sólo lectura
+por campo/registro, con una lectura aislada y control de respuestas tardías. Aún
+faltan merge humano por registro y el recorrido E2E concurrente con dos
+sesiones.
 
 ## Evidencia requerida para marcar `Validada`
 

@@ -58,10 +58,61 @@
         <span>{{ conflict.message }} No se mezclará automáticamente y se conserva sólo mientras esta pestaña permanezca abierta.</span>
         <small>Versión base {{ conflict.baseRevision }}.</small>
       </div>
-      <button class="tool-button" type="button" [disabled]="patientWorkspace.loading() || patientWorkspace.saving()" (click)="resolvePendingConflict()">
-        <span>Descartar borrador y recuperar historia</span>
-      </button>
+      <div class="clinical-save-conflict-actions">
+        @if (conflict.code === 'VERSION_CONFLICT' && auth.hasPermission('section.history.view')) {
+          <button class="tool-button" type="button" [disabled]="patientWorkspace.loading() || patientWorkspace.conflictLatestLoading() || patientWorkspace.saving()" (click)="openConflictReview()"><span>Comparar cambios</span></button>
+        }
+        <button class="tool-button" type="button" [disabled]="patientWorkspace.loading() || patientWorkspace.saving()" (click)="resolvePendingConflict()"><span>Descartar borrador y recuperar historia</span></button>
+      </div>
     </section>
+  }
+
+  @if (conflictReviewOpen() && patientWorkspace.activeSaveConflict(); as conflict) {
+    <div class="modal-backdrop open" aria-hidden="false">
+      <section class="modal-card clinical-conflict-review-modal" role="dialog" aria-modal="true" aria-labelledby="clinicalConflictReviewTitle" aria-describedby="clinicalConflictReviewDescription">
+        <header class="modal-header">
+          <div><span class="sheet-kicker">Guardado concurrente</span><h2 id="clinicalConflictReviewTitle">Comparar cambios de la historia</h2><p id="clinicalConflictReviewDescription">Muestra los valores confirmados y los del borrador por campo o registro. No mezcla ni sobrescribe información.</p></div>
+          <button #conflictReviewClose class="icon-button" type="button" title="Cerrar" aria-label="Cerrar comparación" (click)="closeConflictReview()">×</button>
+        </header>
+        <div class="modal-body clinical-conflict-review-body">
+          @if (patientWorkspace.conflictLatestError()) { <p class="clinical-conflict-review-message is-error" role="alert">{{ patientWorkspace.conflictLatestError() }}</p> }
+          @if (conflictComparison(); as comparison) {
+            <div class="clinical-conflict-review-summary">
+              <span><strong>Versión base</strong>{{ comparison.baseRevision }}</span>
+              <span><strong>Su borrador</strong>{{ comparison.draftChanges }} cambios</span>
+              <span><strong>Última versión</strong>{{ comparison.latestLoaded ? ('v' + comparison.latestRevision + ' · ' + comparison.serverChanges + ' cambios') : patientWorkspace.conflictLatestError() ? 'No disponible' : 'Consultando…' }}</span>
+            </div>
+            @if (patientWorkspace.conflictLatestLoading()) { <p class="clinical-conflict-review-message" role="status">Recuperando la última versión confirmada…</p> }
+            <div class="clinical-conflict-review-sections" aria-label="Comparación por campo y registro">
+              @for (section of comparison.sections; track section.key) {
+                @if (section.details.length) {
+                  <section class="clinical-conflict-review-section" [class.has-overlap]="section.overlaps">
+                    <header><strong>{{ section.label }}</strong>@if (section.overlaps) { <span>Revisión humana</span> }</header>
+                    <div class="clinical-conflict-review-table" role="table" [attr.aria-label]="'Cambios en ' + section.label">
+                      <div class="clinical-conflict-review-row is-heading" role="row"><span role="columnheader">Campo o registro</span><span role="columnheader">Base</span><span role="columnheader">Su borrador</span><span role="columnheader">Servidor</span></div>
+                      @for (detail of section.details; track detail.key) {
+                        <div class="clinical-conflict-review-row" [class.has-overlap]="detail.overlaps" role="row">
+                          <strong role="cell">{{ detail.label }}</strong>
+                          <span role="cell">{{ detail.baseValue }}</span>
+                          <span role="cell" [class.has-change]="detail.draftChanged">{{ detail.draftValue }}</span>
+                          <span role="cell" [class.has-change]="detail.serverChanged">{{ detail.serverValue }}</span>
+                        </div>
+                      }
+                    </div>
+                  </section>
+                }
+              }
+            </div>
+            @if (comparison.latestLoaded && comparison.overlaps) { <p class="clinical-conflict-review-warning"><strong>{{ comparison.overlaps }} campo(s) o registro(s) modificados por ambos.</strong> Requieren revisión humana; este sistema no los fusionará automáticamente.</p> }
+            @else if (comparison.latestLoaded) { <p class="clinical-conflict-review-message is-ready">No hay secciones modificadas por ambos lados. El borrador sigue sin guardarse.</p> }
+          }
+        </div>
+        <footer class="modal-actions">
+          <button class="tool-button" type="button" [disabled]="patientWorkspace.loading() || patientWorkspace.conflictLatestLoading() || !auth.hasPermission('section.history.view')" (click)="patientWorkspace.refreshConflictLatest()"><span>Actualizar comparación</span></button>
+          <button class="tool-button primary" type="button" (click)="closeConflictReview()"><span>Cerrar</span></button>
+        </footer>
+      </section>
+    </div>
   }
 
   <main class="split-workspace" aria-label="Espacio clínico Angular">
