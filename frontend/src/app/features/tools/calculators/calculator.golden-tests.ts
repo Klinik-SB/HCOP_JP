@@ -1,4 +1,4 @@
-import { evaluateCalculator } from './calculator.engine';
+import { evaluateCalculator, externalLink, tableNote } from './calculator.engine';
 import { CALCULATOR_INVENTORY, EXPECTED_CALCULATOR_ORIGIN_COUNTS } from './calculator.inventory';
 import { BSA_CALCULATOR, BMI_CALCULATOR, CALVERT_CALCULATOR } from './core-calculator.definitions';
 import {
@@ -13,6 +13,12 @@ import {
   NODAL_RISK_CALCULATOR,
   PARTIN_CALCULATOR
 } from './legacy-calculators-08-11.definitions';
+import {
+  BIOPSY_RISK_CALCULATOR,
+  CHAARTED_LATITUDE_CALCULATOR,
+  MSKCC_PROSTATE_CALCULATOR,
+  PSA_KINETICS_CALCULATOR
+} from './legacy-calculators-12-15.definitions';
 import { PORTED_CALCULATORS } from './ported-calculator.registry';
 import { CalculatorOrigin } from './calculator.models';
 
@@ -37,11 +43,13 @@ test('inventory contains the exact 57 unique legacy tools in stable order', () =
   }
 });
 
-test('only the first eleven calculators are marked as ported', () => {
+test('only the first fifteen calculators are marked as ported', () => {
   deepEqual(CALCULATOR_INVENTORY.filter((entry) => entry.migrationStatus === 'ported').map((entry) => entry.id),
-    ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk']);
+    ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk',
+      'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude']);
   deepEqual(PORTED_CALCULATORS.map((entry) => entry.id),
-    ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk']);
+    ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk',
+      'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude']);
 });
 
 test('BSA opens blank and keeps legacy values only as examples', () => {
@@ -545,8 +553,8 @@ test('Partin prepares the official lookup profile without inventing local percen
   equal(evaluation.result.metrics.some((metric) => String(metric.value).includes('%')), false);
   const link = evaluation.result.notes[1];
   equal(typeof link === 'object' ? link.kind : '', 'external-link');
-  equal(typeof link === 'object' ? link.label : '', 'Abrir tablas Partin de Johns Hopkins');
-  equal(typeof link === 'object' ? new URL(link.href).protocol : '', 'https:');
+  equal(typeof link === 'object' && link.kind === 'external-link' ? link.label : '', 'Abrir tablas Partin de Johns Hopkins');
+  equal(typeof link === 'object' && link.kind === 'external-link' ? new URL(link.href).protocol : '', 'https:');
 });
 
 test('Partin rejects unknown lookup categories', () => {
@@ -575,12 +583,365 @@ test('Roach exposes Briganti only as a typed HTTPS reference and validates its i
   const evaluation = evaluateCalculator(NODAL_RISK_CALCULATOR, { psa: 12, gleason: '7' });
   const link = evaluation.result.notes[1];
   equal(typeof link === 'object' ? link.kind : '', 'external-link');
-  equal(typeof link === 'object' ? link.label : '', 'Abrir nomograma validado');
-  equal(typeof link === 'object' ? new URL(link.href).protocol : '', 'https:');
+  equal(typeof link === 'object' && link.kind === 'external-link' ? link.label : '', 'Abrir nomograma validado');
+  equal(typeof link === 'object' && link.kind === 'external-link' ? new URL(link.href).protocol : '', 'https:');
 
   equal(evaluateCalculator(NODAL_RISK_CALCULATOR, { psa: -0.1, gleason: '7' }).issues[0]?.code, 'below-minimum');
   equal(evaluateCalculator(NODAL_RISK_CALCULATOR, { psa: 12.05, gleason: '7' }).issues[0]?.code, 'step-mismatch');
   equal(evaluateCalculator(NODAL_RISK_CALCULATOR, { psa: 12, gleason: '11' }).issues[0]?.code, 'unknown-option');
+});
+
+test('calculators 12 to 15 preserve blank forms and legacy examples', () => {
+  const mskcc = evaluateCalculator(MSKCC_PROSTATE_CALCULATOR);
+  equal(mskcc.status, 'invalid');
+  equal(mskcc.values['scenario'], 'pre');
+  deepEqual(mskcc.issues.map((issue) => issue.fieldId), [
+    'msk_pre_no_hormone', 'msk_pre_no_radiation', 'msk_pre_age', 'msk_pre_psa',
+    'msk_pre_gleason_primary', 'msk_pre_gleason_secondary', 'msk_pre_stage'
+  ]);
+
+  const psaDates = MSKCC_PROSTATE_CALCULATOR.fields.find((field) => field.id === 'msk_psadt_dates');
+  equal(psaDates?.kind === 'text' ? psaDates.initialValue : null, '');
+  equal(psaDates?.kind === 'text' ? psaDates.exampleValue : null, '01/01/2025, 01/01/2026');
+  equal(psaDates?.kind === 'text' ? psaDates.placeholder : null, 'Ej.: 01/01/2025, 01/01/2026');
+
+  const pbcg = evaluateCalculator(BIOPSY_RISK_CALCULATOR);
+  deepEqual(pbcg.issues.map((issue) => issue.fieldId), ['psa', 'age']);
+  equal(pbcg.values['dre'], false);
+
+  const kinetics = evaluateCalculator(PSA_KINETICS_CALCULATOR);
+  deepEqual(kinetics.issues.map((issue) => issue.fieldId), ['psa', 'volume', 'context']);
+  equal(kinetics.values['psaSeries'], '');
+  equal(kinetics.values['nadir'], '');
+  const seriesField = PSA_KINETICS_CALCULATOR.fields.find((field) => field.id === 'psaSeries');
+  equal(seriesField?.kind === 'textarea' ? seriesField.exampleValue : null,
+    '01/01/2025; 1,0\n01/07/2025; 2,0\n01/01/2026; 4,0');
+
+  const metastatic = evaluateCalculator(CHAARTED_LATITUDE_CALCULATOR);
+  deepEqual(metastatic.issues.map((issue) => issue.fieldId), ['bone']);
+  equal(metastatic.values['visceral'], false);
+  equal(metastatic.values['outsideAxial'], false);
+  equal(metastatic.values['gleasonHigh'], false);
+});
+
+test('MSKCC validates only the selected scenario and keeps optional inputs optional', () => {
+  const scenarios: readonly [string, readonly string[]][] = [
+    ['volume', ['msk_volume_length', 'msk_volume_width', 'msk_volume_height', 'msk_volume_psa']],
+    ['psadt', ['msk_psadt_dates', 'msk_psadt_values', 'msk_psadt_minimum_series']],
+    ['post', [
+      'msk_post_no_hormone', 'msk_post_no_radiation', 'msk_post_preop_psa',
+      'msk_post_age_surgery', 'msk_post_months_undetectable', 'msk_post_gleason_primary',
+      'msk_post_gleason_secondary', 'msk_post_margins', 'msk_post_ece',
+      'msk_post_svi', 'msk_post_nodes'
+    ]]
+  ];
+  for (const [scenario, expected] of scenarios) {
+    const evaluation = evaluateCalculator(MSKCC_PROSTATE_CALCULATOR, { scenario });
+    deepEqual(evaluation.issues.map((issue) => issue.fieldId), expected);
+  }
+  const whitespace = evaluateCalculator(MSKCC_PROSTATE_CALCULATOR, {
+    scenario: 'psadt',
+    msk_psadt_dates: '   ',
+    msk_psadt_values: '2.5, 5.0',
+    msk_psadt_minimum_series: '2'
+  });
+  deepEqual(whitespace.issues.map((issue) => issue.fieldId), ['msk_psadt_dates']);
+});
+
+test('MSKCC preoperative golden result uses typed checklists and overview data', () => {
+  const evaluation = evaluateCalculator(MSKCC_PROSTATE_CALCULATOR, mskccPreInput());
+  equal(evaluation.status, 'calculated');
+  deepEqual(evaluation.result, {
+    title: 'Datos listos para MSKCC',
+    detail: 'Escenario: Pre-prostatectomia radical. El resultado numérico se obtiene únicamente en el nomograma oficial.',
+    badge: 'listo',
+    score: 0,
+    showScore: false,
+    severity: 'good',
+    metrics: [
+      { label: 'Obligatorios', value: '7/7' },
+      { label: 'Opcionales', value: '0/2' },
+      { label: 'Faltantes', value: 0 },
+      { label: 'Opcional', value: '0%' }
+    ],
+    notes: evaluation.result.notes
+  });
+
+  const link = evaluation.result.notes[0];
+  equal(typeof link === 'object' && link.kind === 'external-link' ? link.label : '',
+    'Abrir nomograma interactivo MSKCC: Pre-prostatectomia radical');
+  equal(typeof link === 'object' && link.kind === 'external-link' ? new URL(link.href).protocol : '', 'https:');
+
+  const required = evaluation.result.notes[1];
+  equal(typeof required === 'object' && required.kind === 'checklist' ? required.items.length : 0, 7);
+  equal(typeof required === 'object' && required.kind === 'checklist'
+    ? required.items.every((item) => item.status === 'complete') : false, true);
+
+  const optional = evaluation.result.notes[2];
+  equal(typeof optional === 'object' && optional.kind === 'checklist' ? optional.items.length : 0, 2);
+  equal(typeof optional === 'object' && optional.kind === 'checklist'
+    ? optional.items.every((item) => item.status === 'missing') : false, true);
+
+  const overview = evaluation.result.notes[3];
+  equal(typeof overview === 'object' && overview.kind === 'table' ? overview.rows.length : 0, 7);
+  if (typeof overview === 'object' && overview.kind === 'table') {
+    deepEqual(overview.columns, ['Nomograma', 'Completitud', 'Faltante principal', 'MSKCC']);
+    deepEqual(overview.rows[0]?.slice(0, 3), ['Pre-prostatectomia radical', '100%', 'Listo']);
+    equal(overview.rows[1]?.[1], '0%');
+    const overviewLink = overview.rows[0]?.[3];
+    equal(typeof overviewLink === 'object' && overviewLink.kind === 'external-link'
+      ? new URL(overviewLink.href).protocol : '', 'https:');
+  }
+  assertNoRawMarkup(evaluation.result.notes);
+});
+
+test('MSKCC volume scenario completes four required values without a local estimate', () => {
+  const evaluation = evaluateCalculator(MSKCC_PROSTATE_CALCULATOR, {
+    scenario: 'volume',
+    msk_volume_length: 4.5,
+    msk_volume_width: 4,
+    msk_volume_height: 3.5,
+    msk_volume_psa: 7.01
+  });
+  equal(evaluation.status, 'calculated');
+  equal(evaluation.result.title, 'Datos listos para MSKCC');
+  deepEqual(evaluation.result.metrics, [
+    { label: 'Obligatorios', value: '4/4' },
+    { label: 'Opcionales', value: 'no aplica' },
+    { label: 'Faltantes', value: 0 },
+    { label: 'Opcional', value: 'no aplica' }
+  ]);
+  equal(evaluation.result.metrics.some((metric) => String(metric.value).includes('riesgo')), false);
+});
+
+test('MSKCC rejects unknown scenarios and invalid values before opening an external model', () => {
+  const scenario = evaluateCalculator(MSKCC_PROSTATE_CALCULATOR, { scenario: 'invented' });
+  equal(scenario.status, 'invalid');
+  deepEqual(scenario.issues.map((issue) => issue.code), ['unknown-option']);
+
+  const age = evaluateCalculator(MSKCC_PROSTATE_CALCULATOR, mskccPreInput({ msk_pre_age: 34 }));
+  equal(age.status, 'invalid');
+  deepEqual(age.issues.map((issue) => issue.code), ['below-minimum']);
+});
+
+test('PBCG golden probabilities match the public legacy coefficients', () => {
+  const evaluation = evaluateCalculator(BIOPSY_RISK_CALCULATOR, pbcgInput());
+  equal(evaluation.status, 'calculated');
+  deepEqual(evaluation.result, {
+    title: 'PBCG: 30.0% de alto grado',
+    detail: 'Probabilidades mutuamente excluyentes calculadas con los coeficientes públicos PBCG.',
+    badge: 'PBCG',
+    score: 0,
+    showScore: false,
+    severity: 'info',
+    metrics: [
+      { label: 'Sin cáncer', value: '49.8%' },
+      { label: 'Bajo grado', value: '20.2%' },
+      { label: 'Alto grado', value: '30.0%' }
+    ],
+    notes: evaluation.result.notes
+  });
+  const link = evaluation.result.notes[2];
+  equal(typeof link === 'object' && link.kind === 'external-link' ? link.label : '',
+    'Comparar con PBCG oficial');
+  equal(typeof link === 'object' && link.kind === 'external-link' ? new URL(link.href).protocol : '', 'https:');
+  assertNoRawMarkup(evaluation.result.notes);
+});
+
+test('PBCG accepts inclusive validated limits and rejects values outside them', () => {
+  equal(evaluateCalculator(BIOPSY_RISK_CALCULATOR, pbcgInput({ psa: 2, age: 40 })).status, 'calculated');
+  equal(evaluateCalculator(BIOPSY_RISK_CALCULATOR, pbcgInput({ psa: 50, age: 90 })).status, 'calculated');
+
+  const belowPsa = evaluateCalculator(BIOPSY_RISK_CALCULATOR, pbcgInput({ psa: 1.9 }));
+  deepEqual(belowPsa.issues.map((issue) => issue.code), ['below-minimum']);
+  const abovePsa = evaluateCalculator(BIOPSY_RISK_CALCULATOR, pbcgInput({ psa: 50.1 }));
+  deepEqual(abovePsa.issues.map((issue) => issue.code), ['above-maximum']);
+  const belowAge = evaluateCalculator(BIOPSY_RISK_CALCULATOR, pbcgInput({ age: 39 }));
+  deepEqual(belowAge.issues.map((issue) => issue.code), ['below-minimum']);
+  const aboveAge = evaluateCalculator(BIOPSY_RISK_CALCULATOR, pbcgInput({ age: 91 }));
+  deepEqual(aboveAge.issues.map((issue) => issue.code), ['above-maximum']);
+});
+
+test('PBCG preserves all four binary predictors and mutually exclusive output', () => {
+  const evaluation = evaluateCalculator(BIOPSY_RISK_CALCULATOR, pbcgInput({
+    african: true,
+    priorNegative: true,
+    dre: true,
+    family: true
+  }));
+  deepEqual(evaluation.result.metrics, [
+    { label: 'Sin cáncer', value: '34.2%' },
+    { label: 'Bajo grado', value: '19.3%' },
+    { label: 'Alto grado', value: '46.4%' }
+  ]);
+});
+
+test('PSA kinetics golden series preserves density, dates, decimal commas and regression', () => {
+  const evaluation = evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput());
+  equal(evaluation.status, 'calculated');
+  deepEqual(evaluation.result, {
+    title: 'PSA-D 0.150 · PSA-DT 6.0 meses',
+    detail: 'Sin criterio de recaida aplicable a este contexto',
+    badge: 'sin criterio',
+    score: 0,
+    showScore: false,
+    severity: 'info',
+    metrics: [
+      { label: 'PSA-D', value: '0.150' },
+      { label: 'PSA-DT', value: '6.0 meses' },
+      { label: 'Velocidad', value: '3.00/año' },
+      { label: 'Mediciones', value: 3 }
+    ],
+    notes: [
+      'PSA-DT calculado por regresión logarítmica de toda la serie.',
+      'La separación temporal de la serie es adecuada para el cálculo.',
+      'Se eliminó el score compuesto local: PSA-D, PSA-DT y BCR son resultados diferentes.'
+    ]
+  });
+
+  const reordered = evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput({
+    psaSeries: '01/01/2026\t4,0\ntexto invalido\n01/01/2025; 1,0\n01/07/2025; 2,0'
+  }));
+  equal(reordered.result.title, evaluation.result.title);
+  equal(reordered.result.metrics[3]?.value, 3);
+});
+
+test('PSA kinetics filters malformed and non-positive rows and reports insufficient series', () => {
+  const empty = evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput({ psaSeries: '' }));
+  equal(empty.result.title, 'PSA-D 0.150 · PSA-DT sin duplicación calculable');
+  deepEqual(empty.result.metrics.slice(1), [
+    { label: 'PSA-DT', value: 'ND' },
+    { label: 'Velocidad', value: 'ND' },
+    { label: 'Mediciones', value: 0 }
+  ]);
+  equal(empty.result.notes[0], 'Con menos de tres mediciones el PSA-DT es frágil; agregar una tercera determinación.');
+  equal(empty.result.notes[1], 'No hay una serie suficiente para evaluar intervalos temporales.');
+
+  const one = evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput({
+    psaSeries: 'sin-fecha; 2\n01/01/2025; 0\n01/01/2025; 1'
+  }));
+  equal(one.result.metrics[3]?.value, 1);
+  equal(one.result.metrics[1]?.value, 'ND');
+});
+
+test('PSA kinetics reports short gaps and long windows independently', () => {
+  const shortGap = evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput({
+    psaSeries: '01/01/2025; 1\n15/01/2025; 2'
+  }));
+  equal(shortGap.result.notes[1],
+    'Hay determinaciones separadas por menos de cuatro semanas; interpretar la cinética con cautela.');
+
+  const longWindow = evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput({
+    psaSeries: '01/01/2024; 1\n01/02/2025; 2'
+  }));
+  equal(longWindow.result.notes[1],
+    'La serie abarca más de 12 meses; revisar si conviene usar una ventana clínica más reciente.');
+});
+
+test('PSA biochemical recurrence keeps post-RT nadir and Phoenix boundary exact', () => {
+  const missing = evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput({
+    context: 'post_rt',
+    nadir: ''
+  }));
+  deepEqual(missing.result, {
+    title: 'Falta el nadir post-radioterapia',
+    detail: 'Phoenix requiere comparar el PSA actual con nadir + 2 ng/ml.',
+    badge: 'no calculable',
+    score: 0,
+    showScore: false,
+    severity: 'warn',
+    metrics: [],
+    notes: []
+  });
+
+  const met = evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput({
+    psa: 2.4,
+    context: 'post_rt',
+    nadir: 0.4,
+    psaSeries: ''
+  }));
+  equal(met.result.detail, 'Cumple Phoenix: PSA actual ≥ nadir + 2 ng/ml.');
+  equal(met.result.badge, 'criterio cumplido');
+  equal(met.result.severity, 'bad');
+
+  const below = evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput({
+    psa: 2.39,
+    context: 'post_rt',
+    nadir: 0.4,
+    psaSeries: ''
+  }));
+  equal(below.result.detail, 'Phoenix: PSA actual ≥ nadir + 2 ng/ml');
+  equal(below.result.badge, 'sin criterio');
+});
+
+test('PSA biochemical recurrence keeps post-RP confirmation gate exact', () => {
+  const pending = evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput({
+    psa: 0.2,
+    context: 'post_rp',
+    confirmed: false,
+    psaSeries: ''
+  }));
+  equal(pending.result.detail, 'Umbral post-RP alcanzado; falta un PSA confirmatorio posterior.');
+  equal(pending.result.badge, 'pendiente');
+  equal(pending.result.severity, 'warn');
+
+  const confirmed = evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput({
+    psa: 0.2,
+    context: 'post_rp',
+    confirmed: true,
+    psaSeries: ''
+  }));
+  equal(confirmed.result.detail, 'Cumple Post-RP: PSA ≥0,2 ng/ml confirmado.');
+  equal(confirmed.result.badge, 'criterio cumplido');
+
+  const below = evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput({
+    psa: 0.19,
+    context: 'post_rp',
+    confirmed: true,
+    psaSeries: ''
+  }));
+  equal(below.result.detail, 'Post-RP: PSA ≥0,2 ng/ml confirmado');
+  equal(below.result.badge, 'sin criterio');
+});
+
+test('CHAARTED and LATITUDE preserve independent threshold logic', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string][] = [
+    [{ bone: 0 }, 'CHAARTED bajo volumen · LATITUDE no alto riesgo', '0/3'],
+    [{ bone: 3 }, 'CHAARTED bajo volumen · LATITUDE no alto riesgo', '1/3'],
+    [{ bone: 4 }, 'CHAARTED bajo volumen · LATITUDE no alto riesgo', '1/3'],
+    [{ bone: 4, outsideAxial: true }, 'CHAARTED alto volumen · LATITUDE no alto riesgo', '1/3'],
+    [{ bone: 0, visceral: true }, 'CHAARTED alto volumen · LATITUDE no alto riesgo', '1/3'],
+    [{ bone: 3, gleasonHigh: true }, 'CHAARTED bajo volumen · LATITUDE alto riesgo', '2/3'],
+    [{ bone: 0, visceral: true, gleasonHigh: true }, 'CHAARTED alto volumen · LATITUDE alto riesgo', '2/3'],
+    [{ bone: 3, visceral: true, gleasonHigh: true }, 'CHAARTED alto volumen · LATITUDE alto riesgo', '3/3']
+  ];
+  for (const [input, title, factors] of cases) {
+    const evaluation = evaluateCalculator(CHAARTED_LATITUDE_CALCULATOR, input);
+    equal(evaluation.result.title, title);
+    equal(evaluation.result.metrics[1]?.value, factors);
+  }
+});
+
+test('CHAARTED accepts zero and rejects negative bone lesion counts', () => {
+  equal(evaluateCalculator(CHAARTED_LATITUDE_CALCULATOR, { bone: 0 }).status, 'calculated');
+  const negative = evaluateCalculator(CHAARTED_LATITUDE_CALCULATOR, { bone: -0.1 });
+  equal(negative.status, 'invalid');
+  deepEqual(negative.issues.map((issue) => issue.code), ['below-minimum']);
+});
+
+test('ported 12 to 15 results never contain raw HTML notes', () => {
+  const results = [
+    evaluateCalculator(MSKCC_PROSTATE_CALCULATOR, mskccPreInput()).result,
+    evaluateCalculator(BIOPSY_RISK_CALCULATOR, pbcgInput()).result,
+    evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput()).result,
+    evaluateCalculator(CHAARTED_LATITUDE_CALCULATOR, { bone: 3 }).result
+  ];
+  for (const current of results) assertNoRawMarkup(current.notes);
+});
+
+test('structured note factories reject unsafe links and malformed tables', () => {
+  throws(() => externalLink('inseguro', 'http://example.test'), 'El enlace externo debe usar HTTPS');
+  throws(() => tableNote('invalida', ['una'], [['a', 'b']]), 'cantidad de celdas invalida');
 });
 
 function g8Input(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
@@ -607,6 +968,50 @@ function capraPostInput(overrides: Readonly<Record<string, unknown>> = {}): Reco
     scenario: 'post', capraSpsa: 8, capraSPrimary: '3', capraSSecondary: '4',
     margin: false, ece: false, svi: false, lni: false, ...overrides
   };
+}
+
+function mskccPreInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'pre',
+    msk_pre_no_hormone: 'no',
+    msk_pre_no_radiation: 'no',
+    msk_pre_age: 65,
+    msk_pre_psa: 8.01,
+    msk_pre_gleason_primary: '3',
+    msk_pre_gleason_secondary: '4',
+    msk_pre_stage: 't2a',
+    ...overrides
+  };
+}
+
+function pbcgInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    psa: 7,
+    age: 65,
+    dre: false,
+    family: false,
+    african: false,
+    priorNegative: false,
+    ...overrides
+  };
+}
+
+function psaKineticsInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    psa: 6,
+    volume: 40,
+    psaSeries: '01/01/2025; 1,0\n01/07/2025; 2,0\n01/01/2026; 4,0',
+    context: 'intact',
+    nadir: '',
+    confirmed: false,
+    ...overrides
+  };
+}
+
+function assertNoRawMarkup(value: unknown): void {
+  const serialized = JSON.stringify(value);
+  equal(serialized.includes('<'), false);
+  equal(serialized.includes('href='), false);
 }
 
 function ipssShimInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
@@ -659,4 +1064,14 @@ function deepEqual(actual: unknown, expected: unknown): void {
 
 function print(value: unknown): string {
   return typeof value === 'string' ? JSON.stringify(value) : String(value);
+}
+
+function throws(run: () => void, expectedMessage: string): void {
+  try {
+    run();
+  } catch (failure) {
+    if (failure instanceof Error && failure.message.includes(expectedMessage)) return;
+    throw new Error('Error inesperado: ' + String(failure));
+  }
+  throw new Error('Se esperaba una excepcion que contuviera ' + JSON.stringify(expectedMessage) + '.');
 }

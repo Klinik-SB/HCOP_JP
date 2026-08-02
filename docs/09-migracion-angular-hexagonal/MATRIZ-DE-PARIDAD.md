@@ -38,7 +38,7 @@ la implementación anterior.
 
 Las 57 calculadoras y scores continúan en transición y la fila permanece
 explícitamente `Pendiente`; Guías y AJCC/TNM no modifican ese estado.
-La base Angular mantiene el inventario completo y porta 11 de 57 con pruebas
+La base Angular mantiene el inventario completo y porta 15 de 57 con pruebas
 doradas, pero la fila no cambia de estado hasta completar y validar la
 biblioteca visible.
 

@@ -58,10 +58,12 @@ frontend anterior sólo se retira cuando la matriz de paridad está completa.
 - [Corte Angular 010](CORTE-ANGULAR-010-ESCALAS-FUNCIONALES-GERIATRICAS.md):
   ECOG/Karnofsky, Charlson, G8/CARG e IPSS/SHIM portados con campos
   condicionales, formularios inicialmente vacíos y límites clínicos comparados.
-
 - [Corte Angular 011](CORTE-ANGULAR-011-RIESGO-PROSTATICO.md): riesgo
   prostático EAU, CAPRA/CAPRA-S, Partin y Roach portados con escenarios,
   referencias oficiales seguras y fronteras clínicas verificadas.
+- [Corte Angular 012](CORTE-ANGULAR-012-NOMOGRAMAS-Y-CINETICA-PROSTATICA.md):
+  MSKCC, PBCG, cinética de PSA/BCR y CHAARTED/LATITUDE portados con
+  escenarios, series temporales y salidas estructuradas seguras.
 
 ## Ciclo obligatorio por capacidad
 

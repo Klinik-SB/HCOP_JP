@@ -4,7 +4,11 @@ import {
   CalculatorField,
   CalculatorInput,
   CalculatorExternalLink,
+  CalculatorChecklistItem,
+  CalculatorChecklistNote,
   CalculatorResult,
+  CalculatorTableCell,
+  CalculatorTableNote,
   CalculatorValidationIssue,
   CalculatorValue,
   CalculatorValues
@@ -133,6 +137,9 @@ function normalizeField(field: CalculatorField, rawValue: unknown, supplied: boo
     }
     return { value };
   }
+  if (field.kind === 'text' || field.kind === 'textarea') {
+    return { value: rawValue === null || rawValue === undefined ? '' : String(rawValue) };
+  }
 
   if (rawValue === null || rawValue === undefined || rawValue === '') return { value: '' };
   if (typeof rawValue === 'string' && !rawValue.trim()) return { value: '' };
@@ -163,6 +170,7 @@ function normalizeBoolean(value: unknown, fallback: boolean): boolean {
 function isMissing(field: CalculatorField, value: CalculatorValue): boolean {
   if (!field.required) return false;
   if (field.kind === 'checkbox') return value !== true;
+  if (field.kind === 'text' || field.kind === 'textarea') return typeof value !== 'string' || value.trim() === '';
   return value === '';
 }
 
@@ -192,4 +200,23 @@ export function externalLink(label: string, href: string): CalculatorExternalLin
   const parsed = new URL(href);
   if (parsed.protocol !== 'https:') throw new Error(`El enlace externo debe usar HTTPS: ${href}`);
   return { kind: 'external-link', label, href: parsed.toString() };
+}
+
+export function checklistNote(
+  title: string,
+  items: readonly CalculatorChecklistItem[],
+  emptyText = 'Sin items.'
+): CalculatorChecklistNote {
+  return { kind: 'checklist', title, items: [...items], emptyText };
+}
+
+export function tableNote(
+  title: string,
+  columns: readonly string[],
+  rows: readonly (readonly CalculatorTableCell[])[]
+): CalculatorTableNote {
+  if (rows.some((row) => row.length !== columns.length)) {
+    throw new Error(`La tabla ${title} contiene una fila con cantidad de celdas invalida.`);
+  }
+  return { kind: 'table', title, columns: [...columns], rows: rows.map((row) => [...row]) };
 }

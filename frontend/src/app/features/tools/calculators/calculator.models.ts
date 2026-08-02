@@ -46,6 +46,19 @@ export interface CalculatorSelectField extends CalculatorFieldBase<'select'> {
   readonly options: readonly CalculatorOption[];
 }
 
+export interface CalculatorTextField extends CalculatorFieldBase<'text'> {
+  readonly initialValue: string;
+  readonly exampleValue?: string;
+  readonly placeholder?: string;
+}
+
+export interface CalculatorTextareaField extends CalculatorFieldBase<'textarea'> {
+  readonly initialValue: string;
+  readonly exampleValue?: string;
+  readonly placeholder?: string;
+  readonly rows?: number;
+}
+
 export interface CalculatorCheckboxField extends CalculatorFieldBase<'checkbox'> {
   readonly initialValue: boolean;
   readonly weight?: number;
@@ -59,6 +72,8 @@ export interface CalculatorSectionField extends CalculatorFieldBase<'section'> {
 export type CalculatorField =
   | CalculatorNumberField
   | CalculatorSelectField
+  | CalculatorTextField
+  | CalculatorTextareaField
   | CalculatorCheckboxField
   | CalculatorSectionField;
 export type CalculatorValue = string | number | boolean;
@@ -77,7 +92,32 @@ export interface CalculatorExternalLink {
   readonly href: string;
 }
 
-export type CalculatorNote = string | CalculatorExternalLink;
+export interface CalculatorChecklistItem {
+  readonly label: string;
+  readonly status: 'complete' | 'missing';
+}
+
+export interface CalculatorChecklistNote {
+  readonly kind: 'checklist';
+  readonly title: string;
+  readonly items: readonly CalculatorChecklistItem[];
+  readonly emptyText: string;
+}
+
+export type CalculatorTableCell = string | number | CalculatorExternalLink;
+
+export interface CalculatorTableNote {
+  readonly kind: 'table';
+  readonly title: string;
+  readonly columns: readonly string[];
+  readonly rows: readonly (readonly CalculatorTableCell[])[];
+}
+
+export type CalculatorNote =
+  | string
+  | CalculatorExternalLink
+  | CalculatorChecklistNote
+  | CalculatorTableNote;
 
 export interface CalculatorResult {
   readonly title: string;
