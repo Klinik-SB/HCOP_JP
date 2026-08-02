@@ -45,9 +45,11 @@ operativo, el merge de built-ins y el motor seguro de fórmulas/scores; el corte
 025 suma la factory que los convierte al contrato visual común. El corte 026
 valida atómicamente el JSON institucional y el corte 027 conecta el endpoint
 como autoridad, ensambla built-ins, overrides y configurables, y mantiene el
-workspace cerrado durante carga, error, invalidación o falta de permiso. La
-capacidad pasa a `En convivencia`; todavía faltan comparación visual/E2E y
-smoke Docker para marcarla como `Validada`.
+workspace cerrado durante carga, error, invalidación o falta de permiso. El
+corte 028 completa el smoke Docker aislado, el recorrido autorizado y la
+corrección responsive según el ancho real del panel. La capacidad permanece
+`En convivencia`: todavía faltan el recorrido visual con un usuario autenticado
+sin permiso y la comparación formal de todas las resoluciones admitidas.
 
 ## Evidencia requerida para marcar `Validada`
 

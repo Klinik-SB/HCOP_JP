@@ -28,9 +28,9 @@ RUN groupadd --system --gid 10001 hcop \
     && useradd --system --uid 10001 --gid hcop --home-dir /opt/hcop --shell /usr/sbin/nologin hcop
 
 WORKDIR /opt/hcop
-COPY --from=build /workspace/target/hcop-jp.jar ./app.jar
+COPY --chown=hcop:hcop --from=build /workspace/target/hcop-jp.jar ./app.jar
 COPY --chown=hcop:hcop runtime/catalogs ./runtime/catalogs
-RUN mkdir -p ./runtime/storage && chown -R hcop:hcop /opt/hcop
+RUN mkdir -p ./runtime/storage && chown hcop:hcop ./runtime ./runtime/storage
 
 USER hcop
 EXPOSE 5180

@@ -115,6 +115,9 @@ configuración institucional y cerrar la paridad visual/E2E integrada.
 - [Corte Angular 027](CORTE-ANGULAR-027-CATALOGO-INSTITUCIONAL-INTEGRADO.md):
   conexión autoritativa de PostgreSQL al workspace Angular, ensamblado seguro,
   estados fail-closed, invalidación y recarga sin fallback local.
+- [Corte Angular 028](CORTE-ANGULAR-028-SMOKE-DOCKER-Y-RESPONSIVE.md):
+  smoke Docker aislado, recorrido visual autorizado, corrección responsive por
+  ancho real del panel y optimización de construcción de la imagen.
 
 ## Ciclo obligatorio por capacidad
 
