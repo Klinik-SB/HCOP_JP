@@ -107,6 +107,7 @@ Con el sistema iniciado también existe una versión navegable en
 - [Corte Angular 003: Hospital de Día](09-migracion-angular-hexagonal/CORTE-ANGULAR-003-HOSPITAL-DE-DIA-LECTURA.md)
 - [Corte Angular 031: conflictos de guardado](09-migracion-angular-hexagonal/CORTE-ANGULAR-031-CONFLICTOS-DE-GUARDADO.md)
 - [Corte Angular 032: comparación segura](09-migracion-angular-hexagonal/CORTE-ANGULAR-032-COMPARACION-DE-CONFLICTOS.md)
+- [Corte Angular 033: E2E concurrente](09-migracion-angular-hexagonal/CORTE-ANGULAR-033-E2E-CONFLICTO-CONCURRENTE.md)
 
 ## Fuentes de verdad
 

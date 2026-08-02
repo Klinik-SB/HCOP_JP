@@ -1,0 +1,58 @@
+name: hcop-ajp-conflict-e2e
+
+services:
+  database:
+    image: ${HCOP_POSTGRES_IMAGE:-postgres:18.4-alpine}
+    environment:
+      POSTGRES_DB: hcop_e2e
+      POSTGRES_USER: hcop_e2e
+      POSTGRES_PASSWORD: ${HCOP_E2E_DB_PASSWORD:?Falta HCOP_E2E_DB_PASSWORD}
+    volumes:
+      - conflict_e2e_postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hcop_e2e -d hcop_e2e"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    networks: [conflict_e2e_internal]
+
+  application:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${HCOP_E2E_APP_IMAGE:-hcop-jp-conflict-e2e:local}
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      HCOP_DB_URL: jdbc:postgresql://database:5432/hcop_e2e
+      HCOP_DB_USER: hcop_e2e
+      HCOP_DB_PASSWORD: ${HCOP_E2E_DB_PASSWORD:?Falta HCOP_E2E_DB_PASSWORD}
+      HCOP_BOOTSTRAP_USERNAME: ${HCOP_E2E_USERNAME:-qa_conflict}
+      HCOP_BOOTSTRAP_PASSWORD: ${HCOP_E2E_PASSWORD:?Falta HCOP_E2E_PASSWORD}
+      HCOP_BOOTSTRAP_SECOND_USERNAME: ${HCOP_E2E_SECOND_USERNAME:-qa_conflict_2}
+      HCOP_QR_SECRET: ${HCOP_E2E_QR_SECRET:?Falta HCOP_E2E_QR_SECRET}
+      HCOP_ENCRYPTION_SECRET: ${HCOP_E2E_ENCRYPTION_SECRET:?Falta HCOP_E2E_ENCRYPTION_SECRET}
+      HCOP_PUBLIC_BASE_URL: http://localhost:${HCOP_E2E_PORT:-5182}
+      HCOP_BIND_ADDRESS: 0.0.0.0
+      HCOP_PORT: 5180
+    ports:
+      - "127.0.0.1:${HCOP_E2E_PORT:-5182}:5180"
+    volumes:
+      - conflict_e2e_storage:/opt/hcop/runtime/storage
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/5180 && printf 'GET /actuator/health HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q '\"status\":\"UP\"' <&3"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    networks: [conflict_e2e_internal, conflict_e2e_egress]
+
+volumes:
+  conflict_e2e_postgres:
+  conflict_e2e_storage:
+
+networks:
+  conflict_e2e_internal:
+    internal: true
+  conflict_e2e_egress:

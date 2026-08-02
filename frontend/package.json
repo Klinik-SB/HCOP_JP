@@ -6,7 +6,8 @@
     "build": "ng build",
     "start": "ng serve",
     "test": "npm run test:clinical",
-    "test:clinical": "node scripts/run-clinical-tests.mjs"
+    "test:clinical": "node scripts/run-clinical-tests.mjs",
+    "test:e2e:conflict": "playwright test --config=e2e/playwright.config.ts"
   },
   "engines": {
     "node": ">=22.22.3 || >=24.15.0"
@@ -25,6 +26,7 @@
     "@angular/build": "^22.1.2",
     "@angular/cli": "^22.1.2",
     "@angular/compiler-cli": "^22.1.0",
+    "@playwright/test": "^1.62.1",
     "esbuild": "0.28.1",
     "typescript": "~6.0.2"
   }

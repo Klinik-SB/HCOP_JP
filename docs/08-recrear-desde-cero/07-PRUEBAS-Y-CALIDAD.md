@@ -58,6 +58,16 @@ login → paciente → diagnóstico → tratamiento → ciclos → farmacia
 
 Nunca ejecute una prueba que crea pacientes sobre producción.
 
+El conflicto de revisión de la hoja posee un recorrido aislado con dos
+sesiones de navegador y PostgreSQL efímero:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-clinical-conflict-e2e.ps1
+```
+
+Usa el puerto 5182 por defecto y destruye base, pacientes, almacenamiento y
+redes al finalizar. No lo apunte a una instancia existente.
+
 ## Casos críticos
 
 - dos turnos concurrentes para el mismo sillón;

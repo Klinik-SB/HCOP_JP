@@ -130,6 +130,9 @@ configuración institucional y cerrar la paridad visual/E2E integrada.
 - [Corte Angular 032](CORTE-ANGULAR-032-COMPARACION-DE-CONFLICTOS.md):
   comparación de sólo lectura entre base, borrador y revisión vigente, aislada
   del paciente activo y protegida contra respuestas tardías.
+- [Corte Angular 033](CORTE-ANGULAR-033-E2E-CONFLICTO-CONCURRENTE.md):
+  dos sesiones Chrome y PostgreSQL efímero demuestran `VERSION_CONFLICT`,
+  borrador conservado, descarte explícito y ausencia de sobrescritura.
 
 ## Ciclo obligatorio por capacidad
 

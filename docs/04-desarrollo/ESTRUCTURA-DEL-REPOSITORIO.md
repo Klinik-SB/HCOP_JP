@@ -177,6 +177,10 @@ Archivos centrales de este corte:
 | `frontend/src/app/core/patients/clinical-conflict-comparison.tests.ts` | Regresiones de diferencias, aislamiento, identidad y respuestas tardías |
 | `frontend/src/app/core/patients/pending-clinical-draft.guard.ts` | Impide abandonar por navegación SPA una ficha con borrador conflictivo pendiente |
 | `frontend/scripts/run-clinical-tests.mjs` | Ejecutor multiplataforma de las suites clínicas invocado por `npm test` |
+| `frontend/e2e/clinical-conflict.spec.ts` | Recorrido Chrome con dos sesiones, borrador `409`, respuesta tardía y verificación final de PostgreSQL |
+| `frontend/e2e/playwright.config.ts` | Configuración aislada de Playwright; conserva captura y traza solamente ante fallo |
+| `compose.e2e.yaml` | Aplicación, PostgreSQL, redes y volúmenes descartables para concurrencia clínica |
+| `scripts/test-clinical-conflict-e2e.ps1` | Orquesta secretos efímeros, salud, E2E y limpieza incondicional del entorno |
 | `frontend/src/app/features/clinical-workspace/` | Hoja clínica Angular y selección de paciente |
 | `frontend/src/app/features/timeline/` | Línea temporal y filtros clínicos |
 | `frontend/src/app/features/tools/calculators/` | Catálogo, motor y renderizador de las 57 calculadoras |

@@ -70,8 +70,10 @@ mismo paciente; la interfaz bloquea nuevos guardados y salidas que podrían
 perderlo hasta descartar y recargar explícitamente. La fila continúa
 `Pendiente`: el corte 032 ya agrega una comparación conservadora de sólo lectura
 por campo/registro, con una lectura aislada y control de respuestas tardías. Aún
-faltan merge humano por registro y el recorrido E2E concurrente con dos
-sesiones.
+faltan merge humano por registro y editores equivalentes a legacy. El corte 033
+ya valida en dos sesiones Chrome y PostgreSQL efímero que la segunda escritura
+recibe `VERSION_CONFLICT`, conserva su borrador y nunca pisa la revisión
+ganadora.
 
 ## Evidencia requerida para marcar `Validada`
 
