@@ -160,6 +160,8 @@ Recupera la hoja del paciente activo o la plantilla en blanco.
 ### `PUT /api/hc` - Guardar historia clínica
 
 Guarda con control optimista de revisión para evitar pisar cambios concurrentes.
+Los `409` usan `ACTIVE_PATIENT_REQUIRED`, `CLINICAL_REVISION_REQUIRED`,
+`CLINICAL_PATIENT_MISMATCH` o `VERSION_CONFLICT` según la causa.
 
 - **Controlador MVC:** `ClinicalDocumentController`
 - **Operación Java/OpenAPI:** `put`

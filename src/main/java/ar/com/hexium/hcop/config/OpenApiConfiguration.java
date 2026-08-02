@@ -89,7 +89,7 @@ public class OpenApiConfiguration {
       doc("PatientController.preview", "Previsualizar paciente", "Resume disponibilidad y cantidad de registros antes de abrir la historia."),
       doc("PatientController.importPatient", "Abrir paciente local", "Activa una historia ya consolidada en PostgreSQL; no consulta Lira y proyecta las secciones según permisos."),
       doc("ClinicalDocumentController.get", "Leer historia clínica", "Recupera la hoja del paciente activo o la plantilla en blanco; requiere acceso a Historia y omite prescriptions sin permiso de lectura de Prescripción."),
-      doc("ClinicalDocumentController.put", "Guardar historia clínica", "Guarda con control optimista de revisión. Si prescriptions cambia exige edición de Prescripción; si el campo fue ocultado, conserva su valor existente."),
+      doc("ClinicalDocumentController.put", "Guardar historia clínica", "Guarda con control optimista de revisión. Si prescriptions cambia exige edición de Prescripción; si el campo fue ocultado, conserva su valor existente. Los conflictos 409 se distinguen con ACTIVE_PATIENT_REQUIRED, CLINICAL_REVISION_REQUIRED, CLINICAL_PATIENT_MISMATCH o VERSION_CONFLICT."),
       doc("ClinicalDocumentController.restoreDemo", "Compatibilidad de persistencia", "Confirma que la historia es persistente y que no se restaura un demo."),
       doc("DiagnosisController.list", "Listar diagnósticos", "Lista todos los diagnósticos oncológicos no archivados del paciente."),
       doc("DiagnosisController.link", "Validar diagnóstico de tratamiento", "Confirma que el diagnóstico seleccionado pertenece a la historia del paciente."),

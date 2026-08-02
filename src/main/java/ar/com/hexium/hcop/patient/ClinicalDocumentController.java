@@ -55,13 +55,19 @@ public class ClinicalDocumentController {
     auth.requirePermission(request, "section.history.edit");
     SessionPrincipal principal = auth.require(request);
     if (principal.activePatientId() == null) {
-      throw new ApiException(HttpStatus.CONFLICT, "Abra un paciente antes de guardar.");
+      throw new ApiException(
+          HttpStatus.CONFLICT,
+          "Abra un paciente antes de guardar.",
+          "ACTIVE_PATIENT_REQUIRED");
     }
     StoredDocument current = documents.require(principal.activePatientId());
     JsonNode stateToSave = accessPolicy.writableState(state, current.document(), principal);
     long expected = state.path("meta").path("persistenceRevision").asLong(0);
     if (expected < 1) {
-      throw new ApiException(HttpStatus.CONFLICT, "Falta la revisión de la historia clínica.");
+      throw new ApiException(
+          HttpStatus.CONFLICT,
+          "Falta la revisión de la historia clínica.",
+          "CLINICAL_REVISION_REQUIRED");
     }
     StoredDocument saved = documents.save(
         principal.activePatientId(),

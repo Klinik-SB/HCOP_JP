@@ -64,6 +64,13 @@ workspace entre Java y Angular. La fila Hoja clínica continúa `Pendiente` hast
 que edición, borrador recuperable y resolución explícita de `409` estén
 validados.
 
+El corte 031 tipa las cuatro causas de `409` de la hoja y conserva en memoria
+copias profundas de la base y del intento. El borrador sólo se proyecta sobre el
+mismo paciente; la interfaz bloquea nuevos guardados y salidas que podrían
+perderlo hasta descartar y recargar explícitamente. La fila continúa
+`Pendiente`: falta comparación de diferencias, merge humano por campo y el
+recorrido E2E concurrente con dos sesiones.
+
 ## Evidencia requerida para marcar `Validada`
 
 1. Prueba automática de la regla o del contrato.

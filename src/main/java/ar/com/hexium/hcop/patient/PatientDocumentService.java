@@ -73,7 +73,10 @@ public class PatientDocumentService {
   public StoredDocument save(long patientId, JsonNode document, long expectedRevision, long actorId) {
     validatePatient(document, patientId);
     StoredDocument saved = documents.update(patientId, document, expectedRevision, actorId)
-        .orElseThrow(() -> new ApiException(HttpStatus.CONFLICT, "La historia fue modificada en otra ventana."));
+        .orElseThrow(() -> new ApiException(
+            HttpStatus.CONFLICT,
+            "La historia fue modificada en otra ventana.",
+            "VERSION_CONFLICT"));
     applyRevision(saved.document(), saved.revision());
     return saved;
   }
@@ -100,7 +103,10 @@ public class PatientDocumentService {
     evolutions.insert(0, evolution);
     document.withObject("/meta").put("updatedAt", clock.instant().toString());
     StoredDocument saved = documents.update(patientId, document, stored.revision(), actorId)
-        .orElseThrow(() -> new ApiException(HttpStatus.CONFLICT, "La historia fue modificada en otra ventana."));
+        .orElseThrow(() -> new ApiException(
+            HttpStatus.CONFLICT,
+            "La historia fue modificada en otra ventana.",
+            "VERSION_CONFLICT"));
     return new EvolutionAppend(evolution.deepCopy(), saved.revision());
   }
 
@@ -145,7 +151,10 @@ public class PatientDocumentService {
     String identityPatient = document.path("patient").path("liraId").asText("");
     if ((!documentPatient.isBlank() && !documentPatient.equals(Long.toString(patientId)))
         || (!identityPatient.isBlank() && !identityPatient.equals(Long.toString(patientId)))) {
-      throw new ApiException(HttpStatus.CONFLICT, "La historia pertenece a otro paciente.");
+      throw new ApiException(
+          HttpStatus.CONFLICT,
+          "La historia pertenece a otro paciente.",
+          "CLINICAL_PATIENT_MISMATCH");
     }
   }
 

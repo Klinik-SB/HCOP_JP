@@ -172,6 +172,8 @@ Archivos centrales de este corte:
 | `frontend/src/app/core/clinical/clinical-treatment-projection.tests.ts` | Casos de regresión de fuentes relacionales/documentales, identidades, categorías y tombstones |
 | `frontend/src/app/core/clinical/clinical-print-projection.ts` | Selección pura de secciones e identidad para impresión clínica |
 | `frontend/src/app/core/patients/patient-workspace.normalization.ts` | Normalización compatible de revisión y fecha del workspace |
+| `frontend/src/app/core/patients/clinical-save-conflict.ts` | Clasificación de errores y captura profunda de borradores clínicos en conflicto |
+| `frontend/src/app/core/patients/pending-clinical-draft.guard.ts` | Impide abandonar por navegación SPA una ficha con borrador conflictivo pendiente |
 | `frontend/scripts/run-clinical-tests.mjs` | Ejecutor multiplataforma de las suites clínicas invocado por `npm test` |
 | `frontend/src/app/features/clinical-workspace/` | Hoja clínica Angular y selección de paciente |
 | `frontend/src/app/features/timeline/` | Línea temporal y filtros clínicos |

@@ -49,7 +49,7 @@ export class ClinicalWorkspaceComponent implements OnInit {
   open(patient: ClinicalPatient): void { this.workspaceService.activate(patient); }
   closePatient(): void { this.workspaceService.close(); }
 
-  state(): ClinicalState { return this.workspaceService.workspace()?.state || {}; }
+  state(): ClinicalState { return this.workspaceService.workingWorkspace()?.state || {}; }
   records(key: 'diagnoses' | 'studies' | 'treatments' | 'evolutions' | 'prescriptions' | 'researchRecords'): ClinicalRecord[] { return this.state()[key] || []; }
   narrative(key: string): string { return this.text(this.state().narrative?.[key]); }
   oncology(key: string): string { return this.text(this.state().oncology?.[key]); }
@@ -66,14 +66,14 @@ export class ClinicalWorkspaceComponent implements OnInit {
     return clinicalSectionTreatments(
       this.state(),
       kind,
-      this.workspaceService.workspace()?.treatments?.oncology || []
+      this.workspaceService.workingWorkspace()?.treatments?.oncology || []
     );
   }
   printHas(section: ClinicalPrintSection): boolean {
     return clinicalPrintSectionHasContent(
       this.state(),
       section,
-      this.workspaceService.workspace()?.treatments?.oncology || []
+      this.workspaceService.workingWorkspace()?.treatments?.oncology || []
     );
   }
   printFacts(patient: ClinicalPatient): ClinicalPrintFact[] { return clinicalPrintPatientFacts(patient); }

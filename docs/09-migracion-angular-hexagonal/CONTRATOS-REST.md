@@ -119,6 +119,20 @@ coincide:
 
 Nunca se reintenta automáticamente un `409` clínico.
 
+Para `PUT /api/hc`, los conflictos poseen códigos inequívocos:
+
+| Código | Condición |
+|---|---|
+| `ACTIVE_PATIENT_REQUIRED` | No hay paciente activo en la sesión. |
+| `CLINICAL_REVISION_REQUIRED` | Falta `meta.persistenceRevision` o no es positiva. |
+| `CLINICAL_PATIENT_MISMATCH` | La identidad del documento no coincide con el paciente activo. |
+| `VERSION_CONFLICT` | La revisión esperada ya no es la vigente. |
+
+Un cliente sólo trata como colisión de versión el código `VERSION_CONFLICT`.
+Un `409` sin código se conserva como `UNKNOWN_CLINICAL_CONFLICT`, nunca se
+convierte en conflicto de revisión leyendo el mensaje destinado al usuario y
+tampoco se reintenta automáticamente.
+
 ## Idempotencia
 
 Las transiciones clínicas que podrían repetirse por doble clic, reconexión o

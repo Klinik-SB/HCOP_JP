@@ -110,7 +110,7 @@ export class PrescriptionComponent {
   }
 
   readonly records = computed(() => {
-    const source = this.workspace.workspace()?.state.prescriptions || [];
+    const source = this.workspace.workingWorkspace()?.state.prescriptions || [];
     return [...source]
       .filter((item): item is PrescriptionRecord => Boolean(item && item.type && item.title))
       .sort((left, right) => String(right.createdAt || right.date || '').localeCompare(String(left.createdAt || left.date || '')));
@@ -206,6 +206,7 @@ export class PrescriptionComponent {
     if (this.busy()) return;
     if (!this.canEdit()) { this.message.set('No tiene permiso para registrar prescripciones.'); return; }
     if (!this.workspace.workspace()) { this.message.set('Abra o cree un paciente antes de registrar documentos.'); return; }
+    if (this.workspace.activeSaveConflict()) { this.message.set('Resuelva el borrador pendiente antes de registrar otro documento.'); return; }
     if (this.type() === 'systemic') { await this.prepareSystemicForm(); return; }
     const record = this.collectRecord();
     if (!record) return;
@@ -441,6 +442,10 @@ export class PrescriptionComponent {
   private async saveRecords(records: ClinicalRecord[]): Promise<boolean> {
     const current = this.workspace.workspace();
     if (!current || this.busy()) return false;
+    if (this.workspace.activeSaveConflict()) {
+      this.message.set('Resuelva el borrador pendiente antes de guardar otro documento.');
+      return false;
+    }
     const patientId = current.patientId;
     this.busy.set(true); this.message.set('');
     try {
@@ -459,7 +464,7 @@ export class PrescriptionComponent {
     } finally { this.busy.set(false); }
   }
 
-  private rawRecords(): ClinicalRecord[] { return [...(this.workspace.workspace()?.state.prescriptions || [])]; }
+  private rawRecords(): ClinicalRecord[] { return [...(this.workspace.workingWorkspace()?.state.prescriptions || [])]; }
 
   private audit(at: string): JsonObject {
     const user = this.auth.session()?.user;
@@ -482,7 +487,7 @@ export class PrescriptionComponent {
   }
 
   private clinicalText(): string {
-    const state = this.workspace.workspace()?.state || {};
+    const state = this.workspace.workingWorkspace()?.state || {};
     return JSON.stringify({ oncology: state.oncology || {}, narrative: state.narrative || {}, exam: state.exam || {}, diagnoses: state.diagnoses || [], studies: state.studies || [], treatments: state.treatments || [], evolutions: state.evolutions || [] });
   }
 

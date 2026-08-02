@@ -124,6 +124,9 @@ configuración institucional y cerrar la paridad visual/E2E integrada.
 - [Corte Angular 030](CORTE-ANGULAR-030-IMPRESION-Y-REVISION-DE-HOJA.md):
   impresión clínica sin secciones vacías y contrato canónico de revisión del
   workspace para guardados optimistas seguros.
+- [Corte Angular 031](CORTE-ANGULAR-031-CONFLICTOS-DE-GUARDADO.md):
+  errores `409` inequívocos, borrador clínico conservado en memoria y recarga
+  explícita sin sobrescritura ni mezcla automática.
 
 ## Ciclo obligatorio por capacidad
 

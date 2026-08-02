@@ -9,15 +9,15 @@
     </div>
 
     <div class="header-actions">
-      <button class="tool-button new-patient-button" type="button" title="Crear una historia clínica nueva y vacía" (click)="openNewPatient()">
+      <button class="tool-button new-patient-button" type="button" title="Crear una historia clínica nueva y vacía" [disabled]="hasPendingConflict()" (click)="openNewPatient()">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8m10-3v6m3-3h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         <span>Nuevo paciente</span>
       </button>
-      <button class="tool-button lira-import-button" type="button" title="Buscar y abrir un paciente de la base clínica" (click)="openPatient()">
+      <button class="tool-button lira-import-button" type="button" title="Buscar y abrir un paciente de la base clínica" [disabled]="hasPendingConflict()" (click)="openPatient()">
         <svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" fill="none" stroke="currentColor" stroke-width="2"/></svg>
         <span>Abrir paciente</span>
       </button>
-      <button class="tool-button lira-day-hospital-button" type="button" title="Abrir Hospital de día y Tratamiento" (click)="careSchedulerOpen.set(true)">
+      <button class="tool-button lira-day-hospital-button" type="button" title="Abrir Hospital de día y Tratamiento" [disabled]="hasPendingConflict()" (click)="careSchedulerOpen.set(true)">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m18 2 4 4m-5 1 3-3M19 9 8.7 19.3a2.4 2.4 0 0 1-3.4 0l-.6-.6a2.4 2.4 0 0 1 0-3.4L15 5m-6 6 4 4m1-11 6 6M5 19l-3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span>Hospital de dia</span>
       </button>
@@ -27,25 +27,42 @@
           <span>Imprimir</span>
         </button>
       }
-      <a class="tool-button configuration-button" href="/configuration/" title="Abrir el Centro de configuración">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm0-13v2m0 15v2M4.6 4.6 6 6m12 12 1.4 1.4M2.5 12h2m15 0h2M4.6 19.4 6 18m12-12 1.4-1.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        <span>Configuracion</span>
-      </a>
-      <a class="tool-button" href="/docs/manual-usuario.html" title="Abrir ayuda">
+      @if (hasPendingConflict()) {
+        <button class="tool-button configuration-button" type="button" disabled title="Resuelva el borrador pendiente antes de salir de la ficha"><span>Configuracion</span></button>
+      } @else {
+        <a class="tool-button configuration-button" href="/configuration/" title="Abrir el Centro de configuración">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm0-13v2m0 15v2M4.6 4.6 6 6m12 12 1.4 1.4M2.5 12h2m15 0h2M4.6 19.4 6 18m12-12 1.4-1.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span>Configuracion</span>
+        </a>
+      }
+      <a class="tool-button" href="/docs/manual-usuario.html" target="_blank" rel="noopener" title="Abrir ayuda">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9.5 9a2.7 2.7 0 1 1 4.2 2.2c-1.2.8-1.7 1.3-1.7 2.8m0 3h.01" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         <span>Ayuda</span>
       </a>
       @if (auth.session()?.authenticated) {
         <div class="clinical-session-controls">
-          <button class="clinical-inbox-button" type="button" title="Solicitudes clínicas" (click)="legacyFallback()"><span aria-hidden="true">◌</span></button>
+          <button class="clinical-inbox-button" type="button" title="Solicitudes clínicas" [disabled]="hasPendingConflict()" (click)="legacyFallback()"><span aria-hidden="true">◌</span></button>
           <div class="clinical-user-chip" title="Usuario activo"><span class="clinical-user-avatar" aria-hidden="true">{{ initial() }}</span><span><strong>{{ auth.session()?.user?.displayName || auth.session()?.user?.username }}</strong><small>{{ auth.session()?.user?.specialty || 'Sesión clínica' }}</small></span></div>
-          <button class="clinical-logout-button" type="button" title="Cerrar sesión" aria-label="Cerrar sesión" (click)="logout()">↪</button>
+          <button class="clinical-logout-button" type="button" title="Cerrar sesión" aria-label="Cerrar sesión" [disabled]="hasPendingConflict()" (click)="logout()">↪</button>
         </div>
       } @else {
         <button class="clinical-login-button" type="button" (click)="openLogin()"><span>Ingresar</span></button>
       }
     </div>
   </header>
+
+  @if (patientWorkspace.activeSaveConflict(); as conflict) {
+    <section class="clinical-save-conflict-banner" role="alert" aria-live="assertive">
+      <div>
+        <strong>Hay cambios sin guardar.</strong>
+        <span>{{ conflict.message }} No se mezclará automáticamente y se conserva sólo mientras esta pestaña permanezca abierta.</span>
+        <small>Versión base {{ conflict.baseRevision }}.</small>
+      </div>
+      <button class="tool-button" type="button" [disabled]="patientWorkspace.loading() || patientWorkspace.saving()" (click)="resolvePendingConflict()">
+        <span>Descartar borrador y recuperar historia</span>
+      </button>
+    </section>
+  }
 
   <main class="split-workspace" aria-label="Espacio clínico Angular">
     <section class="panel clinical-panel" aria-label="Historia clínica">
@@ -56,9 +73,9 @@
         </div>
         <div class="paper-highlight-actions" aria-label="Acciones de la historia clínica">
           <div class="paper-clinical-search" [class.open]="searchExpanded()"><button class="icon-button clinical-search-toggle" type="button" title="Buscar en la historia" (click)="searchExpanded.set(!searchExpanded())">⌕</button>@if (searchExpanded()) { <input type="search" placeholder="Buscar en la historia..." aria-label="Buscar en la historia clínica"> }</div>
-          <button class="icon-button clinical-highlighter-button" type="button" title="Resaltar texto" (click)="legacyFallback()">▰</button>
-          <button class="icon-button clinical-unhighlight-button" type="button" title="Quitar resaltado" (click)="legacyFallback()">⌫</button>
-          <button class="icon-button clinical-close-patient-button" type="button" title="Cerrar paciente" [disabled]="!patientWorkspace.workspace()" (click)="closePatient()">×</button>
+          <button class="icon-button clinical-highlighter-button" type="button" title="Resaltar texto" [disabled]="hasPendingConflict()" (click)="legacyFallback()">▰</button>
+          <button class="icon-button clinical-unhighlight-button" type="button" title="Quitar resaltado" [disabled]="hasPendingConflict()" (click)="legacyFallback()">⌫</button>
+          <button class="icon-button clinical-close-patient-button" type="button" title="Cerrar paciente" [disabled]="!patientWorkspace.workspace() || hasPendingConflict()" (click)="closePatient()">×</button>
         </div>
       </div>
       <div class="panel-scroll paper-area"><app-clinical-workspace [printTimestamp]="printTimestamp()" /></div>
@@ -88,7 +105,7 @@
         @else if (selectedPane() === 'protocols') { <app-protocol-explorer /> }
         @else if (selectedPane() === 'tools') { <app-tools /> }
         @else {
-        <section class="right-empty-state"><strong>{{ selectedPane() === 'care' ? 'Hospital de día' : selectedPane() === 'studies' ? 'Estudios' : 'Módulo clínico' }}</strong><span>Este panel conserva la geometría y los estilos de la versión vigente. Su contenido se migra con su mismo flujo y permisos.</span><button class="tool-button" type="button" (click)="legacyFallback()"><span>Usar módulo estable</span></button></section>
+        <section class="right-empty-state"><strong>{{ selectedPane() === 'care' ? 'Hospital de día' : selectedPane() === 'studies' ? 'Estudios' : 'Módulo clínico' }}</strong><span>Este panel conserva la geometría y los estilos de la versión vigente. Su contenido se migra con su mismo flujo y permisos.</span><button class="tool-button" type="button" [disabled]="hasPendingConflict()" (click)="legacyFallback()"><span>Usar módulo estable</span></button></section>
         }
       </div>
     </aside>

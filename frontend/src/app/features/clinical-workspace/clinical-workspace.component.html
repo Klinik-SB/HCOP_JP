@@ -2,7 +2,7 @@
   @if (workspaceService.loading()) { <div class="clinical-loading" role="status">Actualizando historia clínica…</div> }
   @if (workspaceService.error()) { <p class="clinical-workspace-error" role="alert">{{ workspaceService.error() }}</p> }
 
-  @if (workspaceService.workspace(); as workspace) {
+  @if (workspaceService.workingWorkspace(); as workspace) {
     <article class="paper-sheet clinical-document">
       <header class="sheet-header">
         <div class="sheet-header-main">

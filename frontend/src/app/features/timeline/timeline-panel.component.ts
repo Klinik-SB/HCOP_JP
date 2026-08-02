@@ -41,7 +41,7 @@ export class TimelinePanelComponent {
   readonly filters = signal<TimelineCategory[]>([]);
 
   readonly allEntries = computed(() => {
-    const workspace = this.workspace.workspace();
+    const workspace = this.workspace.workingWorkspace();
     return this.entriesFrom(workspace?.state, workspace?.treatments?.oncology || []);
   });
   readonly categories = computed(() => [...new Set(this.allEntries().map((entry) => entry.category))]);

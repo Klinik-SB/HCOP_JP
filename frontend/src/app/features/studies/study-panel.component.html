@@ -1,7 +1,7 @@
 <section class="right-tab-panel active angular-study-panel" aria-label="Estudios complementarios">
   <div class="study-upload-bar">
     <div class="study-upload-actions">
-      <button class="tool-button primary" type="button" title="Subir archivos o pegar una imagen con Ctrl+V" [disabled]="!workspace.workspace()" (click)="openUpload()"><span aria-hidden="true">▣</span><span>Subir estudios</span></button>
+      <button class="tool-button primary" type="button" title="Subir archivos o pegar una imagen con Ctrl+V" [disabled]="!workspace.workspace() || workspace.activeSaveConflict()" (click)="openUpload()"><span aria-hidden="true">▣</span><span>Subir estudios</span></button>
       <button class="tool-button" type="button" disabled title="Las plantillas anatómicas se incorporan en el próximo corte Angular"><span aria-hidden="true">▧</span><span>Cargar plantilla</span></button>
     </div>
     <span aria-live="polite">{{ studies().length ? studies().length + (studies().length === 1 ? ' estudio' : ' estudios') : 'Sin estudios cargados' }}</span>

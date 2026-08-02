@@ -49,7 +49,7 @@ export class StudyPanelComponent {
 
   readonly studies = computed(() => {
     const query = this.searchTerm().trim().toLocaleLowerCase('es-AR');
-    const state = this.workspace.workspace()?.state;
+    const state = this.workspace.workingWorkspace()?.state;
     const source = [...(state?.externalStudies || []), ...(state?.studies || [])] as ClinicalRecord[];
     const unique = [...new Map(source.map((record, index) => [String(record.id || `index-${index}`), record])).values()];
     return unique
@@ -109,6 +109,10 @@ export class StudyPanelComponent {
   }
 
   async upload(): Promise<void> {
+    if (this.workspace.activeSaveConflict()) {
+      this.message.set('Resuelva el borrador pendiente antes de cargar nuevos archivos.');
+      return;
+    }
     const current = this.workspace.workspace();
     const patientId = current?.patientId || current?.patient?.id;
     const ready = this.uploads().filter((item) => item.status === 'ready');
@@ -157,6 +161,10 @@ export class StudyPanelComponent {
   }
 
   async removeStudy(record: ClinicalRecord): Promise<void> {
+    if (this.workspace.activeSaveConflict()) {
+      this.message.set('Resuelva el borrador pendiente antes de eliminar archivos.');
+      return;
+    }
     const studyId = String(record.id || '');
     const authorization = this.deleteAuthorizations.get(studyId);
     if (!authorization || !authorization.storageName || this.busy()) return;
@@ -197,7 +205,7 @@ export class StudyPanelComponent {
   queueLabel(item: UploadItem): string { return item.status === 'ready' ? 'Listo para subir' : item.status === 'uploading' ? 'Subiendo…' : item.status === 'uploaded' ? 'Cargado' : item.error || 'No se pudo cargar'; }
 
   private nextState(mutator: (state: ClinicalState) => ClinicalState): ClinicalState {
-    const current = this.workspace.workspace()?.state;
+    const current = this.workspace.workingWorkspace()?.state;
     if (!current) throw new Error('No hay una historia clínica activa.');
     return mutator(structuredClone(current));
   }
