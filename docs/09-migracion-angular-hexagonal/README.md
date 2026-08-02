@@ -106,6 +106,9 @@ configuración institucional y cerrar la paridad visual/E2E integrada.
 - [Corte Angular 024](CORTE-ANGULAR-024-CATALOGO-Y-MOTOR-CONFIGURABLE.md):
   catálogo institucional aislado, merge seguro de built-ins y motor TypeScript
   de fórmulas/scores comparado contra los dos motores legacy reales.
+- [Corte Angular 025](CORTE-ANGULAR-025-FACTORY-INSTITUCIONAL.md): traducción
+  tipada de fórmulas y scores validados al contrato visual de calculadoras,
+  todavía aislada del workspace hasta completar la validación atómica.
 
 ## Ciclo obligatorio por capacidad
 

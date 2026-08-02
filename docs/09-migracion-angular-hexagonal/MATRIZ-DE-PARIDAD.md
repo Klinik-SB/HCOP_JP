@@ -41,8 +41,9 @@ explícitamente `Pendiente`; Guías y AJCC/TNM no modifican ese estado.
 La base Angular ya porta **57 de 57 definiciones y reglas** con pruebas doradas,
 y el corte 023 incorpora un renderizador Angular nativo con permiso efectivo y
 carga diferida. El corte 024 agrega, todavía de forma aislada, el catálogo
-operativo, el merge de built-ins y el motor seguro de fórmulas/scores. La fila
-no cambia de estado hasta validar atómicamente el JSON institucional, conectar
+operativo, el merge de built-ins y el motor seguro de fórmulas/scores; el corte
+025 suma la factory que los convierte al contrato visual común. La fila no
+cambia de estado hasta validar atómicamente el JSON institucional, conectar
 esas capas al workspace y completar la comparación visual/E2E.
 
 ## Evidencia requerida para marcar `Validada`
