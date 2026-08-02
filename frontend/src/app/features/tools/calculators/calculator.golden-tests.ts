@@ -55,6 +55,12 @@ import {
   OLYMPIA_CPSEG_CALCULATOR,
   R2_ISS_MYELOMA_CALCULATOR
 } from './legacy-calculators-36-39.definitions';
+import {
+  GYNE_PETERS_CALCULATOR,
+  GYNE_PROMISE_CALCULATOR,
+  GYNE_RMI_I_CALCULATOR,
+  GYNE_SEDLIS_CALCULATOR
+} from './legacy-calculators-40-43.definitions';
 import { PORTED_CALCULATORS } from './ported-calculator.registry';
 import { CalculatorOrigin } from './calculator.models';
 
@@ -79,7 +85,7 @@ test('inventory contains the exact 57 unique legacy tools in stable order', () =
   }
 });
 
-test('only the first thirty-nine calculators are marked as ported', () => {
+test('only the first forty-three calculators are marked as ported', () => {
   deepEqual(CALCULATOR_INVENTORY.filter((entry) => entry.migrationStatus === 'ported').map((entry) => entry.id),
     ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk',
       'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude', 'nmibc', 'cystectomy', 'cisplatin', 'utuc',
@@ -87,7 +93,8 @@ test('only the first thirty-nine calculators are marked as ported', () => {
       'khorana-vte', 'mascc-febrile-neutropenia', 'cisne-febrile-neutropenia',
       'palliative-prognostic-index', 'bed-eqd2', 'qtc-fridericia',
       'nottingham-prognostic-index', 'residual-cancer-burden-experimental', 'pepi-breast', 'cts5-breast',
-      'monarche-cohort-1', 'olympia-cpseg', 'international-prognostic-index', 'r2-iss-myeloma']);
+      'monarche-cohort-1', 'olympia-cpseg', 'international-prognostic-index', 'r2-iss-myeloma',
+      'gyne-sedlis', 'gyne-peters', 'gyne-promise', 'gyne-rmi-i']);
   deepEqual(PORTED_CALCULATORS.map((entry) => entry.id),
     ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk',
       'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude', 'nmibc', 'cystectomy', 'cisplatin', 'utuc',
@@ -95,7 +102,8 @@ test('only the first thirty-nine calculators are marked as ported', () => {
       'khorana-vte', 'mascc-febrile-neutropenia', 'cisne-febrile-neutropenia',
       'palliative-prognostic-index', 'bed-eqd2', 'qtc-fridericia',
       'nottingham-prognostic-index', 'residual-cancer-burden-experimental', 'pepi-breast', 'cts5-breast',
-      'monarche-cohort-1', 'olympia-cpseg', 'international-prognostic-index', 'r2-iss-myeloma']);
+      'monarche-cohort-1', 'olympia-cpseg', 'international-prognostic-index', 'r2-iss-myeloma',
+      'gyne-sedlis', 'gyne-peters', 'gyne-promise', 'gyne-rmi-i']);
 });
 
 test('BSA opens blank and keeps legacy values only as examples', () => {
@@ -3004,6 +3012,380 @@ test('ported 36 to 39 reject invalid inputs and contain typed text only', () => 
   for (const current of results) assertNoRawMarkup(current.notes);
 });
 
+test('ported 40 to 43 preserve canonical metadata and field order', () => {
+  deepEqual([
+    GYNE_SEDLIS_CALCULATOR,
+    GYNE_PETERS_CALCULATOR,
+    GYNE_PROMISE_CALCULATOR,
+    GYNE_RMI_I_CALCULATOR
+  ].map((definition) => ({
+    id: definition.id,
+    title: definition.title,
+    category: definition.category,
+    subtitle: definition.subtitle,
+    source: definition.source,
+    fieldIds: definition.fields.map((field) => field.id)
+  })), [
+    {
+      id: 'gyne-sedlis', title: 'Cuello uterino — criterios de Sedlis',
+      category: 'ginecologia',
+      subtitle: 'Combinaciones de riesgo intermedio luego de cirugía radical.',
+      source: 'GOG-92 / Sedlis - tabla vigente 2025',
+      fieldIds: ['sedlis_context_section', 'sedlis_node_status', 'sedlis_margin_status',
+        'sedlis_parametrium', 'sedlis_rule_section', 'sedlis_lvsi', 'sedlis_stromal',
+        'sedlis_size', 'sedlis_size_method']
+    },
+    {
+      id: 'gyne-peters', title: 'Cuello uterino — criterios de Peters',
+      category: 'ginecologia',
+      subtitle: 'Características de alto riesgo en la anatomía patológica posoperatoria.',
+      source: 'GOG-109 / Peters - ESGO 2023',
+      fieldIds: ['peters_section', 'peters_node_status', 'peters_margin_status',
+        'peters_parametrium']
+    },
+    {
+      id: 'gyne-promise', title: 'Endometrio — ProMisE / ESGO 2025',
+      category: 'ginecologia',
+      subtitle: 'Clasificación molecular TCGA subrogada y refinamiento NSMP.',
+      source: 'ProMisE - ESGO/ESTRO/ESP 2025',
+      fieldIds: ['promise_core_section', 'promise_pole', 'promise_mmr', 'promise_p53',
+        'promise_nsmp_section', 'promise_grade', 'promise_er']
+    },
+    {
+      id: 'gyne-rmi-i', title: 'Masa anexial — RMI I', category: 'ginecologia',
+      subtitle: 'CA 125, menopausia y cinco hallazgos ecográficos.',
+      source: 'Jacobs RMI I - NICE CG122 actualizado 2026',
+      fieldIds: ['rmi_ca125', 'rmi_menopause', 'rmi_ultrasound_section',
+        'rmi_multilocular', 'rmi_solid', 'rmi_metastases', 'rmi_ascites', 'rmi_bilateral']
+    }
+  ]);
+});
+
+test('ported 40 to 43 open blank without inventing legacy example values', () => {
+  deepEqual(evaluateCalculator(GYNE_SEDLIS_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['sedlis_node_status', 'sedlis_margin_status', 'sedlis_parametrium']);
+  deepEqual(evaluateCalculator(GYNE_PETERS_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['peters_node_status', 'peters_margin_status', 'peters_parametrium']);
+  deepEqual(evaluateCalculator(GYNE_PROMISE_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['promise_pole', 'promise_mmr', 'promise_p53']);
+  deepEqual(evaluateCalculator(GYNE_RMI_I_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['rmi_ca125', 'rmi_menopause']);
+  const definitions = [GYNE_SEDLIS_CALCULATOR, GYNE_PETERS_CALCULATOR,
+    GYNE_PROMISE_CALCULATOR, GYNE_RMI_I_CALCULATOR];
+  for (const definition of definitions) {
+    for (const field of definition.fields) {
+      if (field.kind === 'number' || field.kind === 'select') {
+        equal(field.initialValue, '');
+        equal(field.exampleValue, undefined);
+      } else if (field.kind === 'checkbox') {
+        equal(field.initialValue, false);
+      }
+    }
+  }
+});
+
+test('Sedlis makes LVSI, stromal depth and size dynamically required only in applicable context', () => {
+  const applicable = evaluateCalculator(GYNE_SEDLIS_CALCULATOR, {
+    sedlis_node_status: 'negative', sedlis_margin_status: 'negative',
+    sedlis_parametrium: 'no'
+  });
+  equal(applicable.status, 'calculated');
+  deepEqual(applicable.result, {
+    title: 'No calculable con los datos actuales',
+    detail: 'Falta completar: invasion linfovascular (LVSI), tercio de invasion estromal, tamano tumoral.',
+    badge: 'datos incompletos', score: 0, showScore: false, severity: 'warn',
+    metrics: [],
+    notes: ['Los campos ausentes no se interpretan automaticamente como hallazgos negativos.']
+  });
+  const excluded = evaluateCalculator(GYNE_SEDLIS_CALCULATOR, {
+    sedlis_node_status: 'micrometastasis', sedlis_margin_status: 'negative',
+    sedlis_parametrium: 'no'
+  });
+  equal(excluded.result.title, 'Sedlis no es aplicable en este contexto');
+  equal(excluded.result.detail, 'metastasis ganglionar pelvica');
+});
+
+test('Sedlis golden negative case preserves exact output and historical cautions', () => {
+  const evaluation = evaluateCalculator(GYNE_SEDLIS_CALCULATOR, sedlisInput());
+  deepEqual(evaluation.result, {
+    title: 'No cumple criterios de Sedlis',
+    detail: 'No coincide con ninguna de las cuatro combinaciones exactas publicadas.',
+    badge: 'Sedlis negativo', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'LVSI', value: 'negativo' },
+      { label: 'Invasion estromal', value: 'superficial' },
+      { label: 'Tamano', value: '1 cm' }
+    ],
+    notes: [
+      'La regla evalua combinaciones exactas; no cuenta simplemente dos de tres factores.',
+      'El tamano de la tabla original fue determinado por palpacion clinica.',
+      'Es una clasificacion de riesgo; no constituye por si sola una indicacion terapeutica.'
+    ]
+  });
+});
+
+test('Sedlis preserves all four exact combinations and size boundaries', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string][] = [
+    [{ sedlis_lvsi: 'yes', sedlis_stromal: 'deep', sedlis_size: 0.01 },
+      'Cumple criterios de Sedlis', 'LVSI positivo, tercio profundo, cualquier tamano'],
+    [{ sedlis_lvsi: 'yes', sedlis_stromal: 'middle', sedlis_size: 1.99 },
+      'No cumple criterios de Sedlis', 'No coincide con ninguna de las cuatro combinaciones exactas publicadas.'],
+    [{ sedlis_lvsi: 'yes', sedlis_stromal: 'middle', sedlis_size: 2 },
+      'Cumple criterios de Sedlis', 'LVSI positivo, tercio medio, tumor >=2 cm'],
+    [{ sedlis_lvsi: 'yes', sedlis_stromal: 'superficial', sedlis_size: 4.99 },
+      'No cumple criterios de Sedlis', 'No coincide con ninguna de las cuatro combinaciones exactas publicadas.'],
+    [{ sedlis_lvsi: 'yes', sedlis_stromal: 'superficial', sedlis_size: 5 },
+      'Cumple criterios de Sedlis', 'LVSI positivo, tercio superficial, tumor >=5 cm'],
+    [{ sedlis_lvsi: 'no', sedlis_stromal: 'middle', sedlis_size: 3.99 },
+      'No cumple criterios de Sedlis', 'No coincide con ninguna de las cuatro combinaciones exactas publicadas.'],
+    [{ sedlis_lvsi: 'no', sedlis_stromal: 'middle', sedlis_size: 4 },
+      'Cumple criterios de Sedlis', 'LVSI negativo, tercio medio o profundo, tumor >=4 cm'],
+    [{ sedlis_lvsi: 'no', sedlis_stromal: 'deep', sedlis_size: 4 },
+      'Cumple criterios de Sedlis', 'LVSI negativo, tercio medio o profundo, tumor >=4 cm']
+  ];
+  for (const [overrides, title, detail] of cases) {
+    const evaluation = evaluateCalculator(GYNE_SEDLIS_CALCULATOR, sedlisInput(overrides));
+    equal(evaluation.result.title, title);
+    equal(evaluation.result.detail, detail);
+  }
+});
+
+test('Sedlis preserves measurement-method warning and all high-risk exclusion reasons', () => {
+  const palpation = evaluateCalculator(GYNE_SEDLIS_CALCULATOR,
+    sedlisInput({ sedlis_size_method: 'clinical_palpation' }));
+  equal(palpation.result.notes.length, 3);
+  const pathology = evaluateCalculator(GYNE_SEDLIS_CALCULATOR,
+    sedlisInput({ sedlis_size_method: 'pathology' }));
+  deepEqual(pathology.result.notes, [
+    'La regla evalua combinaciones exactas; no cuenta simplemente dos de tres factores.',
+    'El tamano de la tabla original fue determinado por palpacion clinica.',
+    'El metodo de medicion informado no es la palpacion clinica del modelo original.',
+    'Es una clasificacion de riesgo; no constituye por si sola una indicacion terapeutica.'
+  ]);
+  const excluded = evaluateCalculator(GYNE_SEDLIS_CALCULATOR, {
+    sedlis_node_status: 'macrometastasis', sedlis_margin_status: 'positive',
+    sedlis_parametrium: 'yes'
+  });
+  equal(excluded.result.detail,
+    'metastasis ganglionar pelvica, margen quirurgico positivo y invasion parametrial');
+});
+
+test('Sedlis preserves the canonical ITC early-return defect that masks margin and parametrium', () => {
+  const evaluation = evaluateCalculator(GYNE_SEDLIS_CALCULATOR, {
+    sedlis_node_status: 'isolated_tumor_cells', sedlis_margin_status: 'positive',
+    sedlis_parametrium: 'yes'
+  });
+  equal(evaluation.result.title, 'Sedlis no es aplicable en este contexto');
+  equal(evaluation.result.detail, 'celulas tumorales aisladas: significado adyuvante incierto');
+  equal(evaluation.result.detail.includes('margen'), false);
+  equal(evaluation.result.detail.includes('parametrial'), false);
+});
+
+test('Peters golden negative case preserves exact pathology output', () => {
+  const evaluation = evaluateCalculator(GYNE_PETERS_CALCULATOR, petersInput());
+  deepEqual(evaluation.result, {
+    title: 'No cumple criterios de Peters',
+    detail: 'No se identificaron ganglios pelvicos metastasicos, margenes positivos ni invasion parametrial.',
+    badge: 'Peters negativo', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'Ganglios', value: 'negative' },
+      { label: 'Margenes', value: 'negative' },
+      { label: 'Parametrio', value: 'sin invasion' }
+    ],
+    notes: [
+      'La clasificacion se obtuvo con los tres datos requeridos.',
+      'El resultado describe riesgo patologico y no prescribe un esquema adyuvante.'
+    ]
+  });
+});
+
+test('Peters preserves nodal, margin and parametrial positive features and natural joining', () => {
+  for (const nodes of ['micrometastasis', 'macrometastasis']) {
+    const evaluation = evaluateCalculator(GYNE_PETERS_CALCULATOR,
+      petersInput({ peters_node_status: nodes }));
+    equal(evaluation.result.detail, 'Ganglio pelvico metastasico');
+  }
+  equal(evaluateCalculator(GYNE_PETERS_CALCULATOR,
+    petersInput({ peters_margin_status: 'positive' })).result.detail,
+  'Margen quirurgico positivo');
+  equal(evaluateCalculator(GYNE_PETERS_CALCULATOR,
+    petersInput({ peters_parametrium: 'yes' })).result.detail, 'Invasion parametrial');
+  const all = evaluateCalculator(GYNE_PETERS_CALCULATOR, petersInput({
+    peters_node_status: 'micrometastasis', peters_margin_status: 'positive',
+    peters_parametrium: 'yes'
+  }));
+  equal(all.result.detail,
+    'Ganglio pelvico metastasico, Margen quirurgico positivo y Invasion parametrial');
+  equal(all.result.title, 'Cumple criterios de Peters');
+  equal(all.result.severity, 'warn');
+});
+
+test('Peters preserves isolated-tumor-cell indeterminacy and uncertainty with another positive feature', () => {
+  const isolated = evaluateCalculator(GYNE_PETERS_CALCULATOR,
+    petersInput({ peters_node_status: 'isolated_tumor_cells' }));
+  deepEqual(isolated.result, {
+    title: 'Resultado indeterminado por celulas tumorales aisladas',
+    detail: 'No hay otra caracteristica Peters positiva, pero las celulas tumorales aisladas no deben tratarse como ganglios completamente negativos.',
+    badge: 'incertidumbre nodal', score: 0, showScore: false, severity: 'warn',
+    metrics: [{ label: 'Ganglios', value: 'ITC solamente' }],
+    notes: ['La salida no asigna una conducta terapeutica automatica.']
+  });
+  const withMargin = evaluateCalculator(GYNE_PETERS_CALCULATOR,
+    petersInput({ peters_node_status: 'isolated_tumor_cells', peters_margin_status: 'positive' }));
+  equal(withMargin.result.title, 'Cumple criterios de Peters');
+  equal(withMargin.result.detail, 'Margen quirurgico positivo');
+  equal(withMargin.result.notes[0], 'Hay incertidumbre adicional por celulas tumorales aisladas.');
+});
+
+test('ProMisE golden NSMP refinement preserves exact class, metrics and warning', () => {
+  const evaluation = evaluateCalculator(GYNE_PROMISE_CALCULATOR, promiseInput());
+  deepEqual(evaluation.result, {
+    title: 'Clase molecular: NSMP',
+    detail: 'Clasificacion obtenida mediante la jerarquia POLEmut, MMRd, p53abn y NSMP.',
+    badge: 'NSMP', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'Clase', value: 'NSMP' },
+      { label: 'Rasgos detectados', value: 'ninguno de los tres' },
+      { label: 'Clasificador multiple', value: 'no' },
+      { label: 'Refinamiento NSMP', value: 'NSMP bajo grado y ER positivo' }
+    ],
+    notes: ['La clase molecular no reemplaza el estadio FIGO ni define por si sola un tratamiento.']
+  });
+});
+
+test('ProMisE preserves POLEmut, MMRd, p53abn and NSMP hierarchy', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{ promise_pole: 'pathogenic', promise_mmr: 'deficient', promise_p53: 'abnormal' }, 'POLEmut'],
+    [{ promise_pole: 'non_pathogenic', promise_mmr: 'deficient', promise_p53: 'abnormal' }, 'MMRd'],
+    [{ promise_pole: 'non_pathogenic', promise_mmr: 'proficient', promise_p53: 'abnormal' }, 'p53abn'],
+    [{ promise_pole: 'non_pathogenic', promise_mmr: 'proficient', promise_p53: 'wild_type' }, 'NSMP']
+  ];
+  for (const [overrides, expected] of cases) {
+    equal(evaluateCalculator(GYNE_PROMISE_CALCULATOR,
+      promiseInput(overrides)).result.metrics[0]?.value, expected);
+  }
+  const multiple = evaluateCalculator(GYNE_PROMISE_CALCULATOR,
+    promiseInput({ promise_pole: 'pathogenic', promise_mmr: 'deficient',
+      promise_p53: 'abnormal' }));
+  equal(multiple.result.detail,
+    'Clasificador multiple resuelto por jerarquia: POLEmut + MMRd + p53abn.');
+  equal(multiple.result.metrics[2]?.value, 'si');
+});
+
+test('ProMisE preserves VUS warning and does not classify it as POLEmut', () => {
+  const evaluation = evaluateCalculator(GYNE_PROMISE_CALCULATOR,
+    promiseInput({ promise_pole: 'vus' }));
+  equal(evaluation.result.title, 'Clase molecular: NSMP');
+  equal(evaluation.result.notes[0],
+    'Una variante POLE de significado incierto no se clasifica como POLEmut.');
+  equal(evaluation.result.metrics[1]?.value, 'ninguno de los tres');
+});
+
+test('ProMisE keeps NSMP class calculable while optional refinement data are pending', () => {
+  const evaluation = evaluateCalculator(GYNE_PROMISE_CALCULATOR, {
+    promise_pole: 'non_pathogenic', promise_mmr: 'proficient', promise_p53: 'wild_type'
+  });
+  equal(evaluation.status, 'calculated');
+  equal(evaluation.result.title, 'Clase molecular: NSMP');
+  equal(evaluation.result.metrics[3]?.value, 'Pendiente');
+  deepEqual(evaluation.result.notes, [
+    'Para completar el refinamiento NSMP falta: grado histologico, receptor de estrogeno.',
+    'La clase molecular no reemplaza el estadio FIGO ni define por si sola un tratamiento.'
+  ]);
+});
+
+test('ProMisE preserves the ten-percent ER boundary and high-grade override in NSMP', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{ promise_grade: 'low', promise_er: 9.9 }, 'NSMP alto grado o ER negativo'],
+    [{ promise_grade: 'low', promise_er: 10 }, 'NSMP bajo grado y ER positivo'],
+    [{ promise_grade: 'high', promise_er: 100 }, 'NSMP alto grado o ER negativo']
+  ];
+  for (const [overrides, expected] of cases) {
+    equal(evaluateCalculator(GYNE_PROMISE_CALCULATOR,
+      promiseInput(overrides)).result.metrics[3]?.value, expected);
+  }
+});
+
+test('RMI I golden zero-ultrasound case preserves multipliers, thresholds and cautions', () => {
+  const evaluation = evaluateCalculator(GYNE_RMI_I_CALCULATOR, rmiInput());
+  deepEqual(evaluation.result, {
+    title: 'RMI I: 0', detail: 'U 0 x M 1 x CA 125 100.',
+    badge: 'debajo de umbral NICE 250', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'RMI I', value: '0' },
+      { label: 'Hallazgos ecograficos', value: 0 },
+      { label: 'Umbral NICE 250', value: 'no alcanzado' },
+      { label: 'Umbral historico 200', value: 'no alcanzado' }
+    ],
+    notes: [
+      'El umbral vigente mostrado es el de NICE; otros sistemas pueden utilizar un punto de corte distinto.',
+      'RMI I es una herramienta de triage preoperatorio y no confirma ni excluye malignidad.'
+    ]
+  });
+});
+
+test('RMI I preserves ultrasound multipliers zero, one and three and menopause multipliers', () => {
+  const none = evaluateCalculator(GYNE_RMI_I_CALCULATOR, rmiInput());
+  equal(none.result.detail, 'U 0 x M 1 x CA 125 100.');
+  const one = evaluateCalculator(GYNE_RMI_I_CALCULATOR,
+    rmiInput({ rmi_multilocular: true }));
+  equal(one.result.detail, 'U 1 x M 1 x CA 125 100.');
+  equal(one.result.metrics[1]?.value, 1);
+  const two = evaluateCalculator(GYNE_RMI_I_CALCULATOR,
+    rmiInput({ rmi_multilocular: true, rmi_solid: true }));
+  equal(two.result.detail, 'U 3 x M 1 x CA 125 100.');
+  equal(two.result.metrics[1]?.value, 2);
+  const twoPost = evaluateCalculator(GYNE_RMI_I_CALCULATOR, rmiInput({
+    rmi_menopause: 'postmenopausal', rmi_multilocular: true, rmi_solid: true,
+  }));
+  equal(twoPost.result.detail, 'U 3 x M 3 x CA 125 100.');
+  equal(twoPost.result.title, 'RMI I: 900');
+  equal(twoPost.result.metrics[1]?.value, 2);
+});
+
+test('RMI I preserves historical 200 and NICE 250 inclusive thresholds', () => {
+  const cases: readonly [number, string, string, string][] = [
+    [199, 'RMI I: 199', 'no alcanzado', 'no alcanzado'],
+    [199.9, 'RMI I: 199,9', 'no alcanzado', 'no alcanzado'],
+    [200, 'RMI I: 200', 'no alcanzado', 'alcanzado'],
+    [249.9, 'RMI I: 249,9', 'no alcanzado', 'alcanzado'],
+    [250, 'RMI I: 250', 'alcanzado', 'alcanzado']
+  ];
+  for (const [ca125, title, nice, historical] of cases) {
+    const evaluation = evaluateCalculator(GYNE_RMI_I_CALCULATOR,
+      rmiInput({ rmi_ca125: ca125, rmi_multilocular: true }));
+    equal(evaluation.result.title, title);
+    equal(evaluation.result.metrics[2]?.value, nice);
+    equal(evaluation.result.metrics[3]?.value, historical);
+  }
+});
+
+test('RMI I accepts CA 125 zero and treats unchecked ultrasound boxes as explicit absence', () => {
+  const evaluation = evaluateCalculator(GYNE_RMI_I_CALCULATOR,
+    rmiInput({ rmi_ca125: 0 }));
+  equal(evaluation.status, 'calculated');
+  equal(evaluation.result.title, 'RMI I: 0');
+  equal(evaluation.result.metrics[1]?.value, 0);
+});
+
+test('ported 40 to 43 enforce declared validation and contain typed text only', () => {
+  deepEqual(evaluateCalculator(GYNE_SEDLIS_CALCULATOR,
+    sedlisInput({ sedlis_size: 0 })).issues.map((issue) => issue.code), ['below-minimum']);
+  deepEqual(evaluateCalculator(GYNE_PETERS_CALCULATOR,
+    petersInput({ peters_node_status: 'unknown' })).issues.map((issue) => issue.code), ['unknown-option']);
+  deepEqual(evaluateCalculator(GYNE_PROMISE_CALCULATOR,
+    promiseInput({ promise_er: 100.1 })).issues.map((issue) => issue.code), ['above-maximum']);
+  deepEqual(evaluateCalculator(GYNE_RMI_I_CALCULATOR,
+    rmiInput({ rmi_ca125: 0.15 })).issues.map((issue) => issue.code), ['step-mismatch']);
+  const results = [
+    evaluateCalculator(GYNE_SEDLIS_CALCULATOR, sedlisInput()).result,
+    evaluateCalculator(GYNE_PETERS_CALCULATOR, petersInput()).result,
+    evaluateCalculator(GYNE_PROMISE_CALCULATOR, promiseInput()).result,
+    evaluateCalculator(GYNE_RMI_I_CALCULATOR, rmiInput()).result
+  ];
+  for (const current of results) assertNoRawMarkup(current.notes);
+});
+
 test('structured note factories reject unsafe links and malformed tables', () => {
   throws(() => externalLink('inseguro', 'http://example.test'), 'El enlace externo debe usar HTTPS');
   throws(() => tableNote('invalida', ['una'], [['a', 'b']]), 'cantidad de celdas invalida');
@@ -3259,6 +3641,36 @@ function r2IssInput(overrides: Readonly<Record<string, unknown>> = {}): Record<s
   return {
     r2iss_beta2: 3, r2iss_albumin: 4, r2iss_del17p: false, r2iss_high_ldh: false,
     r2iss_t414: false, r2iss_1q: false, ...overrides
+  };
+}
+
+function sedlisInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    sedlis_node_status: 'negative', sedlis_margin_status: 'negative',
+    sedlis_parametrium: 'no', sedlis_lvsi: 'no', sedlis_stromal: 'superficial',
+    sedlis_size: 1, sedlis_size_method: '', ...overrides
+  };
+}
+
+function petersInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    peters_node_status: 'negative', peters_margin_status: 'negative',
+    peters_parametrium: 'no', ...overrides
+  };
+}
+
+function promiseInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    promise_pole: 'non_pathogenic', promise_mmr: 'proficient',
+    promise_p53: 'wild_type', promise_grade: 'low', promise_er: 10, ...overrides
+  };
+}
+
+function rmiInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    rmi_ca125: 100, rmi_menopause: 'premenopausal', rmi_multilocular: false,
+    rmi_solid: false, rmi_metastases: false, rmi_ascites: false,
+    rmi_bilateral: false, ...overrides
   };
 }
 

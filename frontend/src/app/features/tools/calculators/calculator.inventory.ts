@@ -59,10 +59,10 @@ export const CALCULATOR_INVENTORY = [
   item(38, 'international-prognostic-index', 'International Prognostic Index — IPI', 'oncology-general', GENERAL_JS, 'ported'),
   item(39, 'r2-iss-myeloma', 'R2-ISS — mieloma múltiple', 'oncology-general', GENERAL_JS, 'ported'),
 
-  item(40, 'gyne-sedlis', 'Cuello uterino — criterios de Sedlis', 'oncology-gynecology', GYNECOLOGY_JS),
-  item(41, 'gyne-peters', 'Cuello uterino — criterios de Peters', 'oncology-gynecology', GYNECOLOGY_JS),
-  item(42, 'gyne-promise', 'Endometrio — ProMisE / ESGO 2025', 'oncology-gynecology', GYNECOLOGY_JS),
-  item(43, 'gyne-rmi-i', 'Masa anexial — RMI I', 'oncology-gynecology', GYNECOLOGY_JS),
+  item(40, 'gyne-sedlis', 'Cuello uterino — criterios de Sedlis', 'oncology-gynecology', GYNECOLOGY_JS, 'ported'),
+  item(41, 'gyne-peters', 'Cuello uterino — criterios de Peters', 'oncology-gynecology', GYNECOLOGY_JS, 'ported'),
+  item(42, 'gyne-promise', 'Endometrio — ProMisE / ESGO 2025', 'oncology-gynecology', GYNECOLOGY_JS, 'ported'),
+  item(43, 'gyne-rmi-i', 'Masa anexial — RMI I', 'oncology-gynecology', GYNECOLOGY_JS, 'ported'),
   item(44, 'gyne-fagotti', 'Ovario — Fagotti PIV clásico', 'oncology-gynecology', GYNECOLOGY_JS),
   item(45, 'gyne-ago-desktop', 'Ovario recurrente — AGO / DESKTOP III', 'oncology-gynecology', GYNECOLOGY_JS),
 
