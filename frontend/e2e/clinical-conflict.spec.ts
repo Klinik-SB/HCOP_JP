@@ -445,7 +445,7 @@ test('edita motivo de consulta con foco contenido, reintento seguro y auditoría
       };
     };
     const competingState = structuredClone(competingWorkspace.state);
-    competingState.narrative = { ...(competingState.narrative || {}), currentIllness: competingNote };
+    competingState.narrative = { ...(competingState.narrative || {}), backgroundClinical: competingNote };
     competingState.meta = {
       ...(competingState.meta || {}),
       persistenceRevision: competingWorkspace.revision
@@ -536,6 +536,237 @@ test('edita motivo de consulta con foco contenido, reintento seguro y auditoría
     expect(versions[1]?.author).toBe(versions[1]?.audit?.lastName);
     expect(versions[1]?.license).toBe(versions[1]?.audit?.license);
     expect(final.state?.meta?.sectionAudit?.chiefComplaint).toEqual(versions[1]?.audit);
+  } finally {
+    await Promise.all([context.close(), competingContext.close()]);
+  }
+});
+
+test('edita antecedentes de enfermedad actual con foco contenido, reintento, conflicto y auditoría canónica', async ({ browser }) => {
+  const suffix = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+  const initialIllness = `Comenzó con tos seca y disnea progresiva hace dos meses ${suffix}`;
+  const changedIllness = `Persisten tos seca y disnea, con pérdida de peso durante tres meses ${suffix}`;
+  const modificationReason = 'Evolución clínica documentada durante el control';
+  const competingNote = `Antecedente concurrente ganador ${suffix}`;
+  const context = await browser.newContext();
+  const competingContext = await browser.newContext();
+
+  try {
+    await login(context);
+    const created = await context.request.post(`${origin}/api/clinical/patients`, {
+      data: {
+        firstName: `Paciente ${suffix}`,
+        lastName: 'Enfermedad actual QA',
+        dni: `96${Date.now().toString().slice(-6)}`,
+        medicalRecord: `QA-EA-${suffix}`,
+        birthDate: '1981-06-07',
+        sex: 'No especificado',
+        insurance: 'Cobertura sintética QA',
+        affiliateNumber: `QA-EA-${suffix}`,
+        phone: '', email: '', address: ''
+      }
+    });
+    await expectStatus(created, 201);
+    const body = await created.json() as {
+      patientId: string;
+      revision: number;
+      patient: { fullName: string };
+    };
+
+    const page = await context.newPage();
+    await page.goto('./');
+    await expect(page.getByText(body.patient.fullName, { exact: true }).first()).toBeVisible();
+
+    const loadTrigger = page.getByRole('button', {
+      name: 'Cargar antecedentes de enfermedad actual',
+      exact: true
+    });
+    await loadTrigger.click();
+    let editor = page.getByRole('dialog', { name: 'Antecedentes de enfermedad actual', exact: true });
+    const initialField = editor.getByLabel('Antecedentes de enfermedad actual', { exact: true });
+    const initialSaveButton = editor.getByRole('button', { name: 'Cargar en historia', exact: true });
+    const initialCloseButton = editor.getByRole('button', {
+      name: 'Cerrar editor de antecedentes de enfermedad actual',
+      exact: true
+    });
+    await expect(editor).toBeVisible();
+    await expect(initialField).toBeFocused();
+    await expect(initialSaveButton).toBeVisible();
+
+    await page.keyboard.press('Shift+Tab');
+    await expect(initialCloseButton).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(initialSaveButton).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(initialCloseButton).toBeFocused();
+    await page.locator('.current-illness-editor-backdrop').click({ position: { x: 4, y: 4 } });
+    await page.keyboard.press('Escape');
+    await expect(editor).toBeVisible();
+
+    await initialField.fill(`  ${initialIllness}  `);
+    await expect(page.getByRole('button', { name: 'Nuevo paciente', exact: true })).toBeDisabled();
+    await expect(page.locator('.configuration-button')).toBeDisabled();
+    page.once('dialog', (dialog) => dialog.dismiss());
+    await initialCloseButton.click();
+    await expect(editor).toBeVisible();
+
+    const clinicalPath = '**/api/hc';
+    await page.route(clinicalPath, async (route) => {
+      if (route.request().method() === 'PUT') {
+        await route.fulfill({
+          status: 503,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            ok: false,
+            status: 503,
+            code: 'QA_TRANSIENT',
+            error: 'Falla transitoria sintética de antecedentes de enfermedad actual'
+          })
+        });
+        return;
+      }
+      await route.continue();
+    });
+    const transientPut = page.waitForResponse((candidate) =>
+      candidate.request().method() === 'PUT' && new URL(candidate.url()).pathname === '/api/hc');
+    await initialSaveButton.click();
+    await expectStatus(await transientPut, 503);
+    await expect(editor).toBeVisible();
+    await expect(editor.getByRole('alert')).toContainText(
+      'Falla transitoria sintética de antecedentes de enfermedad actual'
+    );
+    await expect(initialField).toHaveValue(`  ${initialIllness}  `);
+    await page.unroute(clinicalPath);
+
+    const initialPut = page.waitForResponse((candidate) =>
+      candidate.request().method() === 'PUT' && new URL(candidate.url()).pathname === '/api/hc');
+    await initialSaveButton.click();
+    await expectStatus(await initialPut, 200);
+    await expect(editor).toHaveCount(0);
+    await expect(page.locator('.doc-section').filter({ hasText: initialIllness })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Nuevo paciente', exact: true })).toBeEnabled();
+
+    const modifyTrigger = page.getByRole('button', {
+      name: 'Modificar sección Antecedentes de enfermedad actual',
+      exact: true
+    });
+    await modifyTrigger.click();
+    editor = page.getByRole('dialog', { name: 'Antecedentes de enfermedad actual', exact: true });
+    const modificationField = editor.getByLabel('Antecedentes de enfermedad actual', { exact: true });
+    const reasonField = editor.getByLabel('Motivo de la modificación', { exact: true });
+    await expect(editor.getByRole('button', { name: 'Guardar modificación', exact: true })).toBeVisible();
+    await expect(modificationField).toHaveValue(initialIllness);
+    await modificationField.fill(changedIllness);
+    await reasonField.fill(modificationReason);
+
+    await login(competingContext);
+    await activate(competingContext, body.patientId);
+    const competingWorkspaceResponse = await competingContext.request.get(
+      `${origin}/api/clinical/patients/${body.patientId}/workspace`
+    );
+    await expectStatus(competingWorkspaceResponse, 200);
+    const competingWorkspace = await competingWorkspaceResponse.json() as {
+      revision: number;
+      state: Record<string, unknown> & {
+        narrative?: Record<string, unknown>;
+        meta?: Record<string, unknown>;
+      };
+    };
+    const competingState = structuredClone(competingWorkspace.state);
+    competingState.narrative = {
+      ...(competingState.narrative || {}),
+      backgroundClinical: competingNote
+    };
+    competingState.meta = {
+      ...(competingState.meta || {}),
+      persistenceRevision: competingWorkspace.revision
+    };
+    const competingPut = await competingContext.request.put(`${origin}/api/hc`, { data: competingState });
+    await expectStatus(competingPut, 200);
+
+    const conflictPut = page.waitForResponse((candidate) =>
+      candidate.request().method() === 'PUT' && new URL(candidate.url()).pathname === '/api/hc');
+    await editor.getByRole('button', { name: 'Guardar modificación', exact: true }).click();
+    const conflictResponse = await conflictPut;
+    await expectStatus(conflictResponse, 409);
+    const conflictBody = await conflictResponse.json() as { code?: string };
+    expect(conflictBody.code).toBe('VERSION_CONFLICT');
+    await expect(editor).toHaveCount(0);
+
+    const conflictBanner = page.locator('.clinical-save-conflict-banner');
+    await expect(conflictBanner).toContainText('Hay cambios sin guardar.');
+    await expect(conflictBanner).toBeFocused();
+    await conflictBanner.getByRole('button', { name: 'Comparar cambios', exact: true }).click();
+    const comparison = page.getByRole('dialog', { name: 'Comparar cambios de la historia' });
+    await expect(comparison).toContainText(changedIllness);
+    await expect(comparison).toContainText(competingNote);
+    await comparison.getByRole('button', { name: 'Cerrar', exact: true }).last().click();
+    page.once('dialog', (dialog) => dialog.accept());
+    await conflictBanner.getByRole('button', {
+      name: 'Descartar borrador y recuperar historia',
+      exact: true
+    }).click();
+    await expect(conflictBanner).toHaveCount(0);
+    await expect(page.locator('.doc-section').filter({ hasText: initialIllness })).toBeVisible();
+
+    await modifyTrigger.click();
+    editor = page.getByRole('dialog', { name: 'Antecedentes de enfermedad actual', exact: true });
+    await editor.getByLabel('Antecedentes de enfermedad actual', { exact: true }).fill(changedIllness);
+    await editor.getByLabel('Motivo de la modificación', { exact: true }).fill(modificationReason);
+    const modificationPut = page.waitForResponse((candidate) =>
+      candidate.request().method() === 'PUT' && new URL(candidate.url()).pathname === '/api/hc');
+    await editor.getByRole('button', { name: 'Guardar modificación', exact: true }).click();
+    await expectStatus(await modificationPut, 200);
+    await expect(editor).toHaveCount(0);
+    await expect(page.locator('.doc-section').filter({ hasText: changedIllness })).toBeVisible();
+
+    const workspace = await context.request.get(`${origin}/api/clinical/patients/${body.patientId}/workspace`);
+    await expectStatus(workspace, 200);
+    const final = await workspace.json() as {
+      revision: number;
+      state?: {
+        narrative?: { currentIllness?: string; backgroundClinical?: string };
+        meta?: {
+          sectionFormModes?: { currentIllness?: string };
+          sectionVersions?: {
+            currentIllness?: Array<{
+              id?: string;
+              author?: string;
+              license?: string;
+              createdAt?: string;
+              reason?: string;
+              content?: string;
+              audit?: { action?: string; lastName?: string; license?: string; at?: string };
+            }>;
+          };
+          sectionAudit?: {
+            currentIllness?: { action?: string; lastName?: string; license?: string; at?: string };
+          };
+          sectionChangeRequests?: { currentIllness?: unknown };
+        };
+      };
+    };
+    expect(final.revision).toBe(body.revision + 3);
+    expect(final.state?.narrative?.currentIllness).toBe(changedIllness);
+    expect(final.state?.narrative?.backgroundClinical).toBe(competingNote);
+    expect(final.state?.meta?.sectionFormModes?.currentIllness).toBe('structured');
+    expect(final.state?.meta?.sectionChangeRequests?.currentIllness).toBeUndefined();
+    const versions = final.state?.meta?.sectionVersions?.currentIllness || [];
+    expect(versions).toHaveLength(2);
+    expect(versions[0]?.id).toMatch(/^sec-currentIllness-/);
+    expect(versions[0]?.reason).toBe('Carga inicial');
+    expect(versions[0]?.content).toBe(initialIllness);
+    expect(versions[0]?.audit?.action).toBe('cargado');
+    expect(versions[1]?.id).toMatch(/^sec-currentIllness-/);
+    expect(versions[1]?.reason).toBe(modificationReason);
+    expect(versions[1]?.content).toBe(changedIllness);
+    expect(versions[1]?.audit?.action).toBe('modificado');
+    expect(versions[1]?.author).toBeTruthy();
+    expect(versions[1]?.license).toBeTruthy();
+    expect(versions[1]?.createdAt).toBeTruthy();
+    expect(versions[1]?.createdAt).toBe(versions[1]?.audit?.at);
+    expect(versions[1]?.author).toBe(versions[1]?.audit?.lastName);
+    expect(versions[1]?.license).toBe(versions[1]?.audit?.license);
+    expect(final.state?.meta?.sectionAudit?.currentIllness).toEqual(versions[1]?.audit);
   } finally {
     await Promise.all([context.close(), competingContext.close()]);
   }

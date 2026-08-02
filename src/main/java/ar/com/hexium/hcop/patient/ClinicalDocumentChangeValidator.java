@@ -16,19 +16,29 @@ public class ClinicalDocumentChangeValidator {
         stored,
         "chiefComplaint",
         "El motivo de consulta",
-        "CLINICAL_CHIEF_COMPLAINT");
+        "CLINICAL_CHIEF_COMPLAINT",
+        true);
+    validateTextChange(
+        incoming,
+        stored,
+        "currentIllness",
+        "El campo Antecedentes de enfermedad actual",
+        "CLINICAL_CURRENT_ILLNESS",
+        true);
     validateTextChange(
         incoming,
         stored,
         "summary",
         "La conclusión / resumen",
-        "CLINICAL_SUMMARY");
+        "CLINICAL_SUMMARY",
+        false);
     validateTextChange(
         incoming,
         stored,
         "plan",
         "La conducta / plan",
-        "CLINICAL_PLAN");
+        "CLINICAL_PLAN",
+        false);
   }
 
   private void validateTextChange(
@@ -36,10 +46,12 @@ public class ClinicalDocumentChangeValidator {
       JsonNode stored,
       String field,
       String label,
-      String codePrefix) {
+      String codePrefix,
+      boolean blankMissingEquivalent) {
     JsonNode next = incoming.path("narrative").path(field);
     JsonNode previous = stored.path("narrative").path(field);
     if (next.equals(previous)) return;
+    if (blankMissingEquivalent && isClinicallyBlank(next) && isClinicallyBlank(previous)) return;
 
     if (!next.isTextual()) {
       throw new ApiException(
@@ -53,5 +65,11 @@ public class ClinicalDocumentChangeValidator {
           label + " no puede superar " + MAX_NARRATIVE_FIELD_CHARS + " caracteres.",
           codePrefix + "_TOO_LONG");
     }
+  }
+
+  private boolean isClinicallyBlank(JsonNode value) {
+    return value.isMissingNode()
+        || value.isNull()
+        || (value.isTextual() && value.textValue().isBlank());
   }
 }

@@ -110,6 +110,7 @@ Con el sistema iniciado también existe una versión navegable en
 - [Corte Angular 033: E2E concurrente](09-migracion-angular-hexagonal/CORTE-ANGULAR-033-E2E-CONFLICTO-CONCURRENTE.md)
 - [Corte Angular 034: editor Conclusión / resumen](09-migracion-angular-hexagonal/CORTE-ANGULAR-034-EDITOR-CONCLUSION-RESUMEN.md)
 - [Corte Angular 035: editor Motivo de consulta](09-migracion-angular-hexagonal/CORTE-ANGULAR-035-EDITOR-MOTIVO-CONSULTA.md)
+- [Corte Angular 036: editor Antecedentes de enfermedad actual](09-migracion-angular-hexagonal/CORTE-ANGULAR-036-EDITOR-ENFERMEDAD-ACTUAL.md)
 
 ## Fuentes de verdad
 

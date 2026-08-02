@@ -139,6 +139,9 @@ configuración institucional y cerrar la paridad visual/E2E integrada.
 - [Corte Angular 035](CORTE-ANGULAR-035-EDITOR-MOTIVO-CONSULTA.md): Motivo de
   consulta con el diseño original, contexto bloqueado desde la apertura,
   autoridad narrativa Java reutilizable y conflicto concurrente E2E.
+- [Corte Angular 036](CORTE-ANGULAR-036-EDITOR-ENFERMEDAD-ACTUAL.md):
+  Antecedentes de enfermedad actual con editor Angular nativo, motor puro
+  compartido y autoridad Java sobre su cadena de versiones.
 
 ## Ciclo obligatorio por capacidad
 

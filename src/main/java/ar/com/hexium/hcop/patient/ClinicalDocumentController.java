@@ -28,6 +28,7 @@ public class ClinicalDocumentController {
   private final ClinicalDocumentChangeValidator changeValidator;
   private final ClinicalSummaryPlanAuthority summaryPlanAuthority;
   private final ClinicalChiefComplaintAuthority chiefComplaintAuthority;
+  private final ClinicalCurrentIllnessAuthority currentIllnessAuthority;
 
   @Autowired
   public ClinicalDocumentController(
@@ -36,13 +37,33 @@ public class ClinicalDocumentController {
       ClinicalDocumentAccessPolicy accessPolicy,
       ClinicalDocumentChangeValidator changeValidator,
       ClinicalSummaryPlanAuthority summaryPlanAuthority,
-      ClinicalChiefComplaintAuthority chiefComplaintAuthority) {
+      ClinicalChiefComplaintAuthority chiefComplaintAuthority,
+      ClinicalCurrentIllnessAuthority currentIllnessAuthority) {
     this.documents = documents;
     this.auth = auth;
     this.accessPolicy = accessPolicy;
     this.changeValidator = changeValidator;
     this.summaryPlanAuthority = summaryPlanAuthority;
     this.chiefComplaintAuthority = chiefComplaintAuthority;
+    this.currentIllnessAuthority = currentIllnessAuthority;
+  }
+
+  /** Backward-compatible constructor retained for focused controller tests. */
+  public ClinicalDocumentController(
+      PatientDocumentService documents,
+      AuthContext auth,
+      ClinicalDocumentAccessPolicy accessPolicy,
+      ClinicalDocumentChangeValidator changeValidator,
+      ClinicalSummaryPlanAuthority summaryPlanAuthority,
+      ClinicalChiefComplaintAuthority chiefComplaintAuthority) {
+    this(
+        documents,
+        auth,
+        accessPolicy,
+        changeValidator,
+        summaryPlanAuthority,
+        chiefComplaintAuthority,
+        null);
   }
 
   /** Backward-compatible constructor retained for focused controller tests. */
@@ -52,7 +73,7 @@ public class ClinicalDocumentController {
       ClinicalDocumentAccessPolicy accessPolicy,
       ClinicalDocumentChangeValidator changeValidator,
       ClinicalSummaryPlanAuthority summaryPlanAuthority) {
-    this(documents, auth, accessPolicy, changeValidator, summaryPlanAuthority, null);
+    this(documents, auth, accessPolicy, changeValidator, summaryPlanAuthority, null, null);
   }
 
   @GetMapping
@@ -94,6 +115,12 @@ public class ClinicalDocumentController {
     stateToSave = summaryPlanAuthority.canonicalize(stateToSave, current.document(), principal);
     if (chiefComplaintAuthority != null) {
       stateToSave = chiefComplaintAuthority.canonicalize(
+          stateToSave,
+          current.document(),
+          principal);
+    }
+    if (currentIllnessAuthority != null) {
+      stateToSave = currentIllnessAuthority.canonicalize(
           stateToSave,
           current.document(),
           principal);

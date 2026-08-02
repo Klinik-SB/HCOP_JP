@@ -5,11 +5,16 @@ import { AuthService } from '../../core/auth/auth.service';
 import { ClinicalFocusRequest, ClinicalFocusService } from '../../core/clinical/clinical-focus.service';
 import {
   CLINICAL_CHIEF_COMPLAINT_TEXT_LIMIT,
-  ClinicalChiefComplaintEditError,
   applyStructuredChiefComplaintEdit,
   chiefComplaintBaseline,
   supportsStructuredChiefComplaint
 } from '../../core/clinical/clinical-chief-complaint-edit';
+import {
+  CLINICAL_CURRENT_ILLNESS_TEXT_LIMIT,
+  applyStructuredCurrentIllnessEdit,
+  currentIllnessBaseline,
+  supportsStructuredCurrentIllness
+} from '../../core/clinical/clinical-current-illness-edit';
 import {
   CLINICAL_SUMMARY_PLAN_TEXT_LIMIT,
   applyStructuredSummaryPlanEdit,
@@ -27,6 +32,8 @@ import { ClinicalDraftHandle, ClinicalDraftRegistryService } from '../../core/pa
 import { PatientWorkspaceService } from '../../core/patients/patient-workspace.service';
 import { ClinicalPatient, ClinicalRecord, ClinicalState } from '../../core/patients/patient-workspace.models';
 
+type SingleNarrativeSectionKey = 'chiefComplaint' | 'currentIllness';
+
 @Component({ selector: 'app-clinical-workspace', imports: [ReactiveFormsModule], templateUrl: './clinical-workspace.component.html', styleUrl: './clinical-workspace.component.scss' })
 export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
   readonly printTimestamp = input('');
@@ -39,17 +46,17 @@ export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
   readonly results = signal<ClinicalPatient[]>([]);
   readonly searching = signal(false);
   readonly searchError = signal('');
-  readonly chiefComplaintOpen = signal(false);
-  readonly chiefComplaintInitial = signal(true);
-  readonly chiefComplaintBusy = signal(false);
-  readonly chiefComplaintError = signal('');
-  readonly chiefComplaintErrorTarget = signal<'content' | 'reason' | ''>('');
-  readonly maxChiefComplaintChars = CLINICAL_CHIEF_COMPLAINT_TEXT_LIMIT;
-  readonly chiefComplaintControl = new FormControl('', { nonNullable: true });
-  readonly chiefComplaintReasonControl = new FormControl('', { nonNullable: true });
-  private chiefComplaintDraft: ClinicalDraftHandle | null = null;
-  private chiefComplaintEditorBaseline = { chiefComplaint: '', initial: true };
-  private chiefComplaintReturnFocus: HTMLElement | null = null;
+  readonly narrativeEditorOpen = signal(false);
+  readonly narrativeEditorKey = signal<SingleNarrativeSectionKey>('chiefComplaint');
+  readonly narrativeEditorInitial = signal(true);
+  readonly narrativeEditorBusy = signal(false);
+  readonly narrativeEditorError = signal('');
+  readonly narrativeEditorErrorTarget = signal<'content' | 'reason' | ''>('');
+  readonly narrativeEditorControl = new FormControl('', { nonNullable: true });
+  readonly narrativeEditorReasonControl = new FormControl('', { nonNullable: true });
+  private narrativeEditorDraft: ClinicalDraftHandle | null = null;
+  private narrativeEditorBaseline = { value: '', initial: true };
+  private narrativeEditorReturnFocus: HTMLElement | null = null;
   readonly summaryPlanOpen = signal(false);
   readonly summaryPlanInitial = signal(true);
   readonly summaryPlanBusy = signal(false);
@@ -74,8 +81,8 @@ export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
     this.summaryControl.valueChanges.subscribe(() => this.refreshSummaryPlanDirtyState());
     this.planControl.valueChanges.subscribe(() => this.refreshSummaryPlanDirtyState());
     this.summaryPlanReasonControl.valueChanges.subscribe(() => this.refreshSummaryPlanDirtyState());
-    this.chiefComplaintControl.valueChanges.subscribe(() => this.refreshChiefComplaintDirtyState());
-    this.chiefComplaintReasonControl.valueChanges.subscribe(() => this.refreshChiefComplaintDirtyState());
+    this.narrativeEditorControl.valueChanges.subscribe(() => this.refreshNarrativeEditorDirtyState());
+    this.narrativeEditorReasonControl.valueChanges.subscribe(() => this.refreshNarrativeEditorDirtyState());
   }
 
   ngOnInit(): void {
@@ -83,7 +90,7 @@ export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.chiefComplaintDraft) this.clinicalDrafts.release(this.chiefComplaintDraft);
+    if (this.narrativeEditorDraft) this.clinicalDrafts.release(this.narrativeEditorDraft);
     if (this.summaryPlanDraft) this.clinicalDrafts.release(this.summaryPlanDraft);
   }
 
@@ -99,99 +106,110 @@ export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
   open(patient: ClinicalPatient): void { this.workspaceService.activate(patient); }
   closePatient(): void { this.workspaceService.close(); }
 
-  canEditChiefComplaint(): boolean {
+  canEditNarrativeSection(key: SingleNarrativeSectionKey): boolean {
     return Boolean(
       this.workspaceService.workspace()
       && !this.workspaceService.loading()
       && this.auth.hasPermission('section.history.edit')
-      && supportsStructuredChiefComplaint(this.state())
+      && this.supportsNarrativeSection(key, this.state())
     );
   }
 
-  openChiefComplaintEditor(event?: Event): void {
+  openNarrativeSectionEditor(key: SingleNarrativeSectionKey, event?: Event): void {
     const workspace = this.workspaceService.workspace();
-    if (!workspace || this.workspaceService.loading() || !this.canEditChiefComplaint() || this.workspaceService.hasPendingClinicalWork()) return;
-    this.chiefComplaintReturnFocus = event?.currentTarget instanceof HTMLElement
+    if (!workspace || this.workspaceService.loading() || !this.canEditNarrativeSection(key) || this.workspaceService.hasPendingClinicalWork()) return;
+    this.narrativeEditorReturnFocus = event?.currentTarget instanceof HTMLElement
       ? event.currentTarget
       : document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const baseline = chiefComplaintBaseline(workspace.state);
-    this.chiefComplaintEditorBaseline = baseline;
-    this.chiefComplaintInitial.set(baseline.initial);
-    this.chiefComplaintControl.setValue(baseline.chiefComplaint, { emitEvent: false });
-    this.chiefComplaintReasonControl.setValue('', { emitEvent: false });
-    this.chiefComplaintError.set('');
-    this.chiefComplaintErrorTarget.set('');
-    this.chiefComplaintDraft = this.clinicalDrafts.acquire({
+    const baseline = this.singleNarrativeBaseline(key, workspace.state);
+    this.narrativeEditorKey.set(key);
+    this.narrativeEditorBaseline = baseline;
+    this.narrativeEditorInitial.set(baseline.initial);
+    this.narrativeEditorControl.setValue(baseline.value, { emitEvent: false });
+    this.narrativeEditorReasonControl.setValue('', { emitEvent: false });
+    this.narrativeEditorError.set('');
+    this.narrativeEditorErrorTarget.set('');
+    this.narrativeEditorDraft = this.clinicalDrafts.acquire({
       patientId: workspace.patientId,
-      label: 'Motivo de consulta'
+      label: this.narrativeEditorTitle()
     });
-    this.chiefComplaintOpen.set(true);
-    this.refreshChiefComplaintDirtyState();
-    this.focusSummaryPlanAfterRender('#chiefComplaintNarrative');
+    this.narrativeEditorOpen.set(true);
+    this.refreshNarrativeEditorDirtyState();
+    this.focusSummaryPlanAfterRender('#singleNarrativeEditorContent');
   }
 
-  closeChiefComplaintEditor(): void {
-    if (!this.chiefComplaintOpen() || this.chiefComplaintBusy()) return;
-    if (this.chiefComplaintDraft && this.clinicalDrafts.isDirty(this.chiefComplaintDraft)
-        && !window.confirm('¿Descartar los cambios no guardados de Motivo de consulta?')) return;
-    this.finishChiefComplaintEditor(true);
+  closeNarrativeSectionEditor(): void {
+    if (!this.narrativeEditorOpen() || this.narrativeEditorBusy()) return;
+    if (this.narrativeEditorDraft && this.clinicalDrafts.isDirty(this.narrativeEditorDraft)
+        && !window.confirm(`¿Descartar los cambios no guardados de ${this.narrativeEditorTitle()}?`)) return;
+    this.finishNarrativeEditor(true);
   }
 
-  async saveChiefComplaint(): Promise<void> {
+  async saveNarrativeSection(): Promise<void> {
     const workspace = this.workspaceService.workspace();
-    if (!workspace || !this.chiefComplaintDraft || this.chiefComplaintBusy()) return;
-    this.chiefComplaintError.set('');
-    this.chiefComplaintErrorTarget.set('');
-    if (workspace.patientId !== this.chiefComplaintDraft.patientId) {
-      this.chiefComplaintError.set('El paciente activo cambió. Cierre este editor y vuelva a abrir la sección antes de guardar.');
+    if (!workspace || !this.narrativeEditorDraft || this.narrativeEditorBusy()) return;
+    this.narrativeEditorError.set('');
+    this.narrativeEditorErrorTarget.set('');
+    if (workspace.patientId !== this.narrativeEditorDraft.patientId) {
+      this.narrativeEditorError.set('El paciente activo cambió. Cierre este editor y vuelva a abrir la sección antes de guardar.');
       return;
     }
     let nextState: ClinicalState;
     try {
-      const user = this.auth.session()?.user;
-      nextState = applyStructuredChiefComplaintEdit(workspace.state, {
-        chiefComplaint: this.chiefComplaintControl.value,
-        reason: this.chiefComplaintReasonControl.value,
-        actor: {
-          userId: user?.id || '',
-          username: user?.username || '',
-          displayName: user?.displayName || user?.username || 'Profesional',
-          licenseNumber: user?.licenseNumber || ''
-        }
-      });
+      nextState = this.applySingleNarrativeEdit(
+        this.narrativeEditorKey(),
+        workspace.state,
+        this.narrativeEditorControl.value,
+        this.narrativeEditorReasonControl.value
+      );
     } catch (error) {
-      this.chiefComplaintError.set(this.errorMessage(error, 'Revise los campos antes de guardar.'));
-      if (error instanceof ClinicalChiefComplaintEditError) {
-        const target = error.code === 'REASON_REQUIRED' || error.code === 'REASON_TOO_LONG'
-          ? 'reason'
-          : error.code === 'EMPTY_CHIEF_COMPLAINT' || error.code === 'CHIEF_COMPLAINT_TOO_LONG'
-            ? 'content'
-            : '';
-        this.chiefComplaintErrorTarget.set(target);
-        if (target) this.focusSummaryPlanAfterRender(target === 'reason' ? '#chiefComplaintReason' : '#chiefComplaintNarrative');
-      }
+      this.narrativeEditorError.set(this.errorMessage(error, 'Revise los campos antes de guardar.'));
+      const code = this.typedClinicalEditCode(error);
+      const target = code === 'REASON_REQUIRED' || code === 'REASON_TOO_LONG'
+        ? 'reason'
+        : code.startsWith('EMPTY_') || code.endsWith('_TOO_LONG') ? 'content' : '';
+      this.narrativeEditorErrorTarget.set(target);
+      if (target) this.focusSummaryPlanAfterRender(target === 'reason' ? '#singleNarrativeEditorReason' : '#singleNarrativeEditorContent');
       return;
     }
 
-    this.chiefComplaintBusy.set(true);
+    this.narrativeEditorBusy.set(true);
     try {
       await firstValueFrom(this.workspaceService.saveState(nextState));
-      this.clinicalDrafts.markClean(this.chiefComplaintDraft);
-      this.finishChiefComplaintEditor(true);
+      this.clinicalDrafts.markClean(this.narrativeEditorDraft);
+      this.finishNarrativeEditor(true);
     } catch (error) {
       if (this.workspaceService.activeSaveConflict()) {
-        this.clinicalDrafts.markClean(this.chiefComplaintDraft);
-        this.finishChiefComplaintEditor(false);
+        this.clinicalDrafts.markClean(this.narrativeEditorDraft);
+        this.finishNarrativeEditor(false);
       } else {
-        this.chiefComplaintError.set(this.errorMessage(error, 'No se pudo guardar el motivo de consulta.'));
+        this.narrativeEditorError.set(this.errorMessage(error, `No se pudo guardar ${this.narrativeEditorTitle().toLocaleLowerCase('es-AR')}.`));
       }
     } finally {
-      this.chiefComplaintBusy.set(false);
+      this.narrativeEditorBusy.set(false);
     }
   }
 
-  chiefComplaintCount(): number { return this.chiefComplaintControl.value.length; }
-  chiefComplaintIsInitial(): boolean { return chiefComplaintBaseline(this.state()).initial; }
+  narrativeEditorCount(): number { return this.narrativeEditorControl.value.length; }
+  narrativeSectionIsInitial(key: SingleNarrativeSectionKey): boolean {
+    return this.singleNarrativeBaseline(key, this.state()).initial;
+  }
+  narrativeEditorTitle(): string {
+    return this.narrativeEditorKey() === 'chiefComplaint'
+      ? 'Motivo de consulta'
+      : 'Antecedentes de enfermedad actual';
+  }
+  narrativeEditorIntro(): string {
+    return this.narrativeEditorKey() === 'chiefComplaint'
+      ? 'Registre el motivo que origina la consulta actual.'
+      : 'Describa el inicio, la evolución y el estado actual de la enfermedad.';
+  }
+  narrativeEditorRows(): number { return this.narrativeEditorKey() === 'chiefComplaint' ? 5 : 8; }
+  narrativeEditorMaxChars(): number {
+    return this.narrativeEditorKey() === 'chiefComplaint'
+      ? CLINICAL_CHIEF_COMPLAINT_TEXT_LIMIT
+      : CLINICAL_CURRENT_ILLNESS_TEXT_LIMIT;
+  }
 
   canEditSummaryPlan(): boolean {
     return Boolean(
@@ -448,29 +466,70 @@ export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
     this.clinicalDrafts.setDirty(this.summaryPlanDraft, dirty);
   }
 
-  private refreshChiefComplaintDirtyState(): void {
-    if (!this.chiefComplaintDraft) return;
-    const dirty = this.chiefComplaintControl.value.trim() !== this.chiefComplaintEditorBaseline.chiefComplaint
-      || this.chiefComplaintReasonControl.value.trim().length > 0;
-    this.clinicalDrafts.setDirty(this.chiefComplaintDraft, dirty);
+  private refreshNarrativeEditorDirtyState(): void {
+    if (!this.narrativeEditorDraft) return;
+    const dirty = this.narrativeEditorControl.value.trim() !== this.narrativeEditorBaseline.value
+      || this.narrativeEditorReasonControl.value.trim().length > 0;
+    this.clinicalDrafts.setDirty(this.narrativeEditorDraft, dirty);
   }
 
-  private releaseChiefComplaintDraft(): void {
-    if (!this.chiefComplaintDraft) return;
-    this.clinicalDrafts.release(this.chiefComplaintDraft);
-    this.chiefComplaintDraft = null;
+  private releaseNarrativeEditorDraft(): void {
+    if (!this.narrativeEditorDraft) return;
+    this.clinicalDrafts.release(this.narrativeEditorDraft);
+    this.narrativeEditorDraft = null;
   }
 
-  private finishChiefComplaintEditor(returnFocus: boolean): void {
-    this.releaseChiefComplaintDraft();
-    this.chiefComplaintOpen.set(false);
-    this.chiefComplaintError.set('');
-    this.chiefComplaintErrorTarget.set('');
-    const trigger = this.chiefComplaintReturnFocus;
-    this.chiefComplaintReturnFocus = null;
+  private finishNarrativeEditor(returnFocus: boolean): void {
+    this.releaseNarrativeEditorDraft();
+    this.narrativeEditorOpen.set(false);
+    this.narrativeEditorError.set('');
+    this.narrativeEditorErrorTarget.set('');
+    const trigger = this.narrativeEditorReturnFocus;
+    this.narrativeEditorReturnFocus = null;
     if (returnFocus && trigger) window.setTimeout(() => {
       if (trigger.isConnected && !trigger.hasAttribute('disabled')) trigger.focus({ preventScroll: true });
     }, 0);
+  }
+
+  private supportsNarrativeSection(key: SingleNarrativeSectionKey, state: ClinicalState): boolean {
+    return key === 'chiefComplaint'
+      ? supportsStructuredChiefComplaint(state)
+      : supportsStructuredCurrentIllness(state);
+  }
+
+  private singleNarrativeBaseline(
+    key: SingleNarrativeSectionKey,
+    state: ClinicalState
+  ): { value: string; initial: boolean } {
+    if (key === 'chiefComplaint') {
+      const baseline = chiefComplaintBaseline(state);
+      return { value: baseline.chiefComplaint, initial: baseline.initial };
+    }
+    const baseline = currentIllnessBaseline(state);
+    return { value: baseline.currentIllness, initial: baseline.initial };
+  }
+
+  private applySingleNarrativeEdit(
+    key: SingleNarrativeSectionKey,
+    state: ClinicalState,
+    value: string,
+    reason: string
+  ): ClinicalState {
+    const user = this.auth.session()?.user;
+    const actor = {
+      userId: user?.id || '',
+      username: user?.username || '',
+      displayName: user?.displayName || user?.username || 'Profesional',
+      licenseNumber: user?.licenseNumber || ''
+    };
+    return key === 'chiefComplaint'
+      ? applyStructuredChiefComplaintEdit(state, { chiefComplaint: value, reason, actor })
+      : applyStructuredCurrentIllnessEdit(state, { currentIllness: value, reason, actor });
+  }
+
+  private typedClinicalEditCode(error: unknown): string {
+    if (!error || typeof error !== 'object' || !('code' in error)) return '';
+    return typeof error.code === 'string' ? error.code : '';
   }
 
   private releaseSummaryPlanDraft(): void {

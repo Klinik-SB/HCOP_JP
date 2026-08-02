@@ -159,6 +159,30 @@ consume, lo retira antes de persistir y reconstruye
 `meta.sectionFormModes.chiefComplaint` desde PostgreSQL, la sesión autenticada
 y el reloj del servidor.
 
+Para **Antecedentes de enfermedad actual**, el mismo `PUT /api/hc` compara
+`narrative.currentIllness` con el documento confirmado y sólo valida el campo
+si realmente cambió. Los códigos de validación son independientes de los de
+otras secciones narrativas:
+
+| Código `400` | Condición |
+|---|---|
+| `CLINICAL_CURRENT_ILLNESS_INVALID` | El nuevo valor no es texto. |
+| `CLINICAL_CURRENT_ILLNESS_TOO_LONG` | El nuevo texto supera 50.000 caracteres. |
+| `CLINICAL_CURRENT_ILLNESS_EMPTY` | La primera carga está vacía. |
+| `CLINICAL_CURRENT_ILLNESS_REASON_REQUIRED` | Una modificación no incluye motivo. |
+| `CLINICAL_CURRENT_ILLNESS_REASON_INVALID` | El motivo transitorio no es texto. |
+| `CLINICAL_CURRENT_ILLNESS_REASON_TOO_LONG` | El motivo supera 50.000 caracteres. |
+
+Una versión posterior puede vaciar la sección si documenta el motivo. Angular
+envía ese comando únicamente en
+`meta.sectionChangeRequests.currentIllness.reason`; Java lo consume y lo retira
+antes de persistir. `ClinicalCurrentIllnessAuthority`, mediante la autoridad
+narrativa compartida, reconstruye `meta.sectionVersions.currentIllness`,
+`meta.sectionAudit.currentIllness` y
+`meta.sectionFormModes.currentIllness = "structured"` con el actor autenticado,
+el reloj y el identificador generados por el servidor. La historia permanece en
+el JSONB de PostgreSQL y la respuesta devuelve su forma canónica.
+
 Para los campos estructurados de **Conclusión / resumen**, `PUT /api/hc`
 compara cada valor entrante contra el documento confirmado. Sólo valida un
 campo cuando realmente cambió, para que una forma legacy atípica no impida

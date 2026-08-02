@@ -20,6 +20,9 @@ class ClinicalDocumentChangeValidatorTest {
     stored.withObject("/narrative").set(
         "chiefComplaint",
         mapper.createObjectNode().put("legacy", true));
+    stored.withObject("/narrative").set(
+        "currentIllness",
+        mapper.createArrayNode().add("legacy"));
     stored.withObject("/narrative").set("summary", mapper.createObjectNode().put("legacy", true));
     stored.withObject("/narrative").set("plan", mapper.createArrayNode().add("legacy"));
 
@@ -41,6 +44,50 @@ class ClinicalDocumentChangeValidatorTest {
 
     assertThatCode(() -> validator.validate(incoming, stored))
         .doesNotThrowAnyException();
+  }
+
+  @Test
+  void acceptsOmittedChiefComplaintAndCurrentIllnessWhenStoredValuesAreBlank() {
+    ObjectNode stored = narrative("Resumen anterior", "Plan vigente");
+    stored.withObject("/narrative")
+        .put("chiefComplaint", "   ")
+        .put("currentIllness", "");
+    ObjectNode incoming = narrative("Resumen actualizado", "Plan vigente");
+
+    assertThatCode(() -> validator.validate(incoming, stored))
+        .doesNotThrowAnyException();
+  }
+
+  @Test
+  void acceptsMissingBlankAndNullAsEquivalentForOptionalSingleNarratives() {
+    ObjectNode stored = narrative("Resumen", "Plan");
+    stored.withObject("/narrative")
+        .putNull("chiefComplaint")
+        .putNull("currentIllness");
+    ObjectNode incoming = narrative("Resumen", "Plan");
+    incoming.withObject("/narrative")
+        .put("chiefComplaint", "")
+        .put("currentIllness", "  \n  ");
+
+    assertThatCode(() -> validator.validate(incoming, stored))
+        .doesNotThrowAnyException();
+  }
+
+  @Test
+  void rejectsOmittingNonBlankChiefComplaintOrCurrentIllness() {
+    ObjectNode storedChiefComplaint = narrative("Resumen", "Plan");
+    storedChiefComplaint.withObject("/narrative").put("chiefComplaint", "Dolor abdominal");
+    assertFailure(
+        narrative("Resumen", "Plan"),
+        storedChiefComplaint,
+        "CLINICAL_CHIEF_COMPLAINT_INVALID");
+
+    ObjectNode storedCurrentIllness = narrative("Resumen", "Plan");
+    storedCurrentIllness.withObject("/narrative").put("currentIllness", "Tres meses");
+    assertFailure(
+        narrative("Resumen", "Plan"),
+        storedCurrentIllness,
+        "CLINICAL_CURRENT_ILLNESS_INVALID");
   }
 
   @Test
@@ -72,6 +119,28 @@ class ClinicalDocumentChangeValidatorTest {
         "m".repeat(ClinicalDocumentChangeValidator.MAX_NARRATIVE_FIELD_CHARS + 1));
 
     assertFailure(incoming, stored, "CLINICAL_CHIEF_COMPLAINT_TOO_LONG");
+  }
+
+  @Test
+  void rejectsChangedNonTextCurrentIllness() {
+    ObjectNode stored = narrative("Anterior", "Plan");
+    stored.withObject("/narrative").put("currentIllness", "Historia anterior");
+    ObjectNode incoming = stored.deepCopy();
+    incoming.withObject("/narrative").set("currentIllness", mapper.createArrayNode());
+
+    assertFailure(incoming, stored, "CLINICAL_CURRENT_ILLNESS_INVALID");
+  }
+
+  @Test
+  void rejectsChangedOversizedCurrentIllness() {
+    ObjectNode stored = narrative("Anterior", "Plan");
+    stored.withObject("/narrative").put("currentIllness", "Historia anterior");
+    ObjectNode incoming = stored.deepCopy();
+    incoming.withObject("/narrative").put(
+        "currentIllness",
+        "e".repeat(ClinicalDocumentChangeValidator.MAX_NARRATIVE_FIELD_CHARS + 1));
+
+    assertFailure(incoming, stored, "CLINICAL_CURRENT_ILLNESS_TOO_LONG");
   }
 
   @Test

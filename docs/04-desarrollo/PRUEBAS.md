@@ -46,16 +46,17 @@ npm run build
 ```
 
 La suite pura cubre proyecciones, normalización del workspace, edición
-estructurada de Motivo de consulta y Conclusión / resumen, registro de borradores sin contenido
-clínico, códigos de conflicto y comparación de revisiones. La compilación usa
-la configuración de producción y aplica sus presupuestos de tamaño.
+estructurada de Motivo de consulta, Antecedentes de enfermedad actual y
+Conclusión / resumen, registro de borradores sin contenido clínico, códigos de
+conflicto y comparación de revisiones. La compilación usa la configuración de
+producción y aplica sus presupuestos de tamaño.
 
-Las pruebas Java de `ClinicalChiefComplaintAuthority` y
-`ClinicalSummaryPlanAuthority` demuestran que actor, fecha, motivo y versiones
-provienen del servidor, que un cliente no puede reescribir la cadena confirmada
-y que el valor legacy no textual se conserva. El contrato
-MVC comprueba además que `PUT /api/hc` devuelve el estado canónico con la nueva
-revisión y sin el comando transitorio.
+Las pruebas Java de `ClinicalChiefComplaintAuthority`,
+`ClinicalCurrentIllnessAuthority` y `ClinicalSummaryPlanAuthority` demuestran
+que actor, fecha, motivo y versiones provienen del servidor, que un cliente no
+puede reescribir la cadena confirmada y que el valor legacy no textual se
+conserva. El contrato MVC comprueba además que `PUT /api/hc` devuelve el estado
+canónico con la nueva revisión y sin el comando transitorio.
 
 El recorrido concurrente y los editores migrados de la hoja se validan contra Java
 y PostgreSQL reales en un entorno Docker efímero:
@@ -74,6 +75,12 @@ recuperada desde PostgreSQL. También interceptan un primer guardado con `503`
 y comprueban que el diálogo y los valores editables permanezcan disponibles
 para reintentar. Motivo de consulta agrega además un `VERSION_CONFLICT` real
 con una segunda sesión.
+
+El recorrido dedicado de **Antecedentes de enfermedad actual** aplica el mismo
+arnés a primera carga, modificación con motivo, error transitorio, conflicto
+concurrente, persistencia canónica y recuperación. El corte 036 cerró con los
+cuatro recorridos Playwright aprobados contra Java y PostgreSQL efímeros; el
+arnés eliminó luego paciente, contenedores, redes y volúmenes sintéticos.
 
 En la aceptación final del 30/07/2026, la suite Java terminó con **101/101
 pruebas aprobadas**. El E2E utilizó una aplicación de cuatro drogas, interrumpió

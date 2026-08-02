@@ -89,6 +89,14 @@ generaliza la autoridad de secciones narrativas sin cambiar el contrato ya
 validado de Conclusión / resumen. La fila Hoja clínica continúa `Pendiente`
 hasta migrar los restantes editores e historial visible.
 
+El corte 036 migra **Antecedentes de enfermedad actual** al mismo editor Angular
+nativo y al motor puro compartido de narrativas simples. Conserva el `textarea`
+amplio del formulario histórico, primera carga, modificación con motivo,
+borrador protegido, límite de 50.000 caracteres, compatibilidad legacy y
+autoridad Java específica sobre `narrative.currentIllness`. La fila Hoja
+clínica permanece `Pendiente`: el E2E integrado del corte está aprobado, pero
+todavía faltan los restantes formularios y el historial visible por sección.
+
 ## Evidencia requerida para marcar `Validada`
 
 1. Prueba automática de la regla o del contrato.
