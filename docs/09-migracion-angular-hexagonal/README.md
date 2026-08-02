@@ -59,6 +59,10 @@ frontend anterior sólo se retira cuando la matriz de paridad está completa.
   ECOG/Karnofsky, Charlson, G8/CARG e IPSS/SHIM portados con campos
   condicionales, formularios inicialmente vacíos y límites clínicos comparados.
 
+- [Corte Angular 011](CORTE-ANGULAR-011-RIESGO-PROSTATICO.md): riesgo
+  prostático EAU, CAPRA/CAPRA-S, Partin y Roach portados con escenarios,
+  referencias oficiales seguras y fronteras clínicas verificadas.
+
 ## Ciclo obligatorio por capacidad
 
 1. Caracterizar el comportamiento vigente.

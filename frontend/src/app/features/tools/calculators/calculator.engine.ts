@@ -3,6 +3,7 @@ import {
   CalculatorEvaluation,
   CalculatorField,
   CalculatorInput,
+  CalculatorExternalLink,
   CalculatorResult,
   CalculatorValidationIssue,
   CalculatorValue,
@@ -42,7 +43,10 @@ export function evaluateCalculator(
   }
 
   for (const field of definition.fields) {
-    if (field.kind === 'section' || definition.isFieldValidationActive?.(field.id, values) === false) continue;
+    if (field.kind === 'section') continue;
+    const scenario = stringValue(values, 'scenario');
+    if (field.scenario && scenario && field.scenario !== scenario) continue;
+    if (definition.isFieldValidationActive?.(field.id, values) === false) continue;
     if (isMissing(field, values[field.id] ?? '')) {
       missing.push(issue(field, 'required', `Complete ${field.label}.`));
     }
@@ -182,4 +186,10 @@ function uniqueLabels(issues: readonly CalculatorValidationIssue[]): string[] {
 
 export function result(value: CalculatorResult): CalculatorResult {
   return value;
+}
+
+export function externalLink(label: string, href: string): CalculatorExternalLink {
+  const parsed = new URL(href);
+  if (parsed.protocol !== 'https:') throw new Error(`El enlace externo debe usar HTTPS: ${href}`);
+  return { kind: 'external-link', label, href: parsed.toString() };
 }

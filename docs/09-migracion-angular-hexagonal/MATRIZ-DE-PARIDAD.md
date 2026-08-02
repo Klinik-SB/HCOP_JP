@@ -36,10 +36,11 @@ la implementación anterior.
 | Ayuda y documentación | Cabecera y páginas de ayuda | Recursos estáticos | Índice, manuales, diagramas, videos y enlaces accesibles desde la interfaz final | Pendiente | No aplica |
 | Instalación y actualización | Lanzador y Docker | GHCR, Compose, Flyway | Primer inicio, actualización conservando datos, respaldo, restauración, healthcheck y un solo comando | Pendiente | Pendiente |
 
-Las 57 calculadoras y scores continúan en transición y se mantienen
+Las 57 calculadoras y scores continúan en transición y la fila permanece
 explícitamente `Pendiente`; Guías y AJCC/TNM no modifican ese estado.
-La base Angular ya inventaría las 57 y porta 7 con pruebas doradas, pero la fila
-no cambia de estado hasta completar y validar la biblioteca visible.
+La base Angular mantiene el inventario completo y porta 11 de 57 con pruebas
+doradas, pero la fila no cambia de estado hasta completar y validar la
+biblioteca visible.
 
 ## Evidencia requerida para marcar `Validada`
 

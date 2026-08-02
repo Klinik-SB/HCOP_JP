@@ -7,6 +7,12 @@ import {
   G8_CARG_CALCULATOR,
   IPSS_SHIM_CALCULATOR
 } from './legacy-calculators-04-07.definitions';
+import {
+  CAPRA_CALCULATOR,
+  DAMICO_CALCULATOR,
+  NODAL_RISK_CALCULATOR,
+  PARTIN_CALCULATOR
+} from './legacy-calculators-08-11.definitions';
 import { PORTED_CALCULATORS } from './ported-calculator.registry';
 import { CalculatorOrigin } from './calculator.models';
 
@@ -31,11 +37,11 @@ test('inventory contains the exact 57 unique legacy tools in stable order', () =
   }
 });
 
-test('only the first seven calculators are marked as ported', () => {
+test('only the first eleven calculators are marked as ported', () => {
   deepEqual(CALCULATOR_INVENTORY.filter((entry) => entry.migrationStatus === 'ported').map((entry) => entry.id),
-    ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim']);
+    ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk']);
   deepEqual(PORTED_CALCULATORS.map((entry) => entry.id),
-    ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim']);
+    ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk']);
 });
 
 test('BSA opens blank and keeps legacy values only as examples', () => {
@@ -420,11 +426,186 @@ test('SHIM not evaluable skips its five answers but keeps IPSS and QoL required'
   deepEqual(invalid.issues.map((issue) => issue.fieldId), ['ipss_qol']);
 });
 
+test('EAU prostate risk opens blank and requires its five clinical inputs', () => {
+  const evaluation = evaluateCalculator(DAMICO_CALCULATOR);
+  equal(evaluation.status, 'invalid');
+  deepEqual(evaluation.issues.map((issue) => issue.fieldId), ['psa', 'gg', 'ct', 'n', 'm']);
+});
+
+test('EAU prostate risk golden groups and boundaries match the legacy rule', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{}, 'Bajo riesgo'],
+    [{ psa: 10 }, 'Intermedio favorable'],
+    [{ psa: 20 }, 'Intermedio favorable'],
+    [{ psa: 20.1 }, 'Alto riesgo localizado'],
+    [{ psa: 9, gg: '2' }, 'Intermedio favorable'],
+    [{ psa: 10, gg: '2' }, 'Intermedio desfavorable'],
+    [{ gg: '3' }, 'Intermedio desfavorable'],
+    [{ gg: '4' }, 'Alto riesgo localizado']
+  ];
+  for (const [overrides, expected] of cases) {
+    equal(evaluateCalculator(DAMICO_CALCULATOR, damicoInput(overrides)).result.title, expected);
+  }
+});
+
+test('EAU prostate risk preserves metastatic and staging precedence', () => {
+  equal(evaluateCalculator(DAMICO_CALCULATOR, damicoInput({ m: 'm1', n: 'n1', ct: 't4' })).result.title,
+    'Fuera de alcance: enfermedad M1');
+  equal(evaluateCalculator(DAMICO_CALCULATOR, damicoInput({ m: 'mx', n: 'n1', ct: 't4' })).result.title,
+    'No clasificable: falta confirmar M0');
+  equal(evaluateCalculator(DAMICO_CALCULATOR, damicoInput({ ct: 't3', n: 'nx' })).result.title,
+    'Localmente avanzado');
+  equal(evaluateCalculator(DAMICO_CALCULATOR, damicoInput({ n: 'n1' })).result.title,
+    'Localmente avanzado');
+  equal(evaluateCalculator(DAMICO_CALCULATOR, damicoInput({ n: 'nx' })).result.title,
+    'No clasificable: falta confirmar cN0');
+});
+
+test('CAPRA starts in pre-treatment mode and validates only that scenario', () => {
+  const initial = evaluateCalculator(CAPRA_CALCULATOR);
+  equal(initial.status, 'invalid');
+  equal(initial.values['scenario'], 'pre');
+  deepEqual(initial.issues.map((issue) => issue.fieldId), [
+    'age', 'psa', 'capraPrimary', 'capraSecondary', 'ct', 'positiveCores', 'totalCores'
+  ]);
+
+  const post = evaluateCalculator(CAPRA_CALCULATOR, { scenario: 'post' });
+  deepEqual(post.issues.map((issue) => issue.fieldId), ['capraSpsa', 'capraSPrimary', 'capraSSecondary']);
+});
+
+test('CAPRA golden pre-treatment result and score thresholds match legacy', () => {
+  const golden = evaluateCalculator(CAPRA_CALCULATOR, capraPreInput());
+  equal(golden.status, 'calculated');
+  equal(golden.result.title, 'CAPRA 3');
+  equal(golden.result.badge, 'intermedio');
+  deepEqual(golden.result.metrics, [
+    { label: 'Puntaje', value: 3 },
+    { label: 'Escala', value: 'CAPRA' },
+    { label: 'Cilindros positivos', value: '25.0%' }
+  ]);
+
+  const cases: readonly [Readonly<Record<string, unknown>>, number][] = [
+    [{ age: 49, psa: 6, capraSecondary: '3', positiveCores: 0, totalCores: 100 }, 0],
+    [{ age: 50, psa: 6, capraSecondary: '3', positiveCores: 0, totalCores: 100 }, 1],
+    [{ age: 49, psa: 6.1, capraSecondary: '3', positiveCores: 0, totalCores: 100 }, 1],
+    [{ age: 49, psa: 10, capraSecondary: '3', positiveCores: 0, totalCores: 100 }, 1],
+    [{ age: 49, psa: 10.1, capraSecondary: '3', positiveCores: 0, totalCores: 100 }, 2],
+    [{ age: 49, psa: 20, capraSecondary: '3', positiveCores: 0, totalCores: 100 }, 2],
+    [{ age: 49, psa: 20.1, capraSecondary: '3', positiveCores: 0, totalCores: 100 }, 3],
+    [{ age: 49, psa: 30, capraSecondary: '3', positiveCores: 0, totalCores: 100 }, 3],
+    [{ age: 49, psa: 30.1, capraSecondary: '3', positiveCores: 0, totalCores: 100 }, 4],
+    [{ age: 49, psa: 6, capraSecondary: '3', positiveCores: 33, totalCores: 100 }, 0],
+    [{ age: 49, psa: 6, capraSecondary: '3', positiveCores: 34, totalCores: 100 }, 1],
+    [{ age: 49, psa: 6, capraSecondary: '3', ct: 't3a', positiveCores: 0, totalCores: 100 }, 1]
+  ];
+  for (const [overrides, expected] of cases) {
+    equal(evaluateCalculator(CAPRA_CALCULATOR, capraPreInput(overrides)).result.metrics[0]?.value, expected);
+  }
+});
+
+test('CAPRA keeps out-of-model stages and incoherent cores explicit', () => {
+  const stage = evaluateCalculator(CAPRA_CALCULATOR, capraPreInput({ ct: 't3b' }));
+  equal(stage.result.title, 'CAPRA no calculable');
+  equal(stage.result.detail, 'CAPRA original no incluye cT3b ni cT4');
+
+  const cores = evaluateCalculator(CAPRA_CALCULATOR, capraPreInput({ positiveCores: 13, totalCores: 12 }));
+  equal(cores.result.title, 'CAPRA no calculable');
+  equal(cores.result.detail, 'Revisar la cantidad de cilindros positivos y totales');
+});
+
+test('CAPRA-S golden case, categories and pathological factors match legacy', () => {
+  const golden = evaluateCalculator(CAPRA_CALCULATOR, capraPostInput());
+  equal(golden.status, 'calculated');
+  equal(golden.result.title, 'CAPRA-S 2');
+  equal(golden.result.badge, 'bajo');
+
+  const maximum = evaluateCalculator(CAPRA_CALCULATOR, capraPostInput({
+    capraSpsa: 20.1, capraSPrimary: '5', capraSSecondary: '5',
+    margin: true, ece: true, svi: true, lni: true
+  }));
+  equal(maximum.result.title, 'CAPRA-S 12');
+  equal(maximum.result.badge, 'alto');
+
+  equal(evaluateCalculator(CAPRA_CALCULATOR,
+    capraPostInput({ capraSpsa: 6, capraSPrimary: '3', capraSSecondary: '3' })).result.title, 'CAPRA-S 0');
+  equal(evaluateCalculator(CAPRA_CALCULATOR,
+    capraPostInput({ capraSpsa: 6.1, capraSPrimary: '3', capraSSecondary: '3' })).result.title, 'CAPRA-S 1');
+  equal(evaluateCalculator(CAPRA_CALCULATOR,
+    capraPostInput({ capraSpsa: 10.1, capraSPrimary: '3', capraSSecondary: '3' })).result.title, 'CAPRA-S 2');
+});
+
+test('Partin prepares the official lookup profile without inventing local percentages', () => {
+  const blank = evaluateCalculator(PARTIN_CALCULATOR);
+  deepEqual(blank.issues.map((issue) => issue.fieldId), ['psaCat', 'gg', 'ct']);
+
+  const evaluation = evaluateCalculator(PARTIN_CALCULATOR, { psaCat: '4to10', gg: '2', ct: 't2a' });
+  equal(evaluation.status, 'calculated');
+  equal(evaluation.result.title, 'Consulta de tablas Partin oficiales');
+  equal(evaluation.result.detail, 'Perfil preparado: PSA 4to10, T2A, GG2.');
+  equal(evaluation.result.metrics.some((metric) => String(metric.value).includes('%')), false);
+  const link = evaluation.result.notes[1];
+  equal(typeof link === 'object' ? link.kind : '', 'external-link');
+  equal(typeof link === 'object' ? link.label : '', 'Abrir tablas Partin de Johns Hopkins');
+  equal(typeof link === 'object' ? new URL(link.href).protocol : '', 'https:');
+});
+
+test('Partin rejects unknown lookup categories', () => {
+  const evaluation = evaluateCalculator(PARTIN_CALCULATOR, { psaCat: 'invented', gg: '2', ct: 't2a' });
+  equal(evaluation.status, 'invalid');
+  deepEqual(evaluation.issues.map((issue) => issue.code), ['unknown-option']);
+});
+
+test('Roach nodal risk keeps the historical formula exact and does not clamp it', () => {
+  const blank = evaluateCalculator(NODAL_RISK_CALCULATOR);
+  deepEqual(blank.issues.map((issue) => issue.fieldId), ['psa', 'gleason']);
+
+  const golden = evaluateCalculator(NODAL_RISK_CALCULATOR, { psa: 12, gleason: '7' });
+  equal(golden.result.title, 'Roach: 18.0%');
+  equal(golden.result.severity, 'info');
+  equal(evaluateCalculator(NODAL_RISK_CALCULATOR, { psa: 0, gleason: '6' }).result.title, 'Roach: 0.0%');
+  equal(evaluateCalculator(NODAL_RISK_CALCULATOR, { psa: 90, gleason: '10' }).result.title, 'Roach: 100.0%');
+
+  const above = evaluateCalculator(NODAL_RISK_CALCULATOR, { psa: 90.1, gleason: '10' });
+  equal(above.result.title, 'Roach fuera del rango interpretable');
+  equal(above.result.metrics[0]?.value, '100.1%');
+  equal(above.result.severity, 'warn');
+});
+
+test('Roach exposes Briganti only as a typed HTTPS reference and validates its inputs', () => {
+  const evaluation = evaluateCalculator(NODAL_RISK_CALCULATOR, { psa: 12, gleason: '7' });
+  const link = evaluation.result.notes[1];
+  equal(typeof link === 'object' ? link.kind : '', 'external-link');
+  equal(typeof link === 'object' ? link.label : '', 'Abrir nomograma validado');
+  equal(typeof link === 'object' ? new URL(link.href).protocol : '', 'https:');
+
+  equal(evaluateCalculator(NODAL_RISK_CALCULATOR, { psa: -0.1, gleason: '7' }).issues[0]?.code, 'below-minimum');
+  equal(evaluateCalculator(NODAL_RISK_CALCULATOR, { psa: 12.05, gleason: '7' }).issues[0]?.code, 'step-mismatch');
+  equal(evaluateCalculator(NODAL_RISK_CALCULATOR, { psa: 12, gleason: '11' }).issues[0]?.code, 'unknown-option');
+});
+
 function g8Input(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
   return {
     g8_food: '2', g8_weight: '3', g8_mobility: '2', g8_neuro: '2',
     g8_bmi: '3', g8_meds: '1', g8_health: '1', g8_age: '2',
     ...overrides
+  };
+}
+
+function damicoInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return { psa: 9, gg: '1', ct: 't1', n: 'n0', m: 'm0', ...overrides };
+}
+
+function capraPreInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'pre', age: 64, psa: 8, capraPrimary: '3', capraSecondary: '4',
+    ct: 't2a', positiveCores: 3, totalCores: 12, ...overrides
+  };
+}
+
+function capraPostInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'post', capraSpsa: 8, capraSPrimary: '3', capraSSecondary: '4',
+    margin: false, ece: false, svi: false, lni: false, ...overrides
   };
 }
 

@@ -18,6 +18,7 @@
     "calculator.engine.ts",
     "core-calculator.definitions.ts",
     "legacy-calculators-04-07.definitions.ts",
+    "legacy-calculators-08-11.definitions.ts",
     "ported-calculator.registry.ts",
     "calculator.golden-tests.ts"
   ]

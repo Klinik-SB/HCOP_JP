@@ -28,6 +28,7 @@ interface CalculatorFieldBase<TKind extends string> {
   readonly required: boolean;
   readonly help?: string;
   readonly wide?: boolean;
+  readonly scenario?: string;
 }
 
 export interface CalculatorNumberField extends CalculatorFieldBase<'number'> {
@@ -70,6 +71,14 @@ export interface CalculatorMetric {
   readonly value: string | number;
 }
 
+export interface CalculatorExternalLink {
+  readonly kind: 'external-link';
+  readonly label: string;
+  readonly href: string;
+}
+
+export type CalculatorNote = string | CalculatorExternalLink;
+
 export interface CalculatorResult {
   readonly title: string;
   readonly detail: string;
@@ -79,7 +88,7 @@ export interface CalculatorResult {
   readonly showScore: boolean;
   readonly severity: CalculatorSeverity;
   readonly metrics: readonly CalculatorMetric[];
-  readonly notes: readonly string[];
+  readonly notes: readonly CalculatorNote[];
 }
 
 export type CalculatorValidationCode =
