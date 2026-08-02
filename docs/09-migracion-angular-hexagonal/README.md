@@ -103,6 +103,9 @@ configuración institucional y cerrar la paridad visual/E2E integrada.
 - [Corte Angular 023](CORTE-ANGULAR-023-RENDERIZADOR-CALCULADORAS.md):
   renderizador Angular nativo de las 57 herramientas, con carga diferida,
   permisos efectivos, formulario tipado y salidas estructuradas sin iframe.
+- [Corte Angular 024](CORTE-ANGULAR-024-CATALOGO-Y-MOTOR-CONFIGURABLE.md):
+  catálogo institucional aislado, merge seguro de built-ins y motor TypeScript
+  de fórmulas/scores comparado contra los dos motores legacy reales.
 
 ## Ciclo obligatorio por capacidad
 
