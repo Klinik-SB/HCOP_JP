@@ -14,6 +14,7 @@ import {
   ToolsApiError
 } from './tools.models';
 import { ToolsService } from './tools.service';
+import { CalculatorWorkspaceComponent } from './calculators/calculator-workspace.component';
 
 interface GuideRequest {
   readonly sequence: number;
@@ -69,6 +70,7 @@ const INTERNAL_AXES = new Set(['T', 'N', 'M', 'Classification', 'DescY', 'DescR'
 
 @Component({
   selector: 'app-tools',
+  imports: [CalculatorWorkspaceComponent],
   host: {
     id: 'rightPanelTools',
     class: 'right-tab-panel active',
@@ -203,7 +205,10 @@ export class ToolsComponent implements OnDestroy {
         this.activePane.set('guides');
         this.cancelRequests();
       }
-      if (!canCalculate) this.cancelStage('Puede consultar las definiciones TNM, pero no calcular sin el permiso de uso de herramientas.');
+      if (!canCalculate) {
+        if (this.activePane() === 'calculators') this.activePane.set('guides');
+        this.cancelStage('Puede consultar las definiciones TNM, pero no calcular sin el permiso de uso de herramientas.');
+      }
     }, { injector: this.injector });
   }
 
@@ -213,6 +218,7 @@ export class ToolsComponent implements OnDestroy {
 
   selectPane(pane: ToolPane): void {
     if (!this.canView()) return;
+    if (pane === 'calculators' && !this.canUse()) return;
     this.activePane.set(pane);
     if (pane === 'guides' && !this.guideCatalog() && !this.guideLoading()) this.loadGuides(false);
     if (pane === 'tnm' && !this.ajccCatalog() && !this.ajccCatalogLoading()) this.loadAjccCatalog(false);

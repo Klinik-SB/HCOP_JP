@@ -1,0 +1,276 @@
+<section class="calculator-library angular-calculator-library">
+  <div class="tools-main" [attr.data-tool-category]="activeCalculator()?.category || 'general'">
+    <section class="embedded-controls" aria-label="Selección de calculadora">
+      <label>
+        <span>Patología o grupo</span>
+        <select [value]="activeCategory()" (change)="changeCategory($event)">
+          @for (category of categories; track category.id) {
+            <option [value]="category.id">{{ category.label }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Calculadora</span>
+        <select
+          [value]="selectedCalculatorId()"
+          [disabled]="filteredCalculators().length === 0"
+          (change)="changeCalculator($event)">
+          @for (calculator of filteredCalculators(); track calculator.id) {
+            <option [value]="calculator.id">{{ calculator.shortTitle || calculator.title }}</option>
+          }
+        </select>
+      </label>
+    </section>
+
+    @if (activeCalculator(); as calculator) {
+      <header class="tools-header">
+        <div>
+          <p class="eyebrow">Herramientas clínicas</p>
+          <h1>{{ calculator.title }}</h1>
+          <p>{{ calculator.subtitle }}</p>
+        </div>
+      </header>
+
+      <section class="support-row">
+        <article>
+          <strong>Uso clínico</strong>
+          <p>{{ calculator.clinicalUse }}</p>
+        </article>
+      </section>
+
+      <section class="workspace">
+        <form class="tool-panel" autocomplete="off" novalidate (submit)="$event.preventDefault(); calculate()">
+          <div class="panel-title">
+            <strong>Variables</strong>
+            <span>{{ calculator.source }}</span>
+          </div>
+
+          <div class="field-grid">
+            @for (field of calculator.fields; track field.id) {
+              @if (fieldVisible(field)) {
+                <div
+                  class="field"
+                  [class.wide]="field.wide"
+                  [class.checkbox-field]="field.kind === 'checkbox'"
+                  [class.section-field]="field.kind === 'section'"
+                  [attr.data-scenario]="field.scenario || null">
+                  @switch (field.kind) {
+                    @case ('section') {
+                      <strong>{{ field.label }}</strong>
+                      @if (field.help) { <small>{{ field.help }}</small> }
+                    }
+                    @case ('checkbox') {
+                      <label>
+                        <input
+                          type="checkbox"
+                          [id]="field.id"
+                          [checked]="values()[field.id] === true"
+                          [attr.aria-invalid]="fieldIssue(field.id) ? 'true' : null"
+                          [attr.aria-describedby]="fieldIssue(field.id) ? field.id + '-error' : null"
+                          (change)="updateField(field, $event)">
+                        <span>
+                          <strong>{{ field.label }}</strong>
+                          @if (field.help) { <small>{{ field.help }}</small> }
+                          @if (fieldIssue(field.id); as issue) {
+                            <small class="field-error" [id]="field.id + '-error'" role="alert">{{ issue }}</small>
+                          }
+                        </span>
+                      </label>
+                    }
+                    @case ('select') {
+                      <label>
+                        <span>{{ field.label }}</span>
+                        <select
+                          [id]="field.id"
+                          [value]="values()[field.id]"
+                          [attr.aria-invalid]="fieldIssue(field.id) ? 'true' : null"
+                          [attr.aria-describedby]="fieldIssue(field.id) ? field.id + '-error' : null"
+                          (change)="updateField(field, $event)">
+                          @if ((!field.options.length || values()[field.id] === '') && !hasEmptyOption(field)) {
+                            <option value="" disabled>Seleccioná una opción</option>
+                          }
+                          @for (option of field.options; track option.value) {
+                            <option [value]="option.value">{{ option.label }}</option>
+                          }
+                        </select>
+                        @if (field.help) { <small>{{ field.help }}</small> }
+                        @if (fieldIssue(field.id); as issue) {
+                          <small class="field-error" [id]="field.id + '-error'" role="alert">{{ issue }}</small>
+                        }
+                      </label>
+                    }
+                    @case ('textarea') {
+                      <label>
+                        <span>{{ field.label }}</span>
+                        <textarea
+                          [id]="field.id"
+                          [rows]="field.rows || 4"
+                          [value]="values()[field.id]"
+                          [placeholder]="fieldPlaceholder(field)"
+                          [attr.aria-invalid]="fieldIssue(field.id) ? 'true' : null"
+                          [attr.aria-describedby]="fieldIssue(field.id) ? field.id + '-error' : null"
+                          (input)="updateField(field, $event)"></textarea>
+                        @if (field.help) { <small>{{ field.help }}</small> }
+                        @if (fieldIssue(field.id); as issue) {
+                          <small class="field-error" [id]="field.id + '-error'" role="alert">{{ issue }}</small>
+                        }
+                      </label>
+                    }
+                    @case ('text') {
+                      <label>
+                        <span>{{ field.label }}</span>
+                        <input
+                          [id]="field.id"
+                          type="text"
+                          [value]="values()[field.id]"
+                          [placeholder]="fieldPlaceholder(field)"
+                          [attr.aria-invalid]="fieldIssue(field.id) ? 'true' : null"
+                          [attr.aria-describedby]="fieldIssue(field.id) ? field.id + '-error' : null"
+                          (input)="updateField(field, $event)">
+                        @if (field.help) { <small>{{ field.help }}</small> }
+                        @if (fieldIssue(field.id); as issue) {
+                          <small class="field-error" [id]="field.id + '-error'" role="alert">{{ issue }}</small>
+                        }
+                      </label>
+                    }
+                    @case ('number') {
+                      <label>
+                        <span>{{ field.label }}</span>
+                        <div class="calculator-input">
+                          <input
+                            [id]="field.id"
+                            type="number"
+                            [value]="values()[field.id]"
+                            [placeholder]="fieldPlaceholder(field)"
+                            [attr.min]="field.min ?? null"
+                            [attr.max]="field.max ?? null"
+                            [attr.step]="field.step ?? 'any'"
+                            [attr.aria-invalid]="fieldIssue(field.id) ? 'true' : null"
+                            [attr.aria-describedby]="fieldIssue(field.id) ? field.id + '-error' : null"
+                            (input)="updateField(field, $event)">
+                          @if (field.unit) { <small>{{ field.unit }}</small> }
+                        </div>
+                        @if (field.help) { <small>{{ field.help }}</small> }
+                        @if (fieldIssue(field.id); as issue) {
+                          <small class="field-error" [id]="field.id + '-error'" role="alert">{{ issue }}</small>
+                        }
+                      </label>
+                    }
+                  }
+                </div>
+              }
+            }
+
+            <div class="calculate-actions wide">
+              <small>Los valores grises son ejemplos; no se usan hasta que escribas los datos reales.</small>
+              <button type="submit" [disabled]="!canCalculate()">
+                {{ canCalculate() ? 'Calcular' : 'Sin permiso de cálculo' }}
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <aside
+          class="result-panel"
+          [class.good]="displayedResult().severity === 'good'"
+          [class.warn]="displayedResult().severity === 'warn'"
+          [class.bad]="displayedResult().severity === 'bad'"
+          [class.info]="displayedResult().severity === 'info'"
+          aria-live="polite">
+          <div class="result-kicker">{{ displayedResult().badge || 'Resultado' }}</div>
+          <h2>{{ displayedResult().title }}</h2>
+          <p>{{ displayedResult().detail }}</p>
+
+          @if (displayedResult().showScore) {
+            <div class="score">
+              <div class="score-head">
+                <span>{{ displayedResult().scoreName || 'Señal integrada' }}</span>
+                <strong>{{ scoreLabel(displayedResult().score) }}</strong>
+              </div>
+              <div class="score-track"><i [style.width]="scoreWidth(displayedResult().score)"></i></div>
+            </div>
+          }
+
+          @if (displayedResult().metrics.length) {
+            <div class="metric-grid">
+              @for (metric of displayedResult().metrics; track $index) {
+                <div class="metric">
+                  <span>{{ metric.label }}</span>
+                  <strong>{{ metric.value }}</strong>
+                </div>
+              }
+            </div>
+          }
+
+          @if (displayedResult().notes.length) {
+            <div class="notes">
+              @for (note of displayedResult().notes; track $index) {
+                @if (isExternalLink(note)) {
+                  <div class="note"><a class="tool-inline-link" [href]="note.href" target="_blank" rel="noopener noreferrer">{{ note.label }}</a></div>
+                } @else if (isChecklist(note)) {
+                  <div class="note calculator-structured-note">
+                    <section class="mskcc-checklist">
+                      <strong>{{ note.title }}</strong>
+                      @if (note.items.length) {
+                        <ul>
+                          @for (item of note.items; track $index) {
+                            <li [class.done]="item.status === 'complete'" [class.missing]="item.status === 'missing'">
+                              <span>{{ item.status === 'complete' ? 'Completo' : 'Falta' }}</span>
+                              {{ item.label }}
+                            </li>
+                          }
+                        </ul>
+                      } @else {
+                        <p>{{ note.emptyText }}</p>
+                      }
+                    </section>
+                  </div>
+                } @else if (isTable(note)) {
+                  <div class="note calculator-structured-note">
+                    <div
+                      class="calculator-table-wrap"
+                      [class.rt-candidate-table-wrap]="calculator.category === 'radioterapia'"
+                      [class.mskcc-table-wrap]="calculator.category !== 'radioterapia'">
+                      <table
+                        [class.rt-candidate-table]="calculator.category === 'radioterapia'"
+                        [class.mskcc-table]="calculator.category !== 'radioterapia'">
+                        <caption>{{ note.title }}</caption>
+                        <thead>
+                          <tr>
+                            @for (column of note.columns; track $index) { <th scope="col">{{ column }}</th> }
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (row of note.rows; track $index; let first = $first) {
+                            <tr [class.is-best]="calculator.category === 'radioterapia' && first">
+                              @for (cell of row; track $index) {
+                                <td>
+                                  @if (isExternalLink(cell)) {
+                                    <a [href]="cell.href" target="_blank" rel="noopener noreferrer">{{ cell.label }}</a>
+                                  } @else {
+                                    {{ cell }}
+                                  }
+                                </td>
+                              }
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="note">{{ note }}</div>
+                }
+              }
+            </div>
+          }
+        </aside>
+      </section>
+    } @else {
+      <section class="protocol-empty calculator-empty-state" role="status">
+        <strong>No hay calculadoras que coincidan</strong>
+        <span>Elegí otro grupo o seleccioná “Todas”.</span>
+      </section>
+    }
+  </div>
+</section>

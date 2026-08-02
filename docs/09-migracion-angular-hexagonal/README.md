@@ -11,9 +11,9 @@ frontend anterior sólo se retira cuando la matriz de paridad está completa.
 
 La biblioteca declarativa Angular conserva el inventario completo y tiene
 **57 de 57 calculadoras** portadas con pruebas doradas. Esto completa las
-definiciones y reglas, pero no habilita todavía una vista parcial: la capacidad
-visible seguirá `Pendiente` hasta completar renderizador, configuración,
-permisos y paridad visual/E2E.
+definiciones y reglas. El corte 023 agrega el primer renderizador Angular
+visible, nativo y diferido; la capacidad seguirá `Pendiente` hasta aplicar la
+configuración institucional y cerrar la paridad visual/E2E integrada.
 
 ## Documentos de control
 
@@ -100,6 +100,9 @@ permisos y paridad visual/E2E.
 - [Corte Angular 022](CORTE-ANGULAR-022-GAME-PCI-Y-RADIOTERAPIA.md): GAME,
   PCI y las cuatro herramientas de radioterapia completan las 57 definiciones,
   con ecuaciones LQ, enumeración SIB y tablas tipadas verificadas.
+- [Corte Angular 023](CORTE-ANGULAR-023-RENDERIZADOR-CALCULADORAS.md):
+  renderizador Angular nativo de las 57 herramientas, con carga diferida,
+  permisos efectivos, formulario tipado y salidas estructuradas sin iframe.
 
 ## Ciclo obligatorio por capacidad
 

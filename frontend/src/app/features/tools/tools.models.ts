@@ -1,4 +1,4 @@
-export type ToolPane = 'guides' | 'tnm';
+export type ToolPane = 'guides' | 'tnm' | 'calculators';
 
 export interface GuideItem {
   readonly name: string;

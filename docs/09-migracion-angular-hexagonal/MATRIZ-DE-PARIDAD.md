@@ -39,10 +39,10 @@ la implementación anterior.
 Las 57 calculadoras y scores continúan en transición y la fila permanece
 explícitamente `Pendiente`; Guías y AJCC/TNM no modifican ese estado.
 La base Angular ya porta **57 de 57 definiciones y reglas** con pruebas doradas,
-pero completar el código declarativo no equivale a validar la capacidad. La
-fila no cambia de estado hasta integrar el renderizador y la configuración,
-verificar permisos y completar la comparación visual/E2E de la biblioteca
-visible.
+y el corte 023 incorpora un renderizador Angular nativo con permiso efectivo y
+carga diferida. La fila no cambia de estado hasta integrar la configuración
+institucional, probar overrides y herramientas configurables, y completar la
+comparación visual/E2E de la biblioteca visible.
 
 ## Evidencia requerida para marcar `Validada`
 

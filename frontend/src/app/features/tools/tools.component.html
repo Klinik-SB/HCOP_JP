@@ -32,6 +32,19 @@
         (click)="selectPane('tnm')">
         Estadificación - TNM
       </button>
+      @if (canUse()) {
+        <button
+          id="toolsCalculatorsTab"
+          type="button"
+          role="tab"
+          data-tool-tab="calculators"
+          aria-controls="toolsCalculatorsPane"
+          [class.active]="activePane() === 'calculators'"
+          [attr.aria-selected]="activePane() === 'calculators'"
+          (click)="selectPane('calculators')">
+          Calculadoras
+        </button>
+      }
     </nav>
 
     <div
@@ -272,6 +285,23 @@
         </form>
       }
     </div>
+
+    @if (canUse()) {
+      <div
+        id="toolsCalculatorsPane"
+        class="tool-pane"
+        data-tool-pane="calculators"
+        role="tabpanel"
+        aria-labelledby="toolsCalculatorsTab"
+        [class.active]="activePane() === 'calculators'"
+        [hidden]="activePane() !== 'calculators'">
+        @defer (when activePane() === 'calculators') {
+          <app-calculator-workspace [canCalculate]="canUse()" />
+        } @placeholder {
+          <div class="protocol-loading" role="status">Preparando calculadoras…</div>
+        }
+      </div>
+    }
 
   </section>
 }
