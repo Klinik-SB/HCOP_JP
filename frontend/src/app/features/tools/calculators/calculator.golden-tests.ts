@@ -25,6 +25,12 @@ import {
   NMIBC_CALCULATOR,
   UTUC_CALCULATOR
 } from './legacy-calculators-16-19.definitions';
+import {
+  IGCCCG_CALCULATOR,
+  IMDC_CALCULATOR,
+  LEIBOVICH_CALCULATOR,
+  RENAL_COMPLEXITY_CALCULATOR
+} from './legacy-calculators-20-23.definitions';
 import { PORTED_CALCULATORS } from './ported-calculator.registry';
 import { CalculatorOrigin } from './calculator.models';
 
@@ -49,13 +55,15 @@ test('inventory contains the exact 57 unique legacy tools in stable order', () =
   }
 });
 
-test('only the first nineteen calculators are marked as ported', () => {
+test('only the first twenty-three calculators are marked as ported', () => {
   deepEqual(CALCULATOR_INVENTORY.filter((entry) => entry.migrationStatus === 'ported').map((entry) => entry.id),
     ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk',
-      'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude', 'nmibc', 'cystectomy', 'cisplatin', 'utuc']);
+      'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude', 'nmibc', 'cystectomy', 'cisplatin', 'utuc',
+      'renal-complexity', 'leibovich', 'imdc', 'igcccg']);
   deepEqual(PORTED_CALCULATORS.map((entry) => entry.id),
     ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk',
-      'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude', 'nmibc', 'cystectomy', 'cisplatin', 'utuc']);
+      'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude', 'nmibc', 'cystectomy', 'cisplatin', 'utuc',
+      'renal-complexity', 'leibovich', 'imdc', 'igcccg']);
 });
 
 test('BSA opens blank and keeps legacy values only as examples', () => {
@@ -1289,6 +1297,343 @@ test('ported 16 to 19 results contain typed text only and reject unknown selecto
   deepEqual(unknown.issues.map((issue) => issue.code), ['unknown-option']);
 });
 
+test('ported 20 to 23 preserve canonical metadata and complete field order', () => {
+  deepEqual([
+    RENAL_COMPLEXITY_CALCULATOR,
+    LEIBOVICH_CALCULATOR,
+    IMDC_CALCULATOR,
+    IGCCCG_CALCULATOR
+  ].map((definition) => ({
+    id: definition.id,
+    title: definition.title,
+    category: definition.category,
+    subtitle: definition.subtitle,
+    source: definition.source,
+    fieldIds: definition.fields.map((field) => field.id)
+  })), [
+    {
+      id: 'renal-complexity', title: 'RENAL / PADUA', category: 'renal',
+      subtitle: 'Complejidad anatómica, con escalas separadas.',
+      source: 'RENAL nephrometry 2009 · PADUA 2009',
+      fieldIds: ['scenario', 'renal_anatomy', 'renalSize', 'renalExo', 'renalNear', 'renalAp',
+        'renalLocation', 'renalHilar', 'padua_anatomy', 'paduaSize', 'paduaLong', 'paduaExo',
+        'paduaRim', 'paduaSinus', 'paduaCollecting', 'paduaAp']
+    },
+    {
+      id: 'leibovich', title: 'Leibovich 2003 / UISS localizado', category: 'renal',
+      subtitle: 'Modelos posnefrectomía separados y sin porcentajes locales.',
+      source: 'EAU RCC 2026 · Leibovich 2003 · UISS',
+      fieldIds: ['scenario', 'leibovich_path', 'leibPt', 'leibPn', 'leibSize', 'leibGrade',
+        'leibNecrosis', 'uiss_path', 'uissPt', 'uissN', 'uissM', 'uissGrade', 'uissEcog']
+    },
+    {
+      id: 'imdc', title: 'IMDC — carcinoma renal metastásico', category: 'renal',
+      subtitle: 'Pronóstico en carcinoma renal metastásico.', source: 'EAU RCC 2026 · IMDC',
+      fieldIds: ['imdc_factors', 'kps', 'time', 'hb', 'calcium', 'neut', 'platelets']
+    },
+    {
+      id: 'igcccg', title: 'IGCCCG testículo', category: 'testiculo',
+      subtitle: 'Riesgo en tumores germinales metastásicos.',
+      source: 'EAU Testicular Cancer 2026 · IGCCCG Update',
+      fieldIds: ['igcccg_context', 'histology', 'primary', 'nonPulmonary', 'afp',
+        'afpUpperLimit', 'hcg', 'ldhRatio']
+    }
+  ]);
+});
+
+test('renal, Leibovich and IGCCCG open without clinical defaults while preserving examples', () => {
+  const renal = evaluateCalculator(RENAL_COMPLEXITY_CALCULATOR);
+  equal(renal.status, 'invalid');
+  equal(renal.values['scenario'], 'renal');
+  deepEqual(renal.issues.map((issue) => issue.fieldId),
+    ['renalSize', 'renalExo', 'renalNear', 'renalAp', 'renalLocation']);
+  const renalSize = RENAL_COMPLEXITY_CALCULATOR.fields.find((field) => field.id === 'renalSize');
+  equal(renalSize?.kind === 'number' ? renalSize.exampleValue : null, 3.2);
+
+  const leibovich = evaluateCalculator(LEIBOVICH_CALCULATOR);
+  equal(leibovich.status, 'invalid');
+  equal(leibovich.values['scenario'], 'leibovich');
+  deepEqual(leibovich.issues.map((issue) => issue.fieldId), ['leibPt', 'leibSize', 'leibGrade']);
+
+  const igcccg = evaluateCalculator(IGCCCG_CALCULATOR);
+  equal(igcccg.status, 'invalid');
+  deepEqual(igcccg.issues.map((issue) => issue.fieldId),
+    ['histology', 'primary', 'afp', 'afpUpperLimit', 'hcg', 'ldhRatio']);
+  const histology = IGCCCG_CALCULATOR.fields.find((field) => field.id === 'histology');
+  equal(histology?.kind === 'select' ? histology.exampleValue : null, 'nonseminoma');
+});
+
+test('RENAL golden minimum preserves descriptor, suffix and explanatory output', () => {
+  const evaluation = evaluateCalculator(RENAL_COMPLEXITY_CALCULATOR, renalInput());
+  deepEqual(evaluation.result, {
+    title: 'RENAL 4x: complejidad baja',
+    detail: 'Resultado anatómico de la escala seleccionada; no es una probabilidad de malignidad ni de complicaciones.',
+    badge: 'RENAL', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'RENAL', value: '4x' },
+      { label: 'Complejidad', value: 'baja' },
+      { label: 'Tamaño', value: '3.2 cm' }
+    ],
+    notes: [
+      'RENAL total 4–12: 4–6 baja, 7–9 moderada, 10–12 alta.',
+      'Corroborar cada descriptor en imágenes multiplanares con contraste cuando sea posible.'
+    ]
+  });
+});
+
+test('RENAL preserves totals 6, 7, 9 and 10 and the exact 4/7 cm size borders', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{ renalSize: 4, renalLocation: '3' }, 'RENAL 6x: complejidad baja'],
+    [{ renalSize: 4.1, renalLocation: '3' }, 'RENAL 7x: complejidad moderada'],
+    [{ renalSize: 6.9, renalExo: '2', renalNear: '2', renalLocation: '3' },
+      'RENAL 9x: complejidad moderada'],
+    [{ renalSize: 7, renalExo: '2', renalNear: '2', renalLocation: '3' },
+      'RENAL 10x: complejidad alta']
+  ];
+  for (const [overrides, expectedTitle] of cases) {
+    equal(evaluateCalculator(RENAL_COMPLEXITY_CALCULATOR, renalInput(overrides)).result.title,
+      expectedTitle);
+  }
+  const hilar = evaluateCalculator(RENAL_COMPLEXITY_CALCULATOR,
+    renalInput({ renalAp: 'p', renalHilar: true }));
+  equal(hilar.result.title, 'RENAL 4ph: complejidad baja');
+  equal(hilar.result.metrics[0]?.value, '4ph');
+});
+
+test('PADUA golden minimum and 4/7 cm size borders preserve totals 6 through 10', () => {
+  const minimum = evaluateCalculator(RENAL_COMPLEXITY_CALCULATOR, paduaInput());
+  equal(minimum.result.title, 'PADUA 6x: complejidad baja');
+  deepEqual(minimum.result.notes, [
+    'PADUA total 6–14: 6–7 baja, 8–9 moderada, ≥10 alta.',
+    'Corroborar cada descriptor en imágenes multiplanares con contraste cuando sea posible.'
+  ]);
+  const cases: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{ paduaSize: 4.1 }, 'PADUA 7x: complejidad baja'],
+    [{ paduaSize: 7 }, 'PADUA 7x: complejidad baja'],
+    [{ paduaSize: 7.1 }, 'PADUA 8x: complejidad moderada'],
+    [{ paduaSize: 7.1, paduaLong: '2' }, 'PADUA 9x: complejidad moderada'],
+    [{ paduaSize: 7.1, paduaLong: '2', paduaRim: '2' }, 'PADUA 10x: complejidad alta']
+  ];
+  for (const [overrides, expectedTitle] of cases) {
+    equal(evaluateCalculator(RENAL_COMPLEXITY_CALCULATOR, paduaInput(overrides)).result.title,
+      expectedTitle);
+  }
+  equal(evaluateCalculator(RENAL_COMPLEXITY_CALCULATOR,
+    paduaInput({ paduaAp: 'a' })).result.metrics[0]?.value, '6a');
+});
+
+test('RENAL and PADUA keep scenarios isolated and enforce browser constraints', () => {
+  const paduaBlank = evaluateCalculator(RENAL_COMPLEXITY_CALCULATOR, { scenario: 'padua' });
+  deepEqual(paduaBlank.issues.map((issue) => issue.fieldId),
+    ['paduaSize', 'paduaLong', 'paduaExo', 'paduaRim', 'paduaSinus', 'paduaCollecting', 'paduaAp']);
+  const below = evaluateCalculator(RENAL_COMPLEXITY_CALCULATOR, renalInput({ renalSize: 0 }));
+  deepEqual(below.issues.map((issue) => issue.code), ['below-minimum']);
+  const step = evaluateCalculator(RENAL_COMPLEXITY_CALCULATOR, renalInput({ renalSize: 3.25 }));
+  deepEqual(step.issues.map((issue) => issue.code), ['step-mismatch']);
+  const unknown = evaluateCalculator(RENAL_COMPLEXITY_CALCULATOR, renalInput({ renalAp: 'posterior' }));
+  deepEqual(unknown.issues.map((issue) => issue.code), ['unknown-option']);
+});
+
+test('Leibovich golden output preserves totals 2, 3, 5 and 6 category borders', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string][] = [
+    [{ leibPt: 'pt1b' }, 'Leibovich 2: riesgo bajo', 'good'],
+    [{ leibPt: 'pt2' }, 'Leibovich 3: riesgo intermedio', 'warn'],
+    [{ leibPt: 'pt3', leibNecrosis: true }, 'Leibovich 5: riesgo intermedio', 'warn'],
+    [{ leibPt: 'pt3', leibPn: true }, 'Leibovich 6: riesgo alto', 'bad']
+  ];
+  for (const [overrides, expectedTitle, expectedSeverity] of cases) {
+    const evaluation = evaluateCalculator(LEIBOVICH_CALCULATOR, leibovichInput(overrides));
+    equal(evaluation.result.title, expectedTitle);
+    equal(evaluation.result.severity, expectedSeverity);
+  }
+  const golden = evaluateCalculator(LEIBOVICH_CALCULATOR, leibovichInput({ leibPt: 'pt1b' }));
+  equal(golden.result.detail, 'Puntaje determinístico publicado para ccRCC M0 operado.');
+  deepEqual(golden.result.notes, [
+    'Aplicar sólo a carcinoma renal de células claras, M0, después de cirugía.',
+    'El grupo estratifica recurrencia; no indica por sí solo adyuvancia.'
+  ]);
+});
+
+test('Leibovich uses the inclusive 10 cm threshold and independent point components', () => {
+  const below = evaluateCalculator(LEIBOVICH_CALCULATOR,
+    leibovichInput({ leibPt: 'pt1a', leibGrade: '1', leibSize: 9.9 }));
+  equal(below.result.metrics[0]?.value, 0);
+  const at = evaluateCalculator(LEIBOVICH_CALCULATOR,
+    leibovichInput({ leibPt: 'pt1a', leibGrade: '1', leibSize: 10 }));
+  equal(at.result.metrics[0]?.value, 1);
+  const maximum = evaluateCalculator(LEIBOVICH_CALCULATOR, leibovichInput({
+    leibPt: 'pt4', leibPn: true, leibSize: 10, leibGrade: '4', leibNecrosis: true
+  }));
+  equal(maximum.result.title, 'Leibovich 11: riesgo alto');
+});
+
+test('UISS preserves low, intermediate and high localized borders', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{ uissPt: 'pt1a', uissGrade: '2', uissEcog: '0' }, 'UISS: Bajo riesgo'],
+    [{ uissPt: 'pt1a', uissGrade: '2', uissEcog: '1' }, 'UISS: Riesgo intermedio'],
+    [{ uissPt: 'pt3', uissGrade: '2', uissEcog: '0' }, 'UISS: Riesgo intermedio'],
+    [{ uissPt: 'pt3', uissGrade: '2', uissEcog: '1' }, 'UISS: Alto riesgo'],
+    [{ uissPt: 'pt4', uissGrade: '1', uissEcog: '0' }, 'UISS: Alto riesgo']
+  ];
+  for (const [overrides, expectedTitle] of cases) {
+    const evaluation = evaluateCalculator(LEIBOVICH_CALCULATOR, uissInput(overrides));
+    equal(evaluation.result.title, expectedTitle);
+    equal(evaluation.result.severity, 'info');
+  }
+});
+
+test('UISS keeps N-positive and M1 outside its localized summary', () => {
+  for (const overrides of [{ uissN: 'nplus' }, { uissM: 'm1' }]) {
+    const evaluation = evaluateCalculator(LEIBOVICH_CALCULATOR, uissInput(overrides));
+    equal(evaluation.result.title, 'UISS: No corresponde al UISS localizado');
+    equal(evaluation.result.detail,
+      'Esta versión resumida no clasifica N+ o M1 como enfermedad localizada.');
+  }
+  const switchedBlank = evaluateCalculator(LEIBOVICH_CALCULATOR, { scenario: 'uiss' });
+  deepEqual(switchedBlank.issues.map((issue) => issue.fieldId),
+    ['uissPt', 'uissN', 'uissM', 'uissGrade', 'uissEcog']);
+});
+
+test('IMDC accepts an empty checkbox form and preserves 0, 1, 2, 3 and 6 factor groups', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string, string][] = [
+    [{}, 'IMDC favorable', '0 / 6', 'good'],
+    [{ kps: true }, 'IMDC intermedio', '1 / 6', 'warn'],
+    [{ kps: true, time: true }, 'IMDC intermedio', '2 / 6', 'warn'],
+    [{ kps: true, time: true, hb: true }, 'IMDC pobre', '3 / 6', 'bad'],
+    [{ kps: true, time: true, hb: true, calcium: true, neut: true, platelets: true },
+      'IMDC pobre', '6 / 6', 'bad']
+  ];
+  for (const [input, expectedTitle, expectedFactors, expectedSeverity] of cases) {
+    const evaluation = evaluateCalculator(IMDC_CALCULATOR, input);
+    equal(evaluation.status, 'calculated');
+    equal(evaluation.result.title, expectedTitle);
+    equal(evaluation.result.metrics[0]?.value, expectedFactors);
+    equal(evaluation.result.severity, expectedSeverity);
+  }
+  equal(evaluateCalculator(IMDC_CALCULATOR, { neut: true }).result.detail,
+    '1 de 6 factores adversos.');
+});
+
+test('IGCCCG golden nonseminoma S1 output preserves contemporary population outcomes', () => {
+  const evaluation = evaluateCalculator(IGCCCG_CALCULATOR, igcccgInput());
+  deepEqual(evaluation.result, {
+    title: 'IGCCCG: buen pronóstico',
+    detail: 'No seminoma, grupo clásico S1.',
+    badge: 'IGCCCG', score: 0, showScore: false, severity: 'good',
+    metrics: [
+      { label: 'S', value: 'S1' },
+      { label: 'PFS 5 años', value: '90% poblacional' },
+      { label: 'Supervivencia 5 años', value: '96% poblacional' },
+      { label: 'Sitio primario', value: 'testis' }
+    ],
+    notes: [
+      'Clasificar antes de iniciar quimioterapia.',
+      'Los porcentajes son resultados de grupos poblacionales contemporáneos, no una predicción individual.',
+      'Confirmar LDH, AFP, hCG, sitio primario y metástasis viscerales inmediatamente antes de primera línea.'
+    ]
+  });
+});
+
+test('IGCCCG preserves every inclusive S2 and strict S3 marker border', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{ afp: 999 }, 'S1'], [{ afp: 1000 }, 'S2'], [{ afp: 10000 }, 'S2'], [{ afp: 10001 }, 'S3'],
+    [{ hcg: 4999 }, 'S1'], [{ hcg: 5000 }, 'S2'], [{ hcg: 50000 }, 'S2'], [{ hcg: 50001 }, 'S3'],
+    [{ ldhRatio: 1.4 }, 'S1'], [{ ldhRatio: 1.5 }, 'S2'], [{ ldhRatio: 10 }, 'S2'],
+    [{ ldhRatio: 10.1 }, 'S3']
+  ];
+  for (const [override, expectedMarker] of cases) {
+    const evaluation = evaluateCalculator(IGCCCG_CALCULATOR,
+      igcccgInput({ afp: 0, hcg: 0, ldhRatio: 0, ...override }));
+    equal(evaluation.result.metrics[0]?.value, expectedMarker);
+  }
+});
+
+test('IGCCCG nonseminoma maps S2 to intermediate and every poor criterion to unfavorable', () => {
+  const intermediate = evaluateCalculator(IGCCCG_CALCULATOR,
+    igcccgInput({ afp: 1000, hcg: 0, ldhRatio: 0 }));
+  equal(intermediate.result.title, 'IGCCCG: pronóstico intermedio');
+  deepEqual(intermediate.result.metrics.slice(1, 3), [
+    { label: 'PFS 5 años', value: '78% poblacional' },
+    { label: 'Supervivencia 5 años', value: '89% poblacional' }
+  ]);
+  for (const overrides of [
+    { primary: 'mediastinal' },
+    { nonPulmonary: true },
+    { afp: 10001 }
+  ]) {
+    const poor = evaluateCalculator(IGCCCG_CALCULATOR,
+      igcccgInput({ afp: 0, hcg: 0, ldhRatio: 0, ...overrides }));
+    equal(poor.result.title, 'IGCCCG: pronóstico desfavorable');
+    equal(poor.result.metrics[1]?.value, '54% poblacional');
+    equal(poor.result.metrics[2]?.value, '67% poblacional');
+  }
+});
+
+test('IGCCCG rejects nonseminoma other primary only until a poor criterion is present', () => {
+  const unclassified = evaluateCalculator(IGCCCG_CALCULATOR, igcccgInput({
+    primary: 'other', afp: 0, hcg: 0, ldhRatio: 0
+  }));
+  equal(unclassified.result.title, 'Sitio primario fuera de la clasificación clásica IGCCCG');
+  equal(unclassified.result.badge, 'no clasificable');
+  equal(unclassified.result.detail,
+    'El perfil no entra en una categoría clásica sin aclarar el sitio primario.');
+  const poor = evaluateCalculator(IGCCCG_CALCULATOR, igcccgInput({
+    primary: 'other', nonPulmonary: true, afp: 0, hcg: 0, ldhRatio: 0
+  }));
+  equal(poor.result.title, 'IGCCCG: pronóstico desfavorable');
+});
+
+test('IGCCCG seminoma accepts AFP equal to ULN and rejects only AFP above it', () => {
+  const equalLimit = evaluateCalculator(IGCCCG_CALCULATOR,
+    igcccgInput({ histology: 'seminoma', afp: 10, afpUpperLimit: 10 }));
+  equal(equalLimit.result.title, 'IGCCCG: buen pronóstico');
+  const above = evaluateCalculator(IGCCCG_CALCULATOR,
+    igcccgInput({ histology: 'seminoma', afp: 11, afpUpperLimit: 10 }));
+  equal(above.result.title, 'No clasificable como seminoma puro: AFP elevada');
+  equal(above.result.detail,
+    'Revisar histología, componente no seminomatoso y otras causas de AFP elevada.');
+  deepEqual(above.result.metrics, [
+    { label: 'AFP', value: 11 }, { label: 'LSN AFP', value: 10 }
+  ]);
+});
+
+test('IGCCCG seminoma preserves visceral group and strict LDH warning border', () => {
+  const at = evaluateCalculator(IGCCCG_CALCULATOR, igcccgInput({
+    histology: 'seminoma', afp: 0, hcg: 0, ldhRatio: 2.5
+  }));
+  equal(at.result.title, 'IGCCCG: buen pronóstico');
+  equal(String(at.result.notes[1]).startsWith('Los porcentajes'), true);
+  const above = evaluateCalculator(IGCCCG_CALCULATOR, igcccgInput({
+    histology: 'seminoma', afp: 0, hcg: 0, ldhRatio: 2.6
+  }));
+  equal(above.result.title, 'IGCCCG: buen pronóstico');
+  equal(above.result.metrics[0]?.value, 'S2');
+  equal(String(above.result.notes[1]).startsWith(
+    'Seminoma de buen grupo clásico con LDH >2,5× LSN'), true);
+  const visceral = evaluateCalculator(IGCCCG_CALCULATOR, igcccgInput({
+    histology: 'seminoma', nonPulmonary: true, afp: 0, hcg: 0, ldhRatio: 0
+  }));
+  equal(visceral.result.title, 'IGCCCG: pronóstico intermedio');
+  equal(visceral.result.metrics[1]?.value, '79% poblacional');
+  equal(visceral.result.metrics[2]?.value, '88% poblacional');
+});
+
+test('ported 20 to 23 preserve input validity and contain typed text only', () => {
+  const invalid = evaluateCalculator(IGCCCG_CALCULATOR, igcccgInput({ ldhRatio: 1.55 }));
+  deepEqual(invalid.issues.map((issue) => issue.code), ['step-mismatch']);
+  const below = evaluateCalculator(IGCCCG_CALCULATOR, igcccgInput({ afpUpperLimit: 0 }));
+  deepEqual(below.issues.map((issue) => issue.code), ['below-minimum']);
+  const unknown = evaluateCalculator(LEIBOVICH_CALCULATOR, leibovichInput({ leibGrade: '5' }));
+  deepEqual(unknown.issues.map((issue) => issue.code), ['unknown-option']);
+  const results = [
+    evaluateCalculator(RENAL_COMPLEXITY_CALCULATOR, renalInput()).result,
+    evaluateCalculator(LEIBOVICH_CALCULATOR, leibovichInput()).result,
+    evaluateCalculator(IMDC_CALCULATOR).result,
+    evaluateCalculator(IGCCCG_CALCULATOR, igcccgInput()).result
+  ];
+  for (const current of results) assertNoRawMarkup(current.notes);
+});
+
 test('structured note factories reject unsafe links and malformed tables', () => {
   throws(() => externalLink('inseguro', 'http://example.test'), 'El enlace externo debe usar HTTPS');
   throws(() => tableNote('invalida', ['una'], [['a', 'b']]), 'cantidad de celdas invalida');
@@ -1400,6 +1745,41 @@ function utucInput(overrides: Readonly<Record<string, unknown>> = {}): Record<st
   return {
     utucM: 'm0', size: 1.5, focality: 'unifocal', cytology: 'negative', biopsy: 'low',
     ctAssessment: 'noninvasive', hydro: false, variant: false, ...overrides
+  };
+}
+
+function renalInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'renal', renalSize: 3.2, renalExo: '1', renalNear: '1', renalAp: 'x',
+    renalLocation: '1', renalHilar: false, ...overrides
+  };
+}
+
+function paduaInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'padua', paduaSize: 3.2, paduaLong: '1', paduaExo: '1', paduaRim: '1',
+    paduaSinus: '1', paduaCollecting: '1', paduaAp: 'x', ...overrides
+  };
+}
+
+function leibovichInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'leibovich', leibPt: 'pt1a', leibPn: false, leibSize: 5,
+    leibGrade: '1', leibNecrosis: false, ...overrides
+  };
+}
+
+function uissInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'uiss', uissPt: 'pt1a', uissN: 'n0', uissM: 'm0', uissGrade: '2',
+    uissEcog: '0', ...overrides
+  };
+}
+
+function igcccgInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    histology: 'nonseminoma', primary: 'testis', nonPulmonary: false, afp: 120,
+    afpUpperLimit: 10, hcg: 800, ldhRatio: 1.1, ...overrides
   };
 }
 

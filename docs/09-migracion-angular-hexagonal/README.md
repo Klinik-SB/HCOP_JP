@@ -9,6 +9,11 @@ La versión operativa permanece disponible durante toda la transición. Cada
 capacidad nueva se compara contra la línea base antes de habilitarse y el
 frontend anterior sólo se retira cuando la matriz de paridad está completa.
 
+La biblioteca declarativa Angular conserva el inventario completo y tiene
+**23 de 57 calculadoras** portadas con pruebas doradas. Todavía no se habilita
+una vista parcial: la biblioteca visible se reemplazará cuando alcance paridad
+funcional y visual completa.
+
 ## Documentos de control
 
 - [Línea base](BASELINE-2026-07-30.md): evidencia técnica y funcional del punto
@@ -67,6 +72,9 @@ frontend anterior sólo se retira cuando la matriz de paridad está completa.
 - [Corte Angular 013](CORTE-ANGULAR-013-UROTELIO-Y-APTITUD-PLATINO.md): NMIBC
   EAU/EORTC/CUETO, post-cistectomía, aptitud para cisplatino/platinum y UTUC
   portados con cohortes, fronteras y limitaciones heredadas verificadas.
+- [Corte Angular 014](CORTE-ANGULAR-014-RENAL-Y-TESTICULO.md): RENAL/PADUA,
+  Leibovich/UISS, IMDC e IGCCCG portados con escenarios, límites anatómicos,
+  grupos pronósticos y limitaciones heredadas verificadas.
 
 ## Ciclo obligatorio por capacidad
 
