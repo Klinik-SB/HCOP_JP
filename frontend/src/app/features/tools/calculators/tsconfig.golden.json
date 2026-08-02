@@ -22,6 +22,7 @@
     "legacy-calculators-12-15.definitions.ts",
     "legacy-calculators-16-19.definitions.ts",
     "legacy-calculators-20-23.definitions.ts",
+    "legacy-calculators-24-27.definitions.ts",
     "ported-calculator.registry.ts",
     "calculator.golden-tests.ts"
   ]

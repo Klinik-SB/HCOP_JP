@@ -31,6 +31,12 @@ import {
   LEIBOVICH_CALCULATOR,
   RENAL_COMPLEXITY_CALCULATOR
 } from './legacy-calculators-20-23.definitions';
+import {
+  ANC_CTCAE_V6_CALCULATOR,
+  KHORANA_VTE_CALCULATOR,
+  MASCC_FEBRILE_NEUTROPENIA_CALCULATOR,
+  RENAL_FUNCTION_ONCOLOGY_CALCULATOR
+} from './legacy-calculators-24-27.definitions';
 import { PORTED_CALCULATORS } from './ported-calculator.registry';
 import { CalculatorOrigin } from './calculator.models';
 
@@ -55,15 +61,17 @@ test('inventory contains the exact 57 unique legacy tools in stable order', () =
   }
 });
 
-test('only the first twenty-three calculators are marked as ported', () => {
+test('only the first twenty-seven calculators are marked as ported', () => {
   deepEqual(CALCULATOR_INVENTORY.filter((entry) => entry.migrationStatus === 'ported').map((entry) => entry.id),
     ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk',
       'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude', 'nmibc', 'cystectomy', 'cisplatin', 'utuc',
-      'renal-complexity', 'leibovich', 'imdc', 'igcccg']);
+      'renal-complexity', 'leibovich', 'imdc', 'igcccg', 'renal-function-oncology', 'anc-ctcae-v6',
+      'khorana-vte', 'mascc-febrile-neutropenia']);
   deepEqual(PORTED_CALCULATORS.map((entry) => entry.id),
     ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk',
       'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude', 'nmibc', 'cystectomy', 'cisplatin', 'utuc',
-      'renal-complexity', 'leibovich', 'imdc', 'igcccg']);
+      'renal-complexity', 'leibovich', 'imdc', 'igcccg', 'renal-function-oncology', 'anc-ctcae-v6',
+      'khorana-vte', 'mascc-febrile-neutropenia']);
 });
 
 test('BSA opens blank and keeps legacy values only as examples', () => {
@@ -1634,6 +1642,348 @@ test('ported 20 to 23 preserve input validity and contain typed text only', () =
   for (const current of results) assertNoRawMarkup(current.notes);
 });
 
+test('ported 24 to 27 preserve canonical metadata and complete field order', () => {
+  deepEqual([
+    RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    ANC_CTCAE_V6_CALCULATOR,
+    KHORANA_VTE_CALCULATOR,
+    MASCC_FEBRILE_NEUTROPENIA_CALCULATOR
+  ].map((definition) => ({
+    id: definition.id,
+    title: definition.title,
+    category: definition.category,
+    subtitle: definition.subtitle,
+    source: definition.source,
+    fieldIds: definition.fields.map((field) => field.id)
+  })), [
+    {
+      id: 'renal-function-oncology',
+      title: 'Función renal: Cockcroft–Gault y CKD-EPI 2021',
+      category: 'general',
+      subtitle: 'Dos estimaciones en paralelo, con método y unidades visibles.',
+      source: 'Cockcroft–Gault; CKD-EPI 2021',
+      fieldIds: ['renal_scope', 'renal_age', 'renal_sex', 'renal_weight', 'renal_creatinine',
+        'renal_cystatin', 'renal_bsa']
+    },
+    {
+      id: 'anc-ctcae-v6',
+      title: 'Recuento absoluto de neutrófilos — CTCAE v6',
+      category: 'general',
+      subtitle: 'ANC calculado y grado de neutrófilos disminuidos.',
+      source: 'NCI CTCAE v6.0 (2025)',
+      fieldIds: ['anc_wbc', 'anc_segmented', 'anc_bands']
+    },
+    {
+      id: 'khorana-vte',
+      title: 'Khorana — riesgo de VTE',
+      category: 'general',
+      subtitle: 'Estratificación basal antes de tratamiento sistémico ambulatorio.',
+      source: 'Khorana et al.',
+      fieldIds: ['khorana_site', 'khorana_platelets', 'khorana_hgb', 'khorana_wbc',
+        'khorana_bmi', 'khorana_esa']
+    },
+    {
+      id: 'mascc-febrile-neutropenia',
+      title: 'MASCC — neutropenia febril',
+      category: 'general',
+      subtitle: 'Riesgo de complicaciones una vez presente la neutropenia febril.',
+      source: 'MASCC Risk Index',
+      fieldIds: ['mascc_scope', 'mascc_burden', 'mascc_no_hypotension', 'mascc_no_copd',
+        'mascc_tumor_fungal', 'mascc_no_dehydration', 'mascc_outpatient', 'mascc_age_under_60']
+    }
+  ]);
+});
+
+test('ported 24 to 27 open blank and keep factory values only as examples', () => {
+  const renal = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR);
+  deepEqual(renal.issues.map((issue) => issue.fieldId),
+    ['renal_age', 'renal_sex', 'renal_weight', 'renal_creatinine']);
+  equal(renal.values['renal_cystatin'], '');
+  equal(renal.values['renal_bsa'], '');
+  const renalAge = RENAL_FUNCTION_ONCOLOGY_CALCULATOR.fields.find((field) =>
+    field.id === 'renal_age');
+  equal(renalAge?.kind === 'number' ? renalAge.exampleValue : null, 65);
+  const optionalCystatin = RENAL_FUNCTION_ONCOLOGY_CALCULATOR.fields.find((field) =>
+    field.id === 'renal_cystatin');
+  equal(optionalCystatin?.kind === 'number' ? optionalCystatin.exampleValue : null, undefined);
+
+  deepEqual(evaluateCalculator(ANC_CTCAE_V6_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['anc_wbc', 'anc_segmented', 'anc_bands']);
+  deepEqual(evaluateCalculator(KHORANA_VTE_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['khorana_site', 'khorana_platelets', 'khorana_hgb', 'khorana_wbc', 'khorana_bmi']);
+  deepEqual(evaluateCalculator(MASCC_FEBRILE_NEUTROPENIA_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['mascc_burden']);
+  const burden = MASCC_FEBRILE_NEUTROPENIA_CALCULATOR.fields.find((field) =>
+    field.id === 'mascc_burden');
+  equal(burden?.kind === 'select' ? burden.exampleValue : null, '5');
+  equal(burden?.initialValue, '');
+});
+
+test('renal function golden creatinine-only result keeps methods and units separate', () => {
+  const evaluation = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput());
+  deepEqual(evaluation.result, {
+    title: 'CrCl 57.6 mL/min · eGFR 62.5 mL/min/1,73 m²',
+    detail: 'Los resultados no son intercambiables: identificar qué estimación exige el protocolo o el prospecto del fármaco.',
+    badge: 'función renal', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'Cockcroft–Gault', value: '57.6 mL/min' },
+      { label: 'CKD-EPI 2021 creatinina', value: '62.5 mL/min/1,73 m²' },
+      { label: 'Peso usado en CG', value: '65.0 kg' }
+    ],
+    notes: [
+      'CKD-EPI está indexado a 1,73 m²; para una dosis que requiera GFR absoluta debe informarse la superficie corporal y desindexarse.',
+      'Creatinina no estable, sarcopenia, caquexia, amputaciones o tamaño corporal extremo pueden volver imprecisas ambas estimaciones.',
+      'Cerca de un punto de corte clínico, considerar cistatina C o GFR medida según disponibilidad y protocolo.'
+    ]
+  });
+});
+
+test('renal function switches to combined CKD-EPI and desindexes only with supplied BSA', () => {
+  const evaluation = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_cystatin: 1, renal_bsa: 1.8 }));
+  equal(evaluation.result.title, 'CrCl 57.6 mL/min · eGFR 69.8 mL/min/1,73 m²');
+  deepEqual(evaluation.result.metrics, [
+    { label: 'Cockcroft–Gault', value: '57.6 mL/min' },
+    { label: 'CKD-EPI 2021 creatinina-cistatina C', value: '69.8 mL/min/1,73 m²' },
+    { label: 'GFR absoluta desindexada', value: '72.6 mL/min' },
+    { label: 'Peso usado en CG', value: '65.0 kg' }
+  ]);
+  equal(evaluation.result.notes[0],
+    'La GFR absoluta se obtuvo como eGFR × superficie corporal / 1,73.');
+});
+
+test('renal function preserves CKD-EPI piecewise knots for creatinine and cystatin C', () => {
+  const femaleCreatinine = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_creatinine: 0.7 }));
+  equal(femaleCreatinine.result.metrics[1]?.value, '95.9 mL/min/1,73 m²');
+  const maleCreatinine = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_sex: 'male', renal_creatinine: 0.9 }));
+  equal(maleCreatinine.result.metrics[1]?.value, '94.8 mL/min/1,73 m²');
+  const femaleCombined = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_creatinine: 0.7, renal_cystatin: 0.8 }));
+  equal(femaleCombined.result.metrics[1]?.value, '100.8 mL/min/1,73 m²');
+  const maleCombined = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_sex: 'male', renal_creatinine: 0.9, renal_cystatin: 0.8 }));
+  equal(maleCombined.result.metrics[1]?.value, '104.7 mL/min/1,73 m²');
+});
+
+test('renal function preserves sex factor and adult-age boundaries', () => {
+  const male = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_sex: 'male' }));
+  equal(male.result.title, 'CrCl 67.7 mL/min · eGFR 83.5 mL/min/1,73 m²');
+  equal(evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_age: 18, renal_sex: 'male', renal_weight: 70 })).status, 'calculated');
+  equal(evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_age: 139, renal_sex: 'male', renal_weight: 70 })).status, 'calculated');
+  for (const age of [17, 140]) {
+    const invalidAge = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+      renalOncologyInput({ renal_age: age }));
+    equal(invalidAge.status, 'invalid');
+    equal(invalidAge.issues[0]?.fieldId, 'renal_age');
+  }
+});
+
+test('renal optional inputs stay optional but enforce declared limits and increments when supplied', () => {
+  equal(evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_cystatin: '', renal_bsa: '' })).status, 'calculated');
+  const cystatinBelow = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_cystatin: 0 }));
+  deepEqual(cystatinBelow.issues.map((issue) => issue.code), ['below-minimum']);
+  const bsaAbove = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_bsa: 4.01 }));
+  deepEqual(bsaAbove.issues.map((issue) => issue.code), ['above-maximum']);
+  const weightStep = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_weight: 65.05 }));
+  deepEqual(weightStep.issues.map((issue) => issue.code), ['step-mismatch']);
+});
+
+test('ANC golden result calculates cells per microliter and CTCAE grade', () => {
+  const evaluation = evaluateCalculator(ANC_CTCAE_V6_CALCULATOR, ancInput());
+  deepEqual(evaluation.result, {
+    title: 'ANC 1200 células/µL', detail: 'CTCAE grado 1', badge: 'CTCAE v6',
+    score: 0, showScore: false, severity: 'warn',
+    metrics: [
+      { label: 'ANC', value: '1200 células/µL' },
+      { label: 'Grado', value: 'CTCAE grado 1' }
+    ],
+    notes: [
+      'Usar el ANC directo del laboratorio cuando esté informado; esta fórmula es una estimación a partir del diferencial.',
+      'La neutropenia febril es un evento clínico separado y no puede inferirse únicamente con este valor.',
+      'Los límites de administración o modificación de un tratamiento dependen del esquema y del protocolo vigente.'
+    ]
+  });
+});
+
+test('ANC preserves strict CTCAE borders at 100, 500, 1000 and 1500 cells per microliter', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string, string][] = [
+    [{ anc_wbc: 1, anc_segmented: 9.9 }, 'ANC 99 células/µL', 'CTCAE grado 4', 'bad'],
+    [{ anc_wbc: 1, anc_segmented: 10 }, 'ANC 100 células/µL', 'CTCAE grado 3', 'bad'],
+    [{ anc_wbc: 1, anc_segmented: 49.9 }, 'ANC 499 células/µL', 'CTCAE grado 3', 'bad'],
+    [{ anc_wbc: 1, anc_segmented: 50 }, 'ANC 500 células/µL', 'CTCAE grado 2', 'warn'],
+    [{ anc_wbc: 1, anc_segmented: 99.9 }, 'ANC 999 células/µL', 'CTCAE grado 2', 'warn'],
+    [{ anc_wbc: 1, anc_segmented: 100 }, 'ANC 1000 células/µL', 'CTCAE grado 1', 'warn'],
+    [{ anc_wbc: 1.5, anc_segmented: 99.9 }, 'ANC 1499 células/µL', 'CTCAE grado 1', 'warn'],
+    [{ anc_wbc: 1.5, anc_segmented: 100 }, 'ANC 1500 células/µL', 'Sin grado CTCAE', 'good']
+  ];
+  for (const [overrides, expectedTitle, expectedDetail, expectedSeverity] of cases) {
+    const evaluation = evaluateCalculator(ANC_CTCAE_V6_CALCULATOR,
+      ancInput({ anc_bands: 0, ...overrides }));
+    equal(evaluation.result.title, expectedTitle);
+    equal(evaluation.result.detail, expectedDetail);
+    equal(evaluation.result.severity, expectedSeverity);
+  }
+});
+
+test('ANC rejects a differential over 100 percent and preserves custom rule message', () => {
+  const evaluation = evaluateCalculator(ANC_CTCAE_V6_CALCULATOR,
+    ancInput({ anc_segmented: 60, anc_bands: 40.1 }));
+  equal(evaluation.status, 'calculated');
+  deepEqual(evaluation.result, {
+    title: 'Datos incompletos',
+    detail: 'Revisar: suma de segmentados y bandas ≤100%.',
+    badge: 'ANC / CTCAE v6', score: 0, showScore: false, severity: 'warn',
+    metrics: [], notes: ['Corregir los datos antes de interpretar el resultado.']
+  });
+});
+
+test('ANC preserves the legacy raw-grade versus rounded-display inconsistency', () => {
+  const evaluation = evaluateCalculator(ANC_CTCAE_V6_CALCULATOR,
+    ancInput({ anc_wbc: 1.02, anc_segmented: 49, anc_bands: 0 }));
+  equal(evaluation.result.title, 'ANC 500 células/µL');
+  equal(evaluation.result.detail, 'CTCAE grado 3');
+});
+
+test('Khorana golden zero case preserves original category and component count', () => {
+  const evaluation = evaluateCalculator(KHORANA_VTE_CALCULATOR, khoranaInput());
+  deepEqual(evaluation.result, {
+    title: 'Khorana 0 · riesgo bajo',
+    detail: 'Clasificación original: 0 bajo, 1–2 intermedio y ≥3 alto.',
+    badge: 'VTE ambulatorio', score: 0, showScore: false, severity: 'good',
+    metrics: [
+      { label: 'Puntaje', value: 0 },
+      { label: 'Categoría original', value: 'bajo' },
+      { label: 'Componentes con puntos', value: 0 }
+    ],
+    notes: [
+      'Población: pacientes ambulatorios con cáncer antes de comenzar quimioterapia sistémica.',
+      'El umbral moderno ≥2 abre una evaluación clínica individual; no indica anticoagulación automática.',
+      'Valorar por separado hemorragia, interacciones, función renal, tipo de cáncer y situación clínica.'
+    ]
+  });
+});
+
+test('Khorana preserves site weights and original 0, 1-2 and at least 3 categories', () => {
+  for (const site of ['stomach', 'pancreas']) {
+    const evaluation = evaluateCalculator(KHORANA_VTE_CALCULATOR, khoranaInput({ khorana_site: site }));
+    equal(evaluation.result.title, 'Khorana 2 · riesgo intermedio');
+    equal(evaluation.result.metrics[2]?.value, 1);
+  }
+  for (const site of ['lung', 'lymphoma', 'gynecologic', 'bladder', 'testicular']) {
+    equal(evaluateCalculator(KHORANA_VTE_CALCULATOR,
+      khoranaInput({ khorana_site: site })).result.title, 'Khorana 1 · riesgo intermedio');
+  }
+  equal(evaluateCalculator(KHORANA_VTE_CALCULATOR,
+    khoranaInput({ khorana_site: 'other' })).result.title, 'Khorana 0 · riesgo bajo');
+  equal(evaluateCalculator(KHORANA_VTE_CALCULATOR, khoranaInput({
+    khorana_site: 'stomach', khorana_platelets: 350
+  })).result.title, 'Khorana 3 · riesgo alto');
+});
+
+test('Khorana preserves every laboratory and BMI border', () => {
+  const cases: readonly [string, number, number, number][] = [
+    ['khorana_platelets', 349, 350, 1],
+    ['khorana_hgb', 10, 9.9, 1],
+    ['khorana_wbc', 11, 11.1, 1],
+    ['khorana_bmi', 34.9, 35, 1]
+  ];
+  for (const [fieldId, noPointValue, pointValue, expected] of cases) {
+    equal(evaluateCalculator(KHORANA_VTE_CALCULATOR,
+      khoranaInput({ [fieldId]: noPointValue })).result.metrics[0]?.value, 0);
+    equal(evaluateCalculator(KHORANA_VTE_CALCULATOR,
+      khoranaInput({ [fieldId]: pointValue })).result.metrics[0]?.value, expected);
+  }
+  equal(evaluateCalculator(KHORANA_VTE_CALCULATOR,
+    khoranaInput({ khorana_esa: true })).result.metrics[0]?.value, 1);
+  equal(evaluateCalculator(KHORANA_VTE_CALCULATOR,
+    khoranaInput({ khorana_hgb: 9.9, khorana_esa: true })).result.metrics[0]?.value, 1);
+});
+
+test('Khorana maximum counts five positive components despite a six-point total', () => {
+  const evaluation = evaluateCalculator(KHORANA_VTE_CALCULATOR, khoranaInput({
+    khorana_site: 'stomach', khorana_platelets: 350, khorana_hgb: 9.9,
+    khorana_wbc: 11.1, khorana_bmi: 35, khorana_esa: true
+  }));
+  equal(evaluation.result.title, 'Khorana 6 · riesgo alto');
+  deepEqual(evaluation.result.metrics, [
+    { label: 'Puntaje', value: 6 },
+    { label: 'Categoría original', value: 'alto' },
+    { label: 'Componentes con puntos', value: 5 }
+  ]);
+});
+
+test('MASCC preserves 20/21 threshold and maximum 26', () => {
+  const twenty = evaluateCalculator(MASCC_FEBRILE_NEUTROPENIA_CALCULATOR, masccInput({
+    mascc_burden: '5', mascc_no_hypotension: true, mascc_no_copd: true,
+    mascc_no_dehydration: true, mascc_outpatient: true
+  }));
+  equal(twenty.result.title, 'MASCC 20/26');
+  equal(twenty.result.detail, 'alto riesgo por MASCC');
+  equal(twenty.result.metrics[1]?.value, '<21');
+  equal(twenty.result.severity, 'bad');
+
+  const twentyOne = evaluateCalculator(MASCC_FEBRILE_NEUTROPENIA_CALCULATOR,
+    masccInput({ mascc_burden: '0', mascc_no_hypotension: true, mascc_no_copd: true,
+      mascc_tumor_fungal: true, mascc_no_dehydration: true, mascc_outpatient: true,
+      mascc_age_under_60: true }));
+  equal(twentyOne.result.title, 'MASCC 21/26');
+  equal(twentyOne.result.detail, 'bajo riesgo por MASCC');
+  equal(twentyOne.result.metrics[1]?.value, '≥21');
+
+  const maximum = evaluateCalculator(MASCC_FEBRILE_NEUTROPENIA_CALCULATOR,
+    masccInput({ mascc_burden: '5', mascc_no_hypotension: true, mascc_no_copd: true,
+      mascc_tumor_fungal: true, mascc_no_dehydration: true, mascc_outpatient: true,
+      mascc_age_under_60: true }));
+  deepEqual(maximum.result, {
+    title: 'MASCC 26/26', detail: 'bajo riesgo por MASCC', badge: 'neutropenia febril',
+    score: 0, showScore: false, severity: 'good',
+    metrics: [{ label: 'Puntaje', value: '26/26' }, { label: 'Umbral', value: '≥21' }],
+    notes: [
+      'Un resultado de bajo riesgo no reemplaza estabilidad, examen, foco infeccioso, comorbilidades ni condiciones para seguimiento.',
+      'No usar como predictor de neutropenia antes de la quimioterapia.',
+      'No define por sí solo internación, vía antibiótica ni alta.'
+    ]
+  });
+});
+
+test('MASCC preserves the severe-burden contradiction and requires clinical precedence', () => {
+  const contradictory = evaluateCalculator(MASCC_FEBRILE_NEUTROPENIA_CALCULATOR,
+    masccInput({ mascc_burden: '0', mascc_no_hypotension: true, mascc_no_copd: true,
+      mascc_tumor_fungal: true, mascc_no_dehydration: true, mascc_outpatient: true,
+      mascc_age_under_60: true }));
+  equal(contradictory.result.title, 'MASCC 21/26');
+  equal(contradictory.result.detail, 'bajo riesgo por MASCC');
+  equal(MASCC_FEBRILE_NEUTROPENIA_CALCULATOR.fields[0]?.label,
+    'Aplicar después de identificar neutropenia febril. La impresión de inestabilidad clínica prevalece sobre el puntaje.');
+});
+
+test('ported 24 to 27 reject unknown selectors and contain typed text only', () => {
+  const unknownSex = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_sex: 'other' }));
+  deepEqual(unknownSex.issues.map((issue) => issue.code), ['unknown-option']);
+  const unknownBurden = evaluateCalculator(MASCC_FEBRILE_NEUTROPENIA_CALCULATOR,
+    masccInput({ mascc_burden: '4' }));
+  deepEqual(unknownBurden.issues.map((issue) => issue.code), ['unknown-option']);
+  const results = [
+    evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR, renalOncologyInput()).result,
+    evaluateCalculator(ANC_CTCAE_V6_CALCULATOR, ancInput()).result,
+    evaluateCalculator(KHORANA_VTE_CALCULATOR, khoranaInput()).result,
+    evaluateCalculator(MASCC_FEBRILE_NEUTROPENIA_CALCULATOR,
+      masccInput({ mascc_burden: '5' })).result
+  ];
+  for (const current of results) assertNoRawMarkup(current.notes);
+});
+
 test('structured note factories reject unsafe links and malformed tables', () => {
   throws(() => externalLink('inseguro', 'http://example.test'), 'El enlace externo debe usar HTTPS');
   throws(() => tableNote('invalida', ['una'], [['a', 'b']]), 'cantidad de celdas invalida');
@@ -1780,6 +2130,32 @@ function igcccgInput(overrides: Readonly<Record<string, unknown>> = {}): Record<
   return {
     histology: 'nonseminoma', primary: 'testis', nonPulmonary: false, afp: 120,
     afpUpperLimit: 10, hcg: 800, ldhRatio: 1.1, ...overrides
+  };
+}
+
+function renalOncologyInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    renal_age: 65, renal_sex: 'female', renal_weight: 65, renal_creatinine: 1,
+    renal_cystatin: '', renal_bsa: '', ...overrides
+  };
+}
+
+function ancInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return { anc_wbc: 3, anc_segmented: 40, anc_bands: 0, ...overrides };
+}
+
+function khoranaInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    khorana_site: 'other', khorana_platelets: 250, khorana_hgb: 12, khorana_wbc: 7,
+    khorana_bmi: 25, khorana_esa: false, ...overrides
+  };
+}
+
+function masccInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    mascc_burden: '5', mascc_no_hypotension: false, mascc_no_copd: false,
+    mascc_tumor_fungal: false, mascc_no_dehydration: false, mascc_outpatient: false,
+    mascc_age_under_60: false, ...overrides
   };
 }
 
