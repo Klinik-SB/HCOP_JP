@@ -109,6 +109,9 @@ configuración institucional y cerrar la paridad visual/E2E integrada.
 - [Corte Angular 025](CORTE-ANGULAR-025-FACTORY-INSTITUCIONAL.md): traducción
   tipada de fórmulas y scores validados al contrato visual de calculadoras,
   todavía aislada del workspace hasta completar la validación atómica.
+- [Corte Angular 026](CORTE-ANGULAR-026-VALIDACION-ATOMICA-CATALOGO.md):
+  validación fail-closed del JSON institucional, límites de complejidad,
+  referencias contra las 57 claves reales y mapper tipado hacia la factory.
 
 ## Ciclo obligatorio por capacidad
 

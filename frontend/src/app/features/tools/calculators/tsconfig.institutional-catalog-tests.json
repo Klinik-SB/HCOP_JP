@@ -1,0 +1,18 @@
+{
+  "extends": "../../../../../tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+    "importHelpers": false,
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "noEmit": false,
+    "noEmitOnError": true,
+    "outDir": ".institutional-catalog-dist",
+    "rootDir": ".",
+    "sourceMap": false,
+    "types": []
+  },
+  "files": [
+    "institutional-calculator-catalog.validator.tests.ts"
+  ]
+}
