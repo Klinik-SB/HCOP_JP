@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, catchError, defer, finalize, map, tap, throwError } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
+import { ClinicalDraftRegistryService } from './clinical-draft-registry.service';
 import {
   ClinicalConflictComparison,
   acceptsLatestClinicalWorkspace,
@@ -27,6 +28,7 @@ import { normalizePatientWorkspace } from './patient-workspace.normalization';
 export class PatientWorkspaceService {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
+  private readonly clinicalDrafts = inject(ClinicalDraftRegistryService);
   readonly workspace = signal<PatientWorkspace | null>(null);
   readonly pickerOpen = signal(false);
   readonly pickerRequest = signal(0);
@@ -35,6 +37,9 @@ export class PatientWorkspaceService {
   readonly saving = signal(false);
   readonly conflictLatestLoading = signal(false);
   readonly conflictLatestError = signal('');
+  readonly hasPendingClinicalWork = computed(() => Boolean(
+    this.activeSaveConflictDraft() || this.saving() || this.clinicalDrafts.hasDirty()
+  ));
   private readonly pendingSaveConflict = signal<ClinicalSaveConflictDraft | null>(null);
   private readonly conflictComparisonAuthorized = signal(true);
   private conflictLatestRequest = 0;
@@ -265,7 +270,10 @@ export class PatientWorkspaceService {
           if (response.unified?.persisted !== true || !Number.isSafeInteger(revision) || revision < 1) {
             throw new Error('La base clínica no confirmó el guardado de la historia.');
           }
-          const savedState = structuredClone(stateToSave);
+          // Java es la autoridad de los metadatos clínicos (actor, fecha, motivo y
+          // versiones). Instalar su estado evita conservar una auditoría optimista
+          // construida por el navegador.
+          const savedState = structuredClone(response.state || stateToSave);
           savedState.meta = { ...(savedState.meta || {}), persistenceRevision: revision };
           this.workspace.set({ ...current, state: savedState, revision, updatedAt: new Date().toISOString() });
         }),
@@ -364,7 +372,8 @@ export class PatientWorkspaceService {
       this.pendingSaveConflict(),
       targetPatientId,
       this.saving(),
-      this.loading()
+      this.loading(),
+      this.clinicalDrafts.hasDirty()
     );
     if (!code) return null;
     return new ClinicalSaveFailure(
@@ -372,9 +381,11 @@ export class PatientWorkspaceService {
         ? 'Hay un guardado clínico en curso. Espere a que termine.'
         : code === 'CLINICAL_CONTEXT_TRANSITION_IN_PROGRESS'
           ? 'El contexto del paciente se está actualizando. Espere a que termine.'
+          : code === 'PENDING_LOCAL_DRAFT'
+            ? 'Hay cambios clínicos sin guardar. Guárdelos o descártelos antes de cambiar el contexto.'
         : 'Hay un borrador en conflicto pendiente. Resuélvalo antes de cambiar o cerrar el paciente.',
       code,
-      code === 'PENDING_CLINICAL_CONFLICT' ? 409 : 0
+      code === 'PENDING_CLINICAL_CONFLICT' || code === 'PENDING_LOCAL_DRAFT' ? 409 : 0
     );
   }
 
@@ -389,6 +400,13 @@ export class PatientWorkspaceService {
       return new ClinicalSaveFailure(
         'Hay un borrador en conflicto pendiente. Resuélvalo antes de modificar archivos.',
         'PENDING_CLINICAL_CONFLICT',
+        409
+      );
+    }
+    if (this.clinicalDrafts.hasDirty()) {
+      return new ClinicalSaveFailure(
+        'Hay cambios clínicos sin guardar. Guárdelos o descártelos antes de modificar archivos.',
+        'PENDING_LOCAL_DRAFT',
         409
       );
     }

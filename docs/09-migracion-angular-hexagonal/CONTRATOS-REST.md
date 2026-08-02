@@ -137,6 +137,35 @@ Un `409` sin código se conserva como `UNKNOWN_CLINICAL_CONFLICT`, nunca se
 convierte en conflicto de revisión leyendo el mensaje destinado al usuario y
 tampoco se reintenta automáticamente.
 
+Para los campos estructurados de **Conclusión / resumen**, `PUT /api/hc`
+compara cada valor entrante contra el documento confirmado. Sólo valida un
+campo cuando realmente cambió, para que una forma legacy atípica no impida
+guardar otra sección:
+
+| Código `400` | Condición |
+|---|---|
+| `CLINICAL_SUMMARY_INVALID` | `narrative.summary` cambió y no es texto. |
+| `CLINICAL_SUMMARY_TOO_LONG` | El nuevo resumen supera 50.000 caracteres. |
+| `CLINICAL_PLAN_INVALID` | `narrative.plan` cambió y no es texto. |
+| `CLINICAL_PLAN_TOO_LONG` | El nuevo plan supera 50.000 caracteres. |
+| `CLINICAL_SUMMARY_PLAN_EMPTY` | La primera carga no contiene resumen ni plan. |
+| `CLINICAL_SUMMARY_PLAN_REASON_REQUIRED` | Una modificación no incluye motivo. |
+| `CLINICAL_SUMMARY_PLAN_REASON_INVALID` | El motivo transitorio no es texto. |
+| `CLINICAL_SUMMARY_PLAN_REASON_TOO_LONG` | El motivo supera 50.000 caracteres. |
+
+El texto vacío es válido para documentar un vaciado. El servidor no recorta ni
+normaliza silenciosamente: Angular normaliza extremos antes de enviar y el
+documento persistido conserva exactamente el valor recibido.
+
+El motivo viaja únicamente como comando transitorio en
+`meta.sectionChangeRequests.summaryPlan.reason`. Java lo consume y elimina antes
+de persistir. Las versiones, la auditoría, el actor y el instante de
+`summaryPlan` se reconstruyen exclusivamente desde el documento ya confirmado,
+la sesión autenticada y el reloj del servidor; cualquier valor homónimo enviado
+por el navegador se ignora. La respuesta satisfactoria contiene `state`, que es
+la copia canónica visible para ese usuario con la nueva
+`meta.persistenceRevision`. Angular instala esa copia, no su borrador optimista.
+
 ## Idempotencia
 
 Las transiciones clínicas que podrían repetirse por doble clic, reconexión o

@@ -33,6 +33,7 @@ test('preserva códigos de precondición clínica con mensajes accionables', () 
   equal(clinicalSaveFailure({ error: { code: 'ACTIVE_PATIENT_REQUIRED' } }, 'Fallback').message, 'Abra nuevamente el paciente antes de guardar.');
   equal(clinicalSaveFailure({ error: { code: 'CLINICAL_REVISION_REQUIRED' } }, 'Fallback').code, 'CLINICAL_REVISION_REQUIRED');
   equal(clinicalSaveFailure({ error: { code: 'CLINICAL_PATIENT_MISMATCH' } }, 'Fallback').message, 'El borrador pertenece a otro paciente y no fue guardado.');
+  equal(clinicalSaveFailure({ status: 409, error: { code: 'PENDING_LOCAL_DRAFT' } }, 'Fallback').message, 'Hay cambios clínicos sin guardar en un editor abierto.');
 });
 
 test('conserva el error local ya tipado y respeta el fallback genérico', () => {
@@ -52,6 +53,10 @@ test('bloquea concurrencia y cambios de paciente sin ocultar el borrador actual'
   equal(clinicalTransitionBlockCode(conflict, null, false), 'PENDING_CLINICAL_CONFLICT');
   equal(clinicalTransitionBlockCode(conflict, 'A', false), '');
   equal(clinicalTransitionBlockCode(null, 'A', true), 'CLINICAL_SAVE_IN_PROGRESS');
+  equal(clinicalTransitionBlockCode(null, 'A', false, false, true), 'PENDING_LOCAL_DRAFT');
+  equal(clinicalTransitionBlockCode(null, null, false, false, true), 'PENDING_LOCAL_DRAFT');
+  equal(clinicalTransitionBlockCode(conflict, 'B', false, false, true), 'PENDING_CLINICAL_CONFLICT');
+  equal(clinicalTransitionBlockCode(conflict, 'A', false, false, true), 'PENDING_LOCAL_DRAFT');
   equal(clinicalTransitionBlockCode(null, 'A', false, true), 'CLINICAL_CONTEXT_TRANSITION_IN_PROGRESS');
 });
 

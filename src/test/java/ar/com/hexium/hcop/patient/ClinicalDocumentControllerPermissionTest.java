@@ -12,7 +12,9 @@ import ar.com.hexium.hcop.auth.SessionPrincipal;
 import ar.com.hexium.hcop.common.ApiException;
 import ar.com.hexium.hcop.patient.PatientDocumentRepository.StoredDocument;
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
@@ -42,7 +44,13 @@ class ClinicalDocumentControllerPermissionTest {
     when(documents.require(42L)).thenReturn(stored);
     when(documents.state(stored)).thenReturn(storedState.deepCopy());
 
-    JsonNode response = new ClinicalDocumentController(documents, auth, new ClinicalDocumentAccessPolicy()).get(request).getBody();
+    JsonNode response = new ClinicalDocumentController(
+        documents,
+        auth,
+        new ClinicalDocumentAccessPolicy(),
+        new ClinicalDocumentChangeValidator(),
+        new ClinicalSummaryPlanAuthority(mapper, Clock.fixed(now, ZoneOffset.UTC)))
+        .get(request).getBody();
 
     assertThat(response).isNotNull();
     assertThat(response.has("prescriptions")).isFalse();
@@ -67,7 +75,12 @@ class ClinicalDocumentControllerPermissionTest {
     when(auth.require(request)).thenReturn(principal);
     when(documents.require(42L)).thenReturn(new StoredDocument(42L, storedState, 3L, null, now, now));
 
-    ClinicalDocumentController controller = new ClinicalDocumentController(documents, auth, new ClinicalDocumentAccessPolicy());
+    ClinicalDocumentController controller = new ClinicalDocumentController(
+        documents,
+        auth,
+        new ClinicalDocumentAccessPolicy(),
+        new ClinicalDocumentChangeValidator(),
+        new ClinicalSummaryPlanAuthority(mapper, Clock.fixed(now, ZoneOffset.UTC)));
 
     assertThatThrownBy(() -> controller.put(incomingState, request))
         .isInstanceOfSatisfying(ApiException.class, error -> {
@@ -98,8 +111,15 @@ class ClinicalDocumentControllerPermissionTest {
     when(documents.require(42L)).thenReturn(stored);
     when(documents.save(eq(42L), org.mockito.ArgumentMatchers.any(JsonNode.class), eq(3L), eq(7L)))
         .thenReturn(saved);
+    when(documents.state(saved)).thenReturn(storedState.deepCopy());
 
-    new ClinicalDocumentController(documents, auth, new ClinicalDocumentAccessPolicy()).put(incomingState, request);
+    new ClinicalDocumentController(
+        documents,
+        auth,
+        new ClinicalDocumentAccessPolicy(),
+        new ClinicalDocumentChangeValidator(),
+        new ClinicalSummaryPlanAuthority(mapper, Clock.fixed(now, ZoneOffset.UTC)))
+        .put(incomingState, request);
 
     ArgumentCaptor<JsonNode> stateCaptor = ArgumentCaptor.forClass(JsonNode.class);
     verify(documents).save(eq(42L), stateCaptor.capture(), eq(3L), eq(7L));
@@ -132,8 +152,14 @@ class ClinicalDocumentControllerPermissionTest {
     when(documents.require(42L)).thenReturn(stored);
     when(documents.save(eq(42L), org.mockito.ArgumentMatchers.any(JsonNode.class), eq(3L), eq(9L)))
         .thenReturn(saved);
+    when(documents.state(saved)).thenReturn(incomingState.deepCopy());
 
-    new ClinicalDocumentController(documents, auth, new ClinicalDocumentAccessPolicy())
+    new ClinicalDocumentController(
+        documents,
+        auth,
+        new ClinicalDocumentAccessPolicy(),
+        new ClinicalDocumentChangeValidator(),
+        new ClinicalSummaryPlanAuthority(mapper, Clock.fixed(now, ZoneOffset.UTC)))
         .put(incomingState, request);
 
     ArgumentCaptor<JsonNode> stateCaptor = ArgumentCaptor.forClass(JsonNode.class);

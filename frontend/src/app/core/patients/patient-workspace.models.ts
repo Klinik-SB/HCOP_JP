@@ -67,6 +67,8 @@ export interface StudyUploadDescriptor {
 export interface ClinicalSaveResponse {
   ok: boolean;
   unified?: { persisted?: boolean; revision?: number };
+  /** Estado canónico devuelto por Java después de aplicar auditoría y reglas clínicas. */
+  state?: ClinicalState;
 }
 
 export interface ClinicalState {

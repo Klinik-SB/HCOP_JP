@@ -133,6 +133,9 @@ configuración institucional y cerrar la paridad visual/E2E integrada.
 - [Corte Angular 033](CORTE-ANGULAR-033-E2E-CONFLICTO-CONCURRENTE.md):
   dos sesiones Chrome y PostgreSQL efímero demuestran `VERSION_CONFLICT`,
   borrador conservado, descarte explícito y ausencia de sobrescritura.
+- [Corte Angular 034](CORTE-ANGULAR-034-EDITOR-CONCLUSION-RESUMEN.md): primer
+  formulario completo de la hoja en Angular, con borrador previo al `PUT`,
+  motivo, versiones, auditoría, validación Java y E2E real.
 
 ## Ciclo obligatorio por capacidad
 

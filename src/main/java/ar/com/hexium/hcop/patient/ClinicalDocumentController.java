@@ -24,14 +24,20 @@ public class ClinicalDocumentController {
   private final PatientDocumentService documents;
   private final AuthContext auth;
   private final ClinicalDocumentAccessPolicy accessPolicy;
+  private final ClinicalDocumentChangeValidator changeValidator;
+  private final ClinicalSummaryPlanAuthority summaryPlanAuthority;
 
   public ClinicalDocumentController(
       PatientDocumentService documents,
       AuthContext auth,
-      ClinicalDocumentAccessPolicy accessPolicy) {
+      ClinicalDocumentAccessPolicy accessPolicy,
+      ClinicalDocumentChangeValidator changeValidator,
+      ClinicalSummaryPlanAuthority summaryPlanAuthority) {
     this.documents = documents;
     this.auth = auth;
     this.accessPolicy = accessPolicy;
+    this.changeValidator = changeValidator;
+    this.summaryPlanAuthority = summaryPlanAuthority;
   }
 
   @GetMapping
@@ -69,15 +75,19 @@ public class ClinicalDocumentController {
           "Falta la revisión de la historia clínica.",
           "CLINICAL_REVISION_REQUIRED");
     }
+    changeValidator.validate(stateToSave, current.document());
+    stateToSave = summaryPlanAuthority.canonicalize(stateToSave, current.document(), principal);
     StoredDocument saved = documents.save(
         principal.activePatientId(),
         stateToSave,
         expected,
         principal.userId());
+    JsonNode canonicalState = accessPolicy.visibleState(documents.state(saved), principal);
     return ResponseEntity.ok()
         .cacheControl(CacheControl.noStore())
         .body(Map.of(
             "ok", true,
+            "state", canonicalState,
             "unified", Map.of("persisted", true, "revision", saved.revision())));
   }
 

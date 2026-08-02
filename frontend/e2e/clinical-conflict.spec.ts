@@ -102,6 +102,7 @@ test('conserva el borrador ante VERSION_CONFLICT y nunca pisa el cambio ganador'
 
     const banner = pageA.locator('.clinical-save-conflict-banner');
     await expect(banner).toContainText('Hay cambios sin guardar.');
+    await expect(banner).toBeFocused();
     await expect(pageA.locator('.prescription-draft').filter({ hasText: draftText })).toBeVisible();
     await expect(pageA.getByRole('button', { name: 'Nuevo paciente', exact: true })).toBeDisabled();
     await expect(pageA.getByRole('button', { name: 'Abrir paciente', exact: true })).toBeDisabled();
@@ -178,5 +179,140 @@ test('conserva el borrador ante VERSION_CONFLICT y nunca pisa el cambio ganador'
     expect(documents.some((record) => record.title === draftTitle || record.summary === draftText)).toBe(false);
   } finally {
     await Promise.all([contextA.close(), contextB.close()]);
+  }
+});
+
+test('edita conclusión y plan con borrador protegido, auditoría y versiones reales', async ({ browser }) => {
+  const suffix = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+  const initialSummary = `Respuesta clínica inicial ${suffix}`;
+  const initialPlan = `Continuar controles ${suffix}`;
+  const changedPlan = `Nuevo control en 30 días ${suffix}`;
+  const context = await browser.newContext();
+
+  try {
+    await login(context);
+    const created = await context.request.post(`${origin}/api/clinical/patients`, {
+      data: {
+        firstName: `Paciente ${suffix}`,
+        lastName: 'Resumen QA',
+        dni: `98${Date.now().toString().slice(-6)}`,
+        medicalRecord: `QA-SUM-${suffix}`,
+        birthDate: '1975-02-03',
+        sex: 'No especificado',
+        insurance: 'Cobertura sintética QA',
+        affiliateNumber: `QA-SUM-${suffix}`,
+        phone: '', email: '', address: ''
+      }
+    });
+    await expectStatus(created, 201);
+    const body = await created.json() as { patientId: string; revision: number; patient: { fullName: string } };
+    const page = await context.newPage();
+    await page.goto('./');
+    await expect(page.getByText(body.patient.fullName, { exact: true }).first()).toBeVisible();
+
+    const editSummaryTrigger = page.getByRole('button', { name: 'Editar conclusión / resumen', exact: true });
+    await editSummaryTrigger.click();
+    let editor = page.getByRole('dialog', { name: 'Conclusión / resumen', exact: true });
+    await expect(editor).toBeVisible();
+    const initialSummaryField = editor.getByLabel('Conclusión / resumen', { exact: true });
+    const initialSaveButton = editor.getByRole('button', { name: 'Cargar en historia', exact: true });
+    const initialCloseButton = editor.getByRole('button', { name: 'Cerrar editor de conclusión / resumen', exact: true });
+    await expect(initialSaveButton).toBeVisible();
+    await expect(initialSummaryField).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(initialCloseButton).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(initialSaveButton).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(initialCloseButton).toBeFocused();
+    await page.locator('.summary-plan-editor-backdrop').click({ position: { x: 4, y: 4 } });
+    await page.keyboard.press('Escape');
+    await expect(editor).toBeVisible();
+    await editor.getByRole('button', { name: 'Cancelar', exact: true }).click();
+    await expect(editor).toHaveCount(0);
+    await expect(editSummaryTrigger).toBeFocused();
+
+    await editSummaryTrigger.click();
+    editor = page.getByRole('dialog', { name: 'Conclusión / resumen', exact: true });
+    await expect(editor.getByLabel('Conclusión / resumen', { exact: true })).toBeFocused();
+    await editor.getByLabel('Conclusión / resumen', { exact: true }).fill(`  ${initialSummary}  `);
+    await editor.getByLabel('Conducta / plan', { exact: true }).fill(`  ${initialPlan}  `);
+    await expect(page.getByRole('button', { name: 'Nuevo paciente', exact: true })).toBeDisabled();
+    await expect(page.locator('.configuration-button')).toBeDisabled();
+
+    page.once('dialog', (dialog) => dialog.dismiss());
+    await editor.getByRole('button', { name: 'Cerrar editor de conclusión / resumen', exact: true }).click();
+    await expect(editor).toBeVisible();
+
+    const clinicalPath = '**/api/hc';
+    await page.route(clinicalPath, async (route) => {
+      if (route.request().method() === 'PUT') {
+        await route.fulfill({
+          status: 503,
+          contentType: 'application/json',
+          body: JSON.stringify({ ok: false, status: 503, code: 'QA_TRANSIENT', error: 'Falla transitoria sintética' })
+        });
+        return;
+      }
+      await route.continue();
+    });
+    const transientPut = page.waitForResponse((candidate) =>
+      candidate.request().method() === 'PUT' && new URL(candidate.url()).pathname === '/api/hc');
+    await editor.getByRole('button', { name: 'Cargar en historia', exact: true }).click();
+    await expectStatus(await transientPut, 503);
+    await expect(editor).toBeVisible();
+    await expect(editor.getByRole('alert')).toContainText('Falla transitoria sintética');
+    await expect(editor.getByLabel('Conclusión / resumen', { exact: true })).toHaveValue(`  ${initialSummary}  `);
+    await expect(editor.getByLabel('Conducta / plan', { exact: true })).toHaveValue(`  ${initialPlan}  `);
+    await page.unroute(clinicalPath);
+
+    const initialPut = page.waitForResponse((candidate) =>
+      candidate.request().method() === 'PUT' && new URL(candidate.url()).pathname === '/api/hc');
+    await editor.getByRole('button', { name: 'Cargar en historia', exact: true }).click();
+    await expectStatus(await initialPut, 200);
+    await expect(editor).toHaveCount(0);
+    await expect(page.locator('.doc-section').filter({ hasText: initialSummary })).toBeVisible();
+    await expect(page.locator('.doc-section').filter({ hasText: initialPlan })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Nuevo paciente', exact: true })).toBeEnabled();
+
+    await page.getByRole('button', { name: 'Editar conclusión / resumen', exact: true }).click();
+    editor = page.getByRole('dialog', { name: 'Conclusión / resumen', exact: true });
+    await expect(editor.getByRole('button', { name: 'Guardar modificación', exact: true })).toBeVisible();
+    await editor.getByLabel('Conducta / plan', { exact: true }).fill(changedPlan);
+    await editor.getByLabel('Motivo de la modificación', { exact: true }).fill('Cambio de conducta en control');
+    const modificationPut = page.waitForResponse((candidate) =>
+      candidate.request().method() === 'PUT' && new URL(candidate.url()).pathname === '/api/hc');
+    await editor.getByRole('button', { name: 'Guardar modificación', exact: true }).click();
+    await expectStatus(await modificationPut, 200);
+    await expect(editor).toHaveCount(0);
+    await expect(page.locator('.doc-section').filter({ hasText: changedPlan })).toBeVisible();
+
+    const workspace = await context.request.get(`${origin}/api/clinical/patients/${body.patientId}/workspace`);
+    await expectStatus(workspace, 200);
+    const final = await workspace.json() as {
+      revision: number;
+      state?: {
+        narrative?: { summary?: string; plan?: string };
+        meta?: {
+          sectionFormModes?: { summaryPlan?: string };
+          sectionVersions?: { summaryPlan?: Array<{ reason?: string; content?: string; audit?: { action?: string } }> };
+          sectionAudit?: { summaryPlan?: { action?: string } };
+        };
+      };
+    };
+    expect(final.revision).toBe(body.revision + 2);
+    expect(final.state?.narrative?.summary).toBe(initialSummary);
+    expect(final.state?.narrative?.plan).toBe(changedPlan);
+    expect(final.state?.meta?.sectionFormModes?.summaryPlan).toBe('structured');
+    const versions = final.state?.meta?.sectionVersions?.summaryPlan || [];
+    expect(versions).toHaveLength(2);
+    expect(versions[0]?.reason).toBe('Carga inicial');
+    expect(versions[0]?.audit?.action).toBe('cargado');
+    expect(versions[1]?.reason).toBe('Cambio de conducta en control');
+    expect(versions[1]?.content).toContain(changedPlan);
+    expect(versions[1]?.audit?.action).toBe('modificado');
+    expect(final.state?.meta?.sectionAudit?.summaryPlan?.action).toBe('modificado');
+  } finally {
+    await context.close();
   }
 });

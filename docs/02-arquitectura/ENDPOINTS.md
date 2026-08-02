@@ -5,7 +5,7 @@
 - Especificación: `GET /v3/api-docs/hcop-jp-completa`
 - Swagger UI: `GET /swagger-ui.html`
 - Versión declarada: `1.0.0`
-- Operaciones documentadas: **111**
+- Operaciones documentadas: **112**
 - Autenticación: cookie HttpOnly `HCOP_SESSION`; las operaciones públicas se identifican expresamente.
 
 Los permisos se validan en el servidor. `authenticated` significa que la ruta exige una sesión activa pero no aplica un permiso granular adicional en el controlador.
@@ -93,7 +93,7 @@ Crea un paciente local, su hoja clínica en blanco y lo deja activo.
 
 ### `POST /api/clinical/patients/{patientId}/activate` - Activar paciente y abrir espacio clínico
 
-Asocia el paciente a la sesión y devuelve identidad, historia, tratamientos, turnos y conteos en una respuesta.
+Asocia el paciente a la sesión y devuelve identidad, historia, tratamientos, turnos y conteos, omitiendo secciones sin permiso.
 
 - **Controlador MVC:** `PatientWorkspaceController`
 - **Operación Java/OpenAPI:** `activate`
@@ -126,7 +126,7 @@ Confirma que el diagnóstico seleccionado pertenece a la historia del paciente.
 
 ### `GET /api/clinical/patients/{patientId}/workspace` - Abrir espacio clínico del paciente
 
-Devuelve el agregado de trabajo del paciente sin cambiar otra sesión.
+Devuelve el agregado de trabajo del paciente sin cambiar otra sesión y aplica la misma proyección por permisos.
 
 - **Controlador MVC:** `PatientWorkspaceController`
 - **Operación Java/OpenAPI:** `workspace`
@@ -148,24 +148,22 @@ Filtra el catálogo diagnóstico local por sistema, texto y límite de resultado
 
 ### `GET /api/hc` - Leer historia clínica
 
-Recupera la hoja del paciente activo o la plantilla en blanco.
+Recupera la hoja del paciente activo o la plantilla en blanco; requiere acceso a Historia y omite prescriptions sin permiso de lectura de Prescripción.
 
 - **Controlador MVC:** `ClinicalDocumentController`
 - **Operación Java/OpenAPI:** `get`
-- **Acceso requerido:** `authenticated`
+- **Acceso requerido:** `section.history.view`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** Sin cuerpo.
 - **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `PUT /api/hc` - Guardar historia clínica
 
-Guarda con control optimista de revisión para evitar pisar cambios concurrentes.
-Los `409` usan `ACTIVE_PATIENT_REQUIRED`, `CLINICAL_REVISION_REQUIRED`,
-`CLINICAL_PATIENT_MISMATCH` o `VERSION_CONFLICT` según la causa.
+Guarda con control optimista de revisión y devuelve el estado canónico confirmado. Si prescriptions cambia exige edición de Prescripción; si el campo fue ocultado, conserva su valor existente. Los cambios de narrative.summary y narrative.plan deben ser texto de hasta 50.000 caracteres; valores legacy atípicos que no cambian se preservan. Java genera actor, fecha, versión y auditoría de Conclusión / resumen usando la sesión y no confía en esos metadatos enviados por el cliente. La validación 400 usa CLINICAL_SUMMARY_INVALID, CLINICAL_SUMMARY_TOO_LONG, CLINICAL_PLAN_INVALID, CLINICAL_PLAN_TOO_LONG, CLINICAL_SUMMARY_PLAN_EMPTY, CLINICAL_SUMMARY_PLAN_REASON_REQUIRED, CLINICAL_SUMMARY_PLAN_REASON_INVALID o CLINICAL_SUMMARY_PLAN_REASON_TOO_LONG. Los conflictos 409 usan ACTIVE_PATIENT_REQUIRED, CLINICAL_REVISION_REQUIRED, CLINICAL_PATIENT_MISMATCH o VERSION_CONFLICT.
 
 - **Controlador MVC:** `ClinicalDocumentController`
 - **Operación Java/OpenAPI:** `put`
-- **Acceso requerido:** `section.history.edit`
+- **Acceso requerido:** `section.history.edit + section.prescriptions.edit si prescriptions cambia`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
 - **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
@@ -194,7 +192,7 @@ Sin consulta devuelve los pacientes recientes; con texto filtra por nombre, apel
 
 ### `POST /api/lira/patients/{patientId}/import` - Abrir paciente local
 
-Activa una historia ya consolidada en PostgreSQL; no consulta Lira.
+Activa una historia ya consolidada en PostgreSQL; no consulta Lira y proyecta las secciones según permisos.
 
 - **Controlador MVC:** `PatientController`
 - **Operación Java/OpenAPI:** `importPatient_1`
@@ -216,7 +214,7 @@ Resume disponibilidad y cantidad de registros antes de abrir la historia.
 
 ### `POST /api/lira/patients/{patientId}/refresh` - Abrir paciente local
 
-Activa una historia ya consolidada en PostgreSQL; no consulta Lira.
+Activa una historia ya consolidada en PostgreSQL; no consulta Lira y proyecta las secciones según permisos.
 
 - **Controlador MVC:** `PatientController`
 - **Operación Java/OpenAPI:** `importPatient`
@@ -346,7 +344,7 @@ Devuelve una fila por ciclo y día real con medicación. `pharmacy` permite filt
 fecha de hoy y se ordenan por hora del turno y sillón.
 
 - **Controlador MVC:** `InfusionApplicationWorkflowController`
-- **Operación Java/OpenAPI:** `list_8`
+- **Operación Java/OpenAPI:** `list_9`
 - **Acceso requerido:** `section.day-hospital.view`
 - **Parámetros:** `queue` (query, opcional): pharmacy, triage, preparation o administration.; `date` (query, opcional): Fecha ISO. En triaje/preparación/administración omitirla equivale a hoy.; `q` (query, opcional): Busca por paciente, DNI, esquema, diagnóstico o droga.; `medicationSource` (query, opcional): Fuente/custodia; use patient_to_bring para quienes deben traer medicación.
 - **Cuerpo:** Sin cuerpo.
@@ -807,8 +805,8 @@ Retira un protocolo de nuevas prescripciones sin romper tratamientos existentes.
 Devuelve los sitios tumorales y variables de estadificación disponibles en el catálogo local.
 
 - **Controlador MVC:** `AjccCatalogController`
-- **Operación Java/OpenAPI:** `list_9`
-- **Acceso requerido:** `authenticated`
+- **Operación Java/OpenAPI:** `list_10`
+- **Acceso requerido:** `section.tools.view`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** Sin cuerpo.
 - **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
@@ -819,7 +817,7 @@ Devuelve TNM, factores específicos y reglas del sitio AJCC seleccionado.
 
 - **Controlador MVC:** `AjccCatalogController`
 - **Operación Java/OpenAPI:** `detail_2`
-- **Acceso requerido:** `authenticated`
+- **Acceso requerido:** `section.tools.view`
 - **Parámetros:** `id` (query, obligatorio): Identificador del recurso solicitado.
 - **Cuerpo:** Sin cuerpo.
 - **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
@@ -830,7 +828,7 @@ Calcula el grupo de estadio de forma determinística a partir del sitio y los va
 
 - **Controlador MVC:** `AjccCatalogController`
 - **Operación Java/OpenAPI:** `stage`
-- **Acceso requerido:** `authenticated`
+- **Acceso requerido:** `section.tools.use`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
 - **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
@@ -856,6 +854,17 @@ Confirma que los catálogos empaquetados ya están disponibles y versionados.
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
 - **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+
+### `GET /api/clinical/tools/calculators` - Listar calculadoras operativas
+
+Devuelve únicamente las calculadoras activas y los ajustes institucionales necesarios para ejecutarlas desde Herramientas, sin exponer administración ni historial.
+
+- **Controlador MVC:** `CalculatorCatalogController`
+- **Operación Java/OpenAPI:** `list_8`
+- **Acceso requerido:** `section.tools.use`
+- **Parámetros:** Ninguno.
+- **Cuerpo:** Sin cuerpo.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/guides` - Listar guías clínicas
 
@@ -892,11 +901,11 @@ Guarda un PDF institucional y actualiza el catálogo de guías.
 
 ### `GET /api/medications/search` - Buscar medicamentos
 
-Busca por genérico, marca o presentación en el catálogo local de drogas.
+Busca por genérico, marca o presentación en el catálogo local de drogas. Requiere permiso de lectura de Prescripción.
 
 - **Controlador MVC:** `LegacyCatalogController`
 - **Operación Java/OpenAPI:** `medicationSearch`
-- **Acceso requerido:** `authenticated`
+- **Acceso requerido:** `section.prescriptions.view`
 - **Parámetros:** `q` (query, opcional): Texto de búsqueda; admite coincidencia parcial.
 - **Cuerpo:** Sin cuerpo.
 - **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
@@ -907,7 +916,7 @@ Mantiene el contrato histórico de la interfaz y responde desde los catálogos l
 
 - **Controlador MVC:** `LegacyCatalogController`
 - **Operación Java/OpenAPI:** `protocols`
-- **Acceso requerido:** `authenticated`
+- **Acceso requerido:** `section.protocols.view`
 - **Parámetros:** `source` (query, opcional): Origen del catálogo compatible; por defecto coir.
 - **Cuerpo:** Sin cuerpo.
 - **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
@@ -918,7 +927,7 @@ Devuelve el detalle local de un protocolo COIR o personalizado usando el contrat
 
 - **Controlador MVC:** `LegacyCatalogController`
 - **Operación Java/OpenAPI:** `protocolDetail`
-- **Acceso requerido:** `authenticated`
+- **Acceso requerido:** `section.protocols.view`
 - **Parámetros:** `id` (query, obligatorio): Identificador del recurso solicitado.; `source` (query, opcional): Origen del catálogo compatible; por defecto coir.
 - **Cuerpo:** Sin cuerpo.
 - **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
@@ -1140,7 +1149,7 @@ Lista usuarios habilitados para una capacidad de flujo.
 
 ### `POST /api/agent/chat` - Consultar agente clínico
 
-Responde sobre el contexto entregado y diferencia hechos de inferencias.
+Requiere section.agent.view. Acepta una consulta de hasta 8000 caracteres y envía sólo los últimos 12 mensajes no vacíos del historial, con hasta 8000 caracteres cada uno. Solicita JSON estructurado común a proveedores OpenAI compatibles y Ollama, valida tablas, gráficos, seguimientos y resaltados, y conserva como respuesta textual cualquier salida tradicional o JSON incompleto. Si el último mensaje user repite la consulta actual, se elimina del historial antes de llamar al LLM. timelineEvents y consultAgents se aceptan por compatibilidad pero no se incorporan al prompt en esta versión.
 
 - **Controlador MVC:** `LlmController`
 - **Operación Java/OpenAPI:** `agent`
@@ -1195,7 +1204,7 @@ Extrae únicamente campos configurados como asistidos por LLM.
 
 ### `GET /api/llm/status` - Consultar estado LLM
 
-Informa si la integración está habilitada y configurada.
+Requiere section.agent.view e informa proveedor, modelo y si la integración está habilitada y posee endpoint configurado. No prueba conectividad ni expone secretos.
 
 - **Controlador MVC:** `LlmController`
 - **Operación Java/OpenAPI:** `status`

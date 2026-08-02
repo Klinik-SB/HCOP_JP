@@ -108,6 +108,7 @@ Con el sistema iniciado también existe una versión navegable en
 - [Corte Angular 031: conflictos de guardado](09-migracion-angular-hexagonal/CORTE-ANGULAR-031-CONFLICTOS-DE-GUARDADO.md)
 - [Corte Angular 032: comparación segura](09-migracion-angular-hexagonal/CORTE-ANGULAR-032-COMPARACION-DE-CONFLICTOS.md)
 - [Corte Angular 033: E2E concurrente](09-migracion-angular-hexagonal/CORTE-ANGULAR-033-E2E-CONFLICTO-CONCURRENTE.md)
+- [Corte Angular 034: editor Conclusión / resumen](09-migracion-angular-hexagonal/CORTE-ANGULAR-034-EDITOR-CONCLUSION-RESUMEN.md)
 
 ## Fuentes de verdad
 

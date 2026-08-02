@@ -1,6 +1,14 @@
-import { Component, ElementRef, OnInit, effect, inject, input, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, effect, inject, input, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
+import { AuthService } from '../../core/auth/auth.service';
 import { ClinicalFocusRequest, ClinicalFocusService } from '../../core/clinical/clinical-focus.service';
+import {
+  CLINICAL_SUMMARY_PLAN_TEXT_LIMIT,
+  applyStructuredSummaryPlanEdit,
+  summaryPlanBaseline,
+  supportsStructuredSummaryPlan
+} from '../../core/clinical/clinical-summary-plan-edit';
 import {
   ClinicalPrintFact,
   ClinicalPrintSection,
@@ -8,19 +16,33 @@ import {
   clinicalPrintSectionHasContent
 } from '../../core/clinical/clinical-print-projection';
 import { ClinicalTreatmentKind, clinicalSectionTreatments, clinicalTreatmentBody } from '../../core/clinical/clinical-treatment-projection';
+import { ClinicalDraftHandle, ClinicalDraftRegistryService } from '../../core/patients/clinical-draft-registry.service';
 import { PatientWorkspaceService } from '../../core/patients/patient-workspace.service';
 import { ClinicalPatient, ClinicalRecord, ClinicalState } from '../../core/patients/patient-workspace.models';
 
 @Component({ selector: 'app-clinical-workspace', imports: [ReactiveFormsModule], templateUrl: './clinical-workspace.component.html', styleUrl: './clinical-workspace.component.scss' })
-export class ClinicalWorkspaceComponent implements OnInit {
+export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
   readonly printTimestamp = input('');
   readonly workspaceService = inject(PatientWorkspaceService);
+  readonly auth = inject(AuthService);
   private readonly clinicalFocus = inject(ClinicalFocusService);
+  private readonly clinicalDrafts = inject(ClinicalDraftRegistryService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   readonly query = new FormControl('', { nonNullable: true });
   readonly results = signal<ClinicalPatient[]>([]);
   readonly searching = signal(false);
   readonly searchError = signal('');
+  readonly summaryPlanOpen = signal(false);
+  readonly summaryPlanInitial = signal(true);
+  readonly summaryPlanBusy = signal(false);
+  readonly summaryPlanError = signal('');
+  readonly maxClinicalNarrativeChars = CLINICAL_SUMMARY_PLAN_TEXT_LIMIT;
+  readonly summaryControl = new FormControl('', { nonNullable: true });
+  readonly planControl = new FormControl('', { nonNullable: true });
+  readonly summaryPlanReasonControl = new FormControl('', { nonNullable: true });
+  private summaryPlanDraft: ClinicalDraftHandle | null = null;
+  private summaryPlanBaseline = { summary: '', plan: '', initial: true };
+  private summaryPlanReturnFocus: HTMLElement | null = null;
 
   constructor() {
     effect(() => {
@@ -31,10 +53,17 @@ export class ClinicalWorkspaceComponent implements OnInit {
       if (!request.id) return;
       queueMicrotask(() => this.applyClinicalFocus(request));
     });
+    this.summaryControl.valueChanges.subscribe(() => this.refreshSummaryPlanDirtyState());
+    this.planControl.valueChanges.subscribe(() => this.refreshSummaryPlanDirtyState());
+    this.summaryPlanReasonControl.valueChanges.subscribe(() => this.refreshSummaryPlanDirtyState());
   }
 
   ngOnInit(): void {
     this.query.valueChanges.subscribe(() => this.search());
+  }
+
+  ngOnDestroy(): void {
+    if (this.summaryPlanDraft) this.clinicalDrafts.release(this.summaryPlanDraft);
   }
 
   openPicker(): void { this.workspaceService.openPicker(); }
@@ -48,6 +77,111 @@ export class ClinicalWorkspaceComponent implements OnInit {
   }
   open(patient: ClinicalPatient): void { this.workspaceService.activate(patient); }
   closePatient(): void { this.workspaceService.close(); }
+
+  canEditSummaryPlan(): boolean {
+    return Boolean(
+      this.workspaceService.workspace()
+      && this.auth.hasPermission('section.history.edit')
+      && supportsStructuredSummaryPlan(this.state())
+    );
+  }
+
+  openSummaryPlanEditor(event?: Event): void {
+    const workspace = this.workspaceService.workspace();
+    if (!workspace || !this.canEditSummaryPlan() || this.workspaceService.hasPendingClinicalWork()) return;
+    this.summaryPlanReturnFocus = event?.currentTarget instanceof HTMLElement
+      ? event.currentTarget
+      : document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const baseline = summaryPlanBaseline(workspace.state);
+    this.summaryPlanBaseline = baseline;
+    this.summaryPlanInitial.set(baseline.initial);
+    this.summaryControl.setValue(baseline.summary, { emitEvent: false });
+    this.planControl.setValue(baseline.plan, { emitEvent: false });
+    this.summaryPlanReasonControl.setValue('', { emitEvent: false });
+    this.summaryPlanError.set('');
+    this.summaryPlanDraft = this.clinicalDrafts.acquire({
+      patientId: workspace.patientId,
+      label: 'Conclusión / resumen'
+    });
+    this.summaryPlanOpen.set(true);
+    this.refreshSummaryPlanDirtyState();
+    this.focusSummaryPlanAfterRender('#summaryPlanSummary');
+  }
+
+  closeSummaryPlanEditor(): void {
+    if (!this.summaryPlanOpen() || this.summaryPlanBusy()) return;
+    if (this.summaryPlanDraft && this.clinicalDrafts.isDirty(this.summaryPlanDraft)
+        && !window.confirm('¿Descartar los cambios no guardados de Conclusión / resumen?')) return;
+    this.finishSummaryPlanEditor(true);
+  }
+
+  trapSummaryPlanFocus(event: KeyboardEvent): void {
+    if (event.key !== 'Tab') return;
+    const dialog = event.currentTarget instanceof HTMLElement ? event.currentTarget : null;
+    if (!dialog) return;
+    const focusable = [...dialog.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+    )].filter((element) => element.getAttribute('aria-hidden') !== 'true');
+    if (!focusable.length) {
+      event.preventDefault();
+      dialog.focus();
+      return;
+    }
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+    if (event.shiftKey && (active === first || !dialog.contains(active))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && (active === last || !dialog.contains(active))) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
+  async saveSummaryPlan(): Promise<void> {
+    const workspace = this.workspaceService.workspace();
+    if (!workspace || !this.summaryPlanDraft || this.summaryPlanBusy()) return;
+    this.summaryPlanError.set('');
+    let nextState: ClinicalState;
+    try {
+      const user = this.auth.session()?.user;
+      nextState = applyStructuredSummaryPlanEdit(workspace.state, {
+        summary: this.summaryControl.value,
+        plan: this.planControl.value,
+        reason: this.summaryPlanReasonControl.value,
+        actor: {
+          userId: user?.id || '',
+          username: user?.username || '',
+          displayName: user?.displayName || user?.username || 'Profesional',
+          licenseNumber: user?.licenseNumber || ''
+        }
+      });
+    } catch (error) {
+      this.summaryPlanError.set(this.errorMessage(error, 'Revise los campos antes de guardar.'));
+      return;
+    }
+
+    this.summaryPlanBusy.set(true);
+    try {
+      await firstValueFrom(this.workspaceService.saveState(nextState));
+      this.clinicalDrafts.markClean(this.summaryPlanDraft);
+      this.finishSummaryPlanEditor(true);
+    } catch (error) {
+      if (this.workspaceService.activeSaveConflict()) {
+        // El servicio conserva una copia profunda del intento; el banner pasa a
+        // ser el propietario visible del borrador y evita una doble protección.
+        this.clinicalDrafts.markClean(this.summaryPlanDraft);
+        this.finishSummaryPlanEditor(false);
+      } else {
+        this.summaryPlanError.set(this.errorMessage(error, 'No se pudo guardar la conclusión / resumen.'));
+      }
+    } finally {
+      this.summaryPlanBusy.set(false);
+    }
+  }
+
+  summaryPlanCount(control: FormControl<string>): number { return control.value.length; }
 
   state(): ClinicalState { return this.workspaceService.workingWorkspace()?.state || {}; }
   records(key: 'diagnoses' | 'studies' | 'treatments' | 'evolutions' | 'prescriptions' | 'researchRecords'): ClinicalRecord[] { return this.state()[key] || []; }
@@ -182,5 +316,40 @@ export class ClinicalWorkspaceComponent implements OnInit {
 
   private normalizeSearch(value: string): string {
     return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es-AR').replace(/\s+/g, ' ').trim();
+  }
+
+  private refreshSummaryPlanDirtyState(): void {
+    if (!this.summaryPlanDraft) return;
+    // La detección usa la misma normalización que el guardado: espacios solos
+    // no deben dejar un borrador fantasma ni pedir confirmación al cerrar.
+    const dirty = this.summaryControl.value.trim() !== this.summaryPlanBaseline.summary
+      || this.planControl.value.trim() !== this.summaryPlanBaseline.plan
+      || this.summaryPlanReasonControl.value.trim().length > 0;
+    this.clinicalDrafts.setDirty(this.summaryPlanDraft, dirty);
+  }
+
+  private releaseSummaryPlanDraft(): void {
+    if (!this.summaryPlanDraft) return;
+    this.clinicalDrafts.release(this.summaryPlanDraft);
+    this.summaryPlanDraft = null;
+  }
+
+  private finishSummaryPlanEditor(returnFocus: boolean): void {
+    this.releaseSummaryPlanDraft();
+    this.summaryPlanOpen.set(false);
+    this.summaryPlanError.set('');
+    const trigger = this.summaryPlanReturnFocus;
+    this.summaryPlanReturnFocus = null;
+    if (returnFocus && trigger) window.setTimeout(() => {
+      if (trigger.isConnected && !trigger.hasAttribute('disabled')) trigger.focus({ preventScroll: true });
+    }, 0);
+  }
+
+  private focusSummaryPlanAfterRender(selector: string): void {
+    window.setTimeout(() => this.host.nativeElement.querySelector<HTMLElement>(selector)?.focus({ preventScroll: true }), 0);
+  }
+
+  private errorMessage(error: unknown, fallback: string): string {
+    return error instanceof Error && error.message ? error.message : fallback;
   }
 }

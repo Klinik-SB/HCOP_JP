@@ -1,0 +1,51 @@
+package ar.com.hexium.hcop.patient;
+
+import ar.com.hexium.hcop.common.ApiException;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
+import tools.jackson.databind.JsonNode;
+
+/** Validates newly edited clinical fields without rejecting unchanged legacy values. */
+@Component
+public class ClinicalDocumentChangeValidator {
+  static final int MAX_NARRATIVE_FIELD_CHARS = 50_000;
+
+  public void validate(JsonNode incoming, JsonNode stored) {
+    validateTextChange(
+        incoming,
+        stored,
+        "summary",
+        "La conclusión / resumen",
+        "CLINICAL_SUMMARY");
+    validateTextChange(
+        incoming,
+        stored,
+        "plan",
+        "La conducta / plan",
+        "CLINICAL_PLAN");
+  }
+
+  private void validateTextChange(
+      JsonNode incoming,
+      JsonNode stored,
+      String field,
+      String label,
+      String codePrefix) {
+    JsonNode next = incoming.path("narrative").path(field);
+    JsonNode previous = stored.path("narrative").path(field);
+    if (next.equals(previous)) return;
+
+    if (!next.isTextual()) {
+      throw new ApiException(
+          HttpStatus.BAD_REQUEST,
+          label + " debe ser texto.",
+          codePrefix + "_INVALID");
+    }
+    if (next.textValue().length() > MAX_NARRATIVE_FIELD_CHARS) {
+      throw new ApiException(
+          HttpStatus.BAD_REQUEST,
+          label + " no puede superar " + MAX_NARRATIVE_FIELD_CHARS + " caracteres.",
+          codePrefix + "_TOO_LONG");
+    }
+  }
+}

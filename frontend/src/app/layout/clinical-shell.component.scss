@@ -17,6 +17,7 @@
   color: #5e4a16;
   z-index: 4;
 }
+.clinical-save-conflict-banner:focus { outline: 2px solid #a37813; outline-offset: 2px; }
 .clinical-save-conflict-banner > div { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 9px; min-width: 0; }
 .clinical-save-conflict-banner strong { color: #45350f; }
 .clinical-save-conflict-banner span { line-height: 1.35; }

@@ -75,6 +75,13 @@ ya valida en dos sesiones Chrome y PostgreSQL efímero que la segunda escritura
 recibe `VERSION_CONFLICT`, conserva su borrador y nunca pisa la revisión
 ganadora.
 
+El corte 034 migra de extremo a extremo **Conclusión / resumen**: formulario
+Angular estructurado, primera carga, modificación con motivo, vaciado,
+auditoría y versiones firmadas por Java, borrador previo al `PUT`, protección de
+formas legacy no textuales, respuesta canónica y dos recorridos Chrome contra
+PostgreSQL efímero. La fila continúa `Pendiente` porque los demás editores de la
+hoja y el historial visible equivalente aún no alcanzaron paridad.
+
 ## Evidencia requerida para marcar `Validada`
 
 1. Prueba automática de la regla o del contrato.

@@ -1,8 +1,9 @@
-import { Component, ElementRef, HostListener, OnInit, ViewChild, inject, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, ViewChild, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../core/auth/auth.service';
 import { ClinicalConflictComparison } from '../core/patients/clinical-conflict-comparison';
 import { PatientWorkspaceService } from '../core/patients/patient-workspace.service';
+import { ClinicalDraftRegistryService } from '../core/patients/clinical-draft-registry.service';
 import { ClinicalWorkspaceComponent } from '../features/clinical-workspace/clinical-workspace.component';
 import { StudyPanelComponent } from '../features/studies/study-panel.component';
 import { TimelinePanelComponent } from '../features/timeline/timeline-panel.component';
@@ -25,6 +26,7 @@ type RightPane = 'studies' | 'care' | 'prescription' | 'agent' | 'research' | 't
 export class ClinicalShellComponent implements OnInit {
   readonly auth = inject(AuthService);
   readonly patientWorkspace = inject(PatientWorkspaceService);
+  private readonly clinicalDrafts = inject(ClinicalDraftRegistryService);
   private readonly router = inject(Router);
   readonly selectedPane = signal<RightPane>('studies');
   readonly searchExpanded = signal(false);
@@ -32,8 +34,23 @@ export class ClinicalShellComponent implements OnInit {
   readonly careSchedulerOpen = signal(false);
   readonly printTimestamp = signal('');
   readonly conflictReviewOpen = signal(false);
+  @ViewChild('clinicalSaveConflictBanner') private clinicalSaveConflictBanner?: ElementRef<HTMLElement>;
   @ViewChild('conflictReviewClose') private conflictReviewClose?: ElementRef<HTMLButtonElement>;
   private conflictReviewReturnFocus: HTMLElement | null = null;
+  private focusedConflictId = '';
+
+  constructor() {
+    effect(() => {
+      const conflictId = this.patientWorkspace.activeSaveConflict()?.conflictId || '';
+      if (!conflictId) {
+        this.focusedConflictId = '';
+        return;
+      }
+      if (conflictId === this.focusedConflictId) return;
+      this.focusedConflictId = conflictId;
+      window.setTimeout(() => this.clinicalSaveConflictBanner?.nativeElement.focus(), 0);
+    });
+  }
 
   ngOnInit(): void {
     this.auth.load().subscribe({
@@ -45,7 +62,10 @@ export class ClinicalShellComponent implements OnInit {
     });
   }
 
-  selectPane(pane: RightPane): void { this.selectedPane.set(this.canOpen(pane) ? pane : 'studies'); }
+  selectPane(pane: RightPane): void {
+    if (pane !== this.selectedPane() && this.hasPendingConflict()) return;
+    this.selectedPane.set(this.canOpen(pane) ? pane : 'studies');
+  }
   openLogin(): void { this.router.navigateByUrl('/login'); }
   openPatient(): void { if (!this.hasPendingConflict()) this.patientWorkspace.openPicker(); }
   openNewPatient(): void { if (!this.hasPendingConflict()) this.newPatientOpen.set(true); }
@@ -55,7 +75,7 @@ export class ClinicalShellComponent implements OnInit {
     this.auth.logout().subscribe({ next: () => this.router.navigateByUrl('/login') });
   }
   hasPendingConflict(): boolean {
-    return Boolean(this.patientWorkspace.activeSaveConflict()) || this.patientWorkspace.saving();
+    return this.patientWorkspace.hasPendingClinicalWork();
   }
   canPrint(): boolean {
     return Boolean(
@@ -78,9 +98,11 @@ export class ClinicalShellComponent implements OnInit {
   restoreAfterPrint(): void { this.printTimestamp.set(''); }
   legacyFallback(): void { if (!this.hasPendingConflict()) window.location.assign('/'); }
   resolvePendingConflict(): void {
-    if (!this.hasPendingConflict()) return;
+    const conflict = this.patientWorkspace.activeSaveConflict();
+    if (!conflict) return;
     if (!window.confirm('¿Descartar este borrador no guardado y recuperar la última versión confirmada?')) return;
     this.conflictReviewOpen.set(false);
+    this.clinicalDrafts.clearPatient(conflict.patientId);
     this.patientWorkspace.discardConflictAndReload();
   }
   openConflictReview(): void {

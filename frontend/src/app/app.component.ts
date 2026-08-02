@@ -14,7 +14,7 @@ export class AppComponent implements OnInit {
   ngOnInit(): void { this.visualContract.load(); }
   @HostListener('window:beforeunload', ['$event'])
   protectPendingDraft(event: BeforeUnloadEvent): void {
-    if (!this.workspace.activeSaveConflict() && !this.workspace.saving()) return;
+    if (!this.workspace.hasPendingClinicalWork()) return;
     event.preventDefault();
     event.returnValue = '';
   }

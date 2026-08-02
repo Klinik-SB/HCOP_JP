@@ -59,7 +59,7 @@
       <section class="doc-section" [class.clinical-print-empty]="!printHas('surgery')"><div class="section-heading"><h3>Cirugías oncológicas</h3></div>
         @if (treatmentRecords('surgery').length) { @for (record of treatmentRecords('surgery'); track record.id ?? $index) { <article class="doc-entry treatment-entry" [attr.data-clinical-date]="record.date"><p><strong>{{ treatmentHeading(record) }}</strong> {{ treatmentBody(record) }}</p></article> } } @else { <p class="section-free-text">Sin cirugías oncológicas registradas.</p> }
       </section>
-      <section class="doc-section" [class.clinical-print-empty]="!printHas('summary')"><div class="section-heading"><h3>Conclusión / resumen</h3></div>
+      <section class="doc-section" [class.clinical-print-empty]="!printHas('summary')"><div class="section-heading"><h3>Conclusión / resumen</h3>@if (canEditSummaryPlan()) { <div class="section-actions"><button class="section-action-button" type="button" title="Editar conclusión / resumen" aria-label="Editar conclusión / resumen" [disabled]="workspaceService.hasPendingClinicalWork()" (click)="openSummaryPlanEditor($event)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div> }</div>
         @if (narrative('summary') || narrative('plan')) { <div class="clinical-facts-stack">@if (narrative('summary')) { <p><strong>Conclusión / resumen:</strong> {{ narrative('summary') }}</p> }@if (narrative('plan')) { <p><strong>Conducta / plan:</strong> {{ narrative('plan') }}</p> }</div> } @else { <p class="section-free-text">Sin conclusión o resumen cargado.</p> }
       </section>
       <section class="doc-section" [class.clinical-print-empty]="!printHas('activity')"><div class="section-heading"><h3>Actividad clínica cronológica</h3></div>
@@ -80,6 +80,32 @@
           <div class="lira-patient-results" role="listbox" aria-label="Pacientes encontrados">@for (patient of results(); track patient.id) { <button class="lira-patient-result" type="button" role="option" (click)="open(patient)"><span><strong>{{ patient.fullName }}</strong><small>{{ patientLine(patient) }}</small></span><span aria-hidden="true">›</span></button> }</div>
         </div>
         <footer class="modal-actions"><button class="tool-button" type="button" (click)="closePicker()"><span>Cerrar</span></button></footer>
+      </section>
+    </div>
+  }
+
+  @if (summaryPlanOpen()) {
+    <div class="modal-backdrop summary-plan-editor-backdrop open" aria-hidden="false">
+      <section class="modal-card section-modal-card summary-plan-editor-modal" role="dialog" aria-modal="true" aria-labelledby="summaryPlanEditorTitle" aria-describedby="summaryPlanEditorDescription" tabindex="-1" (keydown)="trapSummaryPlanFocus($event)">
+        <header class="modal-header">
+          <div><span class="sheet-kicker">Historia clínica</span><h2 id="summaryPlanEditorTitle">Conclusión / resumen</h2><p id="summaryPlanEditorDescription">Registre la síntesis clínica y la conducta acordada. Cada modificación queda versionada y auditada.</p></div>
+          <button class="icon-button" type="button" title="Cerrar" aria-label="Cerrar editor de conclusión / resumen" [disabled]="summaryPlanBusy()" (click)="closeSummaryPlanEditor()">×</button>
+        </header>
+        <div class="modal-body summary-plan-editor-body">
+          <div class="section-structured-editor">
+            <p class="section-structured-intro">Puede completar uno o ambos campos. Los espacios al inicio y al final se normalizan al guardar.</p>
+            <div class="section-structured-fields">
+              <label class="section-structured-field is-wide" for="summaryPlanSummary"><span>Conclusión / resumen</span><textarea id="summaryPlanSummary" aria-label="Conclusión / resumen" rows="8" [formControl]="summaryControl" [maxlength]="maxClinicalNarrativeChars" [disabled]="summaryPlanBusy()"></textarea><small>{{ summaryPlanCount(summaryControl) }} / {{ maxClinicalNarrativeChars }}</small></label>
+              <label class="section-structured-field is-wide" for="summaryPlanPlan"><span>Conducta / plan</span><textarea id="summaryPlanPlan" aria-label="Conducta / plan" rows="6" [formControl]="planControl" [maxlength]="maxClinicalNarrativeChars" [disabled]="summaryPlanBusy()"></textarea><small>{{ summaryPlanCount(planControl) }} / {{ maxClinicalNarrativeChars }}</small></label>
+            </div>
+            @if (!summaryPlanInitial()) {
+              <label class="section-structured-field section-edit-reason" for="summaryPlanReason"><span>Motivo de la modificación</span><input id="summaryPlanReason" aria-label="Motivo de la modificación" autocomplete="off" [maxlength]="maxClinicalNarrativeChars" [formControl]="summaryPlanReasonControl" [disabled]="summaryPlanBusy()" placeholder="Explique brevemente por qué se modifica esta sección"><small>Obligatorio para conservar una trazabilidad clínica comprensible.</small></label>
+            }
+            @if (summaryPlanInitial()) { <p class="summary-plan-editor-note">Esta es la carga inicial de la sección. Debe completar al menos uno de los dos campos.</p> }
+            @if (summaryPlanError()) { <p class="summary-plan-editor-error" role="alert">{{ summaryPlanError() }}</p> }
+          </div>
+        </div>
+        <footer class="modal-actions"><button class="tool-button" type="button" [disabled]="summaryPlanBusy()" (click)="closeSummaryPlanEditor()"><span>Cancelar</span></button><button class="tool-button primary" type="button" [disabled]="summaryPlanBusy()" (click)="saveSummaryPlan()"><span>{{ summaryPlanBusy() ? 'Guardando…' : summaryPlanInitial() ? 'Cargar en historia' : 'Guardar modificación' }}</span></button></footer>
       </section>
     </div>
   }

@@ -7,6 +7,7 @@ import ar.com.hexium.hcop.catalog.LegacyCatalogController;
 import ar.com.hexium.hcop.tools.infrastructure.web.CalculatorCatalogController;
 import ar.com.hexium.hcop.integration.LlmController;
 import ar.com.hexium.hcop.integration.LlmController.AgentChatRequest;
+import ar.com.hexium.hcop.patient.ClinicalDocumentController;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.responses.ApiResponse;
@@ -14,6 +15,7 @@ import io.swagger.v3.oas.models.responses.ApiResponses;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.method.HandlerMethod;
+import tools.jackson.databind.JsonNode;
 
 class OpenApiConfigurationTest {
 
@@ -195,6 +197,39 @@ class OpenApiConfigurationTest {
         .isEqualTo("section.tools.use");
     assertThat(operation.getSummary()).isEqualTo("Listar calculadoras operativas");
     assertThat(operation.getSecurity()).isNotEmpty();
+  }
+
+  @Test
+  void documentaLosLimitesYCodigosDelEditorDeConclusion() throws Exception {
+    ClinicalDocumentController controller = new ClinicalDocumentController(
+        null, null, null, null, null);
+    HandlerMethod put = new HandlerMethod(
+        controller,
+        ClinicalDocumentController.class.getDeclaredMethod(
+            "put", JsonNode.class, HttpServletRequest.class));
+    Operation operation = operationWithSuccess();
+
+    new OpenApiConfiguration().documentedOperations().customize(operation, put);
+
+    assertThat(operation.getExtensions().get("x-hcop-permission"))
+        .isEqualTo(
+            "section.history.edit + section.prescriptions.edit si prescriptions cambia");
+    assertThat(operation.getDescription())
+        .contains(
+            "narrative.summary",
+            "narrative.plan",
+            "50.000",
+            "CLINICAL_SUMMARY_INVALID",
+            "CLINICAL_SUMMARY_TOO_LONG",
+            "CLINICAL_PLAN_INVALID",
+            "CLINICAL_PLAN_TOO_LONG",
+            "CLINICAL_SUMMARY_PLAN_EMPTY",
+            "CLINICAL_SUMMARY_PLAN_REASON_REQUIRED",
+            "CLINICAL_SUMMARY_PLAN_REASON_INVALID",
+            "CLINICAL_SUMMARY_PLAN_REASON_TOO_LONG",
+            "estado canónico",
+            "sesión",
+            "VERSION_CONFLICT");
   }
 
   private Operation operationWithSuccess() {

@@ -6,6 +6,7 @@ export type ClinicalSaveErrorCode =
   | 'CLINICAL_PATIENT_MISMATCH'
   | 'VERSION_CONFLICT'
   | 'PENDING_CLINICAL_CONFLICT'
+  | 'PENDING_LOCAL_DRAFT'
   | 'CLINICAL_SAVE_IN_PROGRESS'
   | 'CLINICAL_CONTEXT_TRANSITION_IN_PROGRESS'
   | string;
@@ -69,11 +70,13 @@ export function clinicalTransitionBlockCode(
   conflict: ClinicalSaveConflictDraft | null,
   targetPatientId: string | null,
   saving: boolean,
-  transitioning = false
+  transitioning = false,
+  localDraft = false
 ): ClinicalSaveErrorCode {
   if (saving) return 'CLINICAL_SAVE_IN_PROGRESS';
   if (transitioning) return 'CLINICAL_CONTEXT_TRANSITION_IN_PROGRESS';
   if (conflict && targetPatientId !== conflict.patientId) return 'PENDING_CLINICAL_CONFLICT';
+  if (localDraft) return 'PENDING_LOCAL_DRAFT';
   return '';
 }
 
@@ -122,6 +125,7 @@ function friendlyMessage(code: string): string {
   if (code === 'PENDING_CLINICAL_CONFLICT') {
     return 'Hay un borrador en conflicto pendiente. Recargue la historia antes de intentar otro guardado.';
   }
+  if (code === 'PENDING_LOCAL_DRAFT') return 'Hay cambios clínicos sin guardar en un editor abierto.';
   if (code === 'CLINICAL_SAVE_IN_PROGRESS') return 'Hay un guardado clínico en curso. Espere a que termine.';
   if (code === 'CLINICAL_CONTEXT_TRANSITION_IN_PROGRESS') return 'El contexto del paciente se está actualizando. Espere a que termine.';
   if (code === 'UNKNOWN_CLINICAL_CONFLICT') {

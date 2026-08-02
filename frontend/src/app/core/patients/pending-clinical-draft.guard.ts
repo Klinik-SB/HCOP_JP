@@ -4,5 +4,5 @@ import { PatientWorkspaceService } from './patient-workspace.service';
 
 export const pendingClinicalDraftGuard: CanDeactivateFn<unknown> = () => {
   const workspace = inject(PatientWorkspaceService);
-  return !workspace.activeSaveConflict() && !workspace.saving();
+  return !workspace.hasPendingClinicalWork();
 };
