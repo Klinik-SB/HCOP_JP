@@ -10,7 +10,7 @@ capacidad nueva se compara contra la línea base antes de habilitarse y el
 frontend anterior sólo se retira cuando la matriz de paridad está completa.
 
 La biblioteca declarativa Angular conserva el inventario completo y tiene
-**31 de 57 calculadoras** portadas con pruebas doradas. Todavía no se habilita
+**35 de 57 calculadoras** portadas con pruebas doradas. Todavía no se habilita
 una vista parcial: la biblioteca visible se reemplazará cuando alcance paridad
 funcional y visual completa.
 
@@ -81,6 +81,9 @@ funcional y visual completa.
 - [Corte Angular 016](CORTE-ANGULAR-016-RIESGO-PALIATIVOS-Y-RADIOTERAPIA.md):
   CISNE, PPI, BED/EQD2 y QTc Fridericia portados con clases, equivalencia
   biológica, referencias y redondeos heredados verificados.
+- [Corte Angular 017](CORTE-ANGULAR-017-MAMA-PRONOSTICO-Y-RESPUESTA.md): NPI,
+  RCB experimental, PEPI y CTS5 portados con fronteras, limitaciones clínicas,
+  defectos heredados y enlace oficial tipado verificados.
 
 ## Ciclo obligatorio por capacidad
 

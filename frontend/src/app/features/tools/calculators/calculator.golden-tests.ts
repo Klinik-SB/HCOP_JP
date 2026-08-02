@@ -43,6 +43,12 @@ import {
   PALLIATIVE_PROGNOSTIC_INDEX_CALCULATOR,
   QTC_FRIDERICIA_CALCULATOR
 } from './legacy-calculators-28-31.definitions';
+import {
+  CTS5_BREAST_CALCULATOR,
+  NOTTINGHAM_PROGNOSTIC_INDEX_CALCULATOR,
+  PEPI_BREAST_CALCULATOR,
+  RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR
+} from './legacy-calculators-32-35.definitions';
 import { PORTED_CALCULATORS } from './ported-calculator.registry';
 import { CalculatorOrigin } from './calculator.models';
 
@@ -67,19 +73,21 @@ test('inventory contains the exact 57 unique legacy tools in stable order', () =
   }
 });
 
-test('only the first thirty-one calculators are marked as ported', () => {
+test('only the first thirty-five calculators are marked as ported', () => {
   deepEqual(CALCULATOR_INVENTORY.filter((entry) => entry.migrationStatus === 'ported').map((entry) => entry.id),
     ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk',
       'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude', 'nmibc', 'cystectomy', 'cisplatin', 'utuc',
       'renal-complexity', 'leibovich', 'imdc', 'igcccg', 'renal-function-oncology', 'anc-ctcae-v6',
       'khorana-vte', 'mascc-febrile-neutropenia', 'cisne-febrile-neutropenia',
-      'palliative-prognostic-index', 'bed-eqd2', 'qtc-fridericia']);
+      'palliative-prognostic-index', 'bed-eqd2', 'qtc-fridericia',
+      'nottingham-prognostic-index', 'residual-cancer-burden-experimental', 'pepi-breast', 'cts5-breast']);
   deepEqual(PORTED_CALCULATORS.map((entry) => entry.id),
     ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk',
       'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude', 'nmibc', 'cystectomy', 'cisplatin', 'utuc',
       'renal-complexity', 'leibovich', 'imdc', 'igcccg', 'renal-function-oncology', 'anc-ctcae-v6',
       'khorana-vte', 'mascc-febrile-neutropenia', 'cisne-febrile-neutropenia',
-      'palliative-prognostic-index', 'bed-eqd2', 'qtc-fridericia']);
+      'palliative-prognostic-index', 'bed-eqd2', 'qtc-fridericia',
+      'nottingham-prognostic-index', 'residual-cancer-burden-experimental', 'pepi-breast', 'cts5-breast']);
 });
 
 test('BSA opens blank and keeps legacy values only as examples', () => {
@@ -2312,6 +2320,316 @@ test('ported 28 to 31 enforce safe selectors and typed text-only results', () =>
   for (const current of results) assertNoRawMarkup(current.notes);
 });
 
+test('ported 32 to 35 preserve canonical metadata and field order', () => {
+  deepEqual([
+    NOTTINGHAM_PROGNOSTIC_INDEX_CALCULATOR,
+    RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR,
+    PEPI_BREAST_CALCULATOR,
+    CTS5_BREAST_CALCULATOR
+  ].map((definition) => ({
+    id: definition.id,
+    title: definition.title,
+    category: definition.category,
+    subtitle: definition.subtitle,
+    source: definition.source,
+    fieldIds: definition.fields.map((field) => field.id)
+  })), [
+    {
+      id: 'nottingham-prognostic-index', title: 'Nottingham Prognostic Index — NPI',
+      category: 'mama', subtitle: 'Índice anatomopatológico clásico en cáncer de mama invasivo.',
+      source: 'Nottingham Prognostic Index', fieldIds: ['npi_size', 'npi_grade', 'npi_nodes']
+    },
+    {
+      id: 'residual-cancer-burden-experimental',
+      title: 'Residual Cancer Burden — RCB experimental', category: 'mama',
+      subtitle: 'Cálculo local experimental de enfermedad residual posneoadyuvancia.',
+      source: 'RCB / MD Anderson',
+      fieldIds: ['rcb_warning', 'rcb_d1', 'rcb_d2', 'rcb_cellularity', 'rcb_in_situ',
+        'rcb_nodes', 'rcb_largest_met']
+    },
+    {
+      id: 'pepi-breast', title: 'PEPI — Preoperative Endocrine Prognostic Index',
+      category: 'mama',
+      subtitle: 'Respuesta anatomopatológica después de endocrinoterapia neoadyuvante.',
+      source: 'PEPI',
+      fieldIds: ['pepi_scope', 'pepi_pt', 'pepi_nodes', 'pepi_ki67', 'pepi_er_allred']
+    },
+    {
+      id: 'cts5-breast', title: 'CTS5 — recurrencia tardía', category: 'mama',
+      subtitle: 'Riesgo residual entre los años 5 y 10.', source: 'CTS5, ATAC / BIG 1-98',
+      fieldIds: ['cts5_scope', 'cts5_age', 'cts5_size', 'cts5_grade', 'cts5_nodes']
+    }
+  ]);
+});
+
+test('ported 32 to 35 open blank and retain every factory value only as an example', () => {
+  deepEqual(evaluateCalculator(NOTTINGHAM_PROGNOSTIC_INDEX_CALCULATOR).issues
+    .map((issue) => issue.fieldId), ['npi_size', 'npi_grade', 'npi_nodes']);
+  deepEqual(evaluateCalculator(RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR).issues
+    .map((issue) => issue.fieldId), ['rcb_d1', 'rcb_d2', 'rcb_cellularity', 'rcb_in_situ',
+      'rcb_nodes', 'rcb_largest_met']);
+  deepEqual(evaluateCalculator(PEPI_BREAST_CALCULATOR).issues
+    .map((issue) => issue.fieldId), ['pepi_pt', 'pepi_nodes', 'pepi_ki67', 'pepi_er_allred']);
+  deepEqual(evaluateCalculator(CTS5_BREAST_CALCULATOR).issues
+    .map((issue) => issue.fieldId), ['cts5_age', 'cts5_size', 'cts5_grade', 'cts5_nodes']);
+  deepEqual(NOTTINGHAM_PROGNOSTIC_INDEX_CALCULATOR.fields.map((field) =>
+    field.kind === 'number' || field.kind === 'select' ? field.exampleValue : null), [2, '2', 0]);
+  deepEqual(RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR.fields.map((field) =>
+    field.kind === 'number' || field.kind === 'select' ? field.exampleValue : null),
+  [null, 20, 15, 10, 0, 0, 0]);
+  deepEqual(PEPI_BREAST_CALCULATOR.fields.map((field) =>
+    field.kind === 'number' || field.kind === 'select' ? field.exampleValue : null),
+  [null, 'pt1', 'no', 2, 8]);
+  deepEqual(CTS5_BREAST_CALCULATOR.fields.map((field) =>
+    field.kind === 'number' || field.kind === 'select' ? field.exampleValue : null),
+  [null, 60, 20, '2', 0]);
+});
+
+test('NPI preserves formula, output and historical limitations', () => {
+  const evaluation = evaluateCalculator(NOTTINGHAM_PROGNOSTIC_INDEX_CALCULATOR,
+    npiInput({ npi_size: 2.01 }));
+  deepEqual(evaluation.result, {
+    title: 'NPI 3.40 · moderado I',
+    detail: 'Índice = 0,2 × tamaño en cm + grado + categoría ganglionar.',
+    badge: 'mama invasiva', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'NPI', value: '3.40' },
+      { label: 'Grupo', value: 'moderado I' },
+      { label: 'Categoría ganglionar', value: 1 }
+    ],
+    notes: [
+      'Es un modelo pronóstico histórico; no incorpora ER, HER2, Ki-67, genómica ni tratamientos contemporáneos.',
+      'Usar tamaño del componente invasivo y grado histológico definitivo.',
+      'No determina por sí solo indicación o intensidad de tratamiento.'
+    ]
+  });
+});
+
+test('NPI preserves all raw prognostic cutoffs and nodal categories', () => {
+  const groupCases: readonly [number, string, number, string, string][] = [
+    [2, '1', 0, 'NPI 2.40 · excelente', '2.40'],
+    [2.5, '1', 0, 'NPI 2.50 · bueno', '2.50'],
+    [2, '2', 0, 'NPI 3.40 · bueno', '3.40'],
+    [2.1, '2', 0, 'NPI 3.42 · moderado I', '3.42'],
+    [2, '3', 0, 'NPI 4.40 · moderado I', '4.40'],
+    [2.1, '3', 0, 'NPI 4.42 · moderado II', '4.42'],
+    [2, '3', 1, 'NPI 5.40 · moderado II', '5.40'],
+    [2.1, '3', 1, 'NPI 5.42 · pobre', '5.42'],
+    [2, '3', 4, 'NPI 6.40 · pobre', '6.40'],
+    [2.1, '3', 4, 'NPI 6.42 · muy pobre', '6.42']
+  ];
+  for (const [size, grade, nodes, expectedTitle, expectedScore] of groupCases) {
+    const calculated = NOTTINGHAM_PROGNOSTIC_INDEX_CALCULATOR.calculate({
+      npi_size: size, npi_grade: grade, npi_nodes: nodes
+    });
+    equal(calculated.title, expectedTitle);
+    equal(calculated.metrics[0]?.value, expectedScore);
+  }
+  for (const [nodes, category] of [[0, 1], [1, 2], [3, 2], [4, 3]] as const) {
+    equal(NOTTINGHAM_PROGNOSTIC_INDEX_CALCULATOR.calculate({
+      npi_size: 2, npi_grade: '2', npi_nodes: nodes
+    }).metrics[2]?.value, category);
+  }
+});
+
+test('NPI preserves the legacy minimum-step conflict and raw-versus-rounded classification', () => {
+  const example = evaluateCalculator(NOTTINGHAM_PROGNOSTIC_INDEX_CALCULATOR, npiInput());
+  equal(example.status, 'invalid');
+  deepEqual(example.issues.map((issue) => [issue.fieldId, issue.code]), [['npi_size', 'step-mismatch']]);
+  const accepted = evaluateCalculator(NOTTINGHAM_PROGNOSTIC_INDEX_CALCULATOR,
+    npiInput({ npi_size: 2.01 }));
+  equal(accepted.result.title, 'NPI 3.40 · moderado I');
+  equal(accepted.result.metrics[0]?.value, '3.40');
+});
+
+test('RCB golden example preserves experimental index, class and typed official link', () => {
+  const evaluation = evaluateCalculator(RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR,
+    rcbInput());
+  deepEqual(evaluation.result, {
+    title: 'RCB-II · índice experimental 1.537',
+    detail: 'Resultado local para control técnico; requiere confirmación externa.',
+    badge: 'experimental', score: 0, showScore: false, severity: 'warn',
+    metrics: [
+      { label: 'Clase calculada', value: 'RCB-II' },
+      { label: 'Índice', value: '1.537' },
+      { label: 'Diámetro geométrico', value: '17.32 mm' },
+      { label: 'Fracción invasiva', value: '0.1000' }
+    ],
+    notes: [
+      'Confirmar siempre el resultado antes de documentarlo o utilizarlo.',
+      {
+        kind: 'external-link', label: 'calculadora oficial de MD Anderson',
+        href: 'https://www3.mdanderson.org/app/medcalc/index.cfm?pagename=jsconvert3'
+      },
+      'La medición debe provenir de evaluación anatomopatológica estandarizada del lecho posneoadyuvancia.',
+      'No usar esta implementación experimental para indicar un tratamiento automático.'
+    ]
+  });
+  const link = evaluation.result.notes[1];
+  equal(typeof link === 'object' && link !== null && link.kind === 'external-link', true);
+  equal(typeof link === 'object' && link !== null && link.kind === 'external-link'
+    ? new URL(link.href).protocol : '', 'https:');
+  assertNoRawMarkup(evaluation.result.notes);
+});
+
+test('RCB preserves zero and both published local class borders', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string][] = [
+    [{ rcb_d1: 0, rcb_d2: 0, rcb_cellularity: 0 }, 'RCB-0 · índice experimental 0.000', 'RCB-0'],
+    [{ rcb_d1: 1, rcb_d2: 1, rcb_cellularity: 84.3 }, 'RCB-I · índice experimental 1.360', 'RCB-I'],
+    [{ rcb_d1: 1, rcb_d2: 1, rcb_cellularity: 84.4 }, 'RCB-II · índice experimental 1.360', 'RCB-II'],
+    [{ rcb_d1: 149.6, rcb_d2: 149.6, rcb_cellularity: 100 }, 'RCB-II · índice experimental 3.280', 'RCB-II'],
+    [{ rcb_d1: 149.7, rcb_d2: 149.7, rcb_cellularity: 100 }, 'RCB-III · índice experimental 3.280', 'RCB-III']
+  ];
+  for (const [overrides, expectedTitle, expectedClass] of cases) {
+    const evaluation = evaluateCalculator(RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR,
+      rcbInput(overrides));
+    equal(evaluation.result.title, expectedTitle);
+    equal(evaluation.result.metrics[0]?.value, expectedClass);
+  }
+});
+
+test('RCB enforces nodal coherence and preserves inherited cellularity defects', () => {
+  const nodeWithoutMetastasis = evaluateCalculator(RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR,
+    rcbInput({ rcb_nodes: 1, rcb_largest_met: 0 }));
+  equal(nodeWithoutMetastasis.result.title, 'Datos incompletos');
+  equal(nodeWithoutMetastasis.result.detail,
+    'Revisar: diámetro de mayor metástasis ganglionar coherente.');
+  const metastasisWithoutNode = evaluateCalculator(RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR,
+    rcbInput({ rcb_nodes: 0, rcb_largest_met: 1 }));
+  equal(metastasisWithoutNode.result.title, 'Datos incompletos');
+
+  const rejected = evaluateCalculator(RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR,
+    rcbInput({ rcb_cellularity: 10, rcb_in_situ: 80 }));
+  equal(rejected.result.detail,
+    'Revisar: porcentaje in situ no mayor que la celularidad global.');
+  const zeroCellularity = evaluateCalculator(RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR,
+    rcbInput({ rcb_cellularity: 0, rcb_in_situ: 50 }));
+  equal(zeroCellularity.result.title, 'RCB-0 · índice experimental 0.000');
+  const zeroDiameter = evaluateCalculator(RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR,
+    rcbInput({ rcb_d1: 0, rcb_d2: 20, rcb_cellularity: 100 }));
+  equal(zeroDiameter.result.title, 'RCB-0 · índice experimental 0.000');
+});
+
+test('PEPI golden zero preserves postoperative scope, factors and warnings', () => {
+  const evaluation = evaluateCalculator(PEPI_BREAST_CALCULATOR, pepiInput());
+  deepEqual(evaluation.result, {
+    title: 'PEPI 0 · 0 puntos',
+    detail: 'Puntaje posendocrinoterapia basado en la pieza quirúrgica y biomarcadores residuales.',
+    badge: 'endocrino neoadyuvante', score: 0, showScore: false, severity: 'good',
+    metrics: [
+      { label: 'PEPI', value: 0 }, { label: 'Grupo', value: 'PEPI 0' },
+      { label: 'Puntos pT', value: 0 }, { label: 'Puntos ganglios', value: 0 },
+      { label: 'Puntos Ki-67', value: 0 }, { label: 'Puntos ER', value: 0 }
+    ],
+    notes: [
+      'No aplicar al diagnóstico basal, después de quimioterapia neoadyuvante ni fuera de enfermedad hormonosensible.',
+      'Ki-67 requiere una medición anatomopatológica fiable y comparable.',
+      'PEPI es pronóstico y no determina por sí solo una conducta adyuvante.'
+    ]
+  });
+});
+
+test('PEPI preserves pT, node, Ki-67 and Allred factor boundaries', () => {
+  for (const [pt, points] of [['pt1', 0], ['pt2', 0], ['pt3', 3], ['pt4', 3]] as const) {
+    equal(evaluateCalculator(PEPI_BREAST_CALCULATOR,
+      pepiInput({ pepi_pt: pt })).result.metrics[2]?.value, points);
+  }
+  equal(evaluateCalculator(PEPI_BREAST_CALCULATOR,
+    pepiInput({ pepi_nodes: 'yes' })).result.metrics[3]?.value, 3);
+  const kiCases: readonly [number, number][] = [[2.7, 0], [2.8, 1], [19.7, 1], [19.8, 2], [53.1, 2], [53.2, 3]];
+  for (const [ki67, points] of kiCases) {
+    equal(evaluateCalculator(PEPI_BREAST_CALCULATOR,
+      pepiInput({ pepi_ki67: ki67 })).result.metrics[4]?.value, points);
+  }
+  equal(evaluateCalculator(PEPI_BREAST_CALCULATOR,
+    pepiInput({ pepi_er_allred: 2 })).result.metrics[5]?.value, 3);
+  equal(evaluateCalculator(PEPI_BREAST_CALCULATOR,
+    pepiInput({ pepi_er_allred: 3 })).result.metrics[5]?.value, 0);
+});
+
+test('PEPI preserves total groups at three and four and maximum twelve', () => {
+  const three = evaluateCalculator(PEPI_BREAST_CALCULATOR, pepiInput({ pepi_pt: 'pt3' }));
+  equal(three.result.title, 'PEPI 1–3 · 3 puntos');
+  equal(three.result.severity, 'warn');
+  const four = evaluateCalculator(PEPI_BREAST_CALCULATOR,
+    pepiInput({ pepi_pt: 'pt3', pepi_ki67: 2.8 }));
+  equal(four.result.title, 'PEPI ≥4 · 4 puntos');
+  equal(four.result.severity, 'bad');
+  const maximum = evaluateCalculator(PEPI_BREAST_CALCULATOR,
+    pepiInput({ pepi_pt: 'pt4', pepi_nodes: 'yes', pepi_ki67: 53.2, pepi_er_allred: 2 }));
+  equal(maximum.result.title, 'PEPI ≥4 · 12 puntos');
+});
+
+test('CTS5 golden example preserves formula, risk band and population warnings', () => {
+  const evaluation = evaluateCalculator(CTS5_BREAST_CALCULATOR, cts5Input());
+  deepEqual(evaluation.result, {
+    title: 'CTS5 3.19 · intermedio',
+    detail: 'Banda publicada de recurrencia distante en años 5–10: 5–10%.',
+    badge: 'recurrencia tardía', score: 0, showScore: false, severity: 'warn',
+    metrics: [
+      { label: 'Score', value: '3.19' }, { label: 'Grupo', value: 'intermedio' },
+      { label: 'Categoría ganglionar', value: 0 }, { label: 'Tamaño usado', value: '20.0 mm' }
+    ],
+    notes: [
+      'El tamaño ingresado no requirió el tope de 30 mm.',
+      'CTS5 es pronóstico; no predice directamente el beneficio de prolongar endocrinoterapia.',
+      'Puede requerir recalibración fuera de las poblaciones originales y debe usarse con cautela en premenopausia o HER2 positivo.'
+    ]
+  });
+});
+
+test('CTS5 preserves all nodal categories and the thirty-millimeter cap', () => {
+  for (const [nodes, category] of [[0, 0], [1, 1], [2, 2], [3, 2], [4, 3], [9, 3], [10, 4]] as const) {
+    equal(evaluateCalculator(CTS5_BREAST_CALCULATOR,
+      cts5Input({ cts5_nodes: nodes })).result.metrics[2]?.value, category);
+  }
+  const exact = evaluateCalculator(CTS5_BREAST_CALCULATOR, cts5Input({ cts5_size: 30 }));
+  const capped = evaluateCalculator(CTS5_BREAST_CALCULATOR, cts5Input({ cts5_size: 30.1 }));
+  equal(exact.result.title, capped.result.title);
+  equal(exact.result.metrics[3]?.value, '30.0 mm');
+  equal(capped.result.metrics[3]?.value, '30.0 mm');
+  equal(exact.result.notes[0], 'El tamaño ingresado no requirió el tope de 30 mm.');
+  equal(capped.result.notes[0], 'El tamaño se limitó a 30 mm, como especifica el modelo.');
+});
+
+test('CTS5 preserves raw 3.13 and 3.86 group boundaries despite identical rounded titles', () => {
+  const below313 = evaluateCalculator(CTS5_BREAST_CALCULATOR,
+    cts5Input({ cts5_age: 43, cts5_size: 24.7, cts5_grade: '2', cts5_nodes: 0 }));
+  const above313 = evaluateCalculator(CTS5_BREAST_CALCULATOR,
+    cts5Input({ cts5_age: 82, cts5_size: 7.6, cts5_grade: '3', cts5_nodes: 0 }));
+  equal(below313.result.title, 'CTS5 3.13 · bajo');
+  equal(above313.result.title, 'CTS5 3.13 · intermedio');
+  equal(below313.result.severity, 'good');
+  equal(above313.result.severity, 'warn');
+
+  const below386 = evaluateCalculator(CTS5_BREAST_CALCULATOR,
+    cts5Input({ cts5_age: 53, cts5_size: 27.8, cts5_grade: '2', cts5_nodes: 1 }));
+  const above386 = evaluateCalculator(CTS5_BREAST_CALCULATOR,
+    cts5Input({ cts5_age: 23, cts5_size: 12.3, cts5_grade: '2', cts5_nodes: 10 }));
+  equal(below386.result.title, 'CTS5 3.86 · intermedio');
+  equal(above386.result.title, 'CTS5 3.86 · alto');
+  equal(below386.result.severity, 'warn');
+  equal(above386.result.severity, 'bad');
+});
+
+test('ported 32 to 35 enforce declared validation and contain no raw markup', () => {
+  deepEqual(evaluateCalculator(NOTTINGHAM_PROGNOSTIC_INDEX_CALCULATOR,
+    npiInput({ npi_grade: '4', npi_size: 2.01 })).issues.map((issue) => issue.code), ['unknown-option']);
+  deepEqual(evaluateCalculator(RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR,
+    rcbInput({ rcb_cellularity: 100.1 })).issues.map((issue) => issue.code), ['above-maximum']);
+  deepEqual(evaluateCalculator(PEPI_BREAST_CALCULATOR,
+    pepiInput({ pepi_er_allred: 2.5 })).issues.map((issue) => issue.code), ['step-mismatch']);
+  deepEqual(evaluateCalculator(CTS5_BREAST_CALCULATOR,
+    cts5Input({ cts5_age: 17 })).issues.map((issue) => issue.code), ['below-minimum']);
+  const results = [
+    evaluateCalculator(NOTTINGHAM_PROGNOSTIC_INDEX_CALCULATOR, npiInput({ npi_size: 2.01 })).result,
+    evaluateCalculator(RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR, rcbInput()).result,
+    evaluateCalculator(PEPI_BREAST_CALCULATOR, pepiInput()).result,
+    evaluateCalculator(CTS5_BREAST_CALCULATOR, cts5Input()).result
+  ];
+  for (const current of results) assertNoRawMarkup(current.notes);
+});
+
 test('structured note factories reject unsafe links and malformed tables', () => {
   throws(() => externalLink('inseguro', 'http://example.test'), 'El enlace externo debe usar HTTPS');
   throws(() => tableNote('invalida', ['una'], [['a', 'b']]), 'cantidad de celdas invalida');
@@ -2510,6 +2828,28 @@ function qtcInput(overrides: Readonly<Record<string, unknown>> = {}): Record<str
   return {
     qtc_qt: 400, qtc_hr: 70, qtc_sex: 'female', qtc_baseline: '', ...overrides
   };
+}
+
+function npiInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return { npi_size: 2, npi_grade: '2', npi_nodes: 0, ...overrides };
+}
+
+function rcbInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    rcb_d1: 20, rcb_d2: 15, rcb_cellularity: 10, rcb_in_situ: 0,
+    rcb_nodes: 0, rcb_largest_met: 0, ...overrides
+  };
+}
+
+function pepiInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    pepi_pt: 'pt1', pepi_nodes: 'no', pepi_ki67: 2, pepi_er_allred: 8,
+    ...overrides
+  };
+}
+
+function cts5Input(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return { cts5_age: 60, cts5_size: 20, cts5_grade: '2', cts5_nodes: 0, ...overrides };
 }
 
 function assertNoRawMarkup(value: unknown): void {
