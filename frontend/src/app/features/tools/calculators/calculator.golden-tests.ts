@@ -61,6 +61,12 @@ import {
   GYNE_RMI_I_CALCULATOR,
   GYNE_SEDLIS_CALCULATOR
 } from './legacy-calculators-40-43.definitions';
+import {
+  GYNE_AGO_DESKTOP_CALCULATOR,
+  GYNE_FAGOTTI_CALCULATOR,
+  THORAX_BROCK_CALCULATOR,
+  THORAX_MAYO_HERDER_CALCULATOR
+} from './legacy-calculators-44-47.definitions';
 import { PORTED_CALCULATORS } from './ported-calculator.registry';
 import { CalculatorOrigin } from './calculator.models';
 
@@ -85,7 +91,7 @@ test('inventory contains the exact 57 unique legacy tools in stable order', () =
   }
 });
 
-test('only the first forty-three calculators are marked as ported', () => {
+test('only the first forty-seven calculators are marked as ported', () => {
   deepEqual(CALCULATOR_INVENTORY.filter((entry) => entry.migrationStatus === 'ported').map((entry) => entry.id),
     ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk',
       'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude', 'nmibc', 'cystectomy', 'cisplatin', 'utuc',
@@ -94,7 +100,8 @@ test('only the first forty-three calculators are marked as ported', () => {
       'palliative-prognostic-index', 'bed-eqd2', 'qtc-fridericia',
       'nottingham-prognostic-index', 'residual-cancer-burden-experimental', 'pepi-breast', 'cts5-breast',
       'monarche-cohort-1', 'olympia-cpseg', 'international-prognostic-index', 'r2-iss-myeloma',
-      'gyne-sedlis', 'gyne-peters', 'gyne-promise', 'gyne-rmi-i']);
+      'gyne-sedlis', 'gyne-peters', 'gyne-promise', 'gyne-rmi-i',
+      'gyne-fagotti', 'gyne-ago-desktop', 'thorax_brock', 'thorax_mayo_herder']);
   deepEqual(PORTED_CALCULATORS.map((entry) => entry.id),
     ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk',
       'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude', 'nmibc', 'cystectomy', 'cisplatin', 'utuc',
@@ -103,7 +110,8 @@ test('only the first forty-three calculators are marked as ported', () => {
       'palliative-prognostic-index', 'bed-eqd2', 'qtc-fridericia',
       'nottingham-prognostic-index', 'residual-cancer-burden-experimental', 'pepi-breast', 'cts5-breast',
       'monarche-cohort-1', 'olympia-cpseg', 'international-prognostic-index', 'r2-iss-myeloma',
-      'gyne-sedlis', 'gyne-peters', 'gyne-promise', 'gyne-rmi-i']);
+      'gyne-sedlis', 'gyne-peters', 'gyne-promise', 'gyne-rmi-i',
+      'gyne-fagotti', 'gyne-ago-desktop', 'thorax_brock', 'thorax_mayo_herder']);
 });
 
 test('BSA opens blank and keeps legacy values only as examples', () => {
@@ -3386,6 +3394,344 @@ test('ported 40 to 43 enforce declared validation and contain typed text only', 
   for (const current of results) assertNoRawMarkup(current.notes);
 });
 
+test('ported 44 to 47 preserve canonical metadata, field order and selector ordering', () => {
+  deepEqual([
+    GYNE_FAGOTTI_CALCULATOR,
+    GYNE_AGO_DESKTOP_CALCULATOR,
+    THORAX_BROCK_CALCULATOR,
+    THORAX_MAYO_HERDER_CALCULATOR
+  ].map((definition) => ({
+    id: definition.id,
+    title: definition.title,
+    category: definition.category,
+    subtitle: definition.subtitle,
+    source: definition.source,
+    fieldIds: definition.fields.map((field) => field.id)
+  })), [
+    {
+      id: 'gyne-fagotti', title: 'Ovario — Fagotti PIV clásico', category: 'ginecologia',
+      subtitle: 'Siete parámetros laparoscópicos del modelo de 2006.',
+      source: 'Fagotti 2006 - PIV clasico',
+      fieldIds: ['fagotti_section', 'fagotti_peritoneal', 'fagotti_diaphragm',
+        'fagotti_mesentery', 'fagotti_omentum', 'fagotti_bowel', 'fagotti_stomach',
+        'fagotti_liver']
+    },
+    {
+      id: 'gyne-ago-desktop', title: 'Ovario recurrente — AGO / DESKTOP III',
+      category: 'ginecologia',
+      subtitle: 'Selección reproducible de la población del ensayo DESKTOP III.',
+      source: 'AGO score - DESKTOP III',
+      fieldIds: ['ago_population_section', 'ago_first_relapse', 'ago_platinum_interval',
+        'ago_score_section', 'ago_ecog', 'ago_ascites', 'ago_initial_resection']
+    },
+    {
+      id: 'thorax_brock', title: 'Brock / PanCan — nódulo pulmonar', category: 'pulmon',
+      subtitle: 'Probabilidad de malignidad por datos clínicos y TC.',
+      source: 'McWilliams et al., NEJM 2013 - modelo Brock completo',
+      fieldIds: ['brock_patient_section', 'brock_age', 'brock_sex', 'brock_family_history',
+        'brock_emphysema', 'brock_nodule_section', 'brock_diameter', 'brock_type',
+        'brock_upper_lobe', 'brock_nodule_count', 'brock_spiculation']
+    },
+    {
+      id: 'thorax_mayo_herder', title: 'Mayo-Herder con PET-FDG', category: 'pulmon',
+      subtitle: 'Probabilidad pretest Mayo refinada por captación PET.',
+      source: 'Swensen 1997; Herder et al., Chest 2005',
+      fieldIds: ['herder_patient_section', 'herder_age', 'herder_smoker',
+        'herder_prior_cancer', 'herder_nodule_section', 'herder_diameter',
+        'herder_spiculation', 'herder_upper_lobe', 'herder_pet']
+    }
+  ]);
+  const agoFirst = GYNE_AGO_DESKTOP_CALCULATOR.fields.find((field) => field.id === 'ago_first_relapse');
+  const agoResection = GYNE_AGO_DESKTOP_CALCULATOR.fields.find((field) => field.id === 'ago_initial_resection');
+  const brockFamily = THORAX_BROCK_CALCULATOR.fields.find((field) => field.id === 'brock_family_history');
+  deepEqual(agoFirst?.kind === 'select' ? agoFirst.options.map((item) => item.value) : [], ['yes', 'no']);
+  deepEqual(agoResection?.kind === 'select' ? agoResection.options.map((item) => item.value) : [], ['', 'yes', 'no']);
+  deepEqual(brockFamily?.kind === 'select' ? brockFamily.options.map((item) => item.value) : [], ['no', 'yes']);
+});
+
+test('ported 44 to 47 open blank and preserve only the canonical thorax examples', () => {
+  deepEqual(evaluateCalculator(GYNE_FAGOTTI_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['fagotti_liver']);
+  deepEqual(evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['ago_first_relapse', 'ago_platinum_interval']);
+  deepEqual(evaluateCalculator(THORAX_BROCK_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['brock_age', 'brock_sex', 'brock_family_history', 'brock_emphysema',
+      'brock_diameter', 'brock_type', 'brock_upper_lobe', 'brock_nodule_count', 'brock_spiculation']);
+  deepEqual(evaluateCalculator(THORAX_MAYO_HERDER_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['herder_age', 'herder_smoker', 'herder_prior_cancer', 'herder_diameter',
+      'herder_spiculation', 'herder_upper_lobe', 'herder_pet']);
+  const examples = (definition: typeof THORAX_BROCK_CALCULATOR | typeof THORAX_MAYO_HERDER_CALCULATOR) =>
+    Object.fromEntries(definition.fields.filter((field) => field.kind === 'number')
+      .map((field) => [field.id, field.kind === 'number' ? field.exampleValue : undefined]));
+  deepEqual(examples(THORAX_BROCK_CALCULATOR), {
+    brock_age: 62, brock_diameter: 8, brock_nodule_count: 1
+  });
+  deepEqual(examples(THORAX_MAYO_HERDER_CALCULATOR), {
+    herder_age: 65, herder_diameter: 12
+  });
+  for (const definition of [GYNE_FAGOTTI_CALCULATOR, GYNE_AGO_DESKTOP_CALCULATOR]) {
+    for (const field of definition.fields) {
+      if (field.kind === 'number' || field.kind === 'select') equal(field.initialValue, '');
+      if (field.kind === 'number') equal(field.exampleValue, undefined);
+      if (field.kind === 'checkbox') equal(field.initialValue, false);
+    }
+  }
+});
+
+test('Fagotti golden zero treats every unchecked definition as explicit absence', () => {
+  const evaluation = evaluateCalculator(GYNE_FAGOTTI_CALCULATOR, fagottiInput());
+  deepEqual(evaluation.result, {
+    title: 'Fagotti PIV: 0 / 14',
+    detail: 'No alcanza el umbral historico PIV >=8.',
+    badge: 'PIV <8', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'Puntaje', value: '0 / 14' },
+      { label: 'Parametros con 2 puntos', value: 0 },
+      { label: 'Lesion hepatica', value: '0 cm' },
+      { label: 'Umbral clasico', value: 'no alcanzado' }
+    ],
+    notes: [
+      'El umbral historico predice riesgo de citorreduccion suboptima segun la definicion de residuo >1 cm.',
+      'El resultado no equivale a irresecabilidad ni reemplaza la evaluacion de un centro experto.'
+    ]
+  });
+});
+
+test('Fagotti gives two points to each independent definition and reaches fourteen', () => {
+  const fields = ['fagotti_peritoneal', 'fagotti_diaphragm', 'fagotti_mesentery',
+    'fagotti_omentum', 'fagotti_bowel', 'fagotti_stomach'];
+  for (const fieldId of fields) {
+    const evaluation = evaluateCalculator(GYNE_FAGOTTI_CALCULATOR,
+      fagottiInput({ [fieldId]: true }));
+    equal(evaluation.result.title, 'Fagotti PIV: 2 / 14');
+    equal(evaluation.result.metrics[1]?.value, 1);
+  }
+  const maximum = evaluateCalculator(GYNE_FAGOTTI_CALCULATOR,
+    fagottiInput(Object.fromEntries([...fields.map((id) => [id, true]), ['fagotti_liver', 2.1]])));
+  equal(maximum.result.title, 'Fagotti PIV: 14 / 14');
+  equal(maximum.result.metrics[1]?.value, 7);
+});
+
+test('Fagotti preserves strict liver greater-than-two and inclusive score-eight borders', () => {
+  const base = { fagotti_peritoneal: true, fagotti_diaphragm: true, fagotti_mesentery: true };
+  const atTwo = evaluateCalculator(GYNE_FAGOTTI_CALCULATOR,
+    fagottiInput({ ...base, fagotti_liver: 2 }));
+  equal(atTwo.result.title, 'Fagotti PIV: 6 / 14');
+  equal(atTwo.result.badge, 'PIV <8');
+  const aboveTwo = evaluateCalculator(GYNE_FAGOTTI_CALCULATOR,
+    fagottiInput({ ...base, fagotti_liver: 2.1 }));
+  equal(aboveTwo.result.title, 'Fagotti PIV: 8 / 14');
+  equal(aboveTwo.result.badge, 'PIV >=8');
+  equal(aboveTwo.result.metrics[2]?.value, '2,1 cm');
+});
+
+test('Fagotti enforces declared liver minimum and decimal increment', () => {
+  deepEqual(evaluateCalculator(GYNE_FAGOTTI_CALCULATOR,
+    fagottiInput({ fagotti_liver: -0.1 })).issues.map((issue) => issue.code), ['below-minimum']);
+  deepEqual(evaluateCalculator(GYNE_FAGOTTI_CALCULATOR,
+    fagottiInput({ fagotti_liver: 2.15 })).issues.map((issue) => issue.code), ['step-mismatch']);
+});
+
+test('AGO short-circuits outside DESKTOP III at first relapse and six-month boundaries', () => {
+  const both = evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR,
+    { ago_first_relapse: 'no', ago_platinum_interval: 5.9 });
+  deepEqual(both.result, {
+    title: 'Fuera de la poblacion DESKTOP III',
+    detail: 'no corresponde a la primera recaida y intervalo libre de platino <6 meses',
+    badge: 'AGO no aplicable', score: 0, showScore: false, severity: 'warn', metrics: [],
+    notes: ['No se extrapola el AGO score fuera del contexto en que se valido.']
+  });
+  equal(evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR,
+    { ago_first_relapse: 'no', ago_platinum_interval: 6 }).result.detail,
+  'no corresponde a la primera recaida');
+  equal(evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR,
+    { ago_first_relapse: 'yes', ago_platinum_interval: 5.9 }).result.detail,
+  'intervalo libre de platino <6 meses');
+});
+
+test('AGO dynamically requires all three score components only in the applicable population', () => {
+  const evaluation = evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR,
+    { ago_first_relapse: 'yes', ago_platinum_interval: 6 });
+  equal(evaluation.status, 'calculated');
+  deepEqual(evaluation.result, {
+    title: 'No calculable con los datos actuales',
+    detail: 'Falta completar: ECOG, volumen de ascitis, reseccion completa inicial.',
+    badge: 'datos incompletos', score: 0, showScore: false, severity: 'warn', metrics: [],
+    notes: ['Los campos ausentes no se interpretan automaticamente como hallazgos negativos.']
+  });
+});
+
+test('AGO golden positive case preserves simultaneous components and output', () => {
+  const evaluation = evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR, agoInput());
+  deepEqual(evaluation.result, {
+    title: 'AGO score positivo',
+    detail: 'Se cumplen simultaneamente los tres componentes publicados.',
+    badge: 'AGO positivo', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'ECOG 0', value: 'si' },
+      { label: 'Ascitis <500 ml', value: 'si' },
+      { label: 'Reseccion inicial completa', value: 'si' },
+      { label: 'Intervalo libre de platino', value: '6 meses' }
+    ],
+    notes: [
+      'Un AGO positivo identifica mayor probabilidad de reseccion completa; no garantiza resecabilidad ni beneficio individual.',
+      'El score no indica automaticamente cirugia ni sustituye imagenes, resecabilidad tecnica y evaluacion multidisciplinaria.'
+    ]
+  });
+});
+
+test('AGO preserves strict ascites below-five-hundred and every negative component', () => {
+  equal(evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR,
+    agoInput({ ago_ascites: 499 })).result.title, 'AGO score positivo');
+  const cases: readonly Readonly<Record<string, unknown>>[] = [
+    { ago_ecog: '1' }, { ago_ascites: 500 }, { ago_initial_resection: 'no' }
+  ];
+  for (const overrides of cases) {
+    const evaluation = evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR, agoInput(overrides));
+    equal(evaluation.result.title, 'AGO score negativo');
+    equal(evaluation.result.detail, 'No se cumplen simultaneamente los tres componentes publicados.');
+  }
+});
+
+test('AGO preserves global declarative validation of visible optional fields outside population', () => {
+  const invalidOptional = evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR, {
+    ago_first_relapse: 'no', ago_platinum_interval: 5.9, ago_ecog: '5'
+  });
+  equal(invalidOptional.status, 'invalid');
+  deepEqual(invalidOptional.issues.map((issue) => issue.code), ['unknown-option']);
+  deepEqual(evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR,
+    agoInput({ ago_platinum_interval: 6.05 })).issues.map((issue) => issue.code), ['step-mismatch']);
+  deepEqual(evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR,
+    agoInput({ ago_ascites: 499.5 })).issues.map((issue) => issue.code), ['step-mismatch']);
+});
+
+test('Brock golden base case preserves the complete PanCan formula and output', () => {
+  const evaluation = evaluateCalculator(THORAX_BROCK_CALCULATOR, brockInput());
+  deepEqual(evaluation.result, {
+    title: '1.7%',
+    detail: 'Probabilidad modelada de malignidad para el nodulo evaluado.',
+    badge: 'Brock completo', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'Probabilidad', value: '1.72%' },
+      { label: 'Predictor lineal', value: '-4.0480' },
+      { label: 'Diametro', value: '8.0 mm' },
+      { label: 'Tipo', value: 'solid' }
+    ],
+    notes: [
+      'Modelo de screening: su calibracion puede cambiar en nodulos incidentales o poblaciones con otra prevalencia.',
+      'La probabilidad no equivale a confirmacion histologica ni compara alternativas de manejo.'
+    ]
+  });
+});
+
+test('Brock preserves nodule-type and every independent predictor coefficient', () => {
+  const linearPredictors: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{ brock_type: 'solid' }, '-4.0480'],
+    [{ brock_type: 'part_solid' }, '-3.6710'],
+    [{ brock_type: 'ground_glass' }, '-4.1756'],
+    [{ brock_sex: 'female' }, '-3.4469'],
+    [{ brock_family_history: 'yes' }, '-3.7519'],
+    [{ brock_emphysema: 'yes' }, '-3.7527'],
+    [{ brock_upper_lobe: 'yes' }, '-3.3899'],
+    [{ brock_spiculation: 'yes' }, '-3.2751'],
+    [{ brock_nodule_count: 4 }, '-4.2952']
+  ];
+  for (const [overrides, expected] of linearPredictors) {
+    equal(evaluateCalculator(THORAX_BROCK_CALCULATOR,
+      brockInput(overrides)).result.metrics[1]?.value, expected);
+  }
+  equal(evaluateCalculator(THORAX_BROCK_CALCULATOR,
+    brockInput({ brock_nodule_count: 100 })).status, 'calculated');
+});
+
+test('Brock preserves the 50-to-75 development-cohort warning without blocking extrapolation', () => {
+  for (const age of [49, 76]) {
+    const evaluation = evaluateCalculator(THORAX_BROCK_CALCULATOR, brockInput({ brock_age: age }));
+    equal(evaluation.status, 'calculated');
+    equal(evaluation.result.notes.at(-1),
+      'Edad fuera del rango 50-75 anos de la cohorte de desarrollo PanCan');
+  }
+  for (const age of [50, 75]) {
+    equal(evaluateCalculator(THORAX_BROCK_CALCULATOR,
+      brockInput({ brock_age: age })).result.notes.length, 2);
+  }
+  deepEqual(evaluateCalculator(THORAX_BROCK_CALCULATOR,
+    brockInput({ brock_diameter: 30.1 })).issues.map((issue) => issue.code), ['above-maximum']);
+  deepEqual(evaluateCalculator(THORAX_BROCK_CALCULATOR,
+    brockInput({ brock_nodule_count: 1.5 })).issues.map((issue) => issue.code), ['step-mismatch']);
+});
+
+test('Mayo-Herder golden base case uses Mayo as a decimal and preserves output', () => {
+  const evaluation = evaluateCalculator(THORAX_MAYO_HERDER_CALCULATOR, mayoHerderInput());
+  deepEqual(evaluation.result, {
+    title: '1.1%',
+    detail: 'Probabilidad Herder posterior a incorporar la categoria visual de PET-FDG.',
+    badge: 'Mayo-Herder', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'Mayo pretest', value: '5.97%' },
+      { label: 'Herder con PET', value: '1.08%' },
+      { label: 'Captacion', value: 'absent' },
+      { label: 'Coeficiente PET', value: '0.000' }
+    ],
+    notes: [
+      'Herder utiliza la probabilidad Mayo como decimal entre 0 y 1, no como porcentaje.',
+      'La escala PET es visual; procesos inflamatorios y granulomatosos pueden alterar la especificidad.',
+      'Resultado probabilistico, no diagnostico ni recomendacion de tratamiento.'
+    ]
+  });
+});
+
+test('Mayo-Herder preserves all four PET coefficients and probability oracles', () => {
+  const cases: readonly [string, string, string][] = [
+    ['absent', '0.000', '1.08%'],
+    ['faint', '2.322', '10.01%'],
+    ['moderate', '4.617', '52.46%'],
+    ['intense', '4.771', '56.28%']
+  ];
+  for (const [pet, coefficient, probability] of cases) {
+    const evaluation = evaluateCalculator(THORAX_MAYO_HERDER_CALCULATOR,
+      mayoHerderInput({ herder_pet: pet }));
+    equal(evaluation.result.metrics[1]?.value, probability);
+    equal(evaluation.result.metrics[3]?.value, coefficient);
+  }
+});
+
+test('Mayo preserves each clinical factor and the inclusive ten-millimeter PET warning', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{ herder_smoker: 'yes' }, '12.29%'],
+    [{ herder_prior_cancer: 'yes' }, '19.50%'],
+    [{ herder_spiculation: 'yes' }, '15.24%'],
+    [{ herder_upper_lobe: 'yes' }, '12.21%']
+  ];
+  for (const [overrides, expectedMayo] of cases) {
+    equal(evaluateCalculator(THORAX_MAYO_HERDER_CALCULATOR,
+      mayoHerderInput(overrides)).result.metrics[0]?.value, expectedMayo);
+  }
+  equal(evaluateCalculator(THORAX_MAYO_HERDER_CALCULATOR,
+    mayoHerderInput({ herder_diameter: 10 })).result.notes.at(-1),
+  'La sensibilidad de PET-FDG puede ser menor en nodulos de 10 mm o menos');
+  equal(evaluateCalculator(THORAX_MAYO_HERDER_CALCULATOR,
+    mayoHerderInput({ herder_diameter: 10.1 })).result.notes.length, 3);
+});
+
+test('ported 44 to 47 enforce safe selectors, physical limits and typed text-only results', () => {
+  deepEqual(evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR,
+    agoInput({ ago_first_relapse: 'unknown' })).issues.map((issue) => issue.code), ['unknown-option']);
+  deepEqual(evaluateCalculator(THORAX_BROCK_CALCULATOR,
+    brockInput({ brock_type: 'unknown' })).issues.map((issue) => issue.code), ['unknown-option']);
+  deepEqual(evaluateCalculator(THORAX_MAYO_HERDER_CALCULATOR,
+    mayoHerderInput({ herder_diameter: 3.9 })).issues.map((issue) => issue.code), ['below-minimum']);
+  deepEqual(evaluateCalculator(THORAX_MAYO_HERDER_CALCULATOR,
+    mayoHerderInput({ herder_pet: 'unknown' })).issues.map((issue) => issue.code), ['unknown-option']);
+  const results = [
+    evaluateCalculator(GYNE_FAGOTTI_CALCULATOR, fagottiInput()).result,
+    evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR, agoInput()).result,
+    evaluateCalculator(THORAX_BROCK_CALCULATOR, brockInput()).result,
+    evaluateCalculator(THORAX_MAYO_HERDER_CALCULATOR, mayoHerderInput()).result
+  ];
+  for (const current of results) assertNoRawMarkup(current.notes);
+});
+
 test('structured note factories reject unsafe links and malformed tables', () => {
   throws(() => externalLink('inseguro', 'http://example.test'), 'El enlace externo debe usar HTTPS');
   throws(() => tableNote('invalida', ['una'], [['a', 'b']]), 'cantidad de celdas invalida');
@@ -3671,6 +4017,38 @@ function rmiInput(overrides: Readonly<Record<string, unknown>> = {}): Record<str
     rmi_ca125: 100, rmi_menopause: 'premenopausal', rmi_multilocular: false,
     rmi_solid: false, rmi_metastases: false, rmi_ascites: false,
     rmi_bilateral: false, ...overrides
+  };
+}
+
+function fagottiInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    fagotti_peritoneal: false, fagotti_diaphragm: false, fagotti_mesentery: false,
+    fagotti_omentum: false, fagotti_bowel: false, fagotti_stomach: false,
+    fagotti_liver: 0, ...overrides
+  };
+}
+
+function agoInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    ago_first_relapse: 'yes', ago_platinum_interval: 6, ago_ecog: '0',
+    ago_ascites: 499, ago_initial_resection: 'yes', ...overrides
+  };
+}
+
+function brockInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    brock_age: 62, brock_sex: 'male', brock_family_history: 'no',
+    brock_emphysema: 'no', brock_diameter: 8, brock_type: 'solid',
+    brock_upper_lobe: 'no', brock_nodule_count: 1, brock_spiculation: 'no',
+    ...overrides
+  };
+}
+
+function mayoHerderInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    herder_age: 65, herder_smoker: 'no', herder_prior_cancer: 'no',
+    herder_diameter: 12, herder_spiculation: 'no', herder_upper_lobe: 'no',
+    herder_pet: 'absent', ...overrides
   };
 }
 

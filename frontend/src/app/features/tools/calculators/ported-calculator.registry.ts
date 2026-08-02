@@ -10,6 +10,7 @@ import { LEGACY_CALCULATORS_28_31 } from './legacy-calculators-28-31.definitions
 import { LEGACY_CALCULATORS_32_35 } from './legacy-calculators-32-35.definitions';
 import { LEGACY_CALCULATORS_36_39 } from './legacy-calculators-36-39.definitions';
 import { LEGACY_CALCULATORS_40_43 } from './legacy-calculators-40-43.definitions';
+import { LEGACY_CALCULATORS_44_47 } from './legacy-calculators-44-47.definitions';
 
 export const PORTED_CALCULATORS = [
   ...CORE_CALCULATORS,
@@ -22,7 +23,8 @@ export const PORTED_CALCULATORS = [
   ...LEGACY_CALCULATORS_28_31,
   ...LEGACY_CALCULATORS_32_35,
   ...LEGACY_CALCULATORS_36_39,
-  ...LEGACY_CALCULATORS_40_43
+  ...LEGACY_CALCULATORS_40_43,
+  ...LEGACY_CALCULATORS_44_47
 ] as const;
 export type PortedCalculatorId = (typeof PORTED_CALCULATORS)[number]['id'];
 
