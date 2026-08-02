@@ -74,6 +74,9 @@ public class AuthInterceptor implements HandlerInterceptor {
     if ("POST".equalsIgnoreCase(method) && "/api/ajcc8/stage".equals(path)) {
       return "section.tools.use";
     }
+    if ("GET".equalsIgnoreCase(method) && "/api/clinical/tools/calculators".equals(path)) {
+      return "section.tools.use";
+    }
     return "";
   }
 

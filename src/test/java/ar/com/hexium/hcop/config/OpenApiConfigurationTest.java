@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import ar.com.hexium.hcop.catalog.AjccCatalogController;
 import ar.com.hexium.hcop.catalog.LegacyCatalogController;
+import ar.com.hexium.hcop.tools.infrastructure.web.CalculatorCatalogController;
 import ar.com.hexium.hcop.integration.LlmController;
 import ar.com.hexium.hcop.integration.LlmController.AgentChatRequest;
 import io.swagger.v3.oas.models.Operation;
@@ -177,6 +178,23 @@ class OpenApiConfigurationTest {
     assertThat(listOperation.getSecurity()).isNotEmpty();
     assertThat(detailOperation.getSecurity()).isNotEmpty();
     assertThat(stageOperation.getSecurity()).isNotEmpty();
+  }
+
+  @Test
+  void documentaElCatalogoOperativoDeCalculadorasConPermisoDeUso() throws Exception {
+    CalculatorCatalogController controller = new CalculatorCatalogController(null, null, null);
+    OpenApiConfiguration configuration = new OpenApiConfiguration();
+    HandlerMethod list = new HandlerMethod(
+        controller,
+        CalculatorCatalogController.class.getDeclaredMethod("list", HttpServletRequest.class));
+    Operation operation = operationWithSuccess();
+
+    configuration.documentedOperations().customize(operation, list);
+
+    assertThat(operation.getExtensions().get("x-hcop-permission"))
+        .isEqualTo("section.tools.use");
+    assertThat(operation.getSummary()).isEqualTo("Listar calculadoras operativas");
+    assertThat(operation.getSecurity()).isNotEmpty();
   }
 
   private Operation operationWithSuccess() {

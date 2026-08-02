@@ -158,6 +158,33 @@ class AuthInterceptorTest {
     assertThat(allowed).isTrue();
   }
 
+  @Test
+  void rechazaCatalogoOperativoDeCalculadorasSinPermisoDeUso() throws Exception {
+    MockHttpServletRequest request = authenticatedRequest("GET", "/api/clinical/tools/calculators");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    when(auth.authenticate("token-low-role"))
+        .thenReturn(Optional.of(principal(Set.of("section.tools.view"))));
+
+    boolean allowed = interceptor.preHandle(request, response, new Object());
+
+    assertThat(allowed).isFalse();
+    assertThat(response.getStatus()).isEqualTo(403);
+    assertThat(mapper.readTree(response.getContentAsByteArray()).path("code").asText())
+        .isEqualTo("PERMISSION_DENIED");
+  }
+
+  @Test
+  void permiteCatalogoOperativoDeCalculadorasConPermisoDeUso() throws Exception {
+    MockHttpServletRequest request = authenticatedRequest("GET", "/api/clinical/tools/calculators");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    when(auth.authenticate("token-low-role"))
+        .thenReturn(Optional.of(principal(Set.of("section.tools.use"))));
+
+    boolean allowed = interceptor.preHandle(request, response, new Object());
+
+    assertThat(allowed).isTrue();
+  }
+
   private MockHttpServletRequest agentRequest() {
     return authenticatedRequest("POST", "/api/agent/chat");
   }

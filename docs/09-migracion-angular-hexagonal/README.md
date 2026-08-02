@@ -52,6 +52,9 @@ frontend anterior sólo se retira cuando la matriz de paridad está completa.
 - [Corte Angular 008](CORTE-ANGULAR-008-HERRAMIENTAS-GUIAS-TNM.md): biblioteca
   de Guías PDF y estadificación AJCC/TNM nativas, con las 57 calculadoras
   registradas como deuda de transición.
+- [Corte Angular 009](CORTE-ANGULAR-009-BASE-CALCULADORAS.md): inventario
+  estricto de 57 herramientas, motor seguro, catálogo operativo y primer lote
+  BSA/IMC/Calvert con pruebas doradas; todavía sin habilitar una interfaz parcial.
 
 ## Ciclo obligatorio por capacidad
 
