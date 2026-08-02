@@ -1,12 +1,19 @@
-import { Component, ElementRef, OnInit, effect, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, effect, inject, input, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ClinicalFocusRequest, ClinicalFocusService } from '../../core/clinical/clinical-focus.service';
+import {
+  ClinicalPrintFact,
+  ClinicalPrintSection,
+  clinicalPrintPatientFacts,
+  clinicalPrintSectionHasContent
+} from '../../core/clinical/clinical-print-projection';
 import { ClinicalTreatmentKind, clinicalSectionTreatments, clinicalTreatmentBody } from '../../core/clinical/clinical-treatment-projection';
 import { PatientWorkspaceService } from '../../core/patients/patient-workspace.service';
 import { ClinicalPatient, ClinicalRecord, ClinicalState } from '../../core/patients/patient-workspace.models';
 
 @Component({ selector: 'app-clinical-workspace', imports: [ReactiveFormsModule], templateUrl: './clinical-workspace.component.html', styleUrl: './clinical-workspace.component.scss' })
 export class ClinicalWorkspaceComponent implements OnInit {
+  readonly printTimestamp = input('');
   readonly workspaceService = inject(PatientWorkspaceService);
   private readonly clinicalFocus = inject(ClinicalFocusService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -61,6 +68,25 @@ export class ClinicalWorkspaceComponent implements OnInit {
       kind,
       this.workspaceService.workspace()?.treatments?.oncology || []
     );
+  }
+  printHas(section: ClinicalPrintSection): boolean {
+    return clinicalPrintSectionHasContent(
+      this.state(),
+      section,
+      this.workspaceService.workspace()?.treatments?.oncology || []
+    );
+  }
+  printFacts(patient: ClinicalPatient): ClinicalPrintFact[] { return clinicalPrintPatientFacts(patient); }
+  printFactValue(fact: ClinicalPrintFact): string {
+    return fact.label === 'Fecha de nacimiento' ? this.date(fact.value) : fact.value;
+  }
+  printDateTime(): string {
+    const value = this.printTimestamp();
+    if (!value) return '';
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? value : new Intl.DateTimeFormat('es-AR', {
+      dateStyle: 'short', timeStyle: 'short'
+    }).format(parsed);
   }
   evolutionHeading(record: ClinicalRecord): string { return this.join(this.date(record.date), this.text(record.author) || this.text(record.reason)); }
   activityRecords(): ClinicalRecord[] {

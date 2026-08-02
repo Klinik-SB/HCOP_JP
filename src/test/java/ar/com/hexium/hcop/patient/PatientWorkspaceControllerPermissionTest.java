@@ -65,5 +65,7 @@ class PatientWorkspaceControllerPermissionTest {
 
     assertThat(state.has("prescriptions")).isFalse();
     assertThat(((JsonNode) document.get("document")).has("prescriptions")).isFalse();
+    assertThat(response.get("revision")).isEqualTo(3L);
+    assertThat(response.get("updatedAt")).isEqualTo(now.toString());
   }
 }

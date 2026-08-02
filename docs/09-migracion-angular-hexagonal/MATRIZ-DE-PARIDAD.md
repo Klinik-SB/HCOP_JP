@@ -58,6 +58,12 @@ duplicarlas ni migrar datos. La fila Hoja clínica continúa `Pendiente` porque
 sus recorridos de edición, impresión y conflicto de versión aún no alcanzaron
 paridad.
 
+El corte 030 agrega la proyección específica de impresión —identidad ampliada,
+timestamp y omisión de secciones vacías— y corrige el contrato de revisión del
+workspace entre Java y Angular. La fila Hoja clínica continúa `Pendiente` hasta
+que edición, borrador recuperable y resolución explícita de `409` estén
+validados.
+
 ## Evidencia requerida para marcar `Validada`
 
 1. Prueba automática de la regla o del contrato.

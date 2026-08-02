@@ -93,6 +93,11 @@ export interface PatientWorkspace {
   state: ClinicalState;
   revision: number;
   updatedAt?: string;
+  document?: {
+    revision?: number;
+    updatedAt?: string;
+    document?: ClinicalState;
+  };
   counts?: Record<string, number>;
   treatments?: {
     oncology?: ClinicalRecord[];

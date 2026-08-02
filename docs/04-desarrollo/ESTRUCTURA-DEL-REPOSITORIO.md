@@ -170,7 +170,9 @@ Archivos centrales de este corte:
 |---|---|
 | `frontend/src/app/core/clinical/clinical-treatment-projection.ts` | Proyección, categorización y deduplicación común de tratamientos para hoja y línea temporal |
 | `frontend/src/app/core/clinical/clinical-treatment-projection.tests.ts` | Casos de regresión de fuentes relacionales/documentales, identidades, categorías y tombstones |
-| `frontend/scripts/run-clinical-treatment-tests.mjs` | Ejecutor multiplataforma invocado por `npm test` |
+| `frontend/src/app/core/clinical/clinical-print-projection.ts` | Selección pura de secciones e identidad para impresión clínica |
+| `frontend/src/app/core/patients/patient-workspace.normalization.ts` | Normalización compatible de revisión y fecha del workspace |
+| `frontend/scripts/run-clinical-tests.mjs` | Ejecutor multiplataforma de las suites clínicas invocado por `npm test` |
 | `frontend/src/app/features/clinical-workspace/` | Hoja clínica Angular y selección de paciente |
 | `frontend/src/app/features/timeline/` | Línea temporal y filtros clínicos |
 | `frontend/src/app/features/tools/calculators/` | Catálogo, motor y renderizador de las 57 calculadoras |

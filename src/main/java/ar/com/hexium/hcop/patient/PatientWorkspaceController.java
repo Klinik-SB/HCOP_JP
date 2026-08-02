@@ -77,6 +77,8 @@ public class PatientWorkspaceController {
     response.put("patient", patients.patientView(patient));
     response.put("state", state);
     response.put("document", document);
+    response.put("revision", stored.revision());
+    response.put("updatedAt", stored.updatedAt().toString());
     response.put("counts", patients.counts(state));
     response.put("completeness", patients.completeness());
     response.put("warnings", List.of());

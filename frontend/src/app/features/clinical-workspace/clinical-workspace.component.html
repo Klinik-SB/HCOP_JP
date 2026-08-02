@@ -9,10 +9,18 @@
           <span class="sheet-kicker">Historia clinica oncologica</span>
           <div class="sheet-title-row"><h2>{{ workspace.patient.fullName }}</h2></div>
           <div class="patient-line">{{ patientLine(workspace.patient) }}</div>
+          <div class="clinical-print-only">
+            <dl class="clinical-print-patient-facts">
+              @for (fact of printFacts(workspace.patient); track fact.label) {
+                <div><dt>{{ fact.label }}</dt><dd>{{ printFactValue(fact) }}</dd></div>
+              }
+            </dl>
+            <div class="print-info">Fecha de impresión: {{ printDateTime() }}</div>
+          </div>
         </div>
       </header>
 
-      <section class="doc-section">
+      <section class="doc-section" [class.clinical-print-empty]="!printHas('diagnosis')">
         <div class="section-heading"><h3>Diagnóstico oncológico</h3></div>
         @if (records('diagnoses').length) {
           <div class="diagnosis-record-summary-list">
@@ -30,31 +38,31 @@
         } @else { <p class="section-free-text">Sin diagnóstico oncológico cargado.</p> }
       </section>
 
-      <section class="doc-section"><div class="section-heading"><h3>Motivo de consulta</h3></div><p class="section-free-text">{{ narrative('chiefComplaint') || 'Sin motivo de consulta cargado.' }}</p></section>
-      <section class="doc-section"><div class="section-heading"><h3>Antecedentes de enfermedad actual</h3></div><p class="section-free-text">{{ narrative('currentIllness') || 'Sin antecedentes de enfermedad actual cargados.' }}</p></section>
-      <section class="doc-section"><div class="section-heading"><h3>Antecedentes personales</h3></div>
+      <section class="doc-section" [class.clinical-print-empty]="!printHas('chiefComplaint')"><div class="section-heading"><h3>Motivo de consulta</h3></div><p class="section-free-text">{{ narrative('chiefComplaint') || 'Sin motivo de consulta cargado.' }}</p></section>
+      <section class="doc-section" [class.clinical-print-empty]="!printHas('currentIllness')"><div class="section-heading"><h3>Antecedentes de enfermedad actual</h3></div><p class="section-free-text">{{ narrative('currentIllness') || 'Sin antecedentes de enfermedad actual cargados.' }}</p></section>
+      <section class="doc-section" [class.clinical-print-empty]="!printHas('personalHistory')"><div class="section-heading"><h3>Antecedentes personales</h3></div>
         @if (narrative('backgroundClinical') || narrative('currentMedication') || narrative('familyOncology') || narrative('gynecology')) { <div class="clinical-facts-stack">@if (narrative('backgroundClinical')) { <p><strong>Clínicos / quirúrgicos:</strong> {{ narrative('backgroundClinical') }}</p> }@if (narrative('currentMedication')) { <p><strong>Medicación habitual:</strong> {{ narrative('currentMedication') }}</p> }@if (narrative('familyOncology')) { <p><strong>Oncofamiliares:</strong> {{ narrative('familyOncology') }}</p> }@if (narrative('gynecology')) { <p><strong>Gineco-obstétricos:</strong> {{ narrative('gynecology') }}</p> }</div> } @else { <p class="section-free-text">Sin antecedentes personales cargados.</p> }
       </section>
-      <section class="doc-section"><div class="section-heading"><h3>Estudios complementarios</h3></div>
+      <section class="doc-section" [class.clinical-print-empty]="!printHas('studies')"><div class="section-heading"><h3>Estudios complementarios</h3></div>
         @if (records('studies').length) { @for (record of records('studies'); track record.id ?? $index) { <article class="doc-entry flush-entry study-entry" [attr.data-clinical-date]="record.date"><p><strong>{{ studyHeading(record) }}</strong></p>@if (recordBody(record)) { <p>{{ recordBody(record) }}</p> }</article> } } @else { <p class="section-free-text">Sin estudios complementarios cargados.</p> }
       </section>
-      <section class="doc-section"><div class="section-heading"><h3>Examen físico</h3></div>
+      <section class="doc-section" [class.clinical-print-empty]="!printHas('physicalExam')"><div class="section-heading"><h3>Examen físico</h3></div>
         @if (exam('weightKg') || exam('heightM')) { <div class="inline-facts">@if (exam('weightKg')) { <span><strong>Peso:</strong> {{ exam('weightKg') }} kg</span> }@if (exam('heightM')) { <span><strong>Talla:</strong> {{ exam('heightM') }} cm</span> }</div> }
         <p class="section-free-text">{{ narrative('physicalExam') || 'Sin examen físico cargado.' }}</p>
       </section>
-      <section class="doc-section"><div class="section-heading"><h3>Tratamientos sistémicos</h3></div>
+      <section class="doc-section" [class.clinical-print-empty]="!printHas('systemic')"><div class="section-heading"><h3>Tratamientos sistémicos</h3></div>
         @if (treatmentRecords('systemic').length) { @for (record of treatmentRecords('systemic'); track record.id ?? $index) { <article class="doc-entry treatment-entry" [attr.data-clinical-date]="record.date"><p><strong>{{ treatmentHeading(record) }}</strong> {{ treatmentBody(record) }}</p></article> } } @else { <p class="section-free-text">Sin tratamientos sistémicos registrados.</p> }
       </section>
-      <section class="doc-section"><div class="section-heading"><h3>Tratamientos radioterápicos</h3></div>
+      <section class="doc-section" [class.clinical-print-empty]="!printHas('radiotherapy')"><div class="section-heading"><h3>Tratamientos radioterápicos</h3></div>
         @if (treatmentRecords('radiotherapy').length) { @for (record of treatmentRecords('radiotherapy'); track record.id ?? $index) { <article class="doc-entry treatment-entry" [attr.data-clinical-date]="record.date"><p><strong>{{ treatmentHeading(record) }}</strong> {{ treatmentBody(record) }}</p></article> } } @else { <p class="section-free-text">Sin tratamientos radioterápicos registrados.</p> }
       </section>
-      <section class="doc-section"><div class="section-heading"><h3>Cirugías oncológicas</h3></div>
+      <section class="doc-section" [class.clinical-print-empty]="!printHas('surgery')"><div class="section-heading"><h3>Cirugías oncológicas</h3></div>
         @if (treatmentRecords('surgery').length) { @for (record of treatmentRecords('surgery'); track record.id ?? $index) { <article class="doc-entry treatment-entry" [attr.data-clinical-date]="record.date"><p><strong>{{ treatmentHeading(record) }}</strong> {{ treatmentBody(record) }}</p></article> } } @else { <p class="section-free-text">Sin cirugías oncológicas registradas.</p> }
       </section>
-      <section class="doc-section"><div class="section-heading"><h3>Conclusión / resumen</h3></div>
+      <section class="doc-section" [class.clinical-print-empty]="!printHas('summary')"><div class="section-heading"><h3>Conclusión / resumen</h3></div>
         @if (narrative('summary') || narrative('plan')) { <div class="clinical-facts-stack">@if (narrative('summary')) { <p><strong>Conclusión / resumen:</strong> {{ narrative('summary') }}</p> }@if (narrative('plan')) { <p><strong>Conducta / plan:</strong> {{ narrative('plan') }}</p> }</div> } @else { <p class="section-free-text">Sin conclusión o resumen cargado.</p> }
       </section>
-      <section class="doc-section"><div class="section-heading"><h3>Actividad clínica cronológica</h3></div>
+      <section class="doc-section" [class.clinical-print-empty]="!printHas('activity')"><div class="section-heading"><h3>Actividad clínica cronológica</h3></div>
         @if (activityRecords().length) { @for (record of activityRecords(); track record.id ?? $index) { <article class="doc-entry evolution-entry" [class.prescription-entry]="record.type === 'medication' || record.type === 'certificate' || record.type === 'study' || record.type === 'free' || record.type === 'systemic'" [class.evolution-entry--deleted]="record.deleted" [attr.data-clinical-date]="record.date"><p><strong>{{ activityHeading(record) }}</strong></p>@if (record.type === 'medication' || record.type === 'certificate' || record.type === 'study' || record.type === 'free' || record.type === 'systemic') { <ul class="prescription-clinical-details">@for (line of prescriptionDetails(record); track $index) { <li>{{ line }}</li> }</ul>@if (activityAudit(record)) { <p class="entry-audit">{{ activityAudit(record) }}</p> } } @else if (recordBody(record)) { <p>{{ recordBody(record) }}</p> }</article> } } @else { <p class="section-free-text">Sin actividad clínica cargada.</p> }
       </section>
     </article>

@@ -121,6 +121,9 @@ configuración institucional y cerrar la paridad visual/E2E integrada.
 - [Corte Angular 029](CORTE-ANGULAR-029-TRATAMIENTOS-HISTORICOS-HOJA.md):
   proyección unificada de tratamientos sistémicos, radioterapia y cirugías
   históricas en la hoja Angular, sin reescribir el documento clínico.
+- [Corte Angular 030](CORTE-ANGULAR-030-IMPRESION-Y-REVISION-DE-HOJA.md):
+  impresión clínica sin secciones vacías y contrato canónico de revisión del
+  workspace para guardados optimistas seguros.
 
 ## Ciclo obligatorio por capacidad
 

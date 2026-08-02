@@ -5,8 +5,8 @@
   "scripts": {
     "build": "ng build",
     "start": "ng serve",
-    "test": "npm run test:clinical-treatment",
-    "test:clinical-treatment": "node scripts/run-clinical-treatment-tests.mjs"
+    "test": "npm run test:clinical",
+    "test:clinical": "node scripts/run-clinical-tests.mjs"
   },
   "engines": {
     "node": ">=22.22.3 || >=24.15.0"

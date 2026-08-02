@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, HostListener, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../core/auth/auth.service';
 import { PatientWorkspaceService } from '../core/patients/patient-workspace.service';
@@ -29,6 +29,7 @@ export class ClinicalShellComponent implements OnInit {
   readonly searchExpanded = signal(false);
   readonly newPatientOpen = signal(false);
   readonly careSchedulerOpen = signal(false);
+  readonly printTimestamp = signal('');
 
   ngOnInit(): void {
     this.auth.load().subscribe({
@@ -46,7 +47,24 @@ export class ClinicalShellComponent implements OnInit {
   openNewPatient(): void { this.newPatientOpen.set(true); }
   closePatient(): void { this.patientWorkspace.close(); }
   logout(): void { this.auth.logout().subscribe({ next: () => this.router.navigateByUrl('/login') }); }
-  print(): void { window.print(); }
+  canPrint(): boolean {
+    return Boolean(
+      this.patientWorkspace.workspace()
+      && !this.patientWorkspace.loading()
+      && this.auth.hasPermission('section.history.view')
+    );
+  }
+  print(): void {
+    if (!this.canPrint()) return;
+    this.preparePrint();
+    window.setTimeout(() => window.print(), 0);
+  }
+  @HostListener('window:beforeprint')
+  preparePrint(): void {
+    if (this.canPrint() && !this.printTimestamp()) this.printTimestamp.set(new Date().toISOString());
+  }
+  @HostListener('window:afterprint')
+  restoreAfterPrint(): void { this.printTimestamp.set(''); }
   legacyFallback(): void { window.location.assign('/'); }
   initial(): string { return (this.auth.session()?.user?.displayName || this.auth.session()?.user?.username || 'U').slice(0, 1).toUpperCase(); }
   private canOpen(pane: RightPane): boolean {

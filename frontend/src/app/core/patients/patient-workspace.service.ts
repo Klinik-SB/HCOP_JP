@@ -1,8 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable, finalize, tap } from 'rxjs';
+import { Observable, finalize, map, tap, throwError } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { ClinicalPatient, ClinicalSaveResponse, ClinicalState, CreatedPatientResponse, NewPatientRequest, PatientSearchResponse, PatientWorkspace, StudyUploadDescriptor } from './patient-workspace.models';
+import { normalizePatientWorkspace } from './patient-workspace.normalization';
 
 @Injectable({ providedIn: 'root' })
 export class PatientWorkspaceService {
@@ -38,6 +39,7 @@ export class PatientWorkspaceService {
   load(patientId: string): void {
     this.loading.set(true); this.error.set('');
     this.http.get<PatientWorkspace>(`/api/clinical/patients/${encodeURIComponent(patientId)}/workspace`, { withCredentials: true }).pipe(
+      map(normalizePatientWorkspace),
       finalize(() => this.loading.set(false))
     ).subscribe({ next: (workspace) => this.workspace.set(workspace), error: (response: { error?: { error?: string } }) => this.error.set(response?.error?.error || 'No se pudo abrir la historia clínica.') });
   }
@@ -45,6 +47,7 @@ export class PatientWorkspaceService {
   activate(patient: ClinicalPatient): void {
     this.loading.set(true); this.error.set('');
     this.http.post<PatientWorkspace>(`/api/clinical/patients/${encodeURIComponent(patient.id)}/activate`, {}, { withCredentials: true }).pipe(
+      map(normalizePatientWorkspace),
       tap((workspace) => { this.workspace.set(workspace); this.pickerOpen.set(false); this.auth.load().subscribe(); }),
       finalize(() => this.loading.set(false))
     ).subscribe({ error: (response: { error?: { error?: string } }) => this.error.set(response?.error?.error || 'No se pudo activar el paciente.') });
@@ -53,6 +56,7 @@ export class PatientWorkspaceService {
   activateById(patientId: string): void {
     this.loading.set(true); this.error.set('');
     this.http.post<PatientWorkspace>(`/api/clinical/patients/${encodeURIComponent(patientId)}/activate`, {}, { withCredentials: true }).pipe(
+      map(normalizePatientWorkspace),
       tap((workspace) => { this.workspace.set(workspace); this.pickerOpen.set(false); this.auth.load().subscribe(); }),
       finalize(() => this.loading.set(false))
     ).subscribe({ error: (response: { error?: { error?: string } }) => this.error.set(response?.error?.error || 'No se pudo activar el paciente identificado por QR.') });
@@ -85,7 +89,12 @@ export class PatientWorkspaceService {
     const startedFrom = this.workspace();
     const patientId = startedFrom?.patientId || '';
     const revisionAtStart = startedFrom?.revision || 0;
-    return this.http.put<ClinicalSaveResponse>('/api/hc', nextState, { withCredentials: true }).pipe(
+    if (!patientId || !Number.isSafeInteger(revisionAtStart) || revisionAtStart < 1) {
+      return throwError(() => new Error('La historia activa no tiene una revisión válida para guardar. Recargue el paciente.'));
+    }
+    const stateToSave = structuredClone(nextState);
+    stateToSave.meta = { ...(stateToSave.meta || {}), persistenceRevision: revisionAtStart };
+    return this.http.put<ClinicalSaveResponse>('/api/hc', stateToSave, { withCredentials: true }).pipe(
       tap((response) => {
         const current = this.workspace();
         const revision = Number(response.unified?.revision);
@@ -95,7 +104,7 @@ export class PatientWorkspaceService {
         if (response.unified?.persisted !== true || !Number.isSafeInteger(revision) || revision < 1) {
           throw new Error('La base clínica no confirmó el guardado de la historia.');
         }
-        const savedState = structuredClone(nextState);
+        const savedState = structuredClone(stateToSave);
         savedState.meta = { ...(savedState.meta || {}), persistenceRevision: revision };
         this.workspace.set({ ...current, state: savedState, revision, updatedAt: new Date().toISOString() });
       })
