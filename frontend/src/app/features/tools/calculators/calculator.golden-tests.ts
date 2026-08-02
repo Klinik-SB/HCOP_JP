@@ -67,6 +67,12 @@ import {
   THORAX_BROCK_CALCULATOR,
   THORAX_MAYO_HERDER_CALCULATOR
 } from './legacy-calculators-44-47.definitions';
+import {
+  DIGESTIVE_ALBI_CALCULATOR,
+  DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR,
+  THORAX_LIPI_CALCULATOR,
+  THORAX_LUNG_GPA_2022_CALCULATOR
+} from './legacy-calculators-48-51.definitions';
 import { PORTED_CALCULATORS } from './ported-calculator.registry';
 import { CalculatorOrigin } from './calculator.models';
 
@@ -91,7 +97,7 @@ test('inventory contains the exact 57 unique legacy tools in stable order', () =
   }
 });
 
-test('only the first forty-seven calculators are marked as ported', () => {
+test('only the first fifty-one calculators are marked as ported', () => {
   deepEqual(CALCULATOR_INVENTORY.filter((entry) => entry.migrationStatus === 'ported').map((entry) => entry.id),
     ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk',
       'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude', 'nmibc', 'cystectomy', 'cisplatin', 'utuc',
@@ -101,7 +107,8 @@ test('only the first forty-seven calculators are marked as ported', () => {
       'nottingham-prognostic-index', 'residual-cancer-burden-experimental', 'pepi-breast', 'cts5-breast',
       'monarche-cohort-1', 'olympia-cpseg', 'international-prognostic-index', 'r2-iss-myeloma',
       'gyne-sedlis', 'gyne-peters', 'gyne-promise', 'gyne-rmi-i',
-      'gyne-fagotti', 'gyne-ago-desktop', 'thorax_brock', 'thorax_mayo_herder']);
+      'gyne-fagotti', 'gyne-ago-desktop', 'thorax_brock', 'thorax_mayo_herder',
+      'thorax_lung_gpa_2022', 'thorax_lipi', 'digestive_albi', 'digestive_french_afp_hcc']);
   deepEqual(PORTED_CALCULATORS.map((entry) => entry.id),
     ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk',
       'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude', 'nmibc', 'cystectomy', 'cisplatin', 'utuc',
@@ -111,7 +118,8 @@ test('only the first forty-seven calculators are marked as ported', () => {
       'nottingham-prognostic-index', 'residual-cancer-burden-experimental', 'pepi-breast', 'cts5-breast',
       'monarche-cohort-1', 'olympia-cpseg', 'international-prognostic-index', 'r2-iss-myeloma',
       'gyne-sedlis', 'gyne-peters', 'gyne-promise', 'gyne-rmi-i',
-      'gyne-fagotti', 'gyne-ago-desktop', 'thorax_brock', 'thorax_mayo_herder']);
+      'gyne-fagotti', 'gyne-ago-desktop', 'thorax_brock', 'thorax_mayo_herder',
+      'thorax_lung_gpa_2022', 'thorax_lipi', 'digestive_albi', 'digestive_french_afp_hcc']);
 });
 
 test('BSA opens blank and keeps legacy values only as examples', () => {
@@ -3732,6 +3740,428 @@ test('ported 44 to 47 enforce safe selectors, physical limits and typed text-onl
   for (const current of results) assertNoRawMarkup(current.notes);
 });
 
+test('ported 48 to 51 preserve canonical metadata and complete field order', () => {
+  deepEqual([
+    THORAX_LUNG_GPA_2022_CALCULATOR,
+    THORAX_LIPI_CALCULATOR,
+    DIGESTIVE_ALBI_CALCULATOR,
+    DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR
+  ].map((definition) => ({
+    id: definition.id,
+    title: definition.title,
+    category: definition.category,
+    subtitle: definition.subtitle,
+    source: definition.source,
+    fieldIds: definition.fields.map((field) => field.id)
+  })), [
+    {
+      id: 'thorax_lung_gpa_2022', title: 'Lung GPA 2022', category: 'pulmon',
+      subtitle: 'Pronóstico en metástasis cerebrales de cáncer pulmonar.',
+      source: 'Sperduto et al., Int J Radiat Oncol Biol Phys 2022',
+      fieldIds: ['scenario', 'lung_gpa_common_section', 'lung_gpa_age', 'lung_gpa_kps',
+        'lung_gpa_brain_count', 'lung_gpa_ecm', 'lung_gpa_biomarker_section',
+        'lung_gpa_egfr', 'lung_gpa_alk', 'lung_gpa_pdl1']
+    },
+    {
+      id: 'thorax_lipi', title: 'LIPI', category: 'pulmon',
+      subtitle: 'Índice pronóstico pulmonar por dNLR y LDH.',
+      source: 'Mezquita et al., JAMA Oncology 2018',
+      fieldIds: ['lipi_labs_section', 'lipi_wbc', 'lipi_anc', 'lipi_ldh', 'lipi_ldh_uln']
+    },
+    {
+      id: 'digestive_albi', title: 'ALBI / mALBI', category: 'digestivo',
+      subtitle: 'Reserva hepática objetiva por albúmina y bilirrubina.',
+      source: 'Johnson et al., Journal of Clinical Oncology 2015',
+      fieldIds: ['albi_labs_section', 'albi_bilirubin', 'albi_bilirubin_unit',
+        'albi_albumin', 'albi_albumin_unit']
+    },
+    {
+      id: 'digestive_french_afp_hcc', title: 'AFP francés para trasplante en HCC',
+      category: 'digestivo',
+      subtitle: 'Carga tumoral y AFP en candidatos con hepatocarcinoma.',
+      source: 'Duvoux et al., Gastroenterology 2012',
+      fieldIds: ['afp_hcc_section', 'afp_hcc_diameter', 'afp_hcc_nodules', 'afp_hcc_value']
+    }
+  ]);
+});
+
+test('ported 48 to 51 preserve real defaults separately from numeric examples', () => {
+  const lungBlank = evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR);
+  equal(lungBlank.values['scenario'], 'adenocarcinoma');
+  deepEqual(lungBlank.issues.map((issue) => issue.fieldId), [
+    'lung_gpa_age', 'lung_gpa_kps', 'lung_gpa_brain_count', 'lung_gpa_ecm',
+    'lung_gpa_egfr', 'lung_gpa_alk', 'lung_gpa_pdl1'
+  ]);
+  deepEqual(evaluateCalculator(THORAX_LIPI_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['lipi_wbc', 'lipi_anc', 'lipi_ldh', 'lipi_ldh_uln']);
+  const albiBlank = evaluateCalculator(DIGESTIVE_ALBI_CALCULATOR);
+  deepEqual(albiBlank.issues.map((issue) => issue.fieldId), ['albi_bilirubin', 'albi_albumin']);
+  equal(albiBlank.values['albi_bilirubin_unit'], 'mg/dL');
+  equal(albiBlank.values['albi_albumin_unit'], 'g/dL');
+  deepEqual(evaluateCalculator(DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['afp_hcc_diameter', 'afp_hcc_nodules', 'afp_hcc_value']);
+  const numericExamples = (definition: typeof THORAX_LIPI_CALCULATOR
+    | typeof DIGESTIVE_ALBI_CALCULATOR | typeof DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR) =>
+    definition.fields.filter((field) => field.kind === 'number')
+      .map((field) => field.kind === 'number' ? field.exampleValue : undefined);
+  deepEqual(numericExamples(THORAX_LIPI_CALCULATOR), [7, 4, 200, 250]);
+  deepEqual(numericExamples(DIGESTIVE_ALBI_CALCULATOR), [1, 4]);
+  deepEqual(numericExamples(DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR), [3, 1, 100]);
+});
+
+test('Lung GPA adenocarcinoma golden maximum preserves cohort output', () => {
+  const evaluation = evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR, lungGpaAdenoInput());
+  deepEqual(evaluation.result, {
+    title: 'Lung GPA 4.0',
+    detail: 'NSCLC adenocarcinoma - banda 3.5-4.0.',
+    badge: 'pronostico 2022', score: 0, showScore: false, severity: 'good',
+    metrics: [
+      { label: 'Puntaje', value: '4.0' },
+      { label: 'Banda', value: '3.5-4.0' },
+      { label: 'Mediana OS de cohorte', value: '52 meses' },
+      { label: 'Rango intercuartil', value: '25-69 meses' }
+    ],
+    notes: [
+      'Las supervivencias corresponden a cohortes y no son una prediccion individual exacta.',
+      'Aplicable al diagnostico inicial de metastasis cerebrales; la cohorte excluyo recurrencia cerebral y carcinomatosis leptomeningea.',
+      'Es un indice pronostico y no compara eficacia entre tratamientos.'
+    ]
+  });
+});
+
+test('Lung GPA adenocarcinoma preserves every component and strict border', () => {
+  const neutral = {
+    scenario: 'adenocarcinoma', lung_gpa_age: 70, lung_gpa_kps: '70',
+    lung_gpa_brain_count: 5, lung_gpa_ecm: 'yes', lung_gpa_egfr: 'negative',
+    lung_gpa_alk: 'negative', lung_gpa_pdl1: 'negative'
+  };
+  const cases: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{ lung_gpa_kps: '70' }, '0.0'], [{ lung_gpa_kps: '80' }, '0.5'],
+    [{ lung_gpa_kps: '90' }, '1.0'], [{ lung_gpa_age: 69 }, '0.5'],
+    [{ lung_gpa_age: 70 }, '0.0'], [{ lung_gpa_brain_count: 4 }, '0.5'],
+    [{ lung_gpa_brain_count: 5 }, '0.0'], [{ lung_gpa_ecm: 'no' }, '1.0'],
+    [{ lung_gpa_egfr: 'positive' }, '0.5'], [{ lung_gpa_alk: 'positive' }, '0.5'],
+    [{ lung_gpa_egfr: 'positive', lung_gpa_alk: 'positive' }, '0.5'],
+    [{ lung_gpa_pdl1: 'positive' }, '0.5'], [{ lung_gpa_pdl1: 'unknown' }, '0.0']
+  ];
+  for (const [overrides, expected] of cases) {
+    equal(evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR,
+      { ...neutral, ...overrides }).result.metrics[0]?.value, expected);
+  }
+});
+
+test('Lung GPA non-adenocarcinoma preserves KPS, age, count and extracranial borders', () => {
+  const neutral = {
+    scenario: 'non_adenocarcinoma', lung_gpa_age: 70, lung_gpa_kps: '60',
+    lung_gpa_brain_count: 5, lung_gpa_ecm: 'yes'
+  };
+  const cases: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{ lung_gpa_kps: '60' }, '0.0'], [{ lung_gpa_kps: '70' }, '1.0'],
+    [{ lung_gpa_kps: '80' }, '1.5'], [{ lung_gpa_kps: '90' }, '2.0'],
+    [{ lung_gpa_age: 69 }, '0.5'], [{ lung_gpa_age: 70 }, '0.0'],
+    [{ lung_gpa_brain_count: 4 }, '0.5'], [{ lung_gpa_brain_count: 5 }, '0.0'],
+    [{ lung_gpa_ecm: 'no' }, '1.0']
+  ];
+  for (const [overrides, expected] of cases) {
+    equal(evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR,
+      { ...neutral, ...overrides }).result.metrics[0]?.value, expected);
+  }
+});
+
+test('Lung GPA SCLC preserves its distinct KPS, age, brain-count and ECM borders', () => {
+  const neutral = {
+    scenario: 'sclc', lung_gpa_age: 75, lung_gpa_kps: '60',
+    lung_gpa_brain_count: 8, lung_gpa_ecm: 'yes'
+  };
+  const cases: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{ lung_gpa_kps: '60' }, '0.0'], [{ lung_gpa_kps: '70' }, '0.5'],
+    [{ lung_gpa_kps: '80' }, '1.0'], [{ lung_gpa_kps: '90' }, '1.5'],
+    [{ lung_gpa_kps: '100' }, '2.0'], [{ lung_gpa_age: 74 }, '0.5'],
+    [{ lung_gpa_age: 75 }, '0.0'], [{ lung_gpa_brain_count: 3 }, '1.0'],
+    [{ lung_gpa_brain_count: 4 }, '0.5'], [{ lung_gpa_brain_count: 7 }, '0.5'],
+    [{ lung_gpa_brain_count: 8 }, '0.0'], [{ lung_gpa_ecm: 'no' }, '0.5']
+  ];
+  for (const [overrides, expected] of cases) {
+    equal(evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR,
+      { ...neutral, ...overrides }).result.metrics[0]?.value, expected);
+  }
+});
+
+test('Lung GPA preserves every histology-specific survival band and IQR', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, readonly [string, string, string, string]][] = [
+    [lungGpaAdenoInput({ lung_gpa_kps: '70', lung_gpa_age: 70, lung_gpa_brain_count: 5,
+      lung_gpa_ecm: 'yes', lung_gpa_egfr: 'negative', lung_gpa_alk: 'negative',
+      lung_gpa_pdl1: 'negative' }), ['0-1.0', '6 meses', '2-13 meses', 'bad']],
+    [lungGpaAdenoInput({ lung_gpa_kps: '80', lung_gpa_ecm: 'yes',
+      lung_gpa_egfr: 'negative', lung_gpa_alk: 'negative', lung_gpa_pdl1: 'negative' }),
+    ['1.5-2.0', '15 meses', '5-38 meses', 'warn']],
+    [lungGpaAdenoInput({ lung_gpa_pdl1: 'negative', lung_gpa_egfr: 'negative',
+      lung_gpa_alk: 'negative' }), ['2.5-3.0', '30 meses', '12-no alcanzado meses', 'good']],
+    [lungGpaAdenoInput(), ['3.5-4.0', '52 meses', '25-69 meses', 'good']],
+    [lungGpaNonAdenoInput({ lung_gpa_kps: '60', lung_gpa_age: 70,
+      lung_gpa_brain_count: 5, lung_gpa_ecm: 'yes' }), ['0-1.0', '2 meses', '1-4 meses', 'bad']],
+    [lungGpaNonAdenoInput({ lung_gpa_kps: '70', lung_gpa_age: 69,
+      lung_gpa_brain_count: 5, lung_gpa_ecm: 'yes' }), ['1.5-2.0', '5 meses', '3-12 meses', 'warn']],
+    [lungGpaNonAdenoInput({ lung_gpa_kps: '80', lung_gpa_age: 70,
+      lung_gpa_brain_count: 5, lung_gpa_ecm: 'no' }), ['2.5-3.0', '10 meses', '4-21 meses', 'good']],
+    [lungGpaNonAdenoInput(), ['3.5-4.0', '19 meses', '8-33 meses', 'good']],
+    [lungGpaSclcInput({ lung_gpa_kps: '60', lung_gpa_age: 75,
+      lung_gpa_brain_count: 8, lung_gpa_ecm: 'yes' }), ['0-1.0', '4 meses', '2-8 meses', 'bad']],
+    [lungGpaSclcInput({ lung_gpa_kps: '70', lung_gpa_age: 75,
+      lung_gpa_brain_count: 3, lung_gpa_ecm: 'yes' }), ['1.5-2.0', '8 meses', '4-15 meses', 'warn']],
+    [lungGpaSclcInput({ lung_gpa_kps: '80', lung_gpa_age: 74,
+      lung_gpa_brain_count: 3, lung_gpa_ecm: 'yes' }), ['2.5-3.0', '13 meses', '7-23 meses', 'good']],
+    [lungGpaSclcInput(), ['3.5-4.0', '23 meses', '11-no alcanzado meses', 'good']]
+  ];
+  for (const [input, expected] of cases) {
+    const resultValue = evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR, input).result;
+    deepEqual([resultValue.metrics[1]?.value, resultValue.metrics[2]?.value,
+      resultValue.metrics[3]?.value, resultValue.severity], expected);
+  }
+});
+
+test('Lung GPA activates biomarkers only for adenocarcinoma and ignores hidden invalid values', () => {
+  const nonAdeno = evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR,
+    lungGpaNonAdenoInput({ lung_gpa_egfr: 'invalid', lung_gpa_alk: 'invalid',
+      lung_gpa_pdl1: 'invalid' }));
+  equal(nonAdeno.status, 'calculated');
+  equal(nonAdeno.result.detail, 'NSCLC no adenocarcinoma - banda 3.5-4.0.');
+  const sclc = evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR,
+    lungGpaSclcInput({ lung_gpa_egfr: 'invalid' }));
+  equal(sclc.status, 'calculated');
+  const adeno = evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR, {
+    scenario: 'adenocarcinoma', lung_gpa_age: 65, lung_gpa_kps: '90',
+    lung_gpa_brain_count: 1, lung_gpa_ecm: 'no'
+  });
+  deepEqual(adeno.issues.map((issue) => issue.fieldId),
+    ['lung_gpa_egfr', 'lung_gpa_alk', 'lung_gpa_pdl1']);
+});
+
+test('Lung GPA enforces scenario, age, KPS and integer brain-count constraints', () => {
+  deepEqual(evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR,
+    lungGpaAdenoInput({ scenario: 'unknown' })).issues.map((issue) => issue.code), ['unknown-option']);
+  deepEqual(evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR,
+    lungGpaAdenoInput({ lung_gpa_age: 121 })).issues.map((issue) => issue.code), ['above-maximum']);
+  deepEqual(evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR,
+    lungGpaAdenoInput({ lung_gpa_kps: '85' })).issues.map((issue) => issue.code), ['unknown-option']);
+  deepEqual(evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR,
+    lungGpaAdenoInput({ lung_gpa_brain_count: 1.5 })).issues.map((issue) => issue.code), ['step-mismatch']);
+});
+
+test('LIPI golden zero case preserves formula, output and warnings', () => {
+  const evaluation = evaluateCalculator(THORAX_LIPI_CALCULATOR, lipiInput());
+  deepEqual(evaluation.result, {
+    title: 'LIPI 0 - bueno',
+    detail: 'Indice pronostico compuesto por dNLR mayor de 3 y LDH por encima del limite normal.',
+    badge: 'LIPI', score: 0, showScore: false, severity: 'good',
+    metrics: [
+      { label: 'Puntaje', value: 0 },
+      { label: 'dNLR', value: '1.33' },
+      { label: 'dNLR >3', value: 'No' },
+      { label: 'LDH >LSN', value: 'No' }
+    ],
+    notes: [
+      'Infeccion, inflamacion aguda, corticoides o factores estimulantes pueden modificar los componentes.',
+      'No usar el LIPI como prueba aislada de respuesta ni como selector de tratamiento.',
+      'Indice pronostico; no predice por si solo el beneficio de un tratamiento'
+    ]
+  });
+});
+
+test('LIPI preserves strict dNLR and LDH borders and all three categories', () => {
+  const dnlrBelow = evaluateCalculator(THORAX_LIPI_CALCULATOR,
+    lipiInput({ lipi_wbc: 4.001, lipi_anc: 3, lipi_ldh: 250.001, lipi_ldh_uln: 250.001 }));
+  equal(dnlrBelow.result.title, 'LIPI 0 - bueno');
+  equal(dnlrBelow.result.metrics[1]?.value, '3.00');
+  const dnlrAbove = evaluateCalculator(THORAX_LIPI_CALCULATOR,
+    lipiInput({ lipi_wbc: 4.001, lipi_anc: 3.01, lipi_ldh: 250.001, lipi_ldh_uln: 250.001 }));
+  equal(dnlrAbove.result.title, 'LIPI 1 - intermedio');
+  equal(dnlrAbove.result.metrics[1]?.value, '3.04');
+  equal(dnlrAbove.result.metrics[2]?.value, 'Si');
+  const ldhEqual = evaluateCalculator(THORAX_LIPI_CALCULATOR,
+    lipiInput({ lipi_ldh: 250.001, lipi_ldh_uln: 250.001 }));
+  equal(ldhEqual.result.metrics[3]?.value, 'No');
+  const ldhAbove = evaluateCalculator(THORAX_LIPI_CALCULATOR,
+    lipiInput({ lipi_ldh: 250.101, lipi_ldh_uln: 250.001 }));
+  equal(ldhAbove.result.title, 'LIPI 1 - intermedio');
+  equal(ldhAbove.result.metrics[3]?.value, 'Si');
+  const poor = evaluateCalculator(THORAX_LIPI_CALCULATOR,
+    lipiInput({ lipi_wbc: 4.001, lipi_anc: 3.01, lipi_ldh: 250.101, lipi_ldh_uln: 250.001 }));
+  equal(poor.result.title, 'LIPI 2 - pobre');
+  equal(poor.result.severity, 'bad');
+});
+
+test('LIPI rejects a zero dNLR denominator and preserves the rule-level error', () => {
+  const evaluation = evaluateCalculator(THORAX_LIPI_CALCULATOR,
+    lipiInput({ lipi_wbc: 4.001, lipi_anc: 4.01 }));
+  equal(evaluation.status, 'calculated');
+  deepEqual(evaluation.result, {
+    title: 'LIPI: no calculable',
+    detail: 'absoluteNeutrophils debe ser menor que whiteBloodCells',
+    badge: 'datos invalidos', score: 0, showScore: false, severity: 'warn', metrics: [], notes: []
+  });
+});
+
+test('LIPI preserves displaced min-step grids and unbounded positive laboratory values', () => {
+  const canonicalExamples = evaluateCalculator(THORAX_LIPI_CALCULATOR, {
+    lipi_wbc: 7, lipi_anc: 4, lipi_ldh: 200, lipi_ldh_uln: 250
+  });
+  deepEqual(canonicalExamples.issues.map((issue) => [issue.fieldId, issue.code]), [
+    ['lipi_wbc', 'step-mismatch'], ['lipi_ldh', 'step-mismatch'], ['lipi_ldh_uln', 'step-mismatch']
+  ]);
+  equal(evaluateCalculator(THORAX_LIPI_CALCULATOR, lipiInput({
+    lipi_wbc: 10000.001, lipi_anc: 1, lipi_ldh: 100000.001, lipi_ldh_uln: 1.001
+  })).status, 'calculated');
+});
+
+test('ALBI golden converted-unit case preserves score, grade and mALBI', () => {
+  const evaluation = evaluateCalculator(DIGESTIVE_ALBI_CALCULATOR, albiInput());
+  deepEqual(evaluation.result, {
+    title: 'ALBI grado 2',
+    detail: 'Puntaje continuo -2.587.',
+    badge: 'funcion hepatica', score: 0, showScore: false, severity: 'warn',
+    metrics: [
+      { label: 'ALBI', value: '-2.587' },
+      { label: 'Grado', value: 2 },
+      { label: 'mALBI', value: '2a' },
+      { label: 'Bilirrubina usada', value: '17.12 umol/L' },
+      { label: 'Albumina usada', value: '40.01 g/L' }
+    ],
+    notes: [
+      'ALBI: grado 1 ≤-2,60; grado 2 >-2,60 a ≤-1,39; grado 3 >-1,39. mALBI divide grado 2 en 2a ≤-2,27 y 2b >-2,27.',
+      'No incorpora ascitis, encefalopatia, hipertension portal ni volumen hepatico remanente.',
+      'Describe reserva hepatica; no determina por si solo una conducta oncologica.'
+    ]
+  });
+});
+
+test('ALBI preserves public grade and mALBI borders on the declared input grid', () => {
+  const cases: readonly [number, string, string][] = [
+    [16.341, 'ALBI grado 1', '1'],
+    [16.351, 'ALBI grado 2', '2a'],
+    [51.681, 'ALBI grado 2', '2a'],
+    [51.691, 'ALBI grado 2', '2b'],
+    [1113.631, 'ALBI grado 2', '2b'],
+    [1113.641, 'ALBI grado 3', '3']
+  ];
+  for (const [bilirubin, title, modified] of cases) {
+    const evaluation = evaluateCalculator(DIGESTIVE_ALBI_CALCULATOR, albiInput({
+      albi_bilirubin: bilirubin, albi_bilirubin_unit: 'umol/L'
+    }));
+    equal(evaluation.result.title, title);
+    equal(evaluation.result.metrics[2]?.value, modified);
+  }
+});
+
+test('ALBI applies its inherited tolerance at all three exact score cutoffs', () => {
+  const atGradeOne = albiResultAtScore(-2.60);
+  equal(atGradeOne.title, 'ALBI grado 1');
+  equal(atGradeOne.metrics[2]?.value, '1');
+  const aboveGradeOne = albiResultAtScore(-2.60 + 2e-12);
+  equal(aboveGradeOne.title, 'ALBI grado 2');
+  equal(aboveGradeOne.metrics[2]?.value, '2a');
+  equal(albiResultAtScore(-2.27).metrics[2]?.value, '2a');
+  equal(albiResultAtScore(-2.27 + 2e-12).metrics[2]?.value, '2b');
+  equal(albiResultAtScore(-1.39).title, 'ALBI grado 2');
+  equal(albiResultAtScore(-1.39).metrics[2]?.value, '2b');
+  equal(albiResultAtScore(-1.39 + 2e-12).title, 'ALBI grado 3');
+});
+
+test('ALBI preserves default units, alternate units and displaced numeric grids', () => {
+  const alternate = evaluateCalculator(DIGESTIVE_ALBI_CALCULATOR, {
+    albi_bilirubin: 17.101, albi_bilirubin_unit: 'umol/L',
+    albi_albumin: 40.001, albi_albumin_unit: 'g/L'
+  });
+  equal(alternate.status, 'calculated');
+  equal(alternate.result.metrics[3]?.value, '17.10 umol/L');
+  equal(alternate.result.metrics[4]?.value, '40.00 g/L');
+  const examples = evaluateCalculator(DIGESTIVE_ALBI_CALCULATOR, {
+    albi_bilirubin: 1, albi_albumin: 4
+  });
+  deepEqual(examples.issues.map((issue) => [issue.fieldId, issue.code]), [
+    ['albi_bilirubin', 'step-mismatch'], ['albi_albumin', 'step-mismatch']
+  ]);
+  deepEqual(evaluateCalculator(DIGESTIVE_ALBI_CALCULATOR,
+    albiInput({ albi_bilirubin_unit: 'mg/L' })).issues.map((issue) => issue.code), ['unknown-option']);
+});
+
+test('French AFP HCC golden canonical values preserve exact low-risk output', () => {
+  const value = DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR.calculate({
+    afp_hcc_section: '', afp_hcc_diameter: 3, afp_hcc_nodules: 1, afp_hcc_value: 100
+  });
+  deepEqual(value, {
+    title: 'AFP score 0', detail: 'menor riesgo segun el modelo',
+    badge: 'HCC pretrasplante', score: 0, showScore: false, severity: 'good',
+    metrics: [
+      { label: 'Puntaje total', value: 0 },
+      { label: 'Diametro', value: 0 },
+      { label: 'Numero de nodulos', value: 0 },
+      { label: 'AFP', value: 0 }
+    ],
+    notes: [
+      'El umbral publicado separa puntaje menor o igual a 2 de puntaje mayor de 2.',
+      'Es un modelo de recurrencia postrasplante y no una estadificacion general del HCC.',
+      'No incorpora por si solo invasion macrovascular, enfermedad extrahepatica ni criterios administrativos locales.'
+    ]
+  });
+});
+
+test('French AFP HCC preserves every inclusive component boundary', () => {
+  const cases: readonly [number, number, number, readonly [number, number, number, number]][] = [
+    [3, 3, 100, [0, 0, 0, 0]],
+    [3.0001, 3, 100, [1, 0, 0, 1]],
+    [6, 3, 100, [1, 0, 0, 1]],
+    [6.0001, 3, 100, [4, 0, 0, 4]],
+    [3, 4, 100, [0, 2, 0, 2]],
+    [3, 3, 100.1, [0, 0, 2, 2]],
+    [3, 3, 1000, [0, 0, 2, 2]],
+    [3, 3, 1000.1, [0, 0, 3, 3]],
+    [6.0001, 4, 1000.1, [4, 2, 3, 9]]
+  ];
+  for (const [diameter, nodules, afp, expected] of cases) {
+    const value = DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR.calculate({
+      afp_hcc_section: '', afp_hcc_diameter: diameter,
+      afp_hcc_nodules: nodules, afp_hcc_value: afp
+    });
+    deepEqual([value.metrics[1]?.value, value.metrics[2]?.value,
+      value.metrics[3]?.value, value.metrics[0]?.value], expected);
+  }
+});
+
+test('French AFP HCC preserves score-two/three category and its displaced diameter grid', () => {
+  const low = evaluateCalculator(DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR,
+    afpHccInput({ afp_hcc_value: 1000 }));
+  equal(low.result.title, 'AFP score 2');
+  equal(low.result.severity, 'good');
+  const high = evaluateCalculator(DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR,
+    afpHccInput({ afp_hcc_value: 1000.1 }));
+  equal(high.result.title, 'AFP score 3');
+  equal(high.result.severity, 'bad');
+  const validGridCases: readonly [number, number][] = [[2.91, 0], [3.01, 1], [5.91, 1], [6.01, 4]];
+  for (const [diameter, expectedPoints] of validGridCases) {
+    equal(evaluateCalculator(DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR,
+      afpHccInput({ afp_hcc_diameter: diameter })).result.metrics[1]?.value, expectedPoints);
+  }
+  deepEqual(evaluateCalculator(DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR,
+    afpHccInput({ afp_hcc_diameter: 3 })).issues.map((issue) => issue.code), ['step-mismatch']);
+});
+
+test('ported 48 to 51 enforce safe inputs and return typed text-only notes', () => {
+  deepEqual(evaluateCalculator(THORAX_LIPI_CALCULATOR,
+    lipiInput({ lipi_anc: 4.005 })).issues.map((issue) => issue.code), ['step-mismatch']);
+  deepEqual(evaluateCalculator(DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR,
+    afpHccInput({ afp_hcc_nodules: 1.5 })).issues.map((issue) => issue.code), ['step-mismatch']);
+  deepEqual(evaluateCalculator(DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR,
+    afpHccInput({ afp_hcc_value: -0.1 })).issues.map((issue) => issue.code), ['below-minimum']);
+  const results = [
+    evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR, lungGpaAdenoInput()).result,
+    evaluateCalculator(THORAX_LIPI_CALCULATOR, lipiInput()).result,
+    evaluateCalculator(DIGESTIVE_ALBI_CALCULATOR, albiInput()).result,
+    evaluateCalculator(DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR, afpHccInput()).result
+  ];
+  for (const current of results) assertNoRawMarkup(current.notes);
+});
+
 test('structured note factories reject unsafe links and malformed tables', () => {
   throws(() => externalLink('inseguro', 'http://example.test'), 'El enlace externo debe usar HTTPS');
   throws(() => tableNote('invalida', ['una'], [['a', 'b']]), 'cantidad de celdas invalida');
@@ -4049,6 +4479,56 @@ function mayoHerderInput(overrides: Readonly<Record<string, unknown>> = {}): Rec
     herder_age: 65, herder_smoker: 'no', herder_prior_cancer: 'no',
     herder_diameter: 12, herder_spiculation: 'no', herder_upper_lobe: 'no',
     herder_pet: 'absent', ...overrides
+  };
+}
+
+function lungGpaAdenoInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'adenocarcinoma', lung_gpa_age: 65, lung_gpa_kps: '90',
+    lung_gpa_brain_count: 1, lung_gpa_ecm: 'no', lung_gpa_egfr: 'positive',
+    lung_gpa_alk: 'negative', lung_gpa_pdl1: 'positive', ...overrides
+  };
+}
+
+function lungGpaNonAdenoInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'non_adenocarcinoma', lung_gpa_age: 65, lung_gpa_kps: '80',
+    lung_gpa_brain_count: 1, lung_gpa_ecm: 'no', ...overrides
+  };
+}
+
+function lungGpaSclcInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'sclc', lung_gpa_age: 74, lung_gpa_kps: '90',
+    lung_gpa_brain_count: 3, lung_gpa_ecm: 'no', ...overrides
+  };
+}
+
+function lipiInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    lipi_wbc: 7.001, lipi_anc: 4, lipi_ldh: 200.001, lipi_ldh_uln: 250.001,
+    ...overrides
+  };
+}
+
+function albiInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    albi_bilirubin: 1.001, albi_bilirubin_unit: 'mg/dL',
+    albi_albumin: 4.001, albi_albumin_unit: 'g/dL', ...overrides
+  };
+}
+
+function albiResultAtScore(score: number) {
+  return DIGESTIVE_ALBI_CALCULATOR.calculate({
+    albi_labs_section: '', albi_bilirubin: 1, albi_bilirubin_unit: 'umol/L',
+    albi_albumin: -score / 0.085, albi_albumin_unit: 'g/L'
+  });
+}
+
+function afpHccInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    afp_hcc_diameter: 2.91, afp_hcc_nodules: 1, afp_hcc_value: 100,
+    ...overrides
   };
 }
 

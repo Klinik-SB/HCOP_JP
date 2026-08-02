@@ -10,7 +10,7 @@ capacidad nueva se compara contra la línea base antes de habilitarse y el
 frontend anterior sólo se retira cuando la matriz de paridad está completa.
 
 La biblioteca declarativa Angular conserva el inventario completo y tiene
-**47 de 57 calculadoras** portadas con pruebas doradas. Todavía no se habilita
+**51 de 57 calculadoras** portadas con pruebas doradas. Todavía no se habilita
 una vista parcial: la biblioteca visible se reemplazará cuando alcance paridad
 funcional y visual completa.
 
@@ -93,6 +93,9 @@ funcional y visual completa.
 - [Corte Angular 020](CORTE-ANGULAR-020-GINECOLOGIA-OVARIO-Y-NODULO-PULMONAR.md):
   Fagotti, AGO/DESKTOP III, Brock/PanCan y Mayo-Herder portados con fórmulas,
   fronteras, advertencias y limitaciones heredadas verificadas.
+- [Corte Angular 021](CORTE-ANGULAR-021-GPA-LIPI-ALBI-AFP-HCC.md):
+  Lung GPA 2022, LIPI, ALBI/mALBI y AFP francés HCC portados con tablas,
+  conversiones, tolerancias y defectos de grilla heredados verificados.
 
 ## Ciclo obligatorio por capacidad
 

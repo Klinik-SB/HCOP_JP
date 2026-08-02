@@ -68,10 +68,10 @@ export const CALCULATOR_INVENTORY = [
 
   item(46, 'thorax_brock', 'Brock / PanCan — nódulo pulmonar', 'oncology-gi-thorax', GI_THORAX_JS, 'ported'),
   item(47, 'thorax_mayo_herder', 'Mayo-Herder con PET-FDG', 'oncology-gi-thorax', GI_THORAX_JS, 'ported'),
-  item(48, 'thorax_lung_gpa_2022', 'Lung GPA 2022', 'oncology-gi-thorax', GI_THORAX_JS),
-  item(49, 'thorax_lipi', 'LIPI', 'oncology-gi-thorax', GI_THORAX_JS),
-  item(50, 'digestive_albi', 'ALBI / mALBI', 'oncology-gi-thorax', GI_THORAX_JS),
-  item(51, 'digestive_french_afp_hcc', 'AFP francés para trasplante en HCC', 'oncology-gi-thorax', GI_THORAX_JS),
+  item(48, 'thorax_lung_gpa_2022', 'Lung GPA 2022', 'oncology-gi-thorax', GI_THORAX_JS, 'ported'),
+  item(49, 'thorax_lipi', 'LIPI', 'oncology-gi-thorax', GI_THORAX_JS, 'ported'),
+  item(50, 'digestive_albi', 'ALBI / mALBI', 'oncology-gi-thorax', GI_THORAX_JS, 'ported'),
+  item(51, 'digestive_french_afp_hcc', 'AFP francés para trasplante en HCC', 'oncology-gi-thorax', GI_THORAX_JS, 'ported'),
   item(52, 'digestive_game', 'GAME — metástasis hepáticas colorrectales', 'oncology-gi-thorax', GI_THORAX_JS),
   item(53, 'digestive_pci', 'Índice de cáncer peritoneal (PCI)', 'oncology-gi-thorax', GI_THORAX_JS),
 
