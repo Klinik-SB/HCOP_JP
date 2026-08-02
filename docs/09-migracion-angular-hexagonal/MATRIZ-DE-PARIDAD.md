@@ -29,23 +29,25 @@ la implementación anterior.
 | Configuración H. de Día | Configuración | Ajustes de sillones | Sillones, fracción 5/10/15/20/30, jornada y efecto inmediato controlado sobre agenda | Pendiente | En convivencia |
 | Guías | Configuración y Herramientas | `/api/guides/**` | Carga, metadatos, activación, búsqueda, apertura y conservación del archivo | En convivencia | En convivencia |
 | AJCC/TNM | Herramientas | `/api/ajcc8/**` y catálogos locales | Sitio, ejes T/N/M y factores propios, cálculo determinístico, fuentes, permisos y errores equivalentes | En convivencia | En convivencia |
-| Calculadoras | Configuración y Herramientas | Configuración versionada | Migrar y comparar individualmente las 57 calculadoras/scores; crear fórmula sin programar, variables, reglas, rangos, vista previa, activar y ejecutar | Pendiente | En convivencia |
+| Calculadoras | Configuración y Herramientas | Configuración versionada | Migrar y comparar individualmente las 57 calculadoras/scores; crear fórmula sin programar, variables, reglas, rangos, vista previa, activar y ejecutar | En convivencia | En convivencia |
 | Investigación | Configuración e Investigación | Formularios versionados y hoja | Constructor, orden, etiquetas, tipos, obligatoriedad, versión aplicada y recuperación de respuestas | Pendiente | En convivencia |
 | Plantillas anatómicas | Configuración y Estudios | `/api/study-templates/**` | Catálogo, miniaturas, derechos, alta, baja, selección, marcado e incorporación al estudio | Pendiente | Pendiente |
 | Agente y línea temporal | Solapas derechas | `/api/llm/**` y hoja | Configuración local/remota, errores claros, paciente activo, resaltado y ausencia de pérdida de foco | En convivencia | En convivencia |
 | Ayuda y documentación | Cabecera y páginas de ayuda | Recursos estáticos | Índice, manuales, diagramas, videos y enlaces accesibles desde la interfaz final | Pendiente | No aplica |
 | Instalación y actualización | Lanzador y Docker | GHCR, Compose, Flyway | Primer inicio, actualización conservando datos, respaldo, restauración, healthcheck y un solo comando | Pendiente | Pendiente |
 
-Las 57 calculadoras y scores continúan en transición y la fila permanece
-explícitamente `Pendiente`; Guías y AJCC/TNM no modifican ese estado.
+Las 57 calculadoras y scores continúan en transición y la fila queda
+explícitamente `En convivencia`; Guías y AJCC/TNM no modifican ese estado.
 La base Angular ya porta **57 de 57 definiciones y reglas** con pruebas doradas,
 y el corte 023 incorpora un renderizador Angular nativo con permiso efectivo y
 carga diferida. El corte 024 agrega, todavía de forma aislada, el catálogo
 operativo, el merge de built-ins y el motor seguro de fórmulas/scores; el corte
-025 suma la factory que los convierte al contrato visual común. La fila no
-cambia de estado: el corte 026 ya valida atómicamente el JSON institucional,
-pero todavía falta conectar esas capas al workspace y completar la comparación
-visual/E2E.
+025 suma la factory que los convierte al contrato visual común. El corte 026
+valida atómicamente el JSON institucional y el corte 027 conecta el endpoint
+como autoridad, ensambla built-ins, overrides y configurables, y mantiene el
+workspace cerrado durante carga, error, invalidación o falta de permiso. La
+capacidad pasa a `En convivencia`; todavía faltan comparación visual/E2E y
+smoke Docker para marcarla como `Validada`.
 
 ## Evidencia requerida para marcar `Validada`
 

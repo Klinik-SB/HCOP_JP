@@ -112,6 +112,9 @@ configuración institucional y cerrar la paridad visual/E2E integrada.
 - [Corte Angular 026](CORTE-ANGULAR-026-VALIDACION-ATOMICA-CATALOGO.md):
   validación fail-closed del JSON institucional, límites de complejidad,
   referencias contra las 57 claves reales y mapper tipado hacia la factory.
+- [Corte Angular 027](CORTE-ANGULAR-027-CATALOGO-INSTITUCIONAL-INTEGRADO.md):
+  conexión autoritativa de PostgreSQL al workspace Angular, ensamblado seguro,
+  estados fail-closed, invalidación y recarga sin fallback local.
 
 ## Ciclo obligatorio por capacidad
 

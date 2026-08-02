@@ -1,5 +1,40 @@
-<section class="calculator-library angular-calculator-library">
-  <div class="tools-main" [attr.data-tool-category]="activeCalculator()?.category || 'general'">
+<section
+  class="calculator-library angular-calculator-library"
+  [attr.aria-busy]="catalogLoading() ? 'true' : null">
+  @if (catalogLoading()) {
+    <section class="protocol-loading calculator-catalog-state" role="status" aria-live="polite">
+      <span class="calculator-catalog-spinner" aria-hidden="true"></span>
+      <strong>Cargando calculadoras</strong>
+      <span>Aplicando la configuración institucional vigente…</span>
+    </section>
+  } @else if (catalogErrorStatus() === 401) {
+    <section class="protocol-empty calculator-catalog-state calculator-catalog-error" role="alert">
+      <strong>La sesión venció</strong>
+      <span>Volvé a ingresar al sistema para acceder a las calculadoras clínicas.</span>
+      <a class="calculator-catalog-retry" href="/login">Volver a ingresar</a>
+    </section>
+  } @else if (catalogErrorStatus() === 403) {
+    <section class="protocol-empty calculator-catalog-state calculator-catalog-error" role="alert">
+      <strong>Acceso restringido</strong>
+      <span>Tu perfil no tiene permiso para acceder a las calculadoras clínicas.</span>
+    </section>
+  } @else if (catalogError()) {
+    <section class="protocol-empty calculator-catalog-state calculator-catalog-error" role="alert">
+      <strong>No se pudieron cargar las calculadoras</strong>
+      <span>{{ catalogError() }}</span>
+      @if (catalogRetryAllowed()) {
+        <button type="button" class="calculator-catalog-retry" (click)="retryCatalog()">
+          Reintentar
+        </button>
+      }
+    </section>
+  } @else if (!canCalculate()) {
+    <section class="protocol-empty calculator-catalog-state" role="status" aria-live="polite">
+      <strong>Calculadoras restringidas</strong>
+      <span>Su perfil no tiene permiso para ejecutar calculadoras clínicas.</span>
+    </section>
+  } @else if (catalogReady()) {
+    <div class="tools-main" [attr.data-tool-category]="activeCalculator()?.category || 'general'">
     <section class="embedded-controls" aria-label="Selección de calculadora">
       <label>
         <span>Patología o grupo</span>
@@ -22,7 +57,12 @@
       </label>
     </section>
 
-    @if (activeCalculator(); as calculator) {
+    @if (calculators().length === 0) {
+      <section class="protocol-empty calculator-empty-state" role="status">
+        <strong>No hay calculadoras institucionales activas</strong>
+        <span>La configuración vigente no habilita calculadoras clínicas.</span>
+      </section>
+    } @else if (activeCalculator(); as calculator) {
       <header class="tools-header">
         <div>
           <p class="eyebrow">Herramientas clínicas</p>
@@ -268,9 +308,10 @@
       </section>
     } @else {
       <section class="protocol-empty calculator-empty-state" role="status">
-        <strong>No hay calculadoras que coincidan</strong>
+        <strong>No hay calculadoras activas en este grupo</strong>
         <span>Elegí otro grupo o seleccioná “Todas”.</span>
       </section>
     }
-  </div>
+    </div>
+  }
 </section>

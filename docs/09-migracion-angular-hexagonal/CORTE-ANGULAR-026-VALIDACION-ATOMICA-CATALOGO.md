@@ -61,10 +61,10 @@ preservar el comportamiento del formulario anterior.
 - compilación TypeScript del validador, mapper y factory en el mismo runner;
 - temporales creados fuera del repositorio y eliminados al finalizar.
 
-## Pendiente
+## Continuidad
 
-El validador permanece aislado del renderer. El siguiente corte debe cargar el
-endpoint al abrir Calculadoras, validar antes de publicar estado, combinar
-builtins/overrides/custom, fallar cerrado ante 401/403/red/contrato y preservar
-la selección sólo cuando el ID continúe activo. Después corresponde la
-comparación visual/E2E y el smoke Docker.
+Este corte entregó el validador aislado del renderer. La conexión del endpoint,
+el ensamblado de built-ins/overrides/custom, el comportamiento fail-closed y la
+preservación segura de selección se completaron en el
+[corte 027](CORTE-ANGULAR-027-CATALOGO-INSTITUCIONAL-INTEGRADO.md). Permanecen
+pendientes la comparación visual/E2E y el smoke Docker.

@@ -171,9 +171,15 @@ const FIELD_TYPES = new Set<InstitutionalCalculatorFieldType>([
 const SCORE_OPERATORS = new Set<InstitutionalScoreOperator>(['lt', 'lte', 'eq', 'gte', 'gt', 'between']);
 const SEVERITIES = new Set<InstitutionalSeverity>(['info', 'good', 'warn', 'bad']);
 const SAFE_FUNCTIONS = new Set<string>(SAFE_EXPRESSION_FUNCTIONS);
+const UNARY_EXPRESSION_FUNCTIONS = new Set<string>([
+  'abs', 'sqrt', 'round', 'floor', 'ceil', 'log', 'exp'
+]);
 const FIELD_KEY = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const ITEM_KEY = /^[\x21-\x7e]{1,128}$/;
 const BUILTIN_KEY = /^[a-z0-9_]{1,80}$/;
+const BUILTIN_CALCULATORS_BY_KEY = new Map<string, CalculatorDefinition>(
+  PORTED_CALCULATORS.map((definition) => [toolConfigurationKey(definition.title), definition])
+);
 
 export function toolConfigurationKey(value: unknown): string {
   return repairLegacyText(value)
@@ -493,9 +499,14 @@ function normalizeSettings(value: unknown, path: string, issues: InstitutionalCa
   const disabled: string[] = [];
   const seen = new Set<string>();
   for (const [index, raw] of (Array.isArray(rawDisabled) ? rawDisabled : []).entries()) {
-    const key = optionalText(raw, `${path}.definition.disabledBuiltInKeys[${index}]`, issues);
-    if (!BUILTIN_KEY.test(key)) issue(issues, 'invalid-key', `${path}.definition.disabledBuiltInKeys[${index}]`, 'La clave builtin no es válida.');
-    if (seen.has(key)) issue(issues, 'duplicate-key', `${path}.definition.disabledBuiltInKeys[${index}]`, `La clave ${key} está duplicada.`);
+    const keyPath = `${path}.definition.disabledBuiltInKeys[${index}]`;
+    const key = optionalText(raw, keyPath, issues);
+    const validFormat = BUILTIN_KEY.test(key);
+    if (!validFormat) issue(issues, 'invalid-key', keyPath, 'La clave builtin no es válida.');
+    if (validFormat && !BUILTIN_CALCULATORS_BY_KEY.has(key)) {
+      issue(issues, 'unknown-override', keyPath, `No existe una calculadora builtin con clave ${key}.`);
+    }
+    if (seen.has(key)) issue(issues, 'duplicate-key', keyPath, `La clave ${key} está duplicada.`);
     seen.add(key);
     disabled.push(key);
   }
@@ -527,16 +538,13 @@ function validateCatalogIdentity(calculators: readonly InstitutionalCalculatorIt
 }
 
 function validateOverrides(calculators: readonly InstitutionalCalculatorItem[], issues: InstitutionalCatalogIssue[]): void {
-  const builtinByKey = new Map<string, CalculatorDefinition>(
-    PORTED_CALCULATORS.map((definition) => [toolConfigurationKey(definition.title), definition])
-  );
   const replacements = new Set<string>();
   for (let index = 0; index < calculators.length; index += 1) {
     const definition = calculators[index].definition;
     const key = definition.replacesBuiltInKey;
     if (!key) continue;
     const path = `$.calculators[${index}].definition.replacesBuiltInKey`;
-    const original = builtinByKey.get(key);
+    const original = BUILTIN_CALCULATORS_BY_KEY.get(key);
     if (!original) {
       issue(issues, 'unknown-override', path, `No existe una calculadora builtin con clave ${key}.`);
       continue;
@@ -603,11 +611,12 @@ function expressionVariables(expression: string): ReadonlySet<string> {
       if (peek().type === '(') {
         if (!SAFE_FUNCTIONS.has(name.toLowerCase())) throw new Error(`Funcion no permitida: ${name}.`);
         consume('('); enter();
+        let argumentCount = 0;
         if (peek().type !== ')') {
-          additive();
-          while (peek().type === ',') { consume(','); additive(); }
+          additive(); argumentCount += 1;
+          while (peek().type === ',') { consume(','); additive(); argumentCount += 1; }
         }
-        consume(')'); leave();
+        consume(')'); leave(); validateFunctionArity(name, argumentCount);
       } else {
         variables.add(name);
       }
@@ -643,7 +652,10 @@ function tokenizeExpression(source: string): ExpressionToken[] {
     const char = source[index];
     if (/\s/.test(char)) { index += 1; continue; }
     const number = source.slice(index).match(/^(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?/i);
-    if (number) { tokens.push({ type: 'number', value: number[0] }); index += number[0].length; continue; }
+    if (number) {
+      if (!Number.isFinite(Number(number[0]))) throw new Error(`Literal numerico no finito: ${number[0]}.`);
+      tokens.push({ type: 'number', value: number[0] }); index += number[0].length; continue;
+    }
     const identifier = source.slice(index).match(/^[A-Za-z_][A-Za-z0-9_]*/);
     if (identifier) { tokens.push({ type: 'identifier', value: identifier[0] }); index += identifier[0].length; continue; }
     if ('+-*/%^(),'.includes(char)) { tokens.push({ type: char as ExpressionTokenType, value: char }); index += 1; continue; }
@@ -651,6 +663,21 @@ function tokenizeExpression(source: string): ExpressionToken[] {
   }
   tokens.push({ type: 'end' });
   return tokens;
+}
+
+function validateFunctionArity(name: string, argumentCount: number): void {
+  const normalized = name.toLowerCase();
+  if (normalized === 'min' || normalized === 'max') {
+    if (argumentCount < 1) throw new Error(`La funcion ${name} requiere al menos 1 argumento.`);
+    return;
+  }
+  if (normalized === 'pow') {
+    if (argumentCount !== 2) throw new Error(`La funcion ${name} requiere exactamente 2 argumentos.`);
+    return;
+  }
+  if (UNARY_EXPRESSION_FUNCTIONS.has(normalized) && argumentCount !== 1) {
+    throw new Error(`La funcion ${name} requiere exactamente 1 argumento.`);
+  }
 }
 
 function defaultSettings(): InstitutionalToolSettingsItem {

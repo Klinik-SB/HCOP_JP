@@ -161,6 +161,13 @@ test('settings valida booleano, formato y claves duplicadas', () => {
   }), 'invalid-type', 'invalid-key', 'duplicate-key');
 });
 
+test('settings rechaza claves disabled bien formadas que no pertenecen a las 57 built-in', () => {
+  expectIssues(catalog([], {
+    id: '', key: 'default', name: 'Herramientas', description: '', revision: 0,
+    definition: { enabled: true, disabledBuiltInKeys: ['clave_inexistente'] }
+  }), 'unknown-override');
+});
+
 test('rechaza payload, total y metadatos operativos inválidos de forma atómica', () => {
   expectIssues([], 'invalid-payload');
   const payload = catalog([formulaItem({ id: 'x', key: 'índice', revision: 0 })]);
@@ -197,6 +204,39 @@ test('analiza sintaxis segura y rechaza variables o funciones desconocidas', () 
   const character = formulaItem();
   character['definition'] = { fields: [{ key: 'x', label: 'X', type: 'number' }], expression: 'x;alert(1)' };
   expectIssues(catalog([character]), 'invalid-expression');
+});
+
+test('valida la aridad de todas las funciones permitidas', () => {
+  const valid = formulaItem();
+  valid['definition'] = {
+    fields: [{ key: 'x', label: 'X', type: 'number' }],
+    expression: 'min(x,1,2)+max(x)+pow(x,2)+abs(x)+sqrt(x)+round(x)+floor(x)+ceil(x)+log(x)+exp(x)'
+  };
+  equal(validateInstitutionalCalculatorCatalog(catalog([valid])).total, 1);
+
+  for (const expression of [
+    'min()', 'max()', 'pow(x)', 'pow(x,2,3)',
+    'abs()', 'abs(x,2)', 'sqrt()', 'round(x,2)', 'floor()',
+    'ceil(x,2)', 'log()', 'exp(x,2)'
+  ]) {
+    const invalid = formulaItem();
+    invalid['definition'] = {
+      fields: [{ key: 'x', label: 'X', type: 'number' }],
+      expression
+    };
+    expectIssues(catalog([invalid]), 'invalid-expression');
+  }
+});
+
+test('rechaza literales numericos que desbordan a infinito', () => {
+  for (const expression of ['1e999 + x', '.1e999 + x']) {
+    const item = formulaItem();
+    item['definition'] = {
+      fields: [{ key: 'x', label: 'X', type: 'number' }],
+      expression
+    };
+    expectIssues(catalog([item]), 'invalid-expression');
+  }
 });
 
 test('rechaza fórmula vacía, demasiado larga y anidamiento abusivo', () => {

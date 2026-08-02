@@ -1,5 +1,11 @@
-import { Component, computed, input, signal } from '@angular/core';
-import { evaluateCalculator } from './calculator.engine';
+import { Component, OnDestroy, computed, effect, inject, input, signal } from '@angular/core';
+import { Subscription } from 'rxjs';
+import { CalculatorCatalogService } from './calculator-catalog.service';
+import {
+  catalogFailurePresentation,
+  catalogStatusCanRetry,
+  evaluateCalculatorSafely
+} from './calculator-workspace.helpers';
 import {
   CalculatorChecklistNote,
   CalculatorDefinition,
@@ -14,6 +20,8 @@ import {
   CalculatorValue
 } from './calculator.models';
 import { PORTED_CALCULATORS } from './ported-calculator.registry';
+import { assembleInstitutionalCalculatorCatalog } from './institutional-calculator-catalog.assembler';
+import { InstitutionalCalculatorCatalog } from './institutional-calculator-catalog.validator';
 
 interface CalculatorCategory {
   readonly id: string;
@@ -63,27 +71,72 @@ const FORBIDDEN_RESULT: CalculatorResult = {
   templateUrl: './calculator-workspace.component.html',
   styleUrl: './calculator-workspace.component.scss'
 })
-export class CalculatorWorkspaceComponent {
+export class CalculatorWorkspaceComponent implements OnDestroy {
+  private readonly calculatorCatalogService = inject(CalculatorCatalogService);
+  private readonly subscriptions = new Subscription();
+  private catalogRequest: Subscription | null = null;
+  private catalogRequestSequence = 0;
+  private catalogStarted = false;
+  private pendingSelectedCalculatorId = '';
+
   readonly canCalculate = input(true);
   readonly categories = CATEGORIES;
   readonly activeCategory = signal('general');
-  readonly selectedCalculatorId = signal<string>(PORTED_CALCULATORS[0]?.id ?? '');
-  readonly values = signal<CalculatorInput>(initialValues(PORTED_CALCULATORS[0]));
+  readonly selectedCalculatorId = signal('');
+  readonly values = signal<CalculatorInput>({});
   readonly evaluation = signal<CalculatorEvaluation | null>(null);
+  readonly catalogLoading = signal(false);
+  readonly catalogError = signal('');
+  readonly catalogErrorStatus = signal<number | null>(null);
+  readonly catalogReady = signal(false);
+  readonly calculators = signal<readonly CalculatorDefinition[]>([]);
+
+  readonly catalogRetryAllowed = computed(() => {
+    if (!this.catalogError()) return false;
+    return catalogStatusCanRetry(this.catalogErrorStatus());
+  });
 
   readonly filteredCalculators = computed<readonly CalculatorDefinition[]>(() => {
     const category = this.activeCategory();
-    return PORTED_CALCULATORS.filter((calculator) => category === 'all' || calculator.category === category);
+    return this.calculators().filter((calculator) => category === 'all' || calculator.category === category);
   });
 
   readonly activeCalculator = computed<CalculatorDefinition | null>(() =>
-    PORTED_CALCULATORS.find((calculator) => calculator.id === this.selectedCalculatorId()) ?? null
+    this.calculators().find((calculator) => calculator.id === this.selectedCalculatorId()) ?? null
   );
 
   readonly displayedResult = computed(() => {
     if (!this.canCalculate()) return FORBIDDEN_RESULT;
     return this.evaluation()?.result ?? IDLE_RESULT;
   });
+
+  constructor() {
+    this.subscriptions.add(this.calculatorCatalogService.invalidated$.subscribe(() => {
+      if (this.canCalculate()) this.loadCatalog(true);
+      else this.closeCatalog();
+    }));
+
+    effect(() => {
+      if (!this.canCalculate()) {
+        this.catalogStarted = false;
+        this.closeCatalog();
+        return;
+      }
+      if (this.catalogStarted) return;
+      this.catalogStarted = true;
+      this.loadCatalog(false);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.catalogRequest?.unsubscribe();
+    this.subscriptions.unsubscribe();
+  }
+
+  retryCatalog(): void {
+    if (!this.canCalculate() || this.catalogLoading()) return;
+    this.loadCatalog(true);
+  }
 
   changeCategory(event: Event): void {
     this.activeCategory.set(controlValue(event) || 'general');
@@ -106,7 +159,7 @@ export class CalculatorWorkspaceComponent {
   calculate(): void {
     const calculator = this.activeCalculator();
     if (!calculator || !this.canCalculate()) return;
-    this.evaluation.set(evaluateCalculator(calculator, this.values()));
+    this.evaluation.set(evaluateCalculatorSafely(calculator, this.values()));
   }
 
   fieldVisible(field: CalculatorField): boolean {
@@ -153,9 +206,118 @@ export class CalculatorWorkspaceComponent {
   }
 
   private openCalculator(id: string): void {
-    const calculator = PORTED_CALCULATORS.find((entry) => entry.id === id);
+    const calculator = this.calculators().find((entry) => entry.id === id);
     this.selectedCalculatorId.set(calculator?.id ?? '');
     this.values.set(initialValues(calculator));
+    this.evaluation.set(null);
+  }
+
+  private loadCatalog(force: boolean): void {
+    if (!this.canCalculate()) return;
+
+    const selectedId = this.selectedCalculatorId();
+    if (selectedId) this.pendingSelectedCalculatorId = selectedId;
+
+    const sequence = ++this.catalogRequestSequence;
+    this.catalogRequest?.unsubscribe();
+    this.catalogRequest = null;
+    this.catalogLoading.set(true);
+    this.catalogError.set('');
+    this.catalogErrorStatus.set(null);
+    this.catalogReady.set(false);
+    this.calculators.set([]);
+    this.evaluation.set(null);
+
+    this.catalogRequest = this.calculatorCatalogService.load(force).subscribe({
+      next: (catalog) => {
+        if (sequence !== this.catalogRequestSequence) return;
+        this.acceptCatalog(catalog);
+      },
+      error: (failure: unknown) => {
+        if (sequence !== this.catalogRequestSequence) return;
+        const presentation = catalogFailurePresentation(failure);
+        this.rejectCatalog(presentation.message, presentation.status);
+      }
+    });
+  }
+
+  private acceptCatalog(catalog: InstitutionalCalculatorCatalog): void {
+    if (!catalog.ok) {
+      this.rejectCatalog('La configuración institucional de calculadoras no es válida.');
+      return;
+    }
+
+    let calculators: readonly CalculatorDefinition[];
+    try {
+      calculators = assembleInstitutionalCalculatorCatalog(PORTED_CALCULATORS, catalog);
+    } catch (failure: unknown) {
+      const presentation = catalogFailurePresentation(failure);
+      this.rejectCatalog(presentation.message, presentation.status);
+      return;
+    }
+
+    const selectedId = this.pendingSelectedCalculatorId;
+    this.pendingSelectedCalculatorId = '';
+    this.calculators.set(calculators);
+    this.reconcileWorkspace(selectedId, calculators);
+    this.catalogLoading.set(false);
+    this.catalogError.set('');
+    this.catalogErrorStatus.set(null);
+    this.catalogReady.set(true);
+  }
+
+  private rejectCatalog(message: string, status: number | null = null): void {
+    this.catalogLoading.set(false);
+    this.catalogReady.set(false);
+    this.catalogError.set(message || 'No se pudo cargar la configuración institucional de calculadoras.');
+    this.catalogErrorStatus.set(status);
+    this.calculators.set([]);
+    this.selectedCalculatorId.set('');
+    this.values.set({});
+    this.evaluation.set(null);
+  }
+
+  private closeCatalog(): void {
+    const selectedId = this.selectedCalculatorId();
+    if (selectedId) this.pendingSelectedCalculatorId = selectedId;
+    ++this.catalogRequestSequence;
+    this.catalogRequest?.unsubscribe();
+    this.catalogRequest = null;
+    this.catalogLoading.set(false);
+    this.catalogError.set('');
+    this.catalogErrorStatus.set(null);
+    this.catalogReady.set(false);
+    this.calculators.set([]);
+    this.selectedCalculatorId.set('');
+    this.values.set({});
+    this.evaluation.set(null);
+  }
+
+  private reconcileWorkspace(
+    selectedId: string,
+    calculators: readonly CalculatorDefinition[]
+  ): void {
+    const preserved = selectedId
+      ? calculators.find((calculator) => calculator.id === selectedId)
+      : undefined;
+
+    if (preserved) {
+      if (this.activeCategory() !== 'all' && preserved.category !== this.activeCategory()) {
+        this.activeCategory.set(CATEGORIES.some((category) => category.id === preserved.category)
+          ? preserved.category
+          : 'all');
+      }
+      this.selectedCalculatorId.set(preserved.id);
+      this.values.set(initialValues(preserved));
+      this.evaluation.set(null);
+      return;
+    }
+
+    const first = calculators.find((calculator) =>
+      this.activeCategory() === 'all' || calculator.category === this.activeCategory()
+    );
+    this.selectedCalculatorId.set(first?.id ?? '');
+    this.values.set(initialValues(first));
     this.evaluation.set(null);
   }
 }

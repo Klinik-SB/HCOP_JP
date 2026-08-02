@@ -116,6 +116,7 @@ function repairText(value) { const text = String(value || ""); if (!/[ÃÂâ]/.t
 function formatBytes(value) { const bytes = Number(value) || 0; return bytes > 1048576 ? `${(bytes / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`; }
 function commaList(value) { return String(value || "").split(",").map((item) => item.trim()).filter(Boolean); }
 function notifyConfigurationUpdated() { localStorage.setItem("hcop-configuration-updated", String(Date.now())); }
+function notifyCalculatorConfigurationUpdated() { const updatedAt = String(Date.now()); localStorage.setItem("hcop-configuration-updated", updatedAt); localStorage.setItem("hcop-calculator-configuration-updated", updatedAt); }
 function isPersistedConfigurationItem(item) { return Boolean(String(item?.id ?? "").trim()); }
 function toast(message, type = "success") { const node = document.createElement("div"); node.className = `toast${type === "error" ? " error" : ""}`; node.innerHTML = `<i data-lucide="${type === "error" ? "triangle-alert" : "circle-check"}"></i><span>${escapeHtml(message)}</span>`; $("#toastRegion").append(node); icons(node); setTimeout(() => node.remove(), 4200); }
 
@@ -1151,7 +1152,7 @@ async function saveBuiltInTools() {
     const path = exists ? `/api/clinical/configuration/tool-settings/${state.toolSettingsItem.id}` : "/api/clinical/configuration/tool-settings";
     const payload = await api(path, { method: exists ? "PUT" : "POST", body: JSON.stringify(draft) });
     state.toolSettingsItem = payload.item; state.disabledBuiltInKeys = disabledBuiltInKeys;
-    localStorage.setItem("hcop-configuration-updated", String(Date.now())); renderBuiltInTools(); toast("Herramientas actualizadas");
+    notifyCalculatorConfigurationUpdated(); renderBuiltInTools(); toast("Herramientas actualizadas");
   } catch (error) { toast(error.message, "error"); }
 }
 
@@ -1271,7 +1272,7 @@ function calculatorFields() { return $$(".builder-card", $("#calculatorVariables
 function parseRanges() { return $("#calculatorRanges").value.split("\n").map((line) => line.split("|").map((part) => part.trim())).filter((parts) => parts[2]).map(([min, max, label, severity]) => ({ min: min === "" ? null : Number(min), max: max === "" ? null : Number(max), label, severity: severity || "info" })); }
 function calculatorDraft(active = $("#calculatorActive").checked) { return { name: $("#calculatorName").value.trim(), description: $("#calculatorDescription").value.trim(), active, expectedRevision: $("#calculatorConfigRevision").value || undefined, definition: { category: $("#calculatorCategory").value, source: $("#calculatorSource").value.trim(), clinicalUse: $("#calculatorDescription").value.trim(), fields: calculatorFields(), expression: $("#calculatorExpression").value.trim(), resultLabel: $("#calculatorResultLabel").value.trim(), resultUnit: $("#calculatorResultUnit").value.trim(), decimals: Number($("#calculatorDecimals").value), ranges: parseRanges() } }; }
 
-async function saveCalculator(event, forcedActive) { event?.preventDefault(); try { const draft = calculatorDraft(forcedActive ?? $("#calculatorActive").checked); if (!draft.name) throw new Error("Escriba el nombre de la calculadora."); window.SafeExpression.evaluate(draft.definition.expression, Object.fromEntries(draft.definition.fields.map((field) => [field.key, 1]))); const id = $("#calculatorConfigId").value; const payload = id ? await api(`/api/clinical/configuration/calculator/${id}`, { method: "PUT", body: JSON.stringify(draft) }) : await api("/api/clinical/configuration/calculator", { method: "POST", body: JSON.stringify(draft) }); markConfigurationPanelClean("calculators"); toast(id ? "Calculadora actualizada" : "Calculadora creada"); localStorage.setItem("hcop-configuration-updated", String(Date.now())); await loadCalculators(payload.item.id); }
+async function saveCalculator(event, forcedActive) { event?.preventDefault(); try { const draft = calculatorDraft(forcedActive ?? $("#calculatorActive").checked); if (!draft.name) throw new Error("Escriba el nombre de la calculadora."); window.SafeExpression.evaluate(draft.definition.expression, Object.fromEntries(draft.definition.fields.map((field) => [field.key, 1]))); const id = $("#calculatorConfigId").value; const payload = id ? await api(`/api/clinical/configuration/calculator/${id}`, { method: "PUT", body: JSON.stringify(draft) }) : await api("/api/clinical/configuration/calculator", { method: "POST", body: JSON.stringify(draft) }); markConfigurationPanelClean("calculators"); toast(id ? "Calculadora actualizada" : "Calculadora creada"); notifyCalculatorConfigurationUpdated(); await loadCalculators(payload.item.id); }
   catch (error) { toast(error.message, "error"); } }
 
 function renderCalculatorPreview() {
