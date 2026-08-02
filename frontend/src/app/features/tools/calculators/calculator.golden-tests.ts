@@ -37,6 +37,12 @@ import {
   MASCC_FEBRILE_NEUTROPENIA_CALCULATOR,
   RENAL_FUNCTION_ONCOLOGY_CALCULATOR
 } from './legacy-calculators-24-27.definitions';
+import {
+  BED_EQD2_CALCULATOR,
+  CISNE_FEBRILE_NEUTROPENIA_CALCULATOR,
+  PALLIATIVE_PROGNOSTIC_INDEX_CALCULATOR,
+  QTC_FRIDERICIA_CALCULATOR
+} from './legacy-calculators-28-31.definitions';
 import { PORTED_CALCULATORS } from './ported-calculator.registry';
 import { CalculatorOrigin } from './calculator.models';
 
@@ -61,17 +67,19 @@ test('inventory contains the exact 57 unique legacy tools in stable order', () =
   }
 });
 
-test('only the first twenty-seven calculators are marked as ported', () => {
+test('only the first thirty-one calculators are marked as ported', () => {
   deepEqual(CALCULATOR_INVENTORY.filter((entry) => entry.migrationStatus === 'ported').map((entry) => entry.id),
     ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk',
       'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude', 'nmibc', 'cystectomy', 'cisplatin', 'utuc',
       'renal-complexity', 'leibovich', 'imdc', 'igcccg', 'renal-function-oncology', 'anc-ctcae-v6',
-      'khorana-vte', 'mascc-febrile-neutropenia']);
+      'khorana-vte', 'mascc-febrile-neutropenia', 'cisne-febrile-neutropenia',
+      'palliative-prognostic-index', 'bed-eqd2', 'qtc-fridericia']);
   deepEqual(PORTED_CALCULATORS.map((entry) => entry.id),
     ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk',
       'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude', 'nmibc', 'cystectomy', 'cisplatin', 'utuc',
       'renal-complexity', 'leibovich', 'imdc', 'igcccg', 'renal-function-oncology', 'anc-ctcae-v6',
-      'khorana-vte', 'mascc-febrile-neutropenia']);
+      'khorana-vte', 'mascc-febrile-neutropenia', 'cisne-febrile-neutropenia',
+      'palliative-prognostic-index', 'bed-eqd2', 'qtc-fridericia']);
 });
 
 test('BSA opens blank and keeps legacy values only as examples', () => {
@@ -1984,6 +1992,326 @@ test('ported 24 to 27 reject unknown selectors and contain typed text only', () 
   for (const current of results) assertNoRawMarkup(current.notes);
 });
 
+test('ported 28 to 31 preserve canonical metadata, short title and field order', () => {
+  deepEqual([
+    CISNE_FEBRILE_NEUTROPENIA_CALCULATOR,
+    PALLIATIVE_PROGNOSTIC_INDEX_CALCULATOR,
+    BED_EQD2_CALCULATOR,
+    QTC_FRIDERICIA_CALCULATOR
+  ].map((definition) => ({
+    id: definition.id,
+    title: definition.title,
+    shortTitle: definition.shortTitle ?? null,
+    category: definition.category,
+    subtitle: definition.subtitle,
+    source: definition.source,
+    fieldIds: definition.fields.map((field) => field.id)
+  })), [
+    {
+      id: 'cisne-febrile-neutropenia', title: 'CISNE — neutropenia febril estable',
+      shortTitle: null, category: 'general',
+      subtitle: 'Riesgo oculto de complicaciones en tumor sólido aparentemente estable.',
+      source: 'FINITE / CISNE',
+      fieldIds: ['cisne_scope', 'cisne_glucose', 'cisne_diabetes_steroids', 'cisne_ecog',
+        'cisne_copd', 'cisne_cardiovascular', 'cisne_mucositis', 'cisne_monocytes']
+    },
+    {
+      id: 'palliative-prognostic-index', title: 'Palliative Prognostic Index — PPI',
+      shortTitle: null, category: 'general',
+      subtitle: 'Señal pronóstica en cuidados paliativos avanzados.',
+      source: 'Palliative Prognostic Index',
+      fieldIds: ['ppi_pps', 'ppi_oral', 'ppi_edema', 'ppi_dyspnea', 'ppi_delirium']
+    },
+    {
+      id: 'bed-eqd2', title: 'BED y EQD2 del fraccionamiento', shortTitle: 'BED y EQD2',
+      category: 'radioterapia',
+      subtitle: 'Dosis física y equivalencia biológica con el modelo lineal-cuadrático.',
+      source: 'Modelo LQ · Pangea',
+      fieldIds: ['bed_scope', 'bed_fractions', 'bed_dose_fraction', 'bed_alpha_beta']
+    },
+    {
+      id: 'qtc-fridericia', title: 'QT corregido — Fridericia', shortTitle: null,
+      category: 'general', subtitle: 'QTcF para vigilancia cardio-oncológica.',
+      source: 'ESC Cardio-Oncology / Fridericia',
+      fieldIds: ['qtc_qt', 'qtc_hr', 'qtc_sex', 'qtc_baseline']
+    }
+  ]);
+});
+
+test('ported 28 to 31 open blank and retain factory values only as examples', () => {
+  deepEqual(evaluateCalculator(CISNE_FEBRILE_NEUTROPENIA_CALCULATOR).issues
+    .map((issue) => issue.fieldId), ['cisne_glucose']);
+  deepEqual(evaluateCalculator(PALLIATIVE_PROGNOSTIC_INDEX_CALCULATOR).issues
+    .map((issue) => issue.fieldId), ['ppi_pps', 'ppi_oral']);
+  deepEqual(evaluateCalculator(BED_EQD2_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['bed_fractions', 'bed_dose_fraction', 'bed_alpha_beta']);
+  const qtc = evaluateCalculator(QTC_FRIDERICIA_CALCULATOR);
+  deepEqual(qtc.issues.map((issue) => issue.fieldId), ['qtc_qt', 'qtc_hr', 'qtc_sex']);
+  equal(qtc.values['qtc_baseline'], '');
+  const cisneGlucose = CISNE_FEBRILE_NEUTROPENIA_CALCULATOR.fields.find((field) =>
+    field.id === 'cisne_glucose');
+  equal(cisneGlucose?.kind === 'number' ? cisneGlucose.exampleValue : null, 100);
+  const pps = PALLIATIVE_PROGNOSTIC_INDEX_CALCULATOR.fields.find((field) =>
+    field.id === 'ppi_pps');
+  equal(pps?.kind === 'select' ? pps.exampleValue : null, '50');
+  const baseline = QTC_FRIDERICIA_CALCULATOR.fields.find((field) =>
+    field.id === 'qtc_baseline');
+  equal(baseline?.kind === 'number' ? baseline.exampleValue : null, undefined);
+});
+
+test('CISNE golden zero case preserves scope, class and threshold', () => {
+  const evaluation = evaluateCalculator(CISNE_FEBRILE_NEUTROPENIA_CALCULATOR,
+    cisneInput());
+  deepEqual(evaluation.result, {
+    title: 'CISNE 0 · clase I · bajo',
+    detail: 'Umbral de hiperglucemia aplicado: 121 mg/dL.',
+    badge: 'FN estable', score: 0, showScore: false, severity: 'good',
+    metrics: [
+      { label: 'Puntaje', value: 0 },
+      { label: 'Clase', value: 'I · bajo' },
+      { label: 'Glucemia umbral', value: '121 mg/dL' }
+    ],
+    notes: [
+      'No aplicar a pacientes inestables, neoplasias hematológicas, trasplante o quimioterapia de alta intensidad.',
+      'CISNE busca evitar una falsa clasificación de bajo riesgo; no debe retrasar antibióticos.',
+      'El resultado no define automáticamente manejo ambulatorio o internación.'
+    ]
+  });
+});
+
+test('CISNE preserves glucose borders with and without diabetes or corticosteroids', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, number, string][] = [
+    [{ cisne_glucose: 120 }, 0, '121 mg/dL'],
+    [{ cisne_glucose: 121 }, 2, '121 mg/dL'],
+    [{ cisne_glucose: 249, cisne_diabetes_steroids: true }, 0, '250 mg/dL'],
+    [{ cisne_glucose: 250, cisne_diabetes_steroids: true }, 2, '250 mg/dL']
+  ];
+  for (const [overrides, expectedScore, expectedThreshold] of cases) {
+    const evaluation = evaluateCalculator(CISNE_FEBRILE_NEUTROPENIA_CALCULATOR,
+      cisneInput(overrides));
+    equal(evaluation.result.metrics[0]?.value, expectedScore);
+    equal(evaluation.result.metrics[2]?.value, expectedThreshold);
+  }
+  equal(evaluateCalculator(CISNE_FEBRILE_NEUTROPENIA_CALCULATOR,
+    cisneInput({ cisne_glucose: 121 })).result.title, 'CISNE 2 · clase II · intermedio');
+  equal(evaluateCalculator(CISNE_FEBRILE_NEUTROPENIA_CALCULATOR,
+    cisneInput({ cisne_glucose: 121, cisne_diabetes_steroids: true })).result.title,
+  'CISNE 0 · clase I · bajo');
+});
+
+test('CISNE preserves class borders 0, 1, 2 and 3 and maximum 8', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string][] = [
+    [{}, 'CISNE 0 · clase I · bajo', 'good'],
+    [{ cisne_copd: true }, 'CISNE 1 · clase II · intermedio', 'warn'],
+    [{ cisne_ecog: true }, 'CISNE 2 · clase II · intermedio', 'warn'],
+    [{ cisne_ecog: true, cisne_copd: true }, 'CISNE 3 · clase III · alto', 'bad'],
+    [{ cisne_glucose: 121, cisne_ecog: true, cisne_copd: true,
+      cisne_cardiovascular: true, cisne_mucositis: true, cisne_monocytes: true },
+    'CISNE 8 · clase III · alto', 'bad']
+  ];
+  for (const [overrides, expectedTitle, expectedSeverity] of cases) {
+    const evaluation = evaluateCalculator(CISNE_FEBRILE_NEUTROPENIA_CALCULATOR,
+      cisneInput(overrides));
+    equal(evaluation.result.title, expectedTitle);
+    equal(evaluation.result.severity, expectedSeverity);
+  }
+});
+
+test('PPI golden example preserves decimal format and population warning', () => {
+  const evaluation = evaluateCalculator(PALLIATIVE_PROGNOSTIC_INDEX_CALCULATOR,
+    ppiInput());
+  deepEqual(evaluation.result, {
+    title: 'PPI 2.5', detail: '≤4 · no cruza los puntos de corte originales',
+    badge: 'pronóstico paliativo', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'Puntaje', value: '2.5' },
+      { label: 'Lectura', value: '≤4 · no cruza los puntos de corte originales' }
+    ],
+    notes: [
+      'Los puntos de corte describen probabilidades observadas en cohortes; no predicen una fecha individual.',
+      'Delirium potencialmente reversible por medicación, infección o trastorno metabólico debe interpretarse con cautela.',
+      'No usar el PPI de forma aislada para limitar estudios, hidratación, derivación o tratamientos.'
+    ]
+  });
+});
+
+test('PPI preserves PPS and oral-intake point bands', () => {
+  const ppsCases: readonly [string, string][] = [
+    ['20', '4.0'], ['30', '2.5'], ['50', '2.5'], ['60', '0.0']
+  ];
+  for (const [pps, expected] of ppsCases) {
+    equal(evaluateCalculator(PALLIATIVE_PROGNOSTIC_INDEX_CALCULATOR,
+      ppiInput({ ppi_pps: pps })).result.metrics[0]?.value, expected);
+  }
+  const oralCases: readonly [string, string][] = [
+    ['normal', '0.0'], ['moderate', '1.0'], ['severe', '2.5']
+  ];
+  for (const [oral, expected] of oralCases) {
+    equal(evaluateCalculator(PALLIATIVE_PROGNOSTIC_INDEX_CALCULATOR,
+      ppiInput({ ppi_pps: '100', ppi_oral: oral })).result.metrics[0]?.value, expected);
+  }
+});
+
+test('PPI preserves strict thresholds at 4, 4.5, 6 and 6.5', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string][] = [
+    [{ ppi_pps: '100', ppi_delirium: true }, 'PPI 4.0',
+      '≤4 · no cruza los puntos de corte originales'],
+    [{ ppi_pps: '50', ppi_oral: 'moderate', ppi_edema: true }, 'PPI 4.5',
+      '>4 · cohorte original: alta probabilidad de supervivencia <6 semanas'],
+    [{ ppi_pps: '50', ppi_dyspnea: true }, 'PPI 6.0',
+      '>4 · cohorte original: alta probabilidad de supervivencia <6 semanas'],
+    [{ ppi_pps: '20', ppi_oral: 'severe' }, 'PPI 6.5',
+      '>6 · cohorte original: alta probabilidad de supervivencia <3 semanas']
+  ];
+  for (const [overrides, expectedTitle, expectedDetail] of cases) {
+    const evaluation = evaluateCalculator(PALLIATIVE_PROGNOSTIC_INDEX_CALCULATOR,
+      ppiInput(overrides));
+    equal(evaluation.result.title, expectedTitle);
+    equal(evaluation.result.detail, expectedDetail);
+  }
+});
+
+test('PPI reaches fifteen without converting a cohort threshold into an individual date', () => {
+  const maximum = evaluateCalculator(PALLIATIVE_PROGNOSTIC_INDEX_CALCULATOR,
+    ppiInput({ ppi_pps: '20', ppi_oral: 'severe', ppi_edema: true,
+      ppi_dyspnea: true, ppi_delirium: true }));
+  equal(maximum.result.title, 'PPI 15.0');
+  equal(maximum.result.severity, 'bad');
+  equal(String(maximum.result.notes[0]).includes('no predicen una fecha individual'), true);
+});
+
+test('BED and EQD2 golden conventional fractionation preserves all metrics', () => {
+  const evaluation = evaluateCalculator(BED_EQD2_CALCULATOR, bedInput());
+  deepEqual(evaluation.result, {
+    title: 'BED 60.00 · EQD2 50.00', detail: 'Dosis física total: 50.00 Gy.',
+    badge: 'lineal-cuadrático', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'Dosis total', value: '50.00 Gy' },
+      { label: 'BED', value: '60.00 Gy (α/β 10.0)' },
+      { label: 'EQD2', value: '50.00 Gy (α/β 10.0)' },
+      { label: 'α/β', value: '10.0 Gy' }
+    ],
+    notes: [
+      'El resultado depende por completo del α/β seleccionado y del tejido o objetivo analizado.',
+      'El modelo LQ es una aproximación; la incertidumbre aumenta al alejarse del fraccionamiento convencional.',
+      'No incorpora repoblación, reparación incompleta, tiempo total, heterogeneidad de dosis, recuperación tisular ni reirradiación.',
+      'No constituye una prescripción ni un límite automático de órgano a riesgo.'
+    ]
+  });
+});
+
+test('BED and EQD2 preserve the hypofractionated oracle and strict warning border', () => {
+  const hypofractionated = evaluateCalculator(BED_EQD2_CALCULATOR,
+    bedInput({ bed_fractions: 5, bed_dose_fraction: 6, bed_alpha_beta: 3 }));
+  equal(hypofractionated.result.title, 'BED 90.00 · EQD2 54.00');
+  equal(hypofractionated.result.detail, 'Dosis física total: 30.00 Gy.');
+  equal(hypofractionated.result.severity, 'warn');
+  equal(String(hypofractionated.result.notes[1]).startsWith('Dosis por fracción >5 Gy'), true);
+
+  equal(evaluateCalculator(BED_EQD2_CALCULATOR,
+    bedInput({ bed_dose_fraction: 5 })).result.severity, 'info');
+  equal(evaluateCalculator(BED_EQD2_CALCULATOR,
+    bedInput({ bed_dose_fraction: 5.01 })).result.severity, 'warn');
+});
+
+test('BED and EQD2 enforce integer fractions and declared physical minima', () => {
+  const fractional = evaluateCalculator(BED_EQD2_CALCULATOR,
+    bedInput({ bed_fractions: 1.5 }));
+  deepEqual(fractional.issues.map((issue) => issue.code), ['step-mismatch']);
+  const zeroDose = evaluateCalculator(BED_EQD2_CALCULATOR,
+    bedInput({ bed_dose_fraction: 0 }));
+  deepEqual(zeroDose.issues.map((issue) => issue.code), ['below-minimum']);
+  const zeroAlphaBeta = evaluateCalculator(BED_EQD2_CALCULATOR,
+    bedInput({ bed_alpha_beta: 0 }));
+  deepEqual(zeroAlphaBeta.issues.map((issue) => issue.code), ['below-minimum']);
+});
+
+test('QTcF golden example preserves Fridericia correction, RR and missing baseline', () => {
+  const evaluation = evaluateCalculator(QTC_FRIDERICIA_CALCULATOR, qtcInput());
+  deepEqual(evaluation.result, {
+    title: 'QTcF 421 ms', detail: 'dentro de referencia por sexo', badge: 'Fridericia',
+    score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'QTcF', value: '421 ms' },
+      { label: 'RR', value: '0.857 s' },
+      { label: 'Límite por sexo', value: '460 ms' },
+      { label: 'Cambio desde basal', value: 'No informado' }
+    ],
+    notes: [
+      'QTcF 480–499 ms requiere revisar causas reversibles y monitorización; ≥500 ms se asocia con mayor riesgo de torsade.',
+      'QRS ancho, marcapasos, fibrilación auricular o trazado dudoso requieren medición e interpretación especializada.',
+      'El prospecto del fármaco y la evaluación clínica determinan la conducta; el cálculo no indica suspensión automática.'
+    ]
+  });
+});
+
+test('QTcF preserves sex references and raw 480/500 clinical bands', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string, string][] = [
+    [{ qtc_qt: 460, qtc_hr: 60, qtc_sex: 'female' }, 'QTcF 460 ms',
+      'dentro de referencia por sexo', 'info'],
+    [{ qtc_qt: 461, qtc_hr: 60, qtc_sex: 'female' }, 'QTcF 461 ms',
+      'sobre referencia (460 ms)', 'info'],
+    [{ qtc_qt: 450, qtc_hr: 60, qtc_sex: 'male' }, 'QTcF 450 ms',
+      'dentro de referencia por sexo', 'info'],
+    [{ qtc_qt: 451, qtc_hr: 60, qtc_sex: 'male' }, 'QTcF 451 ms',
+      'sobre referencia (450 ms)', 'info'],
+    [{ qtc_qt: 479, qtc_hr: 60 }, 'QTcF 479 ms', 'sobre referencia (460 ms)', 'info'],
+    [{ qtc_qt: 480, qtc_hr: 60 }, 'QTcF 480 ms', '480–499 ms', 'warn'],
+    [{ qtc_qt: 499, qtc_hr: 60 }, 'QTcF 499 ms', '480–499 ms', 'warn'],
+    [{ qtc_qt: 500, qtc_hr: 60 }, 'QTcF 500 ms', '≥500 ms', 'bad']
+  ];
+  for (const [overrides, expectedTitle, expectedDetail, expectedSeverity] of cases) {
+    const evaluation = evaluateCalculator(QTC_FRIDERICIA_CALCULATOR, qtcInput(overrides));
+    equal(evaluation.result.title, expectedTitle);
+    equal(evaluation.result.detail, expectedDetail);
+    equal(evaluation.result.severity, expectedSeverity);
+  }
+});
+
+test('QTcF preserves signed and rounded baseline deltas', () => {
+  const positive = evaluateCalculator(QTC_FRIDERICIA_CALCULATOR,
+    qtcInput({ qtc_baseline: 390 }));
+  equal(positive.result.metrics[3]?.value, '+31 ms');
+  const zero = evaluateCalculator(QTC_FRIDERICIA_CALCULATOR,
+    qtcInput({ qtc_qt: 400, qtc_hr: 60, qtc_baseline: 400 }));
+  equal(zero.result.metrics[3]?.value, '+0 ms');
+  const negative = evaluateCalculator(QTC_FRIDERICIA_CALCULATOR,
+    qtcInput({ qtc_qt: 400, qtc_hr: 60, qtc_baseline: 420 }));
+  equal(negative.result.metrics[3]?.value, '-20 ms');
+});
+
+test('QTcF preserves raw classification even when the title rounds into the next band', () => {
+  const below480 = evaluateCalculator(QTC_FRIDERICIA_CALCULATOR,
+    qtcInput({ qtc_qt: 458, qtc_hr: 69, qtc_sex: 'male' }));
+  equal(below480.result.title, 'QTcF 480 ms');
+  equal(below480.result.detail, 'sobre referencia (450 ms)');
+  equal(below480.result.severity, 'info');
+  const below500 = evaluateCalculator(QTC_FRIDERICIA_CALCULATOR,
+    qtcInput({ qtc_qt: 477, qtc_hr: 69, qtc_sex: 'male' }));
+  equal(below500.result.title, 'QTcF 500 ms');
+  equal(below500.result.detail, '480–499 ms');
+  equal(below500.result.severity, 'warn');
+});
+
+test('ported 28 to 31 enforce safe selectors and typed text-only results', () => {
+  const invalidPps = evaluateCalculator(PALLIATIVE_PROGNOSTIC_INDEX_CALCULATOR,
+    ppiInput({ ppi_pps: '55' }));
+  deepEqual(invalidPps.issues.map((issue) => issue.code), ['unknown-option']);
+  const invalidSex = evaluateCalculator(QTC_FRIDERICIA_CALCULATOR,
+    qtcInput({ qtc_sex: 'other' }));
+  deepEqual(invalidSex.issues.map((issue) => issue.code), ['unknown-option']);
+  const invalidBaseline = evaluateCalculator(QTC_FRIDERICIA_CALCULATOR,
+    qtcInput({ qtc_baseline: 0 }));
+  deepEqual(invalidBaseline.issues.map((issue) => issue.code), ['below-minimum']);
+  const results = [
+    evaluateCalculator(CISNE_FEBRILE_NEUTROPENIA_CALCULATOR, cisneInput()).result,
+    evaluateCalculator(PALLIATIVE_PROGNOSTIC_INDEX_CALCULATOR, ppiInput()).result,
+    evaluateCalculator(BED_EQD2_CALCULATOR, bedInput()).result,
+    evaluateCalculator(QTC_FRIDERICIA_CALCULATOR, qtcInput()).result
+  ];
+  for (const current of results) assertNoRawMarkup(current.notes);
+});
+
 test('structured note factories reject unsafe links and malformed tables', () => {
   throws(() => externalLink('inseguro', 'http://example.test'), 'El enlace externo debe usar HTTPS');
   throws(() => tableNote('invalida', ['una'], [['a', 'b']]), 'cantidad de celdas invalida');
@@ -2156,6 +2484,31 @@ function masccInput(overrides: Readonly<Record<string, unknown>> = {}): Record<s
     mascc_burden: '5', mascc_no_hypotension: false, mascc_no_copd: false,
     mascc_tumor_fungal: false, mascc_no_dehydration: false, mascc_outpatient: false,
     mascc_age_under_60: false, ...overrides
+  };
+}
+
+function cisneInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    cisne_glucose: 100, cisne_diabetes_steroids: false, cisne_ecog: false,
+    cisne_copd: false, cisne_cardiovascular: false, cisne_mucositis: false,
+    cisne_monocytes: false, ...overrides
+  };
+}
+
+function ppiInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    ppi_pps: '50', ppi_oral: 'normal', ppi_edema: false, ppi_dyspnea: false,
+    ppi_delirium: false, ...overrides
+  };
+}
+
+function bedInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return { bed_fractions: 25, bed_dose_fraction: 2, bed_alpha_beta: 10, ...overrides };
+}
+
+function qtcInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    qtc_qt: 400, qtc_hr: 70, qtc_sex: 'female', qtc_baseline: '', ...overrides
   };
 }
 

@@ -156,6 +156,7 @@ export interface CalculatorEvaluation {
 export interface CalculatorDefinition<TId extends string = string> {
   readonly id: TId;
   readonly title: string;
+  readonly shortTitle?: string;
   readonly category: string;
   readonly subtitle: string;
   readonly source: string;
