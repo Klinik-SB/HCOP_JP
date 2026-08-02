@@ -72,13 +72,13 @@ export const CALCULATOR_INVENTORY = [
   item(49, 'thorax_lipi', 'LIPI', 'oncology-gi-thorax', GI_THORAX_JS, 'ported'),
   item(50, 'digestive_albi', 'ALBI / mALBI', 'oncology-gi-thorax', GI_THORAX_JS, 'ported'),
   item(51, 'digestive_french_afp_hcc', 'AFP francés para trasplante en HCC', 'oncology-gi-thorax', GI_THORAX_JS, 'ported'),
-  item(52, 'digestive_game', 'GAME — metástasis hepáticas colorrectales', 'oncology-gi-thorax', GI_THORAX_JS),
-  item(53, 'digestive_pci', 'Índice de cáncer peritoneal (PCI)', 'oncology-gi-thorax', GI_THORAX_JS),
+  item(52, 'digestive_game', 'GAME — metástasis hepáticas colorrectales', 'oncology-gi-thorax', GI_THORAX_JS, 'ported'),
+  item(53, 'digestive_pci', 'Índice de cáncer peritoneal (PCI)', 'oncology-gi-thorax', GI_THORAX_JS, 'ported'),
 
-  item(54, 'rt-dose-per-fraction-target', 'Dosis por fracción desde BED o EQD2', 'radiotherapy', RADIOTHERAPY_JS),
-  item(55, 'rt-fractions-target', 'Número de fracciones desde BED o EQD2', 'radiotherapy', RADIOTHERAPY_JS),
-  item(56, 'rt-simultaneous-2-volumes', 'Fraccionamiento simultáneo · 2 volúmenes', 'radiotherapy', RADIOTHERAPY_JS),
-  item(57, 'rt-simultaneous-3-volumes', 'Fraccionamiento simultáneo · 3 volúmenes', 'radiotherapy', RADIOTHERAPY_JS)
+  item(54, 'rt-dose-per-fraction-target', 'Dosis por fracción desde BED o EQD2', 'radiotherapy', RADIOTHERAPY_JS, 'ported'),
+  item(55, 'rt-fractions-target', 'Número de fracciones desde BED o EQD2', 'radiotherapy', RADIOTHERAPY_JS, 'ported'),
+  item(56, 'rt-simultaneous-2-volumes', 'Fraccionamiento simultáneo · 2 volúmenes', 'radiotherapy', RADIOTHERAPY_JS, 'ported'),
+  item(57, 'rt-simultaneous-3-volumes', 'Fraccionamiento simultáneo · 3 volúmenes', 'radiotherapy', RADIOTHERAPY_JS, 'ported')
 ] as const;
 
 export type CalculatorInventoryId = (typeof CALCULATOR_INVENTORY)[number]['id'];

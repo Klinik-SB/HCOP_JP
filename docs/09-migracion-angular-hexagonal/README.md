@@ -10,9 +10,10 @@ capacidad nueva se compara contra la línea base antes de habilitarse y el
 frontend anterior sólo se retira cuando la matriz de paridad está completa.
 
 La biblioteca declarativa Angular conserva el inventario completo y tiene
-**51 de 57 calculadoras** portadas con pruebas doradas. Todavía no se habilita
-una vista parcial: la biblioteca visible se reemplazará cuando alcance paridad
-funcional y visual completa.
+**57 de 57 calculadoras** portadas con pruebas doradas. Esto completa las
+definiciones y reglas, pero no habilita todavía una vista parcial: la capacidad
+visible seguirá `Pendiente` hasta completar renderizador, configuración,
+permisos y paridad visual/E2E.
 
 ## Documentos de control
 
@@ -96,6 +97,9 @@ funcional y visual completa.
 - [Corte Angular 021](CORTE-ANGULAR-021-GPA-LIPI-ALBI-AFP-HCC.md):
   Lung GPA 2022, LIPI, ALBI/mALBI y AFP francés HCC portados con tablas,
   conversiones, tolerancias y defectos de grilla heredados verificados.
+- [Corte Angular 022](CORTE-ANGULAR-022-GAME-PCI-Y-RADIOTERAPIA.md): GAME,
+  PCI y las cuatro herramientas de radioterapia completan las 57 definiciones,
+  con ecuaciones LQ, enumeración SIB y tablas tipadas verificadas.
 
 ## Ciclo obligatorio por capacidad
 

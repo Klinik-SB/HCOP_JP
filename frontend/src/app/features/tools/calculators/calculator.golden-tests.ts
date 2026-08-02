@@ -73,8 +73,21 @@ import {
   THORAX_LIPI_CALCULATOR,
   THORAX_LUNG_GPA_2022_CALCULATOR
 } from './legacy-calculators-48-51.definitions';
+import {
+  DIGESTIVE_GAME_CALCULATOR,
+  DIGESTIVE_PCI_CALCULATOR,
+  RT_DOSE_PER_FRACTION_TARGET_CALCULATOR,
+  RT_FRACTIONS_TARGET_CALCULATOR,
+  RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR,
+  RT_SIMULTANEOUS_3_VOLUMES_CALCULATOR
+} from './legacy-calculators-52-57.definitions';
 import { PORTED_CALCULATORS } from './ported-calculator.registry';
-import { CalculatorOrigin } from './calculator.models';
+import {
+  CalculatorDefinition,
+  CalculatorOrigin,
+  CalculatorResult,
+  CalculatorTableNote
+} from './calculator.models';
 
 interface GoldenTest {
   readonly name: string;
@@ -97,7 +110,7 @@ test('inventory contains the exact 57 unique legacy tools in stable order', () =
   }
 });
 
-test('only the first fifty-one calculators are marked as ported', () => {
+test('all fifty-seven calculators are marked as ported in stable order', () => {
   deepEqual(CALCULATOR_INVENTORY.filter((entry) => entry.migrationStatus === 'ported').map((entry) => entry.id),
     ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk',
       'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude', 'nmibc', 'cystectomy', 'cisplatin', 'utuc',
@@ -108,7 +121,9 @@ test('only the first fifty-one calculators are marked as ported', () => {
       'monarche-cohort-1', 'olympia-cpseg', 'international-prognostic-index', 'r2-iss-myeloma',
       'gyne-sedlis', 'gyne-peters', 'gyne-promise', 'gyne-rmi-i',
       'gyne-fagotti', 'gyne-ago-desktop', 'thorax_brock', 'thorax_mayo_herder',
-      'thorax_lung_gpa_2022', 'thorax_lipi', 'digestive_albi', 'digestive_french_afp_hcc']);
+      'thorax_lung_gpa_2022', 'thorax_lipi', 'digestive_albi', 'digestive_french_afp_hcc',
+      'digestive_game', 'digestive_pci', 'rt-dose-per-fraction-target', 'rt-fractions-target',
+      'rt-simultaneous-2-volumes', 'rt-simultaneous-3-volumes']);
   deepEqual(PORTED_CALCULATORS.map((entry) => entry.id),
     ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk',
       'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude', 'nmibc', 'cystectomy', 'cisplatin', 'utuc',
@@ -119,7 +134,9 @@ test('only the first fifty-one calculators are marked as ported', () => {
       'monarche-cohort-1', 'olympia-cpseg', 'international-prognostic-index', 'r2-iss-myeloma',
       'gyne-sedlis', 'gyne-peters', 'gyne-promise', 'gyne-rmi-i',
       'gyne-fagotti', 'gyne-ago-desktop', 'thorax_brock', 'thorax_mayo_herder',
-      'thorax_lung_gpa_2022', 'thorax_lipi', 'digestive_albi', 'digestive_french_afp_hcc']);
+      'thorax_lung_gpa_2022', 'thorax_lipi', 'digestive_albi', 'digestive_french_afp_hcc',
+      'digestive_game', 'digestive_pci', 'rt-dose-per-fraction-target', 'rt-fractions-target',
+      'rt-simultaneous-2-volumes', 'rt-simultaneous-3-volumes']);
 });
 
 test('BSA opens blank and keeps legacy values only as examples', () => {
@@ -4162,6 +4179,466 @@ test('ported 48 to 51 enforce safe inputs and return typed text-only notes', () 
   for (const current of results) assertNoRawMarkup(current.notes);
 });
 
+test('ported 52 to 57 preserve canonical metadata and complete field order', () => {
+  deepEqual([
+    DIGESTIVE_GAME_CALCULATOR,
+    DIGESTIVE_PCI_CALCULATOR,
+    RT_DOSE_PER_FRACTION_TARGET_CALCULATOR,
+    RT_FRACTIONS_TARGET_CALCULATOR,
+    RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR,
+    RT_SIMULTANEOUS_3_VOLUMES_CALCULATOR
+  ].map((definition) => ({
+    id: definition.id,
+    title: definition.title,
+    shortTitle: definition.shortTitle,
+    category: definition.category,
+    subtitle: definition.subtitle,
+    source: definition.source,
+    fieldIds: definition.fields.map((field) => field.id)
+  })), [
+    {
+      id: 'digestive_game', title: 'GAME — metástasis hepáticas colorrectales',
+      shortTitle: undefined, category: 'digestivo',
+      subtitle: 'Evaluación genética y morfológica preoperatoria.',
+      source: 'Margonis, Sasaki et al., British Journal of Surgery 2018',
+      fieldIds: ['game_biology_section', 'game_kras', 'game_cea', 'game_node_positive',
+        'game_burden_section', 'game_largest_met', 'game_met_count', 'game_extrahepatic']
+    },
+    {
+      id: 'digestive_pci', title: 'Índice de cáncer peritoneal (PCI)',
+      shortTitle: undefined, category: 'digestivo',
+      subtitle: 'Carga peritoneal por 13 regiones de Sugarbaker.',
+      source: 'Jacquet y Sugarbaker, 1996',
+      fieldIds: ['pci_abdominopelvic_section', ...Array.from({ length: 9 }, (_, index) => `pci_region_${index}`),
+        'pci_small_bowel_section', ...Array.from({ length: 4 }, (_, index) => `pci_region_${index + 9}`)]
+    },
+    {
+      id: 'rt-dose-per-fraction-target', title: 'Dosis por fracción desde BED o EQD2',
+      shortTitle: 'Dosis/fracción · BED o EQD2', category: 'radioterapia',
+      subtitle: 'Resuelve la dosis por fracción para un efecto biológico objetivo.',
+      source: 'Modelo LQ · Pangea',
+      fieldIds: ['rt_dpf_scope', 'scenario', 'rt_dpf_target', 'rt_dpf_fractions', 'rt_dpf_alpha_beta']
+    },
+    {
+      id: 'rt-fractions-target', title: 'Número de fracciones desde BED o EQD2',
+      shortTitle: 'N.º de fracciones · BED o EQD2', category: 'radioterapia',
+      subtitle: 'Muestra el resultado teórico y recalcula los enteros vecinos.',
+      source: 'Modelo LQ · Pangea',
+      fieldIds: ['rt_n_scope', 'scenario', 'rt_n_target', 'rt_n_dose', 'rt_n_alpha_beta']
+    },
+    {
+      id: 'rt-simultaneous-2-volumes', title: 'Fraccionamiento simultáneo · 2 volúmenes',
+      shortTitle: 'SIB · 2 volúmenes', category: 'radioterapia',
+      subtitle: 'Esquemas con un número común de fracciones para 2 niveles de dosis.',
+      source: 'Modelo LQ · Pangea',
+      fieldIds: ['rt_sib2_scope', 'scenario', 'rt_sib2_target_1', 'rt_sib2_tolerance_1',
+        'rt_sib2_target_2', 'rt_sib2_tolerance_2', 'rt_sib2_delivery',
+        'rt_sib2_alpha_beta', 'rt_sib2_min_dose', 'rt_sib2_max_dose', 'rt_sib2_resolution']
+    },
+    {
+      id: 'rt-simultaneous-3-volumes', title: 'Fraccionamiento simultáneo · 3 volúmenes',
+      shortTitle: 'SIB · 3 volúmenes', category: 'radioterapia',
+      subtitle: 'Esquemas con un número común de fracciones para 3 niveles de dosis.',
+      source: 'Modelo LQ · Pangea',
+      fieldIds: ['rt_sib3_scope', 'scenario', 'rt_sib3_target_1', 'rt_sib3_tolerance_1',
+        'rt_sib3_target_2', 'rt_sib3_tolerance_2', 'rt_sib3_target_3', 'rt_sib3_tolerance_3',
+        'rt_sib3_delivery', 'rt_sib3_alpha_beta', 'rt_sib3_min_dose', 'rt_sib3_max_dose',
+        'rt_sib3_resolution']
+    }
+  ]);
+});
+
+test('ported 52 to 57 preserve blank numbers and only canonical select defaults', () => {
+  deepEqual(evaluateCalculator(DIGESTIVE_GAME_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['game_kras', 'game_cea', 'game_node_positive', 'game_largest_met',
+      'game_met_count', 'game_extrahepatic']);
+  deepEqual(evaluateCalculator(DIGESTIVE_PCI_CALCULATOR).issues.map((issue) => issue.fieldId),
+    Array.from({ length: 13 }, (_, index) => `pci_region_${index}`));
+  const dpfBlank = evaluateCalculator(RT_DOSE_PER_FRACTION_TARGET_CALCULATOR);
+  equal(dpfBlank.values['scenario'], 'eqd2');
+  deepEqual(dpfBlank.issues.map((issue) => issue.fieldId),
+    ['rt_dpf_target', 'rt_dpf_fractions', 'rt_dpf_alpha_beta']);
+  const fractionsBlank = evaluateCalculator(RT_FRACTIONS_TARGET_CALCULATOR);
+  equal(fractionsBlank.values['scenario'], 'eqd2');
+  deepEqual(fractionsBlank.issues.map((issue) => issue.fieldId),
+    ['rt_n_target', 'rt_n_dose', 'rt_n_alpha_beta']);
+  const sib2Blank = evaluateCalculator(RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR);
+  equal(sib2Blank.values['scenario'], 'physical');
+  equal(sib2Blank.values['rt_sib2_resolution'], '0.01');
+  deepEqual(sib2Blank.issues.map((issue) => issue.fieldId),
+    ['rt_sib2_target_1', 'rt_sib2_tolerance_1', 'rt_sib2_target_2', 'rt_sib2_tolerance_2',
+      'rt_sib2_alpha_beta', 'rt_sib2_min_dose', 'rt_sib2_max_dose']);
+  const sib3Blank = evaluateCalculator(RT_SIMULTANEOUS_3_VOLUMES_CALCULATOR);
+  equal(sib3Blank.values['scenario'], 'physical');
+  equal(sib3Blank.values['rt_sib3_resolution'], '0.01');
+  deepEqual(sib3Blank.issues.map((issue) => issue.fieldId),
+    ['rt_sib3_target_1', 'rt_sib3_tolerance_1', 'rt_sib3_target_2', 'rt_sib3_tolerance_2',
+      'rt_sib3_target_3', 'rt_sib3_tolerance_3', 'rt_sib3_alpha_beta',
+      'rt_sib3_min_dose', 'rt_sib3_max_dose']);
+});
+
+test('GAME golden low case preserves TBS, output and limitations', () => {
+  const evaluation = evaluateCalculator(DIGESTIVE_GAME_CALCULATOR, gameInput());
+  deepEqual(evaluation.result, {
+    title: 'GAME 0 - bajo', detail: 'Estrato pronostico preoperatorio del modelo GAME.',
+    badge: 'CRLM', score: 0, showScore: false, severity: 'good',
+    metrics: [
+      { label: 'Puntaje', value: 0 },
+      { label: 'TBS', value: '2.25' },
+      { label: 'KRAS', value: 0 },
+      { label: 'Extrahepatica', value: 0 }
+    ],
+    notes: [
+      'Grupos publicados: 0-1 bajo, 2-3 intermedio y 4 o mas alto.',
+      'El modelo utiliza KRAS especificamente; no sustituirlo automaticamente por un resultado RAS agregado.',
+      'El puntaje describe pronostico y no define resecabilidad ni tratamiento.'
+    ]
+  });
+});
+
+test('GAME preserves every independent component and inclusive CEA threshold', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, number][] = [
+    [{ game_kras: 'mutated' }, 1],
+    [{ game_cea: 19.9 }, 0], [{ game_cea: 20 }, 1],
+    [{ game_node_positive: 'yes' }, 1],
+    [{ game_extrahepatic: 'yes' }, 2]
+  ];
+  for (const [overrides, total] of cases) {
+    equal(evaluateCalculator(DIGESTIVE_GAME_CALCULATOR,
+      gameInput(overrides)).result.metrics[0]?.value, total);
+  }
+});
+
+test('GAME preserves exact TBS three and nine borders without tolerance', () => {
+  const atThree = gameDirectResult({ game_largest_met: Math.sqrt(8), game_met_count: 1 });
+  equal(atThree.metrics[0]?.value, 1);
+  equal(atThree.metrics[1]?.value, '3.00');
+  equal(gameDirectResult({ game_largest_met: Math.sqrt(8) - 1e-9,
+    game_met_count: 1 }).metrics[0]?.value, 0);
+  const atNine = gameDirectResult({ game_largest_met: Math.sqrt(80), game_met_count: 1 });
+  equal(atNine.metrics[0]?.value, 2);
+  equal(atNine.metrics[1]?.value, '9.00');
+  equal(gameDirectResult({ game_largest_met: Math.sqrt(80) - 1e-9,
+    game_met_count: 1 }).metrics[0]?.value, 1);
+});
+
+test('GAME preserves category borders one, two, three, four and maximum seven', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string][] = [
+    [{ game_kras: 'mutated' }, 'GAME 1 - bajo', 'good'],
+    [{ game_extrahepatic: 'yes' }, 'GAME 2 - intermedio', 'warn'],
+    [{ game_extrahepatic: 'yes', game_kras: 'mutated' }, 'GAME 3 - intermedio', 'warn'],
+    [{ game_extrahepatic: 'yes', game_kras: 'mutated', game_cea: 20 }, 'GAME 4 - alto', 'bad'],
+    [{ game_extrahepatic: 'yes', game_kras: 'mutated', game_cea: 20,
+      game_node_positive: 'yes', game_largest_met: 9.01 }, 'GAME 7 - alto', 'bad']
+  ];
+  for (const [overrides, title, severity] of cases) {
+    const evaluation = evaluateCalculator(DIGESTIVE_GAME_CALCULATOR, gameInput(overrides));
+    equal(evaluation.result.title, title);
+    equal(evaluation.result.severity, severity as 'good' | 'warn' | 'bad');
+  }
+});
+
+test('GAME preserves its displaced metastasis-size grid and unbounded count', () => {
+  deepEqual(evaluateCalculator(DIGESTIVE_GAME_CALCULATOR,
+    gameInput({ game_largest_met: 2 })).issues.map((issue) => issue.code), ['step-mismatch']);
+  equal(evaluateCalculator(DIGESTIVE_GAME_CALCULATOR,
+    gameInput({ game_met_count: 1000 })).status, 'calculated');
+});
+
+test('PCI golden zero case preserves all thirteen explicit negative regions', () => {
+  const evaluation = evaluateCalculator(DIGESTIVE_PCI_CALCULATOR, pciInput());
+  deepEqual(evaluation.result, {
+    title: 'PCI 0 / 39', detail: 'Suma de los puntajes LS0-LS3 de las 13 regiones.',
+    badge: 'Sugarbaker PCI', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'PCI', value: '0/39' },
+      { label: 'Regiones comprometidas', value: 0 },
+      { label: 'Regiones LS3', value: 0 },
+      { label: 'Regiones evaluadas', value: 13 }
+    ],
+    notes: [
+      'No se registraron implantes visibles en las 13 regiones.',
+      'El PCI cuantifica carga peritoneal; no existe un corte universal aplicable a todas las histologias o centros.',
+      'La estimacion radiologica puede diferir de la evaluacion laparoscopica o intraoperatoria.'
+    ]
+  });
+});
+
+test('PCI preserves every region label, LS score and ascending note order', () => {
+  const labels = ['Central', 'Superior derecha', 'Epigastrio', 'Superior izquierda',
+    'Flanco izquierdo', 'Inferior izquierda', 'Pelvis', 'Inferior derecha',
+    'Flanco derecho', 'Yeyuno superior', 'Yeyuno inferior', 'Ileon superior', 'Ileon inferior'];
+  for (let index = 0; index < labels.length; index += 1) {
+    const evaluation = evaluateCalculator(DIGESTIVE_PCI_CALCULATOR,
+      pciInput({ [`pci_region_${index}`]: String((index % 3) + 1) }));
+    equal(evaluation.result.metrics[0]?.value, `${(index % 3) + 1}/39`);
+    equal(evaluation.result.notes[0],
+      `Compromiso registrado: ${index} ${labels[index]} (LS${(index % 3) + 1}).`);
+  }
+  const ordered = evaluateCalculator(DIGESTIVE_PCI_CALCULATOR,
+    pciInput({ pci_region_1: '2', pci_region_9: '1', pci_region_12: '3' }));
+  equal(ordered.result.notes[0],
+    'Compromiso registrado: 1 Superior derecha (LS2); 9 Yeyuno superior (LS1); 12 Ileon inferior (LS3).');
+});
+
+test('PCI maximum reaches thirty-nine and rejects unknown LS categories', () => {
+  const maximum = evaluateCalculator(DIGESTIVE_PCI_CALCULATOR,
+    pciInput(Object.fromEntries(Array.from({ length: 13 }, (_, index) => [`pci_region_${index}`, '3']))));
+  equal(maximum.result.title, 'PCI 39 / 39');
+  deepEqual(maximum.result.metrics.map((metric) => metric.value), ['39/39', 13, 13, 13]);
+  deepEqual(evaluateCalculator(DIGESTIVE_PCI_CALCULATOR,
+    pciInput({ pci_region_5: '4' })).issues.map((issue) => issue.code), ['unknown-option']);
+});
+
+test('radiotherapy tools preserve canonical factory examples and selector order', () => {
+  const numberExamples = (definition: CalculatorDefinition) =>
+    definition.fields.filter((field) => field.kind === 'number')
+      .map((field) => [field.id, field.exampleValue]);
+  deepEqual(numberExamples(RT_DOSE_PER_FRACTION_TARGET_CALCULATOR), [
+    ['rt_dpf_target', 60], ['rt_dpf_fractions', 30], ['rt_dpf_alpha_beta', 10]
+  ]);
+  deepEqual(numberExamples(RT_FRACTIONS_TARGET_CALCULATOR), [
+    ['rt_n_target', 60], ['rt_n_dose', 3], ['rt_n_alpha_beta', 10]
+  ]);
+  deepEqual(RT_DOSE_PER_FRACTION_TARGET_CALCULATOR.fields[1]?.kind === 'select'
+    ? RT_DOSE_PER_FRACTION_TARGET_CALCULATOR.fields[1].options : [], [
+    { value: 'eqd2', label: 'EQD2 objetivo' }, { value: 'bed', label: 'BED objetivo' }
+  ]);
+  for (const definition of [RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR,
+    RT_SIMULTANEOUS_3_VOLUMES_CALCULATOR]) {
+    const scenario = definition.fields.find((field) => field.id === 'scenario');
+    deepEqual(scenario?.kind === 'select' ? scenario.options : [], [
+      { value: 'physical', label: 'Dosis física total' }, { value: 'eqd2', label: 'EQD2' }
+    ]);
+    const resolution = definition.fields.find((field) => field.id.endsWith('_resolution'));
+    deepEqual(resolution?.kind === 'select' ? resolution.options : [], [
+      { value: '0.01', label: '0,01 Gy' }, { value: '0.05', label: '0,05 Gy' },
+      { value: '0.1', label: '0,10 Gy' }
+    ]);
+  }
+});
+
+test('dose per fraction golden EQD2 case preserves inverse LQ output', () => {
+  const evaluation = evaluateCalculator(RT_DOSE_PER_FRACTION_TARGET_CALCULATOR,
+    rtDoseInput());
+  deepEqual(evaluation.result, {
+    title: '2,000 Gy por fracción', detail: '30 fracciones entregan 60,00 Gy físicos.',
+    badge: 'EQD2 objetivo', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'Dosis por fracción', value: '2,000 Gy' },
+      { label: 'Dosis total', value: '60,00 Gy' },
+      { label: 'BED', value: '72,00 Gy (α/β 10,0)' },
+      { label: 'EQD2', value: '60,00 Gy (α/β 10,0)' }
+    ],
+    notes: lqGoldenNotes(false)
+  });
+});
+
+test('dose per fraction preserves BED equivalence and strict five-Gy warning', () => {
+  const bed = evaluateCalculator(RT_DOSE_PER_FRACTION_TARGET_CALCULATOR,
+    rtDoseInput({ scenario: 'bed', rt_dpf_target: 72 }));
+  equal(bed.result.title, '2,000 Gy por fracción');
+  equal(bed.result.badge, 'BED objetivo');
+  const exactFive = evaluateCalculator(RT_DOSE_PER_FRACTION_TARGET_CALCULATOR,
+    rtDoseInput({ scenario: 'bed', rt_dpf_target: 7.5, rt_dpf_fractions: 1 }));
+  equal(exactFive.result.title, '5,000 Gy por fracción');
+  equal(exactFive.result.severity, 'info');
+  const aboveFive = evaluateCalculator(RT_DOSE_PER_FRACTION_TARGET_CALCULATOR,
+    rtDoseInput({ scenario: 'bed', rt_dpf_target: 7.52, rt_dpf_fractions: 1 }));
+  equal(aboveFive.result.title, '5,010 Gy por fracción');
+  equal(aboveFive.result.severity, 'warn');
+  equal(aboveFive.result.notes[0], lqGoldenNotes(true)[0]);
+  deepEqual(evaluateCalculator(RT_DOSE_PER_FRACTION_TARGET_CALCULATOR,
+    rtDoseInput({ rt_dpf_fractions: 1.5 })).issues.map((issue) => issue.code), ['step-mismatch']);
+});
+
+test('fraction-count golden case preserves theoretical result and both integer neighbors', () => {
+  const evaluation = evaluateCalculator(RT_FRACTIONS_TARGET_CALCULATOR,
+    rtFractionsInput());
+  deepEqual(evaluation.result, {
+    title: '18,462 fracciones teóricas',
+    detail: 'Las fracciones deben ser enteras; compará el efecto de ambos esquemas adyacentes.',
+    badge: 'EQD2 objetivo', score: 0, showScore: false, severity: 'warn',
+    metrics: [
+      { label: 'Fracciones teóricas', value: '18,462' },
+      { label: 'Dosis por fracción', value: '3,00 Gy' },
+      { label: 'Objetivo', value: '60,00 Gy (α/β 10,0)' },
+      { label: 'α/β', value: '10,0 Gy' }
+    ],
+    notes: [
+      tableNote('Comparación de fracciones enteras',
+        ['Fracciones', 'Dosis total', 'BED', 'EQD2', 'Δ EQD2'], [
+          [18, '54,00 Gy', '70,20 Gy (α/β 10,0)', '58,50 Gy (α/β 10,0)', '−1,50'],
+          [19, '57,00 Gy', '74,10 Gy (α/β 10,0)', '61,75 Gy (α/β 10,0)', '+1,75']
+        ]),
+      'La tabla compara los enteros matemáticamente adyacentes; no señala uno como preferido.',
+      ...lqGoldenNotes(false)
+    ]
+  });
+});
+
+test('fraction-count preserves integer epsilon, one-neighbor edge and strict high-dose warning', () => {
+  const integer = evaluateCalculator(RT_FRACTIONS_TARGET_CALCULATOR,
+    rtFractionsInput({ rt_n_dose: 2 }));
+  equal(integer.result.title, '30 fracciones');
+  equal(integer.result.severity, 'info');
+  deepEqual(tableAt(integer.result).rows.map((row) => row[0]), [30]);
+  equal(rtFractionsDirect(60 + 1e-9).title, '30 fracciones');
+  equal(rtFractionsDirect(60 + 4e-9).title.endsWith('fracciones teóricas'), true);
+  const lessThanOne = evaluateCalculator(RT_FRACTIONS_TARGET_CALCULATOR,
+    rtFractionsInput({ rt_n_target: 1 }));
+  deepEqual(tableAt(lessThanOne.result).rows.map((row) => row[0]), [1]);
+  equal(evaluateCalculator(RT_FRACTIONS_TARGET_CALCULATOR,
+    rtFractionsInput({ rt_n_dose: 5 })).result.notes[2], lqGoldenNotes(false)[0]);
+  equal(evaluateCalculator(RT_FRACTIONS_TARGET_CALCULATOR,
+    rtFractionsInput({ rt_n_dose: 5.01 })).result.notes[2], lqGoldenNotes(true)[0]);
+});
+
+test('SIB two-volume physical golden case preserves count, order and first row', () => {
+  const evaluation = evaluateCalculator(RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR,
+    rtSib2Input());
+  deepEqual(evaluation.result.metrics, [
+    { label: 'Candidatos', value: 9 }, { label: 'Rango de fracciones', value: '24–35' },
+    { label: 'Resolución', value: '0,01 Gy' }, { label: 'α/β', value: '10,0 Gy' }
+  ]);
+  const table = tableAt(evaluation.result);
+  equal(table.title, 'Dosis física objetivo · se muestran 9 de 9 candidatos.');
+  deepEqual(table.rows.map((row) => row[0]), [
+    '28 fracciones comunes', '35 fracciones comunes', '25 fracciones comunes',
+    '32 fracciones comunes', '33 fracciones comunes', '34 fracciones comunes',
+    '24 fracciones comunes', '26 fracciones comunes', '30 fracciones comunes'
+  ]);
+  deepEqual(table.rows[0], [
+    '28 fracciones comunes',
+    '2,50 Gy/fracción · D 70,00 Gy · EQD2 72,92 · Δ +0,00',
+    '2,00 Gy/fracción · D 56,00 Gy · EQD2 56,00 · Δ +0,00'
+  ]);
+});
+
+test('SIB three-volume physical golden case preserves all shared-fraction candidates', () => {
+  const evaluation = evaluateCalculator(RT_SIMULTANEOUS_3_VOLUMES_CALCULATOR,
+    rtSib3Input());
+  equal(evaluation.result.title, '8 esquemas matemáticos compatibles');
+  deepEqual(evaluation.result.metrics.map((metric) => metric.value), [8, '25–35', '0,01 Gy', '10,0 Gy']);
+  const table = tableAt(evaluation.result);
+  deepEqual(table.columns, ['Fracciones', 'Volumen alto', 'Volumen medio', 'Volumen bajo']);
+  deepEqual(table.rows.map((row) => row[0]), [
+    '28 fracciones comunes', '35 fracciones comunes', '25 fracciones comunes',
+    '32 fracciones comunes', '33 fracciones comunes', '30 fracciones comunes',
+    '34 fracciones comunes', '26 fracciones comunes'
+  ]);
+  deepEqual(table.rows[0], [
+    '28 fracciones comunes',
+    '2,50 Gy/fracción · D 70,00 Gy · EQD2 72,92 · Δ +0,00',
+    '2,25 Gy/fracción · D 63,00 Gy · EQD2 64,31 · Δ +0,00',
+    '2,00 Gy/fracción · D 56,00 Gy · EQD2 56,00 · Δ +0,00'
+  ]);
+});
+
+test('SIB EQD2 mode preserves radiobiological solve and mathematical sorting', () => {
+  const evaluation = evaluateCalculator(RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR,
+    rtSib2Input({ scenario: 'eqd2' }));
+  equal(evaluation.result.detail, 'EQD2 como objetivo, resolución 0,01 Gy y α/β 10,0 Gy.');
+  deepEqual(evaluation.result.metrics.map((metric) => metric.value), [8, '22–39', '0,01 Gy', '10,0 Gy']);
+  const table = tableAt(evaluation.result);
+  equal(table.title, 'EQD2 objetivo · se muestran 8 de 8 candidatos.');
+  deepEqual(table.rows.map((row) => row[0]), [
+    '26 fracciones comunes', '34 fracciones comunes', '35 fracciones comunes',
+    '22 fracciones comunes', '32 fracciones comunes', '39 fracciones comunes',
+    '31 fracciones comunes', '36 fracciones comunes'
+  ]);
+});
+
+test('SIB dose resolution changes candidate enumeration exactly', () => {
+  const sib2At005 = evaluateCalculator(RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR,
+    rtSib2Input({ rt_sib2_resolution: '0.05' }));
+  deepEqual(tableAt(sib2At005.result).rows.map((row) => row[0]),
+    ['28 fracciones comunes', '35 fracciones comunes']);
+  const sib2At01 = evaluateCalculator(RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR,
+    rtSib2Input({ rt_sib2_resolution: '0.1' }));
+  deepEqual(tableAt(sib2At01.result).rows.map((row) => row[0]),
+    ['28 fracciones comunes', '35 fracciones comunes']);
+  const sib3At005 = evaluateCalculator(RT_SIMULTANEOUS_3_VOLUMES_CALCULATOR,
+    rtSib3Input({ rt_sib3_resolution: '0.05' }));
+  deepEqual(tableAt(sib3At005.result).rows.map((row) => row[0]),
+    ['28 fracciones comunes', '35 fracciones comunes']);
+  const sib3At01 = evaluateCalculator(RT_SIMULTANEOUS_3_VOLUMES_CALCULATOR,
+    rtSib3Input({ rt_sib3_resolution: '0.1' }));
+  deepEqual(tableAt(sib3At01.result).rows.map((row) => row[0]), ['35 fracciones comunes']);
+});
+
+test('SIB no-candidate state preserves the complete searched range and guidance', () => {
+  const evaluation = evaluateCalculator(RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR,
+    rtSib2Input({ rt_sib2_tolerance_1: 0, rt_sib2_tolerance_2: 0,
+      rt_sib2_min_dose: 3, rt_sib2_max_dose: 3 }));
+  deepEqual(evaluation.result, {
+    title: 'No hay esquemas dentro de esos límites',
+    detail: 'La combinación de objetivos, tolerancias, resolución y rango de dosis por fracción no produjo candidatos.',
+    badge: 'SIB 2 volúmenes', score: 0, showScore: false, severity: 'warn',
+    metrics: [
+      { label: 'Fracciones exploradas', value: '1–200' },
+      { label: 'Resolución', value: '0,01 Gy' }, { label: 'α/β', value: '10,0 Gy' }
+    ],
+    notes: [
+      'Revisá que los objetivos correspondan a la magnitud seleccionada y que la dosis mínima no supere la máxima.',
+      'Si corresponde clínicamente, podés ampliar la tolerancia o el rango de dosis por fracción y volver a calcular.',
+      ...lqGoldenNotes(false)
+    ]
+  });
+});
+
+test('SIB preserves inclusive tolerance, strict high-dose warning and safe range validation', () => {
+  const highDose = evaluateCalculator(RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR,
+    rtSib2Input({ rt_sib2_target_1: 12, rt_sib2_target_2: 10,
+      rt_sib2_min_dose: 5, rt_sib2_max_dose: 6 }));
+  equal(highDose.result.title, '1 esquema matemático compatible');
+  equal(highDose.result.severity, 'warn');
+  deepEqual(tableAt(highDose.result).rows[0], [
+    '2 fracciones comunes',
+    '6,00 Gy/fracción · D 12,00 Gy · EQD2 16,00 · Δ +0,00',
+    '5,00 Gy/fracción · D 10,00 Gy · EQD2 12,50 · Δ +0,00'
+  ]);
+  equal(highDose.result.notes[2], lqGoldenNotes(true)[0]);
+  const reversed = evaluateCalculator(RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR,
+    rtSib2Input({ rt_sib2_min_dose: 3, rt_sib2_max_dose: 2 }));
+  equal(reversed.result.detail, 'Revisar: rango de dosis por fracción ordenado.');
+  deepEqual(evaluateCalculator(RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR,
+    rtSib2Input({ rt_sib2_resolution: '0.02' })).issues.map((issue) => issue.code),
+  ['unknown-option']);
+});
+
+test('SIB deliberately rejects the latent legacy BED branch that its UI never exposed', () => {
+  const latentBed = RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR.calculate({
+    rt_sib2_scope: '', scenario: 'bed', rt_sib2_target_1: 70, rt_sib2_tolerance_1: 0.1,
+    rt_sib2_target_2: 56, rt_sib2_tolerance_2: 0.1, rt_sib2_delivery: '',
+    rt_sib2_alpha_beta: 10, rt_sib2_min_dose: 1.5, rt_sib2_max_dose: 3,
+    rt_sib2_resolution: '0.01'
+  });
+  equal(latentBed.title, 'Datos incompletos o incompatibles');
+  equal(latentBed.detail, 'Revisar: tipo de objetivo.');
+});
+
+test('SIB candidate table deliberately limits display to twelve ordered rows', () => {
+  const evaluation = evaluateCalculator(RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR,
+    rtSib2Input({ rt_sib2_tolerance_1: 0.5, rt_sib2_tolerance_2: 0.5 }));
+  equal(evaluation.result.title, '14 esquemas matemáticos compatibles');
+  const table = tableAt(evaluation.result);
+  equal(table.title, 'Dosis física objetivo · se muestran 12 de 14 candidatos.');
+  equal(table.rows.length, 12);
+});
+
+test('ported 52 to 57 expose only typed safe notes without legacy raw markup', () => {
+  const results = [
+    evaluateCalculator(DIGESTIVE_GAME_CALCULATOR, gameInput()).result,
+    evaluateCalculator(DIGESTIVE_PCI_CALCULATOR, pciInput()).result,
+    evaluateCalculator(RT_DOSE_PER_FRACTION_TARGET_CALCULATOR, rtDoseInput()).result,
+    evaluateCalculator(RT_FRACTIONS_TARGET_CALCULATOR, rtFractionsInput()).result,
+    evaluateCalculator(RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR, rtSib2Input()).result,
+    evaluateCalculator(RT_SIMULTANEOUS_3_VOLUMES_CALCULATOR, rtSib3Input()).result
+  ];
+  for (const current of results) assertNoRawMarkup(current.notes);
+});
+
 test('structured note factories reject unsafe links and malformed tables', () => {
   throws(() => externalLink('inseguro', 'http://example.test'), 'El enlace externo debe usar HTTPS');
   throws(() => tableNote('invalida', ['una'], [['a', 'b']]), 'cantidad de celdas invalida');
@@ -4530,6 +5007,85 @@ function afpHccInput(overrides: Readonly<Record<string, unknown>> = {}): Record<
     afp_hcc_diameter: 2.91, afp_hcc_nodules: 1, afp_hcc_value: 100,
     ...overrides
   };
+}
+
+function gameInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    game_kras: 'wild_type', game_cea: 10, game_node_positive: 'no',
+    game_largest_met: 2.01, game_met_count: 1, game_extrahepatic: 'no',
+    ...overrides
+  };
+}
+
+function gameDirectResult(overrides: Readonly<Record<string, unknown>> = {}) {
+  return DIGESTIVE_GAME_CALCULATOR.calculate({
+    game_biology_section: '', game_burden_section: '', ...gameInput(), ...overrides
+  });
+}
+
+function pciInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    ...Object.fromEntries(Array.from({ length: 13 }, (_, index) => [`pci_region_${index}`, '0'])),
+    ...overrides
+  };
+}
+
+function rtDoseInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'eqd2', rt_dpf_target: 60, rt_dpf_fractions: 30, rt_dpf_alpha_beta: 10,
+    ...overrides
+  };
+}
+
+function rtFractionsInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'eqd2', rt_n_target: 60, rt_n_dose: 3, rt_n_alpha_beta: 10,
+    ...overrides
+  };
+}
+
+function rtFractionsDirect(targetValue: number): CalculatorResult {
+  return RT_FRACTIONS_TARGET_CALCULATOR.calculate({
+    rt_n_scope: '', scenario: 'eqd2', rt_n_target: targetValue,
+    rt_n_dose: 2, rt_n_alpha_beta: 10
+  });
+}
+
+function rtSib2Input(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'physical', rt_sib2_target_1: 70, rt_sib2_tolerance_1: 0.1,
+    rt_sib2_target_2: 56, rt_sib2_tolerance_2: 0.1, rt_sib2_alpha_beta: 10,
+    rt_sib2_min_dose: 1.5, rt_sib2_max_dose: 3, rt_sib2_resolution: '0.01',
+    ...overrides
+  };
+}
+
+function rtSib3Input(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'physical', rt_sib3_target_1: 70, rt_sib3_tolerance_1: 0.1,
+    rt_sib3_target_2: 63, rt_sib3_tolerance_2: 0.1,
+    rt_sib3_target_3: 56, rt_sib3_tolerance_3: 0.1, rt_sib3_alpha_beta: 10,
+    rt_sib3_min_dose: 1.5, rt_sib3_max_dose: 3, rt_sib3_resolution: '0.01',
+    ...overrides
+  };
+}
+
+function lqGoldenNotes(highDose: boolean): readonly string[] {
+  return [
+    highDose
+      ? 'Dosis por fracción >5 Gy: el modelo LQ sigue siendo una estimación y su extrapolación es especialmente incierta en hipofraccionamiento extremo.'
+      : 'El modelo LQ es una aproximación; la incertidumbre aumenta al alejarse del fraccionamiento convencional.',
+    'No incorpora tiempo total, repoblación, reparación incompleta, heterogeneidad de dosis, recuperación tisular ni reirradiación.',
+    'Usar la dosis realmente recibida por el tejido analizado. El resultado no constituye una prescripción ni un límite automático de órgano a riesgo.'
+  ];
+}
+
+function tableAt(resultValue: CalculatorResult, index = 0): CalculatorTableNote {
+  const note = resultValue.notes[index];
+  if (!note || typeof note === 'string' || note.kind !== 'table') {
+    throw new Error(`Se esperaba una nota tabular en la posición ${index}.`);
+  }
+  return note;
 }
 
 function assertNoRawMarkup(value: unknown): void {

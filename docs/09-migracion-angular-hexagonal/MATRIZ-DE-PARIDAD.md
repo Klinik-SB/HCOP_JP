@@ -38,9 +38,11 @@ la implementación anterior.
 
 Las 57 calculadoras y scores continúan en transición y la fila permanece
 explícitamente `Pendiente`; Guías y AJCC/TNM no modifican ese estado.
-La base Angular mantiene el inventario completo y porta 51 de 57 con pruebas
-doradas, pero la fila no cambia de estado hasta completar y validar la
-biblioteca visible.
+La base Angular ya porta **57 de 57 definiciones y reglas** con pruebas doradas,
+pero completar el código declarativo no equivale a validar la capacidad. La
+fila no cambia de estado hasta integrar el renderizador y la configuración,
+verificar permisos y completar la comparación visual/E2E de la biblioteca
+visible.
 
 ## Evidencia requerida para marcar `Validada`
 
