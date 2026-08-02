@@ -9,8 +9,8 @@ repositorio `HCOP_JP`.
 | Ruta | Contenido | Autoridad |
 |---|---|---|
 | `src/main/java/ar/com/hexium/hcop/` | Backend Java: dominio, casos de uso, controladores, seguridad y adaptadores | Código del servidor |
-| `src/main/resources/static/` | Frontend vigente que Spring Boot sirve al navegador | Interfaz actual |
-| `frontend/` | Ubicación reservada para Angular; todavía no existe en este corte | Interfaz futura |
+| `src/main/resources/static/` | Interfaz JavaScript vigente y activos visuales compartidos | Interfaz de convivencia en `/` |
+| `frontend/` | Aplicación Angular standalone, pruebas y construcción npm | Interfaz migrada en `/app/` |
 | `src/main/resources/db/migration/` | 11 migraciones Flyway ordenadas `V001` a `V011` | Esquema PostgreSQL |
 | `src/main/resources/application.yml` | Valores de configuración Spring no secretos | Configuración base |
 | `runtime/catalogs/` | Catálogos clínicos distribuidos con la imagen | Datos de referencia |
@@ -22,11 +22,13 @@ repositorio `HCOP_JP`.
 | `EJECUTAR-DOCKER-DESDE-GITHUB.ps1` | Lanzador de los canales estable y migración | Ejecución desde GHCR |
 | `target/` | Clases y `.jar` generados por Maven; no se versionan | Salida temporal |
 
-## Frontend vigente
+## Convivencia de interfaces
 
-La interfaz visible actual está íntegramente en
-`src/main/resources/static/`. Spring Boot incorpora esa carpeta al `.jar` y la
-sirve desde la misma dirección que la API. No existe otro servidor frontend.
+Spring Boot sirve ambas interfaces y la API desde el mismo proceso. La raíz
+`/` todavía entrega `src/main/resources/static/index.html`; `/app/` entrega el
+build de `frontend/`. No existe un segundo servidor web ni un iframe. Angular
+reutiliza temporalmente estilos y activos clínicos de `static/`, pero no ejecuta
+`static/app.js`.
 
 ### Aplicación clínica principal
 
@@ -40,7 +42,7 @@ sirve desde la misma dirección que la API. No existe otro servidor frontend.
 
 `app.js` sigue siendo grande porque pertenece al frontend heredado. Durante la
 migración no se agregan reglas clínicas nuevas allí: las decisiones permanecen
-en Java y cada recorrido se trasladará a `frontend/src/app/features`.
+en Java y los recorridos se trasladan a `frontend/src/app/features`.
 
 ### Centro de Configuración
 
@@ -135,39 +137,48 @@ No se deben guardar pacientes, estudios cargados ni documentos generados
 dentro de `static/`. Esos archivos pertenecen al volumen persistente
 `/opt/hcop/runtime/storage`.
 
-## Frontend Angular futuro
+## Frontend Angular activo
 
-La decisión vigente reserva `frontend/` como proyecto Angular independiente:
+`frontend/` contiene el proyecto Angular que Docker compila antes del JAR:
 
 ```text
 frontend/src/app
 ├── core
-│   ├── api
 │   ├── auth
-│   ├── errors
-│   └── routing
+│   ├── clinical
+│   ├── patients
+│   └── visual
 ├── layout
-├── shared
-│   ├── accessibility
-│   ├── forms
-│   ├── ui
-│   └── utilities
 └── features
-    ├── patients
-    ├── clinical-history
-    ├── diagnosis
-    ├── studies
-    ├── treatments
-    ├── pharmacy
+    ├── agent
+    ├── auth
+    ├── clinical-workspace
     ├── day-hospital
+    ├── patients
+    ├── prescription
+    ├── protocols
+    ├── qr
     ├── scheduler
-    └── configuration
+    ├── studies
+    ├── timeline
+    └── tools
 ```
 
-En este corte la carpeta todavía no fue creada: la interfaz servida sigue
-siendo `static/`. Durante la convivencia, Angular se publicará bajo `/app` y la
-interfaz anterior bajo `/legacy`. Al alcanzar paridad completa, Angular pasará
-a `/`.
+Archivos centrales de este corte:
+
+| Ruta | Contenido |
+|---|---|
+| `frontend/src/app/core/clinical/clinical-treatment-projection.ts` | Proyección, categorización y deduplicación común de tratamientos para hoja y línea temporal |
+| `frontend/src/app/core/clinical/clinical-treatment-projection.tests.ts` | Casos de regresión de fuentes relacionales/documentales, identidades, categorías y tombstones |
+| `frontend/scripts/run-clinical-treatment-tests.mjs` | Ejecutor multiplataforma invocado por `npm test` |
+| `frontend/src/app/features/clinical-workspace/` | Hoja clínica Angular y selección de paciente |
+| `frontend/src/app/features/timeline/` | Línea temporal y filtros clínicos |
+| `frontend/src/app/features/tools/calculators/` | Catálogo, motor y renderizador de las 57 calculadoras |
+
+El Dockerfile ejecuta `npm test` y `npm run build`, y copia
+`frontend/dist/hcop-jp-angular/browser` a `static/app` dentro del JAR. Angular
+permanecerá bajo `/app/` hasta retirar los fallbacks funcionales y completar la
+matriz de paridad; moverlo hoy a `/` ocultaría capacidades todavía vigentes.
 
 ## Backend Java
 

@@ -23,6 +23,8 @@ export interface ClinicalRecord {
   text?: string;
   title?: string;
   type?: string;
+  category?: string;
+  kind?: string;
   modality?: string;
   source?: string;
   summary?: string;
@@ -42,6 +44,7 @@ export interface ClinicalRecord {
   reportUrl?: string;
   studyUrl?: string;
   attachments?: Array<{ category?: string; url?: string; [key: string]: unknown }>;
+  sourceRef?: Record<string, unknown>;
   deleted?: boolean;
   highlighted?: boolean;
   [key: string]: unknown;
@@ -91,6 +94,12 @@ export interface PatientWorkspace {
   revision: number;
   updatedAt?: string;
   counts?: Record<string, number>;
+  treatments?: {
+    oncology?: ClinicalRecord[];
+    nonOncology?: ClinicalRecord[];
+    procedures?: ClinicalRecord[];
+    referrals?: ClinicalRecord[];
+  };
 }
 
 export interface NewPatientRequest {

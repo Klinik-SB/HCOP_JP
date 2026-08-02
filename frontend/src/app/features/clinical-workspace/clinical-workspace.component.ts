@@ -1,6 +1,7 @@
 import { Component, ElementRef, OnInit, effect, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ClinicalFocusRequest, ClinicalFocusService } from '../../core/clinical/clinical-focus.service';
+import { ClinicalTreatmentKind, clinicalSectionTreatments, clinicalTreatmentBody } from '../../core/clinical/clinical-treatment-projection';
 import { PatientWorkspaceService } from '../../core/patients/patient-workspace.service';
 import { ClinicalPatient, ClinicalRecord, ClinicalState } from '../../core/patients/patient-workspace.models';
 
@@ -51,8 +52,16 @@ export class ClinicalWorkspaceComponent implements OnInit {
   patientLine(patient: ClinicalPatient): string { return [`HC ${patient.medicalRecord || '—'}`, `DNI ${patient.dni || '—'}`, patient.insurance ? `Obra social ${patient.insurance}` : '', patient.affiliateNumber ? `Afiliado ${patient.affiliateNumber}` : ''].filter(Boolean).join(' · '); }
   recordTitle(record: ClinicalRecord): string { return this.text(record.diagnosis) || this.text(record.title) || this.text(record.scheme) || this.text(record.reason) || 'Registro clínico'; }
   recordBody(record: ClinicalRecord): string { return this.text(record.text) || this.text(record.summary) || this.text(record.status); }
+  treatmentBody(record: ClinicalRecord): string { return clinicalTreatmentBody(record); }
   studyHeading(record: ClinicalRecord): string { return this.join(this.date(record.date), this.text(record.type), this.text(record.title)); }
-  treatmentHeading(record: ClinicalRecord): string { return this.join(this.date(record.date), this.text(record.scheme)); }
+  treatmentHeading(record: ClinicalRecord): string { return this.join(this.date(record.date), this.text(record.scheme) || this.text(record.title) || this.text(record.reason)); }
+  treatmentRecords(kind: ClinicalTreatmentKind): ClinicalRecord[] {
+    return clinicalSectionTreatments(
+      this.state(),
+      kind,
+      this.workspaceService.workspace()?.treatments?.oncology || []
+    );
+  }
   evolutionHeading(record: ClinicalRecord): string { return this.join(this.date(record.date), this.text(record.author) || this.text(record.reason)); }
   activityRecords(): ClinicalRecord[] {
     return [...this.records('evolutions'), ...this.records('prescriptions')]

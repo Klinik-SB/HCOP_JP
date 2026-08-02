@@ -7,7 +7,7 @@ COPY frontend ./
 # El CSS, iconografía y activos clínicos vigentes siguen siendo autoridad visual
 # durante la migración, pero Angular no ejecuta app.js ni usa iframes.
 COPY src/main/resources/static ./src/main/resources/static
-RUN npm run build
+RUN npm test && npm run build
 
 FROM maven:3.9.11-eclipse-temurin-21 AS build
 WORKDIR /workspace

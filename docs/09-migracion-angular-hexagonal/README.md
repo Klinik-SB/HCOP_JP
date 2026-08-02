@@ -118,6 +118,9 @@ configuración institucional y cerrar la paridad visual/E2E integrada.
 - [Corte Angular 028](CORTE-ANGULAR-028-SMOKE-DOCKER-Y-RESPONSIVE.md):
   smoke Docker aislado, recorrido visual autorizado, corrección responsive por
   ancho real del panel y optimización de construcción de la imagen.
+- [Corte Angular 029](CORTE-ANGULAR-029-TRATAMIENTOS-HISTORICOS-HOJA.md):
+  proyección unificada de tratamientos sistémicos, radioterapia y cirugías
+  históricas en la hoja Angular, sin reescribir el documento clínico.
 
 ## Ciclo obligatorio por capacidad
 

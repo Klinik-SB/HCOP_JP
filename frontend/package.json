@@ -5,7 +5,8 @@
   "scripts": {
     "build": "ng build",
     "start": "ng serve",
-    "test": "ng test"
+    "test": "npm run test:clinical-treatment",
+    "test:clinical-treatment": "node scripts/run-clinical-treatment-tests.mjs"
   },
   "engines": {
     "node": ">=22.22.3 || >=24.15.0"
@@ -24,6 +25,7 @@
     "@angular/build": "^22.1.2",
     "@angular/cli": "^22.1.2",
     "@angular/compiler-cli": "^22.1.0",
+    "esbuild": "0.28.1",
     "typescript": "~6.0.2"
   }
 }

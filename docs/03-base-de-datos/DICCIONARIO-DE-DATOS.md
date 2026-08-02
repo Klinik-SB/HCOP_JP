@@ -85,15 +85,21 @@ Rutas principales del JSON:
 | `exam.weightKg` | peso en kg |
 | `exam.heightM` | talla normalizada; la UI edita y muestra cm |
 | `oncology.diagnosisRecords` | diagnósticos SNOMED, CIE-10, AJCC, TNM y estadio |
-| `oncology.systemicTreatments` | representación narrativa de tratamientos |
-| `oncology.surgeries` | cirugías oncológicas |
+| `treatments` | tratamientos estructurados del documento; la vista los combina con la fuente relacional y los clasifica como sistémicos, radioterápicos o quirúrgicos |
+| `oncology.systemicTreatments` | representación narrativa histórica compatible, cuando existe |
+| `oncology.surgeries` | colección histórica compatible de cirugías, cuando existe |
 | `studies` | estudios, orden, metadatos y vínculos a archivos |
-| `evolutions` | evoluciones clínicas inmutables/append-only |
+| `evolutions` | evoluciones clínicas inmutables/append-only; una categoría explícita o `sourceRef.kind = oncological-treatment` también puede proyectar un tratamiento histórico |
 | `researchRecords` | formularios de investigación |
 | `meta` | revisión, auditoría visual y compatibilidad |
 
 Los diagnósticos y evoluciones no viven en tablas llamadas
 `patient_diagnoses` o `clinical_evolutions`: esas tablas no existen.
+
+La respuesta del workspace agrega `workspace.treatments.oncology`, construida
+desde `clinical_treatments`, como fuente operativa primaria. Angular la une con
+las colecciones anteriores usando referencias con dominio, sin reescribir el
+documento clínico ni confundir identificadores numéricos de tablas distintas.
 
 ### 10. `patient_records`
 

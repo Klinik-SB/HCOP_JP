@@ -25,9 +25,18 @@ Rutas frecuentes del JSON:
 - `personalHistory`;
 - `exam`;
 - `studies`;
+- `workspace.treatments.oncology`, vista relacional de `clinical_treatments`;
+- `treatments`, colección estructurada dentro del documento;
 - `oncology.systemicTreatments`;
 - `oncology.surgeries`;
-- `evolutions`.
+- `evolutions`, incluidas categorías históricas explícitas como `surgery` o
+  `radiotherapy` y el alta local `sourceRef.kind = oncological-treatment`.
+
+La hoja combina esas fuentes sólo para representación: no mueve ni reescribe
+los registros. La precedencia es la vista relacional, `treatments`, colecciones
+históricas de `oncology` y, por último, evoluciones explícitamente
+categorizadas. Los enlaces se comparan en su dominio (`treatment`,
+`clinical-entry`, `evolution`, `external` o `source`) para evitar colisiones.
 
 ## Diagnóstico y tratamiento
 

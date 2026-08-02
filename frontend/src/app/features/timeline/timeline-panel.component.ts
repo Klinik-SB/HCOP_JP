@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { clinicalIsTreatmentRecord, clinicalTreatmentProjections } from '../../core/clinical/clinical-treatment-projection';
 import { ClinicalRecord, ClinicalState } from '../../core/patients/patient-workspace.models';
 import { PatientWorkspaceService } from '../../core/patients/patient-workspace.service';
 
@@ -39,7 +40,10 @@ export class TimelinePanelComponent {
   readonly milestonesOnly = signal(false);
   readonly filters = signal<TimelineCategory[]>([]);
 
-  readonly allEntries = computed(() => this.entriesFrom(this.workspace.workspace()?.state));
+  readonly allEntries = computed(() => {
+    const workspace = this.workspace.workspace();
+    return this.entriesFrom(workspace?.state, workspace?.treatments?.oncology || []);
+  });
   readonly categories = computed(() => [...new Set(this.allEntries().map((entry) => entry.category))]);
   readonly entries = computed(() => {
     const term = this.searchTerm().trim().toLocaleLowerCase('es-AR');
@@ -70,7 +74,7 @@ export class TimelinePanelComponent {
     window.setTimeout(() => target.classList.remove('clinical-period-focus'), 3500);
   }
 
-  private entriesFrom(state?: ClinicalState): TimelineEvent[] {
+  private entriesFrom(state?: ClinicalState, relationalTreatments: readonly ClinicalRecord[] = []): TimelineEvent[] {
     if (!state) return [];
     const entries: TimelineEvent[] = [];
     const add = (source: unknown, category: TimelineCategory, kind: string, title: string, body: string, phase = 'Seguimiento'): void => {
@@ -84,10 +88,14 @@ export class TimelinePanelComponent {
       const content = `${this.text(record, 'type')} ${this.text(record, 'title')} ${this.text(record, 'summary')}`;
       add(record, /patolog|biops|histolog|citolog|inmunohisto/i.test(content) ? 'pathology' : 'study', /patolog|biops|histolog|citolog|inmunohisto/i.test(content) ? 'Patología' : 'Estudio', this.text(record, 'title', 'type'), this.text(record, 'summary', 'source'));
     }
-    for (const record of state.evolutions || []) add(record, 'evolution', 'Evolución', this.text(record, 'reason', 'specialty', 'title'), this.text(record, 'text', 'summary'));
-    for (const record of state.treatments || []) {
-      const category = this.treatmentCategory(record);
-      add(record, category, CATEGORY_LABELS[category].replace(/s$/, ''), this.text(record, 'scheme', 'title'), this.text(record, 'notes', 'status'), this.text(record, 'intent') || 'Tratamiento');
+    for (const record of state.evolutions || []) {
+      if (clinicalIsTreatmentRecord(record)) continue;
+      add(record, 'evolution', 'Evolución', this.text(record, 'reason', 'specialty', 'title'), this.text(record, 'text', 'summary'));
+    }
+    for (const projection of clinicalTreatmentProjections(state, relationalTreatments)) {
+      const record = projection.record;
+      const category: TimelineCategory = projection.category;
+      add(record, category, CATEGORY_LABELS[category].replace(/s$/, ''), this.text(record, 'scheme', 'title', 'reason'), this.text(record, 'text', 'summary', 'notes', 'status'), this.text(record, 'intent') || 'Tratamiento');
     }
     for (const record of state.prescriptions || []) {
       const type = String(record.type || '');
@@ -109,10 +117,6 @@ export class TimelinePanelComponent {
         return { key, label: this.monthLabel(key), events: monthEntries, days: [...days.entries()].map(([date, dayEntries]) => ({ date, events: dayEntries })) };
       }) };
     });
-  }
-  private treatmentCategory(record: ClinicalRecord): TimelineCategory {
-    const text = `${record.scheme || ''} ${record.intent || ''} ${record.status || ''} ${record.notes || ''}`.toLocaleLowerCase('es-AR');
-    if (/radio/.test(text)) return 'radiotherapy'; if (/cirug/.test(text)) return 'surgery'; if (/quimio|citotox/.test(text)) return 'chemotherapy'; if (/hormono|antiandrogen|tamoxif|anastrozol|letrozol/.test(text)) return 'hormone'; if (/inmuno|pembrol|nivol|atezol/.test(text)) return 'immunotherapy'; if (/dirigida|trastuz|ritux|inhibidor/.test(text)) return 'targeted'; return 'systemic';
   }
   private object(value: unknown): Record<string, unknown> { return typeof value === 'object' && value !== null ? value as Record<string, unknown> : {}; }
   private text(record: ClinicalRecord, ...keys: string[]): string { for (const key of keys) { const value = record[key]; if (typeof value === 'string' && value.trim()) return value; } return ''; }

@@ -51,6 +51,13 @@ corrección responsive según el ancho real del panel. La capacidad permanece
 `En convivencia`: todavía faltan el recorrido visual con un usuario autenticado
 sin permiso y la comparación formal de todas las resoluciones admitidas.
 
+El corte 029 corrige la lectura de tratamientos históricos en la hoja Angular:
+separa sistémicos, radioterapia y cirugías a partir de la vista relacional y el
+documento persistido, incluidas evoluciones explícitamente categorizadas, sin
+duplicarlas ni migrar datos. La fila Hoja clínica continúa `Pendiente` porque
+sus recorridos de edición, impresión y conflicto de versión aún no alcanzaron
+paridad.
+
 ## Evidencia requerida para marcar `Validada`
 
 1. Prueba automática de la regla o del contrato.
