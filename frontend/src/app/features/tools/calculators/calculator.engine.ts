@@ -30,6 +30,7 @@ export function evaluateCalculator(
   input: CalculatorInput = {}
 ): CalculatorEvaluation {
   const values: Record<string, CalculatorValue> = {};
+  const normalizedIssues = new Map<string, CalculatorValidationIssue>();
   const missing: CalculatorValidationIssue[] = [];
   const invalid: CalculatorValidationIssue[] = [];
 
@@ -37,10 +38,16 @@ export function evaluateCalculator(
     const supplied = Object.prototype.hasOwnProperty.call(input, field.id);
     const normalized = normalizeField(field, input[field.id], supplied);
     values[field.id] = normalized.value;
-    if (normalized.issue) invalid.push(normalized.issue);
-    if (isMissing(field, normalized.value)) {
+    if (normalized.issue) normalizedIssues.set(field.id, normalized.issue);
+  }
+
+  for (const field of definition.fields) {
+    if (field.kind === 'section' || definition.isFieldValidationActive?.(field.id, values) === false) continue;
+    if (isMissing(field, values[field.id] ?? '')) {
       missing.push(issue(field, 'required', `Complete ${field.label}.`));
     }
+    const normalizedIssue = normalizedIssues.get(field.id);
+    if (normalizedIssue) invalid.push(normalizedIssue);
   }
 
   if (missing.length) {
@@ -89,7 +96,12 @@ export function evaluateCalculator(
 
 export function numberValue(values: CalculatorValues, fieldId: string, fallback = 0): number {
   const value = values[fieldId];
-  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return fallback;
 }
 
 export function stringValue(values: CalculatorValues, fieldId: string): string {
@@ -108,6 +120,7 @@ interface NormalizedField {
 
 function normalizeField(field: CalculatorField, rawValue: unknown, supplied: boolean): NormalizedField {
   if (!supplied) return { value: field.initialValue };
+  if (field.kind === 'section') return { value: '' };
   if (field.kind === 'checkbox') return { value: normalizeBoolean(rawValue, false) };
   if (field.kind === 'select') {
     const value = rawValue === null || rawValue === undefined ? '' : String(rawValue).trim();

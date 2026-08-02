@@ -47,9 +47,19 @@ export interface CalculatorSelectField extends CalculatorFieldBase<'select'> {
 
 export interface CalculatorCheckboxField extends CalculatorFieldBase<'checkbox'> {
   readonly initialValue: boolean;
+  readonly weight?: number;
 }
 
-export type CalculatorField = CalculatorNumberField | CalculatorSelectField | CalculatorCheckboxField;
+export interface CalculatorSectionField extends CalculatorFieldBase<'section'> {
+  readonly required: false;
+  readonly initialValue: '';
+}
+
+export type CalculatorField =
+  | CalculatorNumberField
+  | CalculatorSelectField
+  | CalculatorCheckboxField
+  | CalculatorSectionField;
 export type CalculatorValue = string | number | boolean;
 export type CalculatorValues = Readonly<Record<string, CalculatorValue>>;
 export type CalculatorInput = Readonly<Record<string, unknown>>;
@@ -65,6 +75,7 @@ export interface CalculatorResult {
   readonly detail: string;
   readonly badge: string;
   readonly score: number;
+  readonly scoreName?: string;
   readonly showScore: boolean;
   readonly severity: CalculatorSeverity;
   readonly metrics: readonly CalculatorMetric[];
@@ -101,5 +112,6 @@ export interface CalculatorDefinition<TId extends string = string> {
   readonly source: string;
   readonly clinicalUse: string;
   readonly fields: readonly CalculatorField[];
+  readonly isFieldValidationActive?: (fieldId: string, values: CalculatorValues) => boolean;
   readonly calculate: (values: CalculatorValues) => CalculatorResult;
 }

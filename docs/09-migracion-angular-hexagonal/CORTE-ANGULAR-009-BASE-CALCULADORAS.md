@@ -26,11 +26,12 @@ La base TypeScript incluye las primeras tres definiciones:
 2. índice de masa corporal;
 3. carboplatino por fórmula de Calvert.
 
-Se conservaron los valores iniciales, campos, unidades, límites, incrementos,
+Se conservaron los valores de ejemplo, campos, unidades, límites, incrementos,
 desindexación de eGFR, tope opcional de 125 ml/min, redondeos, textos y
-advertencias de la implementación vigente. El motor distingue entre un campo
-no enviado —usa el valor inicial— y un campo que el usuario vació de forma
-explícita.
+advertencias de la implementación vigente. Una auditoría posterior del
+renderizador confirmó que esos valores eran placeholders: el formulario se
+abre vacío y nunca calcula con datos ficticios. Esta semántica quedó corregida
+y cubierta por regresión en el corte 010.
 
 ## Motor Angular
 

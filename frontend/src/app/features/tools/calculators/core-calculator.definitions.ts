@@ -1,5 +1,5 @@
 import { booleanValue, defineCalculator, numberValue, result, stringValue } from './calculator.engine';
-import { CalculatorDefinition, CalculatorResult } from './calculator.models';
+import { CalculatorResult } from './calculator.models';
 
 export const BSA_CALCULATOR = defineCalculator({
   id: 'bsa',
@@ -11,11 +11,11 @@ export const BSA_CALCULATOR = defineCalculator({
   fields: [
     {
       id: 'bsa_weight', kind: 'number', label: 'Peso (kg)', unit: 'kg', required: true,
-      initialValue: 70, exampleValue: 70, min: 1, step: 0.1
+      initialValue: '', exampleValue: 70, min: 1, step: 0.1
     },
     {
       id: 'bsa_height', kind: 'number', label: 'Altura (cm)', unit: 'cm', required: true,
-      initialValue: 170, exampleValue: 170, min: 30, step: 0.1
+      initialValue: '', exampleValue: 170, min: 30, step: 0.1
     }
   ],
   calculate(values) {
@@ -45,11 +45,11 @@ export const BMI_CALCULATOR = defineCalculator({
   fields: [
     {
       id: 'bmi_weight', kind: 'number', label: 'Peso (kg)', unit: 'kg', required: true,
-      initialValue: 70, exampleValue: 70, min: 1, step: 0.1
+      initialValue: '', exampleValue: 70, min: 1, step: 0.1
     },
     {
       id: 'bmi_height', kind: 'number', label: 'Altura (cm)', unit: 'cm', required: true,
-      initialValue: 170, exampleValue: 170, min: 30, step: 0.1
+      initialValue: '', exampleValue: 170, min: 30, step: 0.1
     }
   ],
   calculate(values) {
@@ -81,7 +81,7 @@ export const CALVERT_CALCULATOR = defineCalculator({
   fields: [
     {
       id: 'calvert_method', kind: 'select', label: 'Método de función renal', required: true,
-      initialValue: 'measured', exampleValue: 'measured', wide: true,
+      initialValue: '', exampleValue: 'measured', wide: true,
       help: 'La fórmula original utiliza GFR absoluta en ml/min. Identificar siempre el método.',
       options: [
         { value: 'measured', label: 'GFR medida / absoluta' },
@@ -91,16 +91,16 @@ export const CALVERT_CALCULATOR = defineCalculator({
     },
     {
       id: 'calvert_auc', kind: 'number', label: 'AUC objetivo', required: true,
-      initialValue: 5, exampleValue: 5, min: 0.1, step: 0.1
+      initialValue: '', exampleValue: 5, min: 0.1, step: 0.1
     },
     {
       id: 'calvert_gfr', kind: 'number', label: 'Función renal informada',
-      unit: 'ml/min o ml/min/1,73 m²', required: true, initialValue: 80, exampleValue: 80,
+      unit: 'ml/min o ml/min/1,73 m²', required: true, initialValue: '', exampleValue: 80,
       min: 0.1, step: 0.1, help: 'ml/min, salvo eGFR indexado: ml/min/1,73 m².'
     },
     {
       id: 'calvert_bsa', kind: 'number', label: 'Superficie corporal (m²)', unit: 'm²',
-      required: false, initialValue: 1.8, exampleValue: 1.8, min: 0.5, max: 3.5, step: 0.01,
+      required: false, initialValue: '', exampleValue: 1.8, min: 0.5, max: 3.5, step: 0.01,
       help: 'Obligatoria sólo para desindexar eGFR.'
     },
     {
@@ -147,13 +147,7 @@ export const CALVERT_CALCULATOR = defineCalculator({
   }
 });
 
-export const PORTED_CALCULATORS = [BSA_CALCULATOR, BMI_CALCULATOR, CALVERT_CALCULATOR] as const;
-export type PortedCalculatorId = (typeof PORTED_CALCULATORS)[number]['id'];
-
-export function findPortedCalculator(id: string): CalculatorDefinition<PortedCalculatorId> | undefined {
-  return PORTED_CALCULATORS.find((definition) => definition.id === id) as
-    CalculatorDefinition<PortedCalculatorId> | undefined;
-}
+export const CORE_CALCULATORS = [BSA_CALCULATOR, BMI_CALCULATOR, CALVERT_CALCULATOR] as const;
 
 function bodySurfaceArea(weightKg: number, heightCm: number): number | null {
   return weightKg > 0 && heightCm > 0 ? Math.sqrt(weightKg * heightCm / 3600) : null;

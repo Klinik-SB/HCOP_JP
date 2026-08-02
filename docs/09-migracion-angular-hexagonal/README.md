@@ -55,6 +55,9 @@ frontend anterior sólo se retira cuando la matriz de paridad está completa.
 - [Corte Angular 009](CORTE-ANGULAR-009-BASE-CALCULADORAS.md): inventario
   estricto de 57 herramientas, motor seguro, catálogo operativo y primer lote
   BSA/IMC/Calvert con pruebas doradas; todavía sin habilitar una interfaz parcial.
+- [Corte Angular 010](CORTE-ANGULAR-010-ESCALAS-FUNCIONALES-GERIATRICAS.md):
+  ECOG/Karnofsky, Charlson, G8/CARG e IPSS/SHIM portados con campos
+  condicionales, formularios inicialmente vacíos y límites clínicos comparados.
 
 ## Ciclo obligatorio por capacidad
 
