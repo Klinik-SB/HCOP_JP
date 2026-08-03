@@ -109,6 +109,20 @@ instantáneas y que la plantilla no sobrescriba texto. Al finalizar eliminó los
 pacientes sintéticos, contenedores, redes y volúmenes; el corte quedó validado
 localmente y no fue publicado.
 
+El corte 039 agrega la coordinación de **Estudios complementarios** entre hoja
+y panel. La proyección pura aprobó **9/9 casos**, y la proyección de impresión
+aprobó **7 casos y 30 aserciones**. La validación focal de backend y permisos
+aprobó **19/19 pruebas**; el arnés Docker/Playwright aprobó **7/7 escenarios**.
+El recorrido integrado sube y elimina un archivo real, verifica el cierre
+automático exitoso del único modal de alta, foco y cierre explícito, combinación
+y deduplicación local/externa, tombstones, orden ascendente en la hoja y orden
+descendente en el panel. También abre y enfoca una tarjeta sin ID mediante su
+clave estable y comprueba `role="button"`, `aria-pressed`,
+`section.studies.view` y
+`section.studies.edit` en interfaz y servidor. Estudios continúa `Pendiente`
+por las deudas registradas en el documento del corte; la evidencia no declara
+paridad completa.
+
 En la aceptación final del 30/07/2026, la suite Java terminó con **101/101
 pruebas aprobadas**. El E2E utilizó una aplicación de cuatro drogas, interrumpió
 Carboplatino al 50 %, reanudó la administración y finalizó en `completed`

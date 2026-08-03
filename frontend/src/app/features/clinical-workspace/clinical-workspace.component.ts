@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, effect, inject, input, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, effect, inject, input, output, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
@@ -49,6 +49,7 @@ import {
   clinicalPrintPatientFacts,
   clinicalPrintSectionHasContent
 } from '../../core/clinical/clinical-print-projection';
+import { ClinicalStudyEntry, clinicalStudyEntries } from '../../core/clinical/clinical-study-projection';
 import { ClinicalTreatmentKind, clinicalSectionTreatments, clinicalTreatmentBody } from '../../core/clinical/clinical-treatment-projection';
 import { ClinicalDraftHandle, ClinicalDraftRegistryService } from '../../core/patients/clinical-draft-registry.service';
 import { PatientWorkspaceService } from '../../core/patients/patient-workspace.service';
@@ -61,6 +62,7 @@ type PhysicalExamErrorTarget = 'weightKg' | 'heightCm' | 'physicalExam' | 'reaso
 @Component({ selector: 'app-clinical-workspace', imports: [ReactiveFormsModule], templateUrl: './clinical-workspace.component.html', styleUrl: './clinical-workspace.component.scss' })
 export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
   readonly printTimestamp = input('');
+  readonly studiesRequested = output<{ mode: 'browse' | 'upload'; studyKey?: string }>();
   readonly workspaceService = inject(PatientWorkspaceService);
   readonly auth = inject(AuthService);
   private readonly clinicalFocus = inject(ClinicalFocusService);
@@ -666,6 +668,17 @@ export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
 
   state(): ClinicalState { return this.workspaceService.workingWorkspace()?.state || {}; }
   records(key: 'diagnoses' | 'studies' | 'treatments' | 'evolutions' | 'prescriptions' | 'researchRecords'): ClinicalRecord[] { return this.state()[key] || []; }
+  studyEntries(): ClinicalStudyEntry[] { return clinicalStudyEntries(this.state(), 'asc'); }
+  canViewStudies(): boolean { return this.auth.hasPermission('section.studies.view'); }
+  canEditStudies(): boolean { return this.auth.hasPermission('section.studies.edit'); }
+  openStudies(entry?: ClinicalStudyEntry, upload = false): void {
+    if (!this.workspaceService.workspace() || this.workspaceService.loading()
+        || !this.canViewStudies() || this.workspaceService.hasPendingClinicalWork()) return;
+    this.studiesRequested.emit({
+      mode: upload && this.canEditStudies() ? 'upload' : 'browse',
+      studyKey: entry?.key
+    });
+  }
   narrative(key: string): string { return this.text(this.state().narrative?.[key]); }
   oncology(key: string): string { return this.text(this.state().oncology?.[key]); }
   exam(key: string): string { return this.text(this.state().exam?.[key]); }

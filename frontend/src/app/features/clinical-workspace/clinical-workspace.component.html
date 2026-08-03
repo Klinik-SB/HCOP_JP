@@ -57,9 +57,15 @@
         @else if (canEditPersonalHistory()) { <div class="clinical-section-empty"><span>Sin antecedentes personales cargados.</span><button class="ghost-button" type="button" [attr.aria-label]="personalHistoryIsInitial() ? 'Cargar antecedentes personales' : 'Modificar antecedentes personales'" [disabled]="workspaceService.hasPendingClinicalWork()" (click)="openPersonalHistoryEditor($event)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>{{ personalHistoryIsInitial() ? 'Cargar' : 'Modificar' }}</span></button></div> }
         @else { <p class="section-free-text">Sin antecedentes personales cargados.</p> }
       </section>
-      <section class="doc-section" [class.clinical-print-empty]="!printHas('studies')"><div class="section-heading"><h3>Estudios complementarios</h3></div>
-        @if (records('studies').length) { @for (record of records('studies'); track record.id ?? $index) { <article class="doc-entry flush-entry study-entry" [attr.data-clinical-date]="record.date"><p><strong>{{ studyHeading(record) }}</strong></p>@if (recordBody(record)) { <p>{{ recordBody(record) }}</p> }</article> } } @else { <p class="section-free-text">Sin estudios complementarios cargados.</p> }
-      </section>
+      @if (canViewStudies()) { <section class="doc-section" [class.clinical-print-empty]="!printHas('studies')"><div class="section-heading"><h3>Estudios complementarios</h3></div>
+        @if (studyEntries().length) {
+          @for (entry of studyEntries(); track entry.key) {
+            <article class="doc-entry flush-entry study-entry is-navigable" [attr.data-clinical-date]="entry.record.date" role="button" tabindex="0" [attr.aria-label]="'Abrir estudio ' + studyHeading(entry.record)" (click)="openStudies(entry)" (keydown.enter)="openStudies(entry)" (keydown.space)="$event.preventDefault(); openStudies(entry)"><p><strong>{{ studyHeading(entry.record) }}</strong></p>@if (recordBody(entry.record)) { <p>{{ recordBody(entry.record) }}</p> }</article>
+          }
+        } @else if (canViewStudies()) {
+          <div class="clinical-section-empty"><span>Sin estudios complementarios cargados.</span><button class="ghost-button" type="button" aria-label="Subir estudios complementarios" [disabled]="workspaceService.hasPendingClinicalWork()" (click)="openStudies(undefined, true)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>{{ canEditStudies() ? 'Subir estudios' : 'Abrir Estudios' }}</span></button></div>
+        }
+      </section> }
       <section class="doc-section" [class.clinical-print-empty]="!printHas('physicalExam')">
         <div class="section-heading"><h3>Examen físico</h3>@if (canEditPhysicalExam() && physicalExamHasContent()) { <div class="section-actions"><button class="section-action-button" type="button" title="Modificar sección" aria-label="Modificar sección Examen físico" [disabled]="workspaceService.hasPendingClinicalWork()" (click)="openPhysicalExamEditor($event)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div> }</div>
         @if (physicalExamLegacyText()) { <p class="section-free-text">{{ physicalExamLegacyText() }}</p> }

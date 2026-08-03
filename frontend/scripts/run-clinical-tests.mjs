@@ -7,6 +7,7 @@ import { build } from 'esbuild';
 const outputDirectory = mkdtempSync(join(tmpdir(), 'hcop-clinical-tests-'));
 const suites = [
   'src/app/core/clinical/clinical-treatment-projection.tests.ts',
+  'src/app/core/clinical/clinical-study-projection.tests.ts',
   'src/app/core/clinical/clinical-print-projection.tests.ts',
   'src/app/core/clinical/clinical-chief-complaint-edit.tests.ts',
   'src/app/core/clinical/clinical-current-illness-edit.tests.ts',

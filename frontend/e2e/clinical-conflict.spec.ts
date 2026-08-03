@@ -544,6 +544,118 @@ test('edita motivo de consulta con foco contenido, reintento seguro y auditoría
   }
 });
 
+test('coordina Estudios entre hoja y panel sin duplicar registros', async ({ browser }) => {
+  const suffix = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+  const context = await browser.newContext();
+  try {
+    await login(context);
+    const created = await context.request.post(`${origin}/api/clinical/patients`, {
+      data: {
+        firstName: `Paciente ${suffix}`,
+        lastName: 'Estudios QA',
+        dni: `93${Date.now().toString().slice(-6)}`,
+        medicalRecord: `QA-EST-${suffix}`,
+        birthDate: '1981-05-12',
+        sex: 'No especificado',
+        insurance: 'Cobertura sintética QA',
+        affiliateNumber: `QA-EST-${suffix}`,
+        phone: '', email: '', address: ''
+      }
+    });
+    await expectStatus(created, 201);
+    const body = await created.json() as { patientId: string; patient: { fullName: string } };
+
+    const page = await context.newPage();
+    await page.goto('./');
+    await expect(page.getByText(body.patient.fullName, { exact: true }).first()).toBeVisible();
+    await page.getByRole('tab', { name: 'Linea del tiempo', exact: true }).click();
+    const emptyTrigger = page.getByRole('button', { name: 'Subir estudios complementarios', exact: true });
+    await emptyTrigger.click();
+    await expect(page.getByRole('tab', { name: 'Estudios', exact: true })).toHaveAttribute('aria-selected', 'true');
+    const uploadDialog = page.getByRole('dialog', { name: 'Subir archivos', exact: true });
+    const uploadClose = uploadDialog.getByRole('button', { name: 'Cerrar carga de estudios', exact: true });
+    await expect(uploadDialog).toBeVisible();
+    await expect(uploadClose).toBeFocused();
+    await page.locator('.study-upload-backdrop').click({ position: { x: 4, y: 4 } });
+    await page.keyboard.press('Escape');
+    await expect(uploadDialog).toBeVisible();
+    await uploadClose.click();
+    await expect(uploadDialog).toHaveCount(0);
+    await expect(emptyTrigger).toBeFocused();
+
+    await page.getByRole('button', { name: 'Subir estudios', exact: true }).click();
+    await uploadDialog.locator('input[type="file"]').setInputFiles({
+      name: `corte-039-${suffix}.png`,
+      mimeType: 'image/png',
+      buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')
+    });
+    await uploadDialog.getByRole('button', { name: 'Subir archivos', exact: true }).click();
+    await expect(uploadDialog).toHaveCount(0);
+    const uploadedCard = page.locator('.study-card.active').filter({ hasText: `corte-039-${suffix}` });
+    await expect(uploadedCard).toHaveCount(1);
+    page.once('dialog', (dialog) => dialog.accept());
+    await uploadedCard.getByRole('button', { name: 'Eliminar', exact: true }).click();
+    await expect(uploadedCard).toHaveCount(0);
+
+    const workspaceResponse = await context.request.get(
+      `${origin}/api/clinical/patients/${body.patientId}/workspace`
+    );
+    await expectStatus(workspaceResponse, 200);
+    const workspace = await workspaceResponse.json() as {
+      revision: number;
+      state: Record<string, unknown> & { meta?: Record<string, unknown> };
+    };
+    const nextState = structuredClone(workspace.state) as Record<string, unknown> & { meta?: Record<string, unknown> };
+    nextState['externalStudies'] = [
+      { id: 'remote-study', date: '2026-08-02', type: 'TAC', title: 'TAC externa' },
+      { id: 'shared-study', date: '2026-07-15', type: 'Informe', title: 'Informe remoto reemplazado' },
+      { id: 'hidden-study', date: '2026-08-04', title: 'Registro eliminado' },
+      { date: '2026-07-20', type: 'Imagen', title: 'Estudio externo sin ID' }
+    ];
+    nextState['studies'] = [
+      { id: 'local-old', date: '2026-07-01', type: 'Laboratorio', title: 'Control local anterior' },
+      { id: 'shared-study', date: '2026-08-03', type: 'Informe', title: 'Informe local preferido' },
+      { id: 'hidden-study', deleted: true },
+      { date: '2026-07-10', type: 'Imagen', title: 'Estudio local sin ID' }
+    ];
+    nextState.meta = { ...(nextState.meta || {}), persistenceRevision: workspace.revision };
+    const seeded = await context.request.put(`${origin}/api/hc`, { data: nextState });
+    await expectStatus(seeded, 200);
+
+    await page.reload();
+    await expect(page.getByText(body.patient.fullName, { exact: true }).first()).toBeVisible();
+    const paperHeadings = await page.locator('.study-entry strong').allTextContents();
+    expect(paperHeadings).toHaveLength(5);
+    expect(paperHeadings[0]).toContain('Control local anterior');
+    expect(paperHeadings[1]).toContain('Estudio local sin ID');
+    expect(paperHeadings[2]).toContain('Estudio externo sin ID');
+    expect(paperHeadings[3]).toContain('TAC externa');
+    expect(paperHeadings[4]).toContain('Informe local preferido');
+    expect(paperHeadings.join(' ')).not.toContain('Informe remoto reemplazado');
+    expect(paperHeadings.join(' ')).not.toContain('Registro eliminado');
+
+    await page.getByRole('tab', { name: 'Linea del tiempo', exact: true }).click();
+    await page.locator('.study-entry').filter({ hasText: 'Informe local preferido' }).click();
+    await expect(page.getByRole('tab', { name: 'Estudios', exact: true })).toHaveAttribute('aria-selected', 'true');
+    const selectedCard = page.locator('.study-card.active').filter({ hasText: 'Informe local preferido' });
+    await expect(selectedCard).toHaveCount(1);
+    await expect(selectedCard).toBeFocused();
+    const panelTitles = await page.locator('.study-title').allTextContents();
+    expect(panelTitles).toEqual([
+      'Informe local preferido', 'TAC externa', 'Estudio externo sin ID', 'Estudio local sin ID', 'Control local anterior'
+    ]);
+
+    await page.getByRole('tab', { name: 'Linea del tiempo', exact: true }).click();
+    await page.locator('.study-entry').filter({ hasText: 'Estudio local sin ID' }).click();
+    const selectedIdlessCard = page.locator('.study-card.active').filter({ hasText: 'Estudio local sin ID' });
+    await expect(selectedIdlessCard).toHaveCount(1);
+    await expect(selectedIdlessCard).toBeFocused();
+    await expect(page.locator('.study-card.active')).toHaveCount(1);
+  } finally {
+    await context.close();
+  }
+});
+
 test('edita examen físico con centímetros, métricas, plantilla, reintento y conflicto', async ({ browser }) => {
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
   const changedExam = `Control actualizado ${suffix}. Tórax: murmullo conservado. Abdomen: blando. SNC: sin foco.`;

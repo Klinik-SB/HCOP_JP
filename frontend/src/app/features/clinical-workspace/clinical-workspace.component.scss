@@ -15,6 +15,9 @@
 .clinical-print-only { display: none; }
 .section-action-button svg { width: 14px; height: 14px; }
 .section-action-button:disabled { cursor: not-allowed; opacity: .45; }
+.study-entry.is-navigable { cursor: pointer; }
+.study-entry.is-navigable:hover { background: #f3faff; }
+.study-entry.is-navigable:focus-visible { outline: 2px solid var(--accent, #3197c8); outline-offset: 2px; }
 .summary-plan-editor-backdrop { z-index: 79; }
 .summary-plan-editor-modal { display: flex; max-height: min(820px, calc(100vh - 48px)); flex-direction: column; overflow: hidden; background: #fff; }
 .summary-plan-editor-modal .modal-header p { max-width: 650px; margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }

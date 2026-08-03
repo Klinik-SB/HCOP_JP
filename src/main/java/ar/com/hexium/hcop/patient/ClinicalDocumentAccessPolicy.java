@@ -13,29 +13,63 @@ public class ClinicalDocumentAccessPolicy {
 
   public JsonNode visibleState(JsonNode state, SessionPrincipal principal) {
     JsonNode visible = state.deepCopy();
-    if (!principal.hasPermission("section.prescriptions.view") && visible instanceof ObjectNode root) {
-      root.remove("prescriptions");
+    if (visible instanceof ObjectNode root) {
+      if (!principal.hasPermission("section.prescriptions.view")) {
+        root.remove("prescriptions");
+      }
+      if (!principal.hasPermission("section.studies.view")) {
+        root.remove("studies");
+        root.remove("externalStudies");
+      }
     }
     return visible;
   }
 
   public JsonNode writableState(JsonNode incoming, JsonNode stored, SessionPrincipal principal) {
-    if (principal.hasPermission("section.prescriptions.view")
-        && principal.hasPermission("section.prescriptions.edit")) {
+    JsonNode protectedState = protectFields(
+        incoming,
+        stored,
+        principal,
+        "section.prescriptions.view",
+        "section.prescriptions.edit",
+        "No tiene permiso para modificar prescripciones.",
+        "prescriptions");
+    return protectFields(
+        protectedState,
+        stored,
+        principal,
+        "section.studies.view",
+        "section.studies.edit",
+        "No tiene permiso para modificar estudios.",
+        "studies",
+        "externalStudies");
+  }
+
+  private JsonNode protectFields(
+      JsonNode incoming,
+      JsonNode stored,
+      SessionPrincipal principal,
+      String viewPermission,
+      String editPermission,
+      String deniedMessage,
+      String... fields) {
+    if (principal.hasPermission(viewPermission) && principal.hasPermission(editPermission)) {
       return incoming;
     }
-    if (incoming.has("prescriptions")
-        && !stored.path("prescriptions").equals(incoming.path("prescriptions"))) {
-      throw new ApiException(HttpStatus.FORBIDDEN,
-          "No tiene permiso para modificar prescripciones.");
+    for (String field : fields) {
+      if (incoming.has(field) && !stored.path(field).equals(incoming.path(field))) {
+        throw new ApiException(HttpStatus.FORBIDDEN, deniedMessage);
+      }
     }
     if (!(incoming instanceof ObjectNode)) return incoming;
-    ObjectNode protectedState = (ObjectNode) incoming.deepCopy();
-    if (stored.has("prescriptions")) {
-      protectedState.set("prescriptions", stored.path("prescriptions").deepCopy());
-    } else {
-      protectedState.remove("prescriptions");
+    ObjectNode result = (ObjectNode) incoming.deepCopy();
+    for (String field : fields) {
+      if (stored.has(field)) {
+        result.set(field, stored.path(field).deepCopy());
+      } else {
+        result.remove(field);
+      }
     }
-    return protectedState;
+    return result;
   }
 }

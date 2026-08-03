@@ -1,6 +1,8 @@
-import { Component, HostListener, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, ViewChild, computed, effect, inject, input, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
+import { AuthService } from '../../core/auth/auth.service';
+import { ClinicalStudyEntry, clinicalStudyEntries } from '../../core/clinical/clinical-study-projection';
 import { ClinicalRecord, ClinicalState, StudyUploadDescriptor } from '../../core/patients/patient-workspace.models';
 import { PatientWorkspaceService } from '../../core/patients/patient-workspace.service';
 
@@ -20,6 +22,12 @@ interface DeleteAuthorization {
   expiresAt: string;
 }
 
+export interface StudyPanelRequest {
+  readonly id: number;
+  readonly mode: 'browse' | 'upload';
+  readonly studyKey?: string;
+}
+
 const ACCEPTED_EXTENSIONS = new Set([
   'png', 'jpg', 'jpeg', 'gif', 'webp', 'avif', 'bmp', 'ico', 'tif', 'tiff', 'heic', 'heif', 'svg', 'dcm',
   'pdf', 'doc', 'docx', 'rtf', 'odt', 'ppt', 'pps', 'pptx', 'ppsx', 'odp',
@@ -37,6 +45,9 @@ const MAX_FILE_COUNT = 30;
 })
 export class StudyPanelComponent {
   readonly workspace = inject(PatientWorkspaceService);
+  readonly auth = inject(AuthService);
+  readonly request = input<StudyPanelRequest | null>(null);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   readonly term = new FormControl('', { nonNullable: true });
   readonly searchTerm = signal('');
   readonly uploads = signal<UploadItem[]>([]);
@@ -44,35 +55,55 @@ export class StudyPanelComponent {
   readonly busy = signal(false);
   readonly message = signal('');
   readonly dragActive = signal(false);
-  readonly selectedId = signal('');
+  readonly selectedKey = signal('');
   private readonly deleteAuthorizations = new Map<string, DeleteAuthorization>();
+  private handledRequestId = 0;
+  private uploadReturnFocus: HTMLElement | null = null;
+  @ViewChild('studyUploadClose') private studyUploadClose?: ElementRef<HTMLButtonElement>;
 
-  readonly studies = computed(() => {
+  readonly studyEntries = computed(() => {
     const query = this.searchTerm().trim().toLocaleLowerCase('es-AR');
     const state = this.workspace.workingWorkspace()?.state;
-    const source = [...(state?.externalStudies || []), ...(state?.studies || [])] as ClinicalRecord[];
-    const unique = [...new Map(source.map((record, index) => [String(record.id || `index-${index}`), record])).values()];
-    return unique
-      .filter((record) => !query || this.searchText(record).includes(query))
-      .sort((left, right) => String(right.date || '').localeCompare(String(left.date || '')));
+    return clinicalStudyEntries(state)
+      .filter((entry) => !query || this.searchText(entry.record).includes(query));
   });
+  readonly studies = computed(() => this.studyEntries().map((entry) => entry.record));
 
   constructor() {
     this.term.valueChanges.subscribe((value) => this.searchTerm.set(value));
+    effect(() => {
+      const request = this.request();
+      if (!request || request.id === this.handledRequestId) return;
+      this.handledRequestId = request.id;
+      this.term.setValue('', { emitEvent: false });
+      this.searchTerm.set('');
+      if (request.studyKey) this.selectedKey.set(request.studyKey);
+      if (request.mode === 'upload') {
+        queueMicrotask(() => this.openUpload());
+      } else {
+        queueMicrotask(() => this.focusStudy(request.studyKey));
+      }
+    });
   }
 
   openUpload(files?: FileList | File[]): void {
     if (this.busy()) return;
+    if (!this.canUpload()) {
+      this.message.set('No tiene disponible la carga de estudios en este momento.');
+      return;
+    }
+    if (!this.uploadOpen()) {
+      this.uploadReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    }
     this.message.set('');
     this.uploadOpen.set(true);
     if (files) this.addFiles(Array.from(files));
+    queueMicrotask(() => this.studyUploadClose?.nativeElement.focus());
   }
 
   closeUpload(): void {
     if (this.busy()) return;
-    this.uploadOpen.set(false);
-    this.uploads.set([]);
-    this.dragActive.set(false);
+    this.finishCloseUpload();
   }
 
   addFiles(files: File[]): void {
@@ -130,7 +161,7 @@ export class StudyPanelComponent {
           const descriptor = await firstValueFrom(this.workspace.uploadStudy(String(patientId), studyId, item.file));
           if (!descriptor.url) throw new Error('El servidor no confirmó el archivo cargado.');
           records.push(this.studyFromUpload(studyId, item.file, descriptor));
-          if (descriptor.category === 'image' && descriptor.deleteToken) {
+          if (descriptor.deleteToken) {
             this.deleteAuthorizations.set(studyId, {
               storageName: descriptor.url.split('/').pop() || '',
               token: descriptor.deleteToken,
@@ -149,9 +180,9 @@ export class StudyPanelComponent {
           meta: { ...(state.meta || {}), updatedAt: new Date().toISOString() }
         }));
         await firstValueFrom(this.workspace.saveState(next));
-        this.selectedId.set(String(records[0].id));
+        this.selectedKey.set(`id:${String(records[0].id)}`);
       }
-      if (!this.uploads().some((item) => item.status === 'error')) this.closeUpload();
+      if (!this.uploads().some((item) => item.status === 'error')) this.finishCloseUpload();
       else this.message.set(`${records.length} archivo(s) cargado(s). Revise los pendientes.`);
     } catch (error) {
       this.message.set(this.error(error, 'Los archivos se cargaron, pero la historia no pudo guardarse.'));
@@ -168,7 +199,7 @@ export class StudyPanelComponent {
     const studyId = String(record.id || '');
     const authorization = this.deleteAuthorizations.get(studyId);
     if (!authorization || !authorization.storageName || this.busy()) return;
-    if (!window.confirm('¿Eliminar esta imagen cargada durante la sesión actual? Esta acción no se puede deshacer.')) return;
+    if (!window.confirm('¿Eliminar este archivo cargado durante la sesión actual? Esta acción no se puede deshacer.')) return;
     this.busy.set(true);
     this.message.set('');
     try {
@@ -181,7 +212,7 @@ export class StudyPanelComponent {
       try { await firstValueFrom(this.workspace.deleteUploadedStudy(authorization.storageName, authorization.token)); }
       catch { this.message.set('La imagen se eliminó de la ficha, pero no se pudo limpiar el archivo local.'); }
       this.deleteAuthorizations.delete(studyId);
-      if (this.selectedId() === studyId) this.selectedId.set('');
+      if (this.selectedKey() === `id:${studyId}`) this.selectedKey.set('');
     } catch (error) {
       this.message.set(this.error(error, 'No se pudo confirmar la eliminación de la imagen.'));
     } finally {
@@ -189,10 +220,34 @@ export class StudyPanelComponent {
     }
   }
 
-  select(record: ClinicalRecord): void { this.selectedId.set(String(record.id || '')); }
+  select(entry: ClinicalStudyEntry): void { this.selectedKey.set(entry.key); }
   canDelete(record: ClinicalRecord): boolean {
     const authorization = this.deleteAuthorizations.get(String(record.id || ''));
     return Boolean(authorization && (!authorization.expiresAt || Date.parse(authorization.expiresAt) > Date.now()));
+  }
+  canEdit(): boolean { return this.auth.hasPermission('section.studies.edit'); }
+  canUpload(): boolean {
+    return Boolean(this.workspace.workspace()
+      && !this.workspace.loading()
+      && !this.workspace.hasPendingClinicalWork()
+      && this.canEdit());
+  }
+  trapUploadFocus(event: KeyboardEvent): void {
+    if (event.key !== 'Tab') return;
+    const dialog = event.currentTarget instanceof HTMLElement ? event.currentTarget : null;
+    if (!dialog) return;
+    const focusable = [...dialog.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+    )].filter((element) => element.getAttribute('aria-hidden') !== 'true');
+    if (!focusable.length) { event.preventDefault(); dialog.focus(); return; }
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+    if (event.shiftKey && (active === first || !dialog.contains(active))) {
+      event.preventDefault(); last.focus();
+    } else if (!event.shiftKey && (active === last || !dialog.contains(active))) {
+      event.preventDefault(); first.focus();
+    }
   }
   fileIcon(record: ClinicalRecord): string { return this.category(record) === 'image' ? '▧' : this.category(record) === 'pdf' ? '▤' : this.category(record) === 'video' ? '▶' : '▱'; }
   fileKind(record: ClinicalRecord): string { return String(record.type || this.category(record) || 'Archivo'); }
@@ -228,6 +283,24 @@ export class StudyPanelComponent {
     return record;
   }
   private markUpload(id: string, patch: Partial<UploadItem>): void { this.uploads.update((items) => items.map((item) => item.id === id ? { ...item, ...patch } : item)); }
+  private focusStudy(studyKey?: string): void {
+    const candidates = [...this.host.nativeElement.querySelectorAll<HTMLElement>('[data-study-key]')];
+    const target = studyKey
+      ? candidates.find((element) => element.dataset['studyKey'] === studyKey)
+      : this.host.nativeElement.querySelector<HTMLElement>('.study-list');
+    target?.scrollIntoView({ block: 'nearest' });
+    target?.focus({ preventScroll: true });
+  }
+  private finishCloseUpload(): void {
+    this.uploadOpen.set(false);
+    this.uploads.set([]);
+    this.dragActive.set(false);
+    const returnFocus = this.uploadReturnFocus;
+    this.uploadReturnFocus = null;
+    queueMicrotask(() => {
+      if (returnFocus?.isConnected && !returnFocus.hasAttribute('disabled')) returnFocus.focus({ preventScroll: true });
+    });
+  }
   private searchText(record: ClinicalRecord): string { return [record.title, record.fileName, record.summary, record.source, record.type, record.modality].map((item) => String(item || '')).join(' ').toLocaleLowerCase('es-AR'); }
   private extension(name: string): string { return name.toLocaleLowerCase().match(/\.([a-z0-9]+)$/)?.[1] || ''; }
   private category(record: ClinicalRecord): string { return String(record.fileCategory || (record.attachments as Array<{ category?: string }> | undefined)?.[0]?.category || this.categoryFromExtension(this.extension(String(record.fileName || '')))); }

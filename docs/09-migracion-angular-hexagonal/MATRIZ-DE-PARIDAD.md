@@ -118,6 +118,22 @@ Java/OpenAPI y 6/6 recorridos Docker/Playwright. Sólo faltan Estudios
 complementarios coordinados y el historial visual por sección para cerrar la
 paridad global de la hoja.
 
+El corte 039 coordina **Estudios complementarios** entre la hoja y su panel con
+una proyección única: la hoja conserva orden ascendente y el panel orden
+descendente; seleccionar una entrada abre y enfoca la tarjeta exacta y el alta
+reutiliza el modal existente. Los registros sin ID mantienen una clave común
+entre ambos contextos y las tarjetas publican `role="button"` y `aria-pressed`.
+Angular y Java aplican `section.studies.view` y `section.studies.edit`. La
+evidencia aprobada comprende 9/9 casos de proyección, 7 casos y 30 aserciones de
+impresión, 19/19 pruebas focales de backend y 7/7 recorridos Docker/Playwright;
+el E2E incluye carga y eliminación reales y cierre automático tras el guardado
+exitoso. La fila Estudios permanece `Pendiente` por la
+consistencia transaccional binario+estado, conciliación de huérfanos, matriz de
+formatos, pegado contextual y paridad de visor, plantillas, anotación y orden.
+La fila Hoja clínica permanece `Pendiente` por el historial visual equivalente
+por sección. El progreso global se estima conservadoramente en alrededor de
+96,5 %; no representa una certificación de liberación.
+
 ## Evidencia requerida para marcar `Validada`
 
 1. Prueba automática de la regla o del contrato.

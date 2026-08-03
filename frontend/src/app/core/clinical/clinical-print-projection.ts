@@ -1,6 +1,7 @@
 import type { ClinicalPatient, ClinicalRecord, ClinicalState } from '../patients/patient-workspace.models';
 import { personalHistoryLegacySnapshot } from './clinical-personal-history-edit';
 import { physicalExamLegacySnapshot } from './clinical-physical-exam-edit';
+import { clinicalStudyRecords } from './clinical-study-projection';
 import { ClinicalTreatmentKind, clinicalSectionTreatments } from './clinical-treatment-projection';
 
 export type ClinicalPrintSection =
@@ -42,7 +43,7 @@ export function clinicalPrintSectionHasContent(
       personalHistoryLegacySnapshot(state)
     );
   }
-  if (section === 'studies') return active(state.studies).length > 0;
+  if (section === 'studies') return clinicalStudyRecords(state).length > 0;
   if (section === 'physicalExam') {
     return hasText(
       exam['weightKg'], exam['heightM'], narrative['physicalExam'],

@@ -213,9 +213,11 @@ class OpenApiConfigurationTest {
 
     assertThat(operation.getExtensions().get("x-hcop-permission"))
         .isEqualTo(
-            "section.history.edit + section.prescriptions.edit si prescriptions cambia");
+            "section.history.edit + permiso específico de edición si prescriptions, studies o externalStudies cambian");
     assertThat(operation.getDescription())
         .contains(
+            "studies",
+            "externalStudies",
             "narrative.summary",
             "narrative.plan",
             "narrative.physicalExam",

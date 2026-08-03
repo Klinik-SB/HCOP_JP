@@ -39,6 +39,15 @@ test('una hoja parcial imprime únicamente las secciones con contenido clínico'
   equal(clinicalPrintSectionHasContent(state, 'currentIllness'), false);
 });
 
+test('los estudios externos comparten la misma proyección de impresión', () => {
+  equal(clinicalPrintSectionHasContent({
+    externalStudies: [{ id: 'remote-study', date: '2026-08-03', title: 'TAC externa' }]
+  }, 'studies'), true);
+  equal(clinicalPrintSectionHasContent({
+    externalStudies: [{ id: 'remote-study', deleted: true }]
+  }, 'studies'), false);
+});
+
 test('imprime la ultima instantanea legacy sin revivirla en modo estructurado', () => {
   const legacy = {
     narrative: {},

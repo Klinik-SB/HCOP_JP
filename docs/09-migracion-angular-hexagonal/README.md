@@ -148,6 +148,9 @@ configuración institucional y cerrar la paridad visual/E2E integrada.
 - [Corte Angular 038](CORTE-ANGULAR-038-EDITOR-EXAMEN-FISICO.md): Examen físico
   con Peso, Talla en cm, texto libre, métricas Du Bois, plantilla opcional y
   autoridad Java sobre sus unidades e historial.
+- [Corte Angular 039](CORTE-ANGULAR-039-ESTUDIOS-COORDINADOS.md): Estudios
+  complementarios coordinados entre hoja y panel, proyección única, navegación
+  con foco y RBAC efectivo en Angular y Java.
 
 ## Ciclo obligatorio por capacidad
 

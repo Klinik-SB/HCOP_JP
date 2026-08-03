@@ -5,7 +5,7 @@ import { ClinicalConflictComparison } from '../core/patients/clinical-conflict-c
 import { PatientWorkspaceService } from '../core/patients/patient-workspace.service';
 import { ClinicalDraftRegistryService } from '../core/patients/clinical-draft-registry.service';
 import { ClinicalWorkspaceComponent } from '../features/clinical-workspace/clinical-workspace.component';
-import { StudyPanelComponent } from '../features/studies/study-panel.component';
+import { StudyPanelComponent, StudyPanelRequest } from '../features/studies/study-panel.component';
 import { TimelinePanelComponent } from '../features/timeline/timeline-panel.component';
 import { NewPatientModalComponent } from '../features/patients/new-patient-modal.component';
 import { DayHospitalComponent } from '../features/day-hospital/day-hospital.component';
@@ -29,6 +29,7 @@ export class ClinicalShellComponent implements OnInit {
   private readonly clinicalDrafts = inject(ClinicalDraftRegistryService);
   private readonly router = inject(Router);
   readonly selectedPane = signal<RightPane>('studies');
+  readonly studyPanelRequest = signal<StudyPanelRequest | null>(null);
   readonly searchExpanded = signal(false);
   readonly newPatientOpen = signal(false);
   readonly careSchedulerOpen = signal(false);
@@ -38,6 +39,7 @@ export class ClinicalShellComponent implements OnInit {
   @ViewChild('conflictReviewClose') private conflictReviewClose?: ElementRef<HTMLButtonElement>;
   private conflictReviewReturnFocus: HTMLElement | null = null;
   private focusedConflictId = '';
+  private studyRequestSequence = 0;
 
   constructor() {
     effect(() => {
@@ -56,7 +58,7 @@ export class ClinicalShellComponent implements OnInit {
     this.auth.load().subscribe({
       next: (session) => {
         if (session.activePatientId) this.patientWorkspace.load(session.activePatientId);
-        if (!this.canOpen(this.selectedPane())) this.selectedPane.set('studies');
+        if (!this.canOpen(this.selectedPane())) this.selectedPane.set(this.defaultPane());
       },
       error: () => this.auth.session.set({ ok: false, authenticated: false, loginRequired: true, activePatientId: null })
     });
@@ -64,7 +66,12 @@ export class ClinicalShellComponent implements OnInit {
 
   selectPane(pane: RightPane): void {
     if (pane !== this.selectedPane() && this.hasPendingConflict()) return;
-    this.selectedPane.set(this.canOpen(pane) ? pane : 'studies');
+    this.selectedPane.set(this.canOpen(pane) ? pane : this.defaultPane());
+  }
+  openStudies(request: Omit<StudyPanelRequest, 'id'>): void {
+    if (this.hasPendingConflict() || !this.auth.hasPermission('section.studies.view')) return;
+    this.selectedPane.set('studies');
+    this.studyPanelRequest.set({ ...request, id: ++this.studyRequestSequence });
   }
   openLogin(): void { this.router.navigateByUrl('/login'); }
   openPatient(): void { if (!this.hasPendingConflict()) this.patientWorkspace.openPicker(); }
@@ -124,10 +131,14 @@ export class ClinicalShellComponent implements OnInit {
   }
   initial(): string { return (this.auth.session()?.user?.displayName || this.auth.session()?.user?.username || 'U').slice(0, 1).toUpperCase(); }
   private canOpen(pane: RightPane): boolean {
+    if (pane === 'studies') return this.auth.hasPermission('section.studies.view');
     if (pane === 'prescription') return this.auth.hasPermission('section.prescriptions.view');
     if (pane === 'agent') return this.auth.hasPermission('section.agent.view');
     if (pane === 'protocols') return this.auth.hasPermission('section.protocols.view');
     if (pane === 'tools') return this.auth.hasPermission('section.tools.view');
     return true;
+  }
+  private defaultPane(): RightPane {
+    return this.canOpen('studies') ? 'studies' : 'timeline';
   }
 }

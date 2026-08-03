@@ -1,7 +1,7 @@
 <section class="right-tab-panel active angular-study-panel" aria-label="Estudios complementarios">
   <div class="study-upload-bar">
     <div class="study-upload-actions">
-      <button class="tool-button primary" type="button" title="Subir archivos o pegar una imagen con Ctrl+V" [disabled]="!workspace.workspace() || workspace.activeSaveConflict()" (click)="openUpload()"><span aria-hidden="true">▣</span><span>Subir estudios</span></button>
+      <button class="tool-button primary" type="button" title="Subir archivos o pegar una imagen con Ctrl+V" [disabled]="!canUpload()" (click)="openUpload()"><span aria-hidden="true">▣</span><span>Subir estudios</span></button>
       <button class="tool-button" type="button" disabled title="Las plantillas anatómicas se incorporan en el próximo corte Angular"><span aria-hidden="true">▧</span><span>Cargar plantilla</span></button>
     </div>
     <span aria-live="polite">{{ studies().length ? studies().length + (studies().length === 1 ? ' estudio' : ' estudios') : 'Sin estudios cargados' }}</span>
@@ -11,13 +11,13 @@
   @if (!workspace.workspace()) {
     <div class="viewer-empty">Abra un paciente para consultar o cargar estudios.</div>
   } @else if (!studies().length) {
-    <button class="study-empty-upload" type="button" (click)="openUpload()"><span aria-hidden="true">⇧</span><strong>Sin estudios cargados</strong><span>Seleccione archivos, arrástrelos o pegue una imagen con Ctrl+V</span><small>Imágenes, DICOM, PDF, Word, PowerPoint y video</small></button>
+    <button class="study-empty-upload" type="button" [disabled]="!canUpload()" (click)="openUpload()"><span aria-hidden="true">⇧</span><strong>Sin estudios cargados</strong><span>{{ canEdit() ? 'Seleccione archivos, arrástrelos o pegue una imagen con Ctrl+V' : 'No tiene permiso para cargar estudios' }}</span><small>Imágenes, DICOM, PDF, Word, PowerPoint y video</small></button>
   } @else {
     <div class="study-list pangea-study-list" tabindex="-1">
-      @for (record of studies(); track record.id ?? $index) {
-        <article class="study-card pangea-study-card" [class.active]="selectedId() === record.id" (click)="select(record)">
-          <div class="study-row-main"><span class="study-row-file-icon" aria-hidden="true">{{ fileIcon(record) }}</span><span class="study-row-date">{{ date(record.date) }}</span><span class="study-title">{{ title(record) }}</span><span class="study-type">{{ fileKind(record) }}</span><span class="study-row-source">{{ source(record) }}@if (size(record)) { · {{ size(record) }} }</span></div>
-          <div class="study-actions">@if (fileUrl(record)) { <a class="tiny-button" [href]="fileUrl(record)" target="_blank" rel="noopener" (click)="$event.stopPropagation()"><span aria-hidden="true">◉</span><span>Abrir archivo</span></a> } @if (canDelete(record)) { <button class="tiny-button study-session-delete" type="button" [disabled]="busy()" title="Eliminar esta imagen cargada en la sesión actual" (click)="$event.stopPropagation(); removeStudy(record)"><span aria-hidden="true">×</span><span>Eliminar</span></button> }</div>
+      @for (entry of studyEntries(); track entry.key) {
+        <article class="study-card pangea-study-card" role="button" tabindex="0" [class.active]="selectedKey() === entry.key" [attr.aria-pressed]="selectedKey() === entry.key" [attr.data-study-key]="entry.key" (click)="select(entry)" (keydown.enter)="select(entry)" (keydown.space)="$event.preventDefault(); select(entry)">
+          <div class="study-row-main"><span class="study-row-file-icon" aria-hidden="true">{{ fileIcon(entry.record) }}</span><span class="study-row-date">{{ date(entry.record.date) }}</span><span class="study-title">{{ title(entry.record) }}</span><span class="study-type">{{ fileKind(entry.record) }}</span><span class="study-row-source">{{ source(entry.record) }}@if (size(entry.record)) { · {{ size(entry.record) }} }</span></div>
+          <div class="study-actions">@if (fileUrl(entry.record)) { <a class="tiny-button" [href]="fileUrl(entry.record)" target="_blank" rel="noopener" (click)="$event.stopPropagation()"><span aria-hidden="true">◉</span><span>Abrir archivo</span></a> } @if (canDelete(entry.record)) { <button class="tiny-button study-session-delete" type="button" [disabled]="busy()" title="Eliminar este archivo cargado en la sesión actual" (click)="$event.stopPropagation(); removeStudy(entry.record)"><span aria-hidden="true">×</span><span>Eliminar</span></button> }</div>
         </article>
       }
     </div>
@@ -27,8 +27,8 @@
 
 @if (uploadOpen()) {
   <div class="modal-backdrop study-upload-backdrop open" aria-hidden="false">
-    <section class="modal-card study-upload-modal" role="dialog" aria-modal="true" aria-labelledby="angularStudyUploadTitle">
-      <header class="modal-header"><div><span class="sheet-kicker">Estudios</span><h2 id="angularStudyUploadTitle">Subir archivos</h2><p>Seleccione varios archivos, arrástrelos al recuadro o pegue imágenes con Ctrl+V.</p></div><button class="icon-button" type="button" [disabled]="busy()" title="Cerrar" (click)="closeUpload()">×</button></header>
+    <section class="modal-card study-upload-modal" role="dialog" aria-modal="true" aria-labelledby="angularStudyUploadTitle" tabindex="-1" (keydown)="trapUploadFocus($event)">
+      <header class="modal-header"><div><span class="sheet-kicker">Estudios</span><h2 id="angularStudyUploadTitle">Subir archivos</h2><p>Seleccione varios archivos, arrástrelos al recuadro o pegue imágenes con Ctrl+V.</p></div><button #studyUploadClose class="icon-button" type="button" [disabled]="busy()" title="Cerrar" aria-label="Cerrar carga de estudios" (click)="closeUpload()">×</button></header>
       <section class="study-upload-modal-body">
         <label class="study-upload-zone" [class.dragging]="dragActive()" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)"><span aria-hidden="true">⇧</span><strong>Seleccionar archivos</strong><span>o arrastrar y soltar aquí</span><small>Imágenes, DICOM, PDF, Word, PowerPoint y video · selección, arrastre o Ctrl+V</small><input class="visually-hidden" type="file" multiple accept="image/*,.dcm,.pdf,.doc,.docx,.rtf,.odt,.ppt,.pps,.pptx,.ppsx,.odp,video/*,.mkv,.avi,.wmv,.flv" [disabled]="busy()" (change)="onFileInput($event)"></label>
         <div class="study-upload-queue" aria-live="polite">

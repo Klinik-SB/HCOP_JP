@@ -129,7 +129,7 @@
           <button class="icon-button clinical-close-patient-button" type="button" title="Cerrar paciente" [disabled]="!patientWorkspace.workspace() || hasPendingConflict()" (click)="closePatient()">×</button>
         </div>
       </div>
-      <div class="panel-scroll paper-area"><app-clinical-workspace [printTimestamp]="printTimestamp()" /></div>
+      <div class="panel-scroll paper-area"><app-clinical-workspace [printTimestamp]="printTimestamp()" (studiesRequested)="openStudies($event)" /></div>
     </section>
 
     <div class="splitter-shell" aria-hidden="true"><div class="splitter"><span class="splitter-line"></span></div><div class="splitter-presets"><button class="splitter-preset" type="button">«</button><button class="splitter-preset" type="button">▯</button><button class="splitter-preset" type="button">»</button></div></div>
@@ -137,7 +137,7 @@
     <aside class="panel studies-panel" aria-label="Panel derecho de apoyo clínico">
       <div class="panel-header right-panel-header">
         <nav class="right-panel-tabs" role="tablist" aria-label="Panel derecho">
-          <button class="right-tab" [class.active]="selectedPane() === 'studies'" type="button" role="tab" [attr.aria-selected]="selectedPane() === 'studies'" (click)="selectPane('studies')">Estudios</button>
+          @if (auth.hasPermission('section.studies.view')) { <button class="right-tab" [class.active]="selectedPane() === 'studies'" type="button" role="tab" [attr.aria-selected]="selectedPane() === 'studies'" (click)="selectPane('studies')">Estudios</button> }
           <button class="right-tab right-tab--care" [class.active]="selectedPane() === 'care'" type="button" role="tab" [attr.aria-selected]="selectedPane() === 'care'" (click)="selectPane('care')">H. de día</button>
           @if (auth.hasPermission('section.prescriptions.view')) { <button class="right-tab" [class.active]="selectedPane() === 'prescription'" type="button" role="tab" [attr.aria-selected]="selectedPane() === 'prescription'" (click)="selectPane('prescription')">Prescripcion</button> }
           @if (auth.hasPermission('section.agent.view')) { <button class="right-tab" [class.active]="selectedPane() === 'agent'" type="button" role="tab" [attr.aria-selected]="selectedPane() === 'agent'" (click)="selectPane('agent')">Agente</button> }
@@ -148,7 +148,7 @@
         </nav>
       </div>
       <div class="right-panel-body">
-        @if (selectedPane() === 'studies') { <app-study-panel /> }
+        @if (selectedPane() === 'studies') { <app-study-panel [request]="studyPanelRequest()" /> }
         @else if (selectedPane() === 'care') { <app-day-hospital /> }
         @else if (selectedPane() === 'prescription') { <app-prescription /> }
         @else if (selectedPane() === 'agent') { <app-agent /> }
