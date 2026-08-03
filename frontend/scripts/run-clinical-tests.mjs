@@ -11,6 +11,7 @@ const suites = [
   'src/app/core/clinical/clinical-chief-complaint-edit.tests.ts',
   'src/app/core/clinical/clinical-current-illness-edit.tests.ts',
   'src/app/core/clinical/clinical-personal-history-edit.tests.ts',
+  'src/app/core/clinical/clinical-physical-exam-edit.tests.ts',
   'src/app/core/clinical/clinical-summary-plan-edit.tests.ts',
   'src/app/core/patients/patient-workspace.normalization.tests.ts',
   'src/app/core/patients/clinical-draft-registry.tests.ts',

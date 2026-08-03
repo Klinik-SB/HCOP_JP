@@ -112,6 +112,7 @@ Con el sistema iniciado también existe una versión navegable en
 - [Corte Angular 035: editor Motivo de consulta](09-migracion-angular-hexagonal/CORTE-ANGULAR-035-EDITOR-MOTIVO-CONSULTA.md)
 - [Corte Angular 036: editor Antecedentes de enfermedad actual](09-migracion-angular-hexagonal/CORTE-ANGULAR-036-EDITOR-ENFERMEDAD-ACTUAL.md)
 - [Corte Angular 037: editor Antecedentes personales](09-migracion-angular-hexagonal/CORTE-ANGULAR-037-EDITOR-ANTECEDENTES-PERSONALES.md)
+- [Corte Angular 038: editor Examen físico](09-migracion-angular-hexagonal/CORTE-ANGULAR-038-EDITOR-EXAMEN-FISICO.md)
 
 ## Fuentes de verdad
 

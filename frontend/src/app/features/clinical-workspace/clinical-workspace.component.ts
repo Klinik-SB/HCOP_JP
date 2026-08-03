@@ -23,6 +23,21 @@ import {
   supportsStructuredPersonalHistory
 } from '../../core/clinical/clinical-personal-history-edit';
 import {
+  CLINICAL_PHYSICAL_EXAM_HEIGHT_MAX_CM,
+  CLINICAL_PHYSICAL_EXAM_HEIGHT_MIN_CM,
+  CLINICAL_PHYSICAL_EXAM_TEXT_LIMIT,
+  CLINICAL_PHYSICAL_EXAM_WEIGHT_MAX_KG,
+  CLINICAL_PHYSICAL_EXAM_WEIGHT_MIN_KG,
+  DEFAULT_PHYSICAL_EXAM_TEXT,
+  ClinicalPhysicalExamRow,
+  applyStructuredPhysicalExamEdit,
+  calculatePhysicalExamMetrics,
+  physicalExamBaseline,
+  physicalExamLegacySnapshot,
+  physicalExamRows as projectPhysicalExamRows,
+  supportsStructuredPhysicalExam
+} from '../../core/clinical/clinical-physical-exam-edit';
+import {
   CLINICAL_SUMMARY_PLAN_TEXT_LIMIT,
   applyStructuredSummaryPlanEdit,
   summaryPlanBaseline,
@@ -41,6 +56,7 @@ import { ClinicalPatient, ClinicalRecord, ClinicalState } from '../../core/patie
 
 type SingleNarrativeSectionKey = 'chiefComplaint' | 'currentIllness';
 type PersonalHistoryErrorTarget = 'backgroundClinical' | 'currentMedication' | 'familyOncology' | 'gynecology' | 'reason' | '';
+type PhysicalExamErrorTarget = 'weightKg' | 'heightCm' | 'physicalExam' | 'reason' | '';
 
 @Component({ selector: 'app-clinical-workspace', imports: [ReactiveFormsModule], templateUrl: './clinical-workspace.component.html', styleUrl: './clinical-workspace.component.scss' })
 export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
@@ -85,6 +101,23 @@ export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
     initial: true
   };
   private personalHistoryReturnFocus: HTMLElement | null = null;
+  readonly physicalExamOpen = signal(false);
+  readonly physicalExamInitial = signal(true);
+  readonly physicalExamBusy = signal(false);
+  readonly physicalExamError = signal('');
+  readonly physicalExamErrorTarget = signal<PhysicalExamErrorTarget>('');
+  readonly maxPhysicalExamChars = CLINICAL_PHYSICAL_EXAM_TEXT_LIMIT;
+  readonly physicalExamWeightMin = CLINICAL_PHYSICAL_EXAM_WEIGHT_MIN_KG;
+  readonly physicalExamWeightMax = CLINICAL_PHYSICAL_EXAM_WEIGHT_MAX_KG;
+  readonly physicalExamHeightMin = CLINICAL_PHYSICAL_EXAM_HEIGHT_MIN_CM;
+  readonly physicalExamHeightMax = CLINICAL_PHYSICAL_EXAM_HEIGHT_MAX_CM;
+  readonly physicalExamWeightControl = new FormControl('', { nonNullable: true });
+  readonly physicalExamHeightControl = new FormControl('', { nonNullable: true });
+  readonly physicalExamTextControl = new FormControl('', { nonNullable: true });
+  readonly physicalExamReasonControl = new FormControl('', { nonNullable: true });
+  private physicalExamDraft: ClinicalDraftHandle | null = null;
+  private physicalExamEditorBaseline = { weightKg: '', heightCm: '', physicalExam: '', initial: true };
+  private physicalExamReturnFocus: HTMLElement | null = null;
   readonly summaryPlanOpen = signal(false);
   readonly summaryPlanInitial = signal(true);
   readonly summaryPlanBusy = signal(false);
@@ -116,6 +149,10 @@ export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
     this.familyOncologyControl.valueChanges.subscribe(() => this.refreshPersonalHistoryDirtyState());
     this.gynecologyControl.valueChanges.subscribe(() => this.refreshPersonalHistoryDirtyState());
     this.personalHistoryReasonControl.valueChanges.subscribe(() => this.refreshPersonalHistoryDirtyState());
+    this.physicalExamWeightControl.valueChanges.subscribe(() => this.refreshPhysicalExamDirtyState());
+    this.physicalExamHeightControl.valueChanges.subscribe(() => this.refreshPhysicalExamDirtyState());
+    this.physicalExamTextControl.valueChanges.subscribe(() => this.refreshPhysicalExamDirtyState());
+    this.physicalExamReasonControl.valueChanges.subscribe(() => this.refreshPhysicalExamDirtyState());
   }
 
   ngOnInit(): void {
@@ -125,6 +162,7 @@ export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.narrativeEditorDraft) this.clinicalDrafts.release(this.narrativeEditorDraft);
     if (this.personalHistoryDraft) this.clinicalDrafts.release(this.personalHistoryDraft);
+    if (this.physicalExamDraft) this.clinicalDrafts.release(this.physicalExamDraft);
     if (this.summaryPlanDraft) this.clinicalDrafts.release(this.summaryPlanDraft);
   }
 
@@ -369,6 +407,152 @@ export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   personalHistoryCount(control: FormControl<string>): number { return control.value.length; }
+
+  canEditPhysicalExam(): boolean {
+    return Boolean(
+      this.workspaceService.workspace()
+      && !this.workspaceService.loading()
+      && this.auth.hasPermission('section.history.edit')
+      && supportsStructuredPhysicalExam(this.state())
+    );
+  }
+
+  physicalExamHasContent(): boolean {
+    return Boolean(this.exam('weightKg') || this.exam('heightM') || this.narrative('physicalExam'));
+  }
+
+  physicalExamLegacyText(): string { return physicalExamLegacySnapshot(this.state()); }
+  physicalExamHeightCm(): string { return physicalExamBaseline(this.state()).heightCm; }
+  physicalExamIsInitial(): boolean { return physicalExamBaseline(this.state()).initial; }
+  physicalExamPresentationRows(): ClinicalPhysicalExamRow[] {
+    return projectPhysicalExamRows(this.narrative('physicalExam'));
+  }
+  physicalExamStoredBmi(): string {
+    const baseline = physicalExamBaseline(this.state());
+    const metrics = calculatePhysicalExamMetrics(baseline.weightKg, baseline.heightCm);
+    return metrics.bmi === null ? '' : metrics.bmi.toFixed(2);
+  }
+  physicalExamStoredBodySurface(): string {
+    const baseline = physicalExamBaseline(this.state());
+    const metrics = calculatePhysicalExamMetrics(baseline.weightKg, baseline.heightCm);
+    return metrics.bodySurfaceM2 === null ? '' : `${metrics.bodySurfaceM2.toFixed(3)} m²`;
+  }
+  physicalExamBmi(): string {
+    const metrics = calculatePhysicalExamMetrics(this.physicalExamWeightControl.value, this.physicalExamHeightControl.value);
+    return metrics.bmi === null ? '—' : metrics.bmi.toFixed(2);
+  }
+  physicalExamBodySurface(): string {
+    const metrics = calculatePhysicalExamMetrics(this.physicalExamWeightControl.value, this.physicalExamHeightControl.value);
+    return metrics.bodySurfaceM2 === null ? '—' : `${metrics.bodySurfaceM2.toFixed(3)} m²`;
+  }
+
+  openPhysicalExamEditor(event?: Event): void {
+    const workspace = this.workspaceService.workspace();
+    if (!workspace || this.workspaceService.loading() || !this.canEditPhysicalExam() || this.workspaceService.hasPendingClinicalWork()) return;
+    this.physicalExamReturnFocus = event?.currentTarget instanceof HTMLElement
+      ? event.currentTarget
+      : document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const baseline = physicalExamBaseline(workspace.state);
+    this.physicalExamEditorBaseline = baseline;
+    this.physicalExamInitial.set(baseline.initial);
+    this.physicalExamWeightControl.setValue(baseline.weightKg, { emitEvent: false });
+    this.physicalExamHeightControl.setValue(baseline.heightCm, { emitEvent: false });
+    this.physicalExamTextControl.setValue(baseline.physicalExam, { emitEvent: false });
+    this.physicalExamReasonControl.setValue('', { emitEvent: false });
+    this.physicalExamError.set('');
+    this.physicalExamErrorTarget.set('');
+    this.physicalExamDraft = this.clinicalDrafts.acquire({
+      patientId: workspace.patientId,
+      label: 'Examen físico'
+    });
+    this.physicalExamOpen.set(true);
+    this.refreshPhysicalExamDirtyState();
+    this.focusSummaryPlanAfterRender('#physicalExamWeight');
+  }
+
+  prefillPhysicalExam(): void {
+    if (this.physicalExamBusy()) return;
+    if (this.physicalExamTextControl.value.trim()) {
+      this.physicalExamError.set('El examen físico ya contiene texto. La plantilla no lo sobrescribió.');
+      this.physicalExamErrorTarget.set('physicalExam');
+      this.focusSummaryPlanAfterRender('#physicalExamText');
+      return;
+    }
+    this.physicalExamError.set('');
+    this.physicalExamErrorTarget.set('');
+    this.physicalExamTextControl.setValue(DEFAULT_PHYSICAL_EXAM_TEXT);
+    this.focusSummaryPlanAfterRender('#physicalExamText');
+  }
+
+  closePhysicalExamEditor(): void {
+    if (!this.physicalExamOpen() || this.physicalExamBusy()) return;
+    // Recalcular contra la línea de base al cerrar evita depender del orden de
+    // emisión de valueChanges para una confirmación que protege datos clínicos.
+    if (this.physicalExamDraft && this.physicalExamEditorIsDirty()
+        && !window.confirm('¿Descartar los cambios no guardados de Examen físico?')) return;
+    this.finishPhysicalExamEditor(true);
+  }
+
+  async savePhysicalExam(): Promise<void> {
+    const workspace = this.workspaceService.workspace();
+    if (!workspace || !this.physicalExamDraft || this.physicalExamBusy()) return;
+    this.physicalExamError.set('');
+    this.physicalExamErrorTarget.set('');
+    if (workspace.patientId !== this.physicalExamDraft.patientId) {
+      this.physicalExamError.set('El paciente activo cambió. Cierre este editor y vuelva a abrir la sección antes de guardar.');
+      return;
+    }
+    let nextState: ClinicalState;
+    try {
+      const user = this.auth.session()?.user;
+      nextState = applyStructuredPhysicalExamEdit(workspace.state, {
+        weightKg: this.physicalExamWeightControl.value,
+        heightCm: this.physicalExamHeightControl.value,
+        physicalExam: this.physicalExamTextControl.value,
+        reason: this.physicalExamReasonControl.value,
+        actor: {
+          userId: user?.id || '',
+          username: user?.username || '',
+          displayName: user?.displayName || user?.username || 'Profesional',
+          licenseNumber: user?.licenseNumber || ''
+        }
+      });
+    } catch (error) {
+      this.physicalExamError.set(this.errorMessage(error, 'Revise los campos antes de guardar.'));
+      const targets: Record<string, PhysicalExamErrorTarget> = {
+        EMPTY_PHYSICAL_EXAM: 'weightKg',
+        WEIGHT_INVALID: 'weightKg', WEIGHT_OUT_OF_RANGE: 'weightKg',
+        HEIGHT_INVALID: 'heightCm', HEIGHT_OUT_OF_RANGE: 'heightCm',
+        TEXT_TOO_LONG: 'physicalExam', REASON_REQUIRED: 'reason', REASON_TOO_LONG: 'reason'
+      };
+      const target = targets[this.typedClinicalEditCode(error)] || '';
+      this.physicalExamErrorTarget.set(target);
+      const selectors: Record<Exclude<PhysicalExamErrorTarget, ''>, string> = {
+        weightKg: '#physicalExamWeight', heightCm: '#physicalExamHeight',
+        physicalExam: '#physicalExamText', reason: '#physicalExamReason'
+      };
+      if (target) this.focusSummaryPlanAfterRender(selectors[target]);
+      return;
+    }
+
+    this.physicalExamBusy.set(true);
+    try {
+      await firstValueFrom(this.workspaceService.saveState(nextState));
+      this.clinicalDrafts.markClean(this.physicalExamDraft);
+      this.finishPhysicalExamEditor(true);
+    } catch (error) {
+      if (this.workspaceService.activeSaveConflict()) {
+        this.clinicalDrafts.markClean(this.physicalExamDraft);
+        this.finishPhysicalExamEditor(false);
+      } else {
+        this.physicalExamError.set(this.errorMessage(error, 'No se pudo guardar el examen físico.'));
+      }
+    } finally {
+      this.physicalExamBusy.set(false);
+    }
+  }
+
+  physicalExamCount(): number { return this.physicalExamTextControl.value.length; }
 
   canEditSummaryPlan(): boolean {
     return Boolean(
@@ -641,6 +825,47 @@ export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
       || this.gynecologyControl.value.trim() !== baseline.gynecology
       || this.personalHistoryReasonControl.value.trim().length > 0;
     this.clinicalDrafts.setDirty(this.personalHistoryDraft, dirty);
+  }
+
+  private refreshPhysicalExamDirtyState(): void {
+    if (!this.physicalExamDraft) return;
+    this.clinicalDrafts.setDirty(this.physicalExamDraft, this.physicalExamEditorIsDirty());
+  }
+
+  private physicalExamEditorIsDirty(): boolean {
+    const baseline = this.physicalExamEditorBaseline;
+    return this.normalizedPhysicalNumber(this.physicalExamWeightControl.value) !== baseline.weightKg
+      || this.normalizedPhysicalNumber(this.physicalExamHeightControl.value, true) !== baseline.heightCm
+      || this.physicalExamTextControl.value.trim() !== baseline.physicalExam
+      || this.physicalExamReasonControl.value.trim().length > 0;
+  }
+
+  private normalizedPhysicalNumber(value: string | number | null | undefined, height = false): string {
+    // Los input[type=number] usan NumberValueAccessor y pueden entregar un
+    // número en ejecución aunque el control conserve su contrato textual.
+    const raw = String(value ?? '').trim().replace(',', '.');
+    if (!raw) return '';
+    const numeric = Number(raw);
+    if (!Number.isFinite(numeric)) return raw;
+    return String(height ? Math.round(numeric * 10) / 10 : numeric);
+  }
+
+  private releasePhysicalExamDraft(): void {
+    if (!this.physicalExamDraft) return;
+    this.clinicalDrafts.release(this.physicalExamDraft);
+    this.physicalExamDraft = null;
+  }
+
+  private finishPhysicalExamEditor(returnFocus: boolean): void {
+    this.releasePhysicalExamDraft();
+    this.physicalExamOpen.set(false);
+    this.physicalExamError.set('');
+    this.physicalExamErrorTarget.set('');
+    const trigger = this.physicalExamReturnFocus;
+    this.physicalExamReturnFocus = null;
+    if (returnFocus && trigger) window.setTimeout(() => {
+      if (trigger.isConnected && !trigger.hasAttribute('disabled')) trigger.focus({ preventScroll: true });
+    }, 0);
   }
 
   private releasePersonalHistoryDraft(): void {

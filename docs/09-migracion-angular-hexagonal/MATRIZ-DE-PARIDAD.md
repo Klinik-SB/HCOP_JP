@@ -107,6 +107,17 @@ recorridos E2E integrados están aprobados. La fila Hoja clínica continúa
 `Pendiente` porque todavía faltan los formularios restantes y el historial
 visible por sección.
 
+El corte 038 implementa **Examen físico** con Peso, Talla y texto libre en un
+modal Angular nativo, métricas en vivo, plantilla explícita y una sola cadena de
+versiones canónicas. La UI trabaja en centímetros y PostgreSQL conserva
+`exam.heightM` en metros, con lectura compatible de ambas formas históricas. El
+snapshot mantiene las filas clínicas del frontend anterior. La fila Hoja
+clínica continúa `Pendiente`, aunque el corte está validado con 14 casos y 83
+aserciones del helper, 6 casos y 28 aserciones de impresión, 81/81 pruebas
+Java/OpenAPI y 6/6 recorridos Docker/Playwright. Sólo faltan Estudios
+complementarios coordinados y el historial visual por sección para cerrar la
+paridad global de la hoja.
+
 ## Evidencia requerida para marcar `Validada`
 
 1. Prueba automática de la regla o del contrato.

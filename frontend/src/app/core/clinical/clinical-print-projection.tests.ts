@@ -56,6 +56,22 @@ test('imprime la ultima instantanea legacy sin revivirla en modo estructurado', 
   }, 'personalHistory'), false);
 });
 
+test('imprime el examen físico legacy sin revivirlo en modo estructurado', () => {
+  const legacy = {
+    exam: { weightKg: { formato: 'legacy' } }, narrative: {},
+    meta: {
+      liraImport: { origin: 'migration' },
+      sectionVersions: { physicalExam: [{ content: 'Estado general: importado' }] },
+      sectionFormModes: {}
+    }
+  };
+  equal(clinicalPrintSectionHasContent(legacy, 'physicalExam'), true);
+  equal(clinicalPrintSectionHasContent({
+    ...legacy,
+    meta: { ...legacy.meta, sectionFormModes: { physicalExam: 'structured' } }
+  }, 'physicalExam'), false);
+});
+
 test('la impresión reutiliza la proyección unificada de tratamientos', () => {
   const state = {
     evolutions: [

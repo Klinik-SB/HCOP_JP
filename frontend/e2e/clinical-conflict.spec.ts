@@ -441,11 +441,12 @@ test('edita motivo de consulta con foco contenido, reintento seguro y auditoría
       revision: number;
       state: Record<string, unknown> & {
         narrative?: Record<string, unknown>;
+        oncology?: Record<string, unknown>;
         meta?: Record<string, unknown>;
       };
     };
     const competingState = structuredClone(competingWorkspace.state);
-    competingState.narrative = { ...(competingState.narrative || {}), physicalExam: competingNote };
+    competingState.oncology = { ...(competingState.oncology || {}), performanceStatus: competingNote };
     competingState.meta = {
       ...(competingState.meta || {}),
       persistenceRevision: competingWorkspace.revision
@@ -494,7 +495,8 @@ test('edita motivo de consulta con foco contenido, reintento seguro y auditoría
     const final = await workspace.json() as {
       revision: number;
       state?: {
-        narrative?: { chiefComplaint?: string; physicalExam?: string };
+        narrative?: { chiefComplaint?: string };
+        oncology?: { performanceStatus?: string };
         meta?: {
           sectionFormModes?: { chiefComplaint?: string };
           sectionVersions?: {
@@ -517,7 +519,7 @@ test('edita motivo de consulta con foco contenido, reintento seguro y auditoría
     };
     expect(final.revision).toBe(body.revision + 3);
     expect(final.state?.narrative?.chiefComplaint).toBe(changedComplaint);
-    expect(final.state?.narrative?.physicalExam).toBe(competingNote);
+    expect(final.state?.oncology?.performanceStatus).toBe(competingNote);
     expect(final.state?.meta?.sectionFormModes?.chiefComplaint).toBe('structured');
     expect(final.state?.meta?.sectionChangeRequests?.chiefComplaint).toBeUndefined();
     const versions = final.state?.meta?.sectionVersions?.chiefComplaint || [];
@@ -537,6 +539,241 @@ test('edita motivo de consulta con foco contenido, reintento seguro y auditoría
     expect(versions[1]?.author).toBe(versions[1]?.audit?.lastName);
     expect(versions[1]?.license).toBe(versions[1]?.audit?.license);
     expect(final.state?.meta?.sectionAudit?.chiefComplaint).toEqual(versions[1]?.audit);
+  } finally {
+    await Promise.all([context.close(), competingContext.close()]);
+  }
+});
+
+test('edita examen físico con centímetros, métricas, plantilla, reintento y conflicto', async ({ browser }) => {
+  const suffix = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+  const changedExam = `Control actualizado ${suffix}. Tórax: murmullo conservado. Abdomen: blando. SNC: sin foco.`;
+  const modificationReason = 'Control clínico previo a la siguiente aplicación';
+  const competingStatus = `ECOG concurrente ganador ${suffix}`;
+  const context = await browser.newContext();
+  const competingContext = await browser.newContext();
+
+  try {
+    await login(context);
+    const created = await context.request.post(`${origin}/api/clinical/patients`, {
+      data: {
+        firstName: `Paciente ${suffix}`,
+        lastName: 'Examen físico QA',
+        dni: `94${Date.now().toString().slice(-6)}`,
+        medicalRecord: `QA-EF-${suffix}`,
+        birthDate: '1978-03-14',
+        sex: 'No especificado',
+        insurance: 'Cobertura sintética QA',
+        affiliateNumber: `QA-EF-${suffix}`,
+        phone: '', email: '', address: ''
+      }
+    });
+    await expectStatus(created, 201);
+    const body = await created.json() as {
+      patientId: string;
+      revision: number;
+      patient: { fullName: string };
+    };
+
+    const page = await context.newPage();
+    await page.goto('./');
+    await expect(page.getByText(body.patient.fullName, { exact: true }).first()).toBeVisible();
+    await page.getByRole('button', { name: 'Cargar examen físico', exact: true }).click();
+
+    let editor = page.getByRole('dialog', { name: 'Examen físico', exact: true });
+    let weightField = editor.getByLabel('Peso (kg)', { exact: true });
+    let heightField = editor.getByLabel('Talla (cm)', { exact: true });
+    let examField = editor.getByLabel('Examen físico', { exact: true });
+    const initialSaveButton = editor.getByRole('button', { name: 'Cargar en historia', exact: true });
+    const closeButton = editor.getByRole('button', { name: 'Cerrar editor de examen físico', exact: true });
+    await expect(editor).toBeVisible();
+    await expect(weightField).toBeFocused();
+    await expect(heightField).toHaveValue('');
+    await expect(examField).toHaveValue('');
+
+    await page.keyboard.press('Shift+Tab');
+    await expect(closeButton).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(initialSaveButton).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(closeButton).toBeFocused();
+    await page.locator('.physical-exam-editor-backdrop').click({ position: { x: 4, y: 4 } });
+    await page.keyboard.press('Escape');
+    await expect(editor).toBeVisible();
+
+    await weightField.fill('75');
+    await heightField.fill('175');
+    await expect(editor.getByText('24.49', { exact: true })).toBeVisible();
+    await expect(editor.getByText('1.903 m²', { exact: true })).toBeVisible();
+    await editor.getByRole('button', { name: 'Usar examen físico habitual', exact: true }).click();
+    await expect(examField).toHaveValue(/Estado general: paciente en buen estado general\./);
+    const templateText = await examField.inputValue();
+    await editor.getByRole('button', { name: 'Usar examen físico habitual', exact: true }).click();
+    await expect(editor.getByRole('alert')).toContainText('ya contiene texto');
+    await expect(examField).toHaveValue(templateText);
+    await expect(page.getByRole('button', { name: 'Nuevo paciente', exact: true })).toBeDisabled();
+    page.once('dialog', (dialog) => dialog.dismiss());
+    await closeButton.click();
+    await expect(editor).toBeVisible();
+
+    const clinicalPath = '**/api/hc';
+    await page.route(clinicalPath, async (route) => {
+      if (route.request().method() === 'PUT') {
+        await route.fulfill({
+          status: 503,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            ok: false, status: 503, code: 'QA_TRANSIENT',
+            error: 'Falla transitoria sintética de examen físico'
+          })
+        });
+        return;
+      }
+      await route.continue();
+    });
+    const transientPut = page.waitForResponse((candidate) =>
+      candidate.request().method() === 'PUT' && new URL(candidate.url()).pathname === '/api/hc');
+    await initialSaveButton.click();
+    await expectStatus(await transientPut, 503);
+    await expect(editor.getByRole('alert')).toContainText('Falla transitoria sintética de examen físico');
+    await expect(weightField).toHaveValue('75');
+    await expect(heightField).toHaveValue('175');
+    await expect(examField).toHaveValue(templateText);
+    await page.unroute(clinicalPath);
+
+    const initialPut = page.waitForResponse((candidate) =>
+      candidate.request().method() === 'PUT' && new URL(candidate.url()).pathname === '/api/hc');
+    await initialSaveButton.click();
+    await expectStatus(await initialPut, 200);
+    await expect(editor).toHaveCount(0);
+    const sheetSection = page.locator('.doc-section').filter({ hasText: 'Examen físico' });
+    await expect(sheetSection).toContainText('175 cm');
+    await expect(sheetSection).toContainText('24.49');
+    await expect(sheetSection).not.toContainText('1.75 cm');
+
+    const modifyTrigger = page.getByRole('button', { name: 'Modificar sección Examen físico', exact: true });
+    await modifyTrigger.click();
+    editor = page.getByRole('dialog', { name: 'Examen físico', exact: true });
+    weightField = editor.getByLabel('Peso (kg)', { exact: true });
+    heightField = editor.getByLabel('Talla (cm)', { exact: true });
+    examField = editor.getByLabel('Examen físico', { exact: true });
+    const reasonField = editor.getByLabel('Motivo de la modificación', { exact: true });
+    const modificationSaveButton = editor.getByRole('button', { name: 'Guardar modificación', exact: true });
+    await expect(weightField).toHaveValue('75');
+    await expect(heightField).toHaveValue('175');
+    await examField.fill(changedExam);
+
+    let clinicalPutCount = 0;
+    page.on('request', (request) => {
+      if (request.method() === 'PUT' && new URL(request.url()).pathname === '/api/hc') clinicalPutCount += 1;
+    });
+    const putsBeforeMissingReason = clinicalPutCount;
+    await modificationSaveButton.click();
+    await expect(editor.getByRole('alert')).toContainText('Indique el motivo de la modificación.');
+    await expect(reasonField).toBeFocused();
+    expect(clinicalPutCount).toBe(putsBeforeMissingReason);
+    await reasonField.fill(modificationReason);
+
+    await login(competingContext);
+    await activate(competingContext, body.patientId);
+    const competingWorkspaceResponse = await competingContext.request.get(
+      `${origin}/api/clinical/patients/${body.patientId}/workspace`
+    );
+    await expectStatus(competingWorkspaceResponse, 200);
+    const competingWorkspace = await competingWorkspaceResponse.json() as {
+      revision: number;
+      state: Record<string, unknown> & {
+        oncology?: Record<string, unknown>;
+        meta?: Record<string, unknown>;
+      };
+    };
+    const competingState = structuredClone(competingWorkspace.state);
+    competingState.oncology = {
+      ...(competingState.oncology || {}),
+      performanceStatus: competingStatus
+    };
+    competingState.meta = {
+      ...(competingState.meta || {}),
+      persistenceRevision: competingWorkspace.revision
+    };
+    const competingPut = await competingContext.request.put(`${origin}/api/hc`, { data: competingState });
+    await expectStatus(competingPut, 200);
+
+    const conflictPut = page.waitForResponse((candidate) =>
+      candidate.request().method() === 'PUT' && new URL(candidate.url()).pathname === '/api/hc');
+    await modificationSaveButton.click();
+    await expectStatus(await conflictPut, 409);
+    await expect(editor).toHaveCount(0);
+    const conflictBanner = page.locator('.clinical-save-conflict-banner');
+    await expect(conflictBanner).toBeFocused();
+    await conflictBanner.getByRole('button', { name: 'Comparar cambios', exact: true }).click();
+    const comparison = page.getByRole('dialog', { name: 'Comparar cambios de la historia' });
+    await expect(comparison).toContainText(changedExam);
+    await expect(comparison).toContainText(competingStatus);
+    await comparison.getByRole('button', { name: 'Cerrar', exact: true }).last().click();
+    page.once('dialog', (dialog) => dialog.accept());
+    await conflictBanner.getByRole('button', {
+      name: 'Descartar borrador y recuperar historia', exact: true
+    }).click();
+    await expect(conflictBanner).toHaveCount(0);
+
+    await modifyTrigger.click();
+    editor = page.getByRole('dialog', { name: 'Examen físico', exact: true });
+    await expect(editor.getByLabel('Talla (cm)', { exact: true })).toHaveValue('175');
+    await editor.getByLabel('Examen físico', { exact: true }).fill(changedExam);
+    await editor.getByLabel('Motivo de la modificación', { exact: true }).fill(modificationReason);
+    const modificationPut = page.waitForResponse((candidate) =>
+      candidate.request().method() === 'PUT' && new URL(candidate.url()).pathname === '/api/hc');
+    await editor.getByRole('button', { name: 'Guardar modificación', exact: true }).click();
+    await expectStatus(await modificationPut, 200);
+    await expect(editor).toHaveCount(0);
+    await expect(sheetSection).toContainText(`Control actualizado ${suffix}.`);
+
+    const workspace = await context.request.get(`${origin}/api/clinical/patients/${body.patientId}/workspace`);
+    await expectStatus(workspace, 200);
+    const final = await workspace.json() as {
+      revision: number;
+      state?: {
+        exam?: { weightKg?: string; heightM?: string };
+        narrative?: { physicalExam?: string };
+        oncology?: { performanceStatus?: string };
+        meta?: {
+          sectionFormModes?: { physicalExam?: string };
+          sectionVersions?: { physicalExam?: Array<{
+            id?: string; author?: string; license?: string; createdAt?: string;
+            reason?: string; content?: string;
+            audit?: { action?: string; lastName?: string; license?: string; at?: string };
+          }> };
+          sectionAudit?: { physicalExam?: unknown };
+          sectionChangeRequests?: { physicalExam?: unknown };
+        };
+      };
+    };
+    expect(final.revision).toBe(body.revision + 3);
+    expect(final.state?.exam?.weightKg).toBe('75');
+    expect(final.state?.exam?.heightM).toBe('1.75');
+    expect(final.state?.narrative?.physicalExam).toBe(changedExam);
+    expect(final.state?.oncology?.performanceStatus).toBe(competingStatus);
+    expect(final.state?.meta?.sectionFormModes?.physicalExam).toBe('structured');
+    expect(final.state?.meta?.sectionChangeRequests?.physicalExam).toBeUndefined();
+    const versions = final.state?.meta?.sectionVersions?.physicalExam || [];
+    expect(versions).toHaveLength(2);
+    expect(versions[0]?.id).toMatch(/^sec-physicalExam-/);
+    expect(versions[0]?.reason).toBe('Carga inicial');
+    expect(versions[0]?.content).toContain('Peso: 75 kg\nTalla: 175 cm\nEstado general:');
+    expect(versions[0]?.audit?.action).toBe('cargado');
+    expect(versions[1]?.id).toMatch(/^sec-physicalExam-/);
+    expect(versions[1]?.reason).toBe(modificationReason);
+    expect(versions[1]?.content).toBe([
+      'Peso: 75 kg', 'Talla: 175 cm', `Estado general: Control actualizado ${suffix}.`,
+      'Tórax: murmullo conservado.', 'Abdomen: blando.', 'SNC: sin foco.'
+    ].join('\n'));
+    expect(versions[1]?.audit?.action).toBe('modificado');
+    expect(versions[1]?.author).toBeTruthy();
+    expect(versions[1]?.license).toBeTruthy();
+    expect(versions[1]?.createdAt).toBe(versions[1]?.audit?.at);
+    expect(versions[1]?.author).toBe(versions[1]?.audit?.lastName);
+    expect(versions[1]?.license).toBe(versions[1]?.audit?.license);
+    expect(final.state?.meta?.sectionAudit?.physicalExam).toEqual(versions[1]?.audit);
   } finally {
     await Promise.all([context.close(), competingContext.close()]);
   }
@@ -694,13 +931,14 @@ test('edita antecedentes personales por campos con reintento, conflicto y snapsh
       revision: number;
       state: Record<string, unknown> & {
         narrative?: Record<string, unknown>;
+        oncology?: Record<string, unknown>;
         meta?: Record<string, unknown>;
       };
     };
     const competingState = structuredClone(competingWorkspace.state);
-    competingState.narrative = {
-      ...(competingState.narrative || {}),
-      physicalExam: competingExam
+    competingState.oncology = {
+      ...(competingState.oncology || {}),
+      performanceStatus: competingExam
     };
     competingState.meta = {
       ...(competingState.meta || {}),
@@ -759,8 +997,8 @@ test('edita antecedentes personales por campos con reintento, conflicto y snapsh
           currentMedication?: string;
           familyOncology?: string;
           gynecology?: string;
-          physicalExam?: string;
         };
+        oncology?: { performanceStatus?: string };
         meta?: {
           sectionFormModes?: { personalHistory?: string };
           sectionVersions?: {
@@ -786,7 +1024,7 @@ test('edita antecedentes personales por campos con reintento, conflicto y snapsh
     expect(final.state?.narrative?.currentMedication).toBe(changedMedication);
     expect(final.state?.narrative?.familyOncology || '').toBe('');
     expect(final.state?.narrative?.gynecology || '').toBe('');
-    expect(final.state?.narrative?.physicalExam).toBe(competingExam);
+    expect(final.state?.oncology?.performanceStatus).toBe(competingExam);
     expect(final.state?.meta?.sectionFormModes?.personalHistory).toBe('structured');
     expect(final.state?.meta?.sectionChangeRequests?.personalHistory).toBeUndefined();
     const versions = final.state?.meta?.sectionVersions?.personalHistory || [];
@@ -941,13 +1179,14 @@ test('edita antecedentes de enfermedad actual con foco contenido, reintento, con
       revision: number;
       state: Record<string, unknown> & {
         narrative?: Record<string, unknown>;
+        oncology?: Record<string, unknown>;
         meta?: Record<string, unknown>;
       };
     };
     const competingState = structuredClone(competingWorkspace.state);
-    competingState.narrative = {
-      ...(competingState.narrative || {}),
-      physicalExam: competingNote
+    competingState.oncology = {
+      ...(competingState.oncology || {}),
+      performanceStatus: competingNote
     };
     competingState.meta = {
       ...(competingState.meta || {}),
@@ -997,7 +1236,8 @@ test('edita antecedentes de enfermedad actual con foco contenido, reintento, con
     const final = await workspace.json() as {
       revision: number;
       state?: {
-        narrative?: { currentIllness?: string; physicalExam?: string };
+        narrative?: { currentIllness?: string };
+        oncology?: { performanceStatus?: string };
         meta?: {
           sectionFormModes?: { currentIllness?: string };
           sectionVersions?: {
@@ -1020,7 +1260,7 @@ test('edita antecedentes de enfermedad actual con foco contenido, reintento, con
     };
     expect(final.revision).toBe(body.revision + 3);
     expect(final.state?.narrative?.currentIllness).toBe(changedIllness);
-    expect(final.state?.narrative?.physicalExam).toBe(competingNote);
+    expect(final.state?.oncology?.performanceStatus).toBe(competingNote);
     expect(final.state?.meta?.sectionFormModes?.currentIllness).toBe('structured');
     expect(final.state?.meta?.sectionChangeRequests?.currentIllness).toBeUndefined();
     const versions = final.state?.meta?.sectionVersions?.currentIllness || [];

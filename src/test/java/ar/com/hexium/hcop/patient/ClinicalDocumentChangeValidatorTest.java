@@ -35,6 +35,15 @@ class ClinicalDocumentChangeValidatorTest {
     stored.withObject("/narrative").set(
         "gynecology",
         mapper.createArrayNode().add("legacy"));
+    stored.withObject("/exam").set(
+        "weightKg",
+        mapper.createObjectNode().put("legacy", true));
+    stored.withObject("/exam").set(
+        "heightM",
+        mapper.createArrayNode().add("legacy"));
+    stored.withObject("/narrative").set(
+        "physicalExam",
+        mapper.createObjectNode().put("legacy", true));
     stored.withObject("/narrative").set("summary", mapper.createObjectNode().put("legacy", true));
     stored.withObject("/narrative").set("plan", mapper.createArrayNode().add("legacy"));
 
@@ -84,6 +93,10 @@ class ClinicalDocumentChangeValidatorTest {
         .put("currentMedication", "  ")
         .putNull("familyOncology")
         .put("gynecology", "\n");
+    incoming.withObject("/exam")
+        .put("weightKg", "")
+        .putNull("heightM");
+    incoming.withObject("/narrative").put("physicalExam", "  ");
 
     assertThatCode(() -> validator.validate(incoming, stored))
         .doesNotThrowAnyException();
@@ -144,6 +157,136 @@ class ClinicalDocumentChangeValidatorTest {
           "x".repeat(ClinicalDocumentChangeValidator.MAX_NARRATIVE_FIELD_CHARS + 1));
       assertFailure(oversized, stored, field[1] + "_TOO_LONG");
     }
+  }
+
+  @Test
+  void acceptsPhysicalExamNumericBoundariesAndEquivalentLegacyHeightUnits() {
+    ObjectNode blank = narrative("Resumen", "Plan");
+    ObjectNode minimum = blank.deepCopy();
+    minimum.withObject("/exam").put("weightKg", "0,01").put("heightM", "0.3");
+    assertThatCode(() -> validator.validate(minimum, blank)).doesNotThrowAnyException();
+
+    ObjectNode maximum = blank.deepCopy();
+    maximum.withObject("/exam").put("weightKg", 500).put("heightM", 2.5);
+    assertThatCode(() -> validator.validate(maximum, blank)).doesNotThrowAnyException();
+
+    ObjectNode legacy = narrative("Resumen", "Plan");
+    legacy.withObject("/exam").put("weightKg", 75).put("heightM", "175");
+    ObjectNode equivalent = legacy.deepCopy();
+    equivalent.withObject("/exam").put("weightKg", "75.00").put("heightM", "1.75");
+    assertThatCode(() -> validator.validate(equivalent, legacy)).doesNotThrowAnyException();
+  }
+
+  @Test
+  void rejectsInvalidOrOutOfRangePhysicalExamNumbers() {
+    ObjectNode stored = narrative("Resumen", "Plan");
+
+    assertNumericFailure(
+        stored,
+        "weightKg",
+        "NaN",
+        "CLINICAL_PHYSICAL_EXAM_WEIGHT_INVALID");
+    ObjectNode invalidWeightType = stored.deepCopy();
+    invalidWeightType.withObject("/exam").set("weightKg", mapper.createObjectNode());
+    assertFailure(invalidWeightType, stored, "CLINICAL_PHYSICAL_EXAM_WEIGHT_INVALID");
+    assertNumericFailure(
+        stored,
+        "weightKg",
+        "0.009",
+        "CLINICAL_PHYSICAL_EXAM_WEIGHT_OUT_OF_RANGE");
+    assertNumericFailure(
+        stored,
+        "weightKg",
+        "500.01",
+        "CLINICAL_PHYSICAL_EXAM_WEIGHT_OUT_OF_RANGE");
+
+    assertNumericFailure(
+        stored,
+        "heightM",
+        "Infinity",
+        "CLINICAL_PHYSICAL_EXAM_HEIGHT_INVALID");
+    assertNumericFailure(
+        stored,
+        "heightM",
+        "0.299",
+        "CLINICAL_PHYSICAL_EXAM_HEIGHT_OUT_OF_RANGE");
+    assertNumericFailure(
+        stored,
+        "heightM",
+        "2.501",
+        "CLINICAL_PHYSICAL_EXAM_HEIGHT_OUT_OF_RANGE");
+  }
+
+  @Test
+  void rejectsOmittingRealPhysicalExamValues() {
+    ObjectNode storedWeight = narrative("Resumen", "Plan");
+    storedWeight.withObject("/exam").put("weightKg", "75");
+    assertFailure(
+        narrative("Resumen", "Plan"),
+        storedWeight,
+        "CLINICAL_PHYSICAL_EXAM_WEIGHT_INVALID");
+
+    ObjectNode storedHeight = narrative("Resumen", "Plan");
+    storedHeight.withObject("/exam").put("heightM", "1.75");
+    assertFailure(
+        narrative("Resumen", "Plan"),
+        storedHeight,
+        "CLINICAL_PHYSICAL_EXAM_HEIGHT_INVALID");
+
+    ObjectNode storedText = narrative("Resumen", "Plan");
+    storedText.withObject("/narrative").put("physicalExam", "Afebril");
+    assertFailure(
+        narrative("Resumen", "Plan"),
+        storedText,
+        "CLINICAL_PHYSICAL_EXAM_TEXT_INVALID");
+  }
+
+  @Test
+  void validatesPhysicalExamTextTypeAndLength() {
+    ObjectNode stored = narrative("Resumen", "Plan");
+    stored.withObject("/narrative").put("physicalExam", "Afebril");
+    ObjectNode invalid = stored.deepCopy();
+    invalid.withObject("/narrative").set("physicalExam", mapper.createArrayNode());
+    assertFailure(invalid, stored, "CLINICAL_PHYSICAL_EXAM_TEXT_INVALID");
+
+    ObjectNode oversized = stored.deepCopy();
+    oversized.withObject("/narrative").put(
+        "physicalExam",
+        "x".repeat(ClinicalDocumentChangeValidator.MAX_NARRATIVE_FIELD_CHARS + 1));
+    assertFailure(oversized, stored, "CLINICAL_PHYSICAL_EXAM_TEXT_TOO_LONG");
+  }
+
+  @Test
+  void protectsMalformedLegacyPhysicalExamContainersWithoutBlockingUnrelatedEdits() {
+    ObjectNode storedExamArray = narrative("Resumen", "Plan");
+    storedExamArray.set("exam", mapper.createArrayNode().add("legacy"));
+    storedExamArray.withObject("/narrative").put("physicalExam", "Afebril");
+
+    ObjectNode physicalTextEdit = storedExamArray.deepCopy();
+    physicalTextEdit.withObject("/narrative").put("physicalExam", "Normohidratado");
+    assertFailure(
+        physicalTextEdit,
+        storedExamArray,
+        "CLINICAL_PHYSICAL_EXAM_WEIGHT_INVALID");
+    assertThat(physicalTextEdit.path("exam")).isEqualTo(storedExamArray.path("exam"));
+
+    ObjectNode storedNarrativeString = mapper.createObjectNode();
+    storedNarrativeString.put("narrative", "legacy");
+    storedNarrativeString.withObject("/exam").put("weightKg", "70");
+    ObjectNode anthropometricEdit = storedNarrativeString.deepCopy();
+    anthropometricEdit.withObject("/exam").put("weightKg", "75");
+    assertFailure(
+        anthropometricEdit,
+        storedNarrativeString,
+        "CLINICAL_PHYSICAL_EXAM_TEXT_INVALID");
+    assertThat(anthropometricEdit.path("narrative"))
+        .isEqualTo(storedNarrativeString.path("narrative"));
+
+    ObjectNode unrelatedEdit = storedExamArray.deepCopy();
+    unrelatedEdit.withObject("/oncology").put("status", "En seguimiento");
+    assertThatCode(() -> validator.validate(unrelatedEdit, storedExamArray))
+        .doesNotThrowAnyException();
+    assertThat(unrelatedEdit.path("exam")).isEqualTo(storedExamArray.path("exam"));
   }
 
   @Test
@@ -242,5 +385,15 @@ class ClinicalDocumentChangeValidatorTest {
           assertThat(error.status()).isEqualTo(HttpStatus.BAD_REQUEST);
           assertThat(error.code()).isEqualTo(code);
         });
+  }
+
+  private void assertNumericFailure(
+      ObjectNode stored,
+      String field,
+      String value,
+      String code) {
+    ObjectNode incoming = stored.deepCopy();
+    incoming.withObject("/exam").put(field, value);
+    assertFailure(incoming, stored, code);
   }
 }

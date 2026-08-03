@@ -215,6 +215,46 @@ viaja únicamente en `meta.sectionChangeRequests.personalHistory.reason`.
 reloj y el identificador del servidor. Una forma legacy no textual que no se
 modifica se conserva sin coerción ni bloqueo de otras secciones.
 
+Para **Examen físico**, `PUT /api/hc` trata como una unidad clínica
+`exam.weightKg`, `exam.heightM` y `narrative.physicalExam`. El peso puede ser un
+número o texto decimal en kg. La API persiste la talla en metros, aunque Angular
+la edita entre 30 y 250 cm y la normaliza a una décima antes de convertirla. La
+lectura compatible interpreta una talla histórica mayor a 3 como centímetros.
+
+| Código `400` | Condición |
+|---|---|
+| `CLINICAL_PHYSICAL_EXAM_WEIGHT_INVALID` | El peso nuevo o modificado no es un número finito. |
+| `CLINICAL_PHYSICAL_EXAM_WEIGHT_OUT_OF_RANGE` | El peso nuevo o modificado está fuera de 0,01–500 kg. |
+| `CLINICAL_PHYSICAL_EXAM_HEIGHT_INVALID` | La talla nueva o modificada no es un número finito. |
+| `CLINICAL_PHYSICAL_EXAM_HEIGHT_OUT_OF_RANGE` | `exam.heightM` nuevo o modificado está fuera de 0,3–2,5 m. |
+| `CLINICAL_PHYSICAL_EXAM_TEXT_INVALID` | `narrative.physicalExam` cambió y no es texto. |
+| `CLINICAL_PHYSICAL_EXAM_TEXT_TOO_LONG` | El texto supera 50.000 caracteres. |
+| `CLINICAL_PHYSICAL_EXAM_EMPTY` | La primera carga no contiene peso, talla ni examen libre. |
+| `CLINICAL_PHYSICAL_EXAM_REASON_REQUIRED` | Una modificación no incluye motivo. |
+| `CLINICAL_PHYSICAL_EXAM_REASON_INVALID` | El motivo transitorio no es texto. |
+| `CLINICAL_PHYSICAL_EXAM_REASON_TOO_LONG` | El motivo supera 50.000 caracteres. |
+
+La versión `physicalExam` contiene Peso, Talla en cm y las filas normalizadas
+`Estado general`, `Tórax`, `Corazón`, `Abdomen`, `SNC` y `Tacto rectal` que
+correspondan. El motivo viaja únicamente en
+`meta.sectionChangeRequests.physicalExam.reason`.
+`ClinicalPhysicalExamAuthority` consume ese comando y reconstruye
+`meta.sectionVersions.physicalExam`, `meta.sectionAudit.physicalExam` y
+`meta.sectionFormModes.physicalExam = "structured"` con el principal, el reloj
+y el identificador del servidor. Una medida o forma legacy que no cambia se
+preserva y no bloquea otras ediciones.
+
+Cuando se intenta editar **Examen físico**, un contenedor legacy `exam` que no
+sea objeto produce `CLINICAL_PHYSICAL_EXAM_WEIGHT_INVALID`; un contenedor
+`narrative` que no sea objeto produce `CLINICAL_PHYSICAL_EXAM_TEXT_INVALID`.
+Las escrituras de otras secciones preservan esos contenedores malformados sin
+bloquearse ni coaccionarlos a otra forma.
+
+IMC y Superficie corporal no forman parte del cuerpo persistido. Angular los
+calcula para esta sección; por paridad histórica, la superficie usa Du Bois.
+Prescripción y Calculadoras continúan usando Mosteller hasta que una decisión
+clínica gobierne una eventual unificación.
+
 Para los campos estructurados de **Conclusión / resumen**, `PUT /api/hc`
 compara cada valor entrante contra el documento confirmado. Sólo valida un
 campo cuando realmente cambió, para que una forma legacy atípica no impida

@@ -60,9 +60,15 @@
       <section class="doc-section" [class.clinical-print-empty]="!printHas('studies')"><div class="section-heading"><h3>Estudios complementarios</h3></div>
         @if (records('studies').length) { @for (record of records('studies'); track record.id ?? $index) { <article class="doc-entry flush-entry study-entry" [attr.data-clinical-date]="record.date"><p><strong>{{ studyHeading(record) }}</strong></p>@if (recordBody(record)) { <p>{{ recordBody(record) }}</p> }</article> } } @else { <p class="section-free-text">Sin estudios complementarios cargados.</p> }
       </section>
-      <section class="doc-section" [class.clinical-print-empty]="!printHas('physicalExam')"><div class="section-heading"><h3>Examen físico</h3></div>
-        @if (exam('weightKg') || exam('heightM')) { <div class="inline-facts">@if (exam('weightKg')) { <span><strong>Peso:</strong> {{ exam('weightKg') }} kg</span> }@if (exam('heightM')) { <span><strong>Talla:</strong> {{ exam('heightM') }} cm</span> }</div> }
-        <p class="section-free-text">{{ narrative('physicalExam') || 'Sin examen físico cargado.' }}</p>
+      <section class="doc-section" [class.clinical-print-empty]="!printHas('physicalExam')">
+        <div class="section-heading"><h3>Examen físico</h3>@if (canEditPhysicalExam() && physicalExamHasContent()) { <div class="section-actions"><button class="section-action-button" type="button" title="Modificar sección" aria-label="Modificar sección Examen físico" [disabled]="workspaceService.hasPendingClinicalWork()" (click)="openPhysicalExamEditor($event)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div> }</div>
+        @if (physicalExamLegacyText()) { <p class="section-free-text">{{ physicalExamLegacyText() }}</p> }
+        @else if (physicalExamHasContent()) {
+          @if (exam('weightKg') || physicalExamHeightCm()) { <div class="inline-facts">@if (exam('weightKg')) { <span><strong>Peso:</strong> {{ exam('weightKg') }} kg</span> }@if (physicalExamHeightCm()) { <span><strong>Talla:</strong> {{ physicalExamHeightCm() }} cm</span> }@if (physicalExamStoredBmi()) { <span><strong>IMC:</strong> {{ physicalExamStoredBmi() }}</span> }@if (physicalExamStoredBodySurface()) { <span><strong>Superficie corporal:</strong> {{ physicalExamStoredBodySurface() }}</span> }</div> }
+          @for (row of physicalExamPresentationRows(); track $index) { <p class="physical-exam-line"><strong>{{ row.label }}:</strong> {{ row.text }}</p> }
+        }
+        @else if (canEditPhysicalExam()) { <div class="clinical-section-empty"><span>Sin examen físico cargado.</span><button class="ghost-button" type="button" [attr.aria-label]="physicalExamIsInitial() ? 'Cargar examen físico' : 'Modificar examen físico'" [disabled]="workspaceService.hasPendingClinicalWork()" (click)="openPhysicalExamEditor($event)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>{{ physicalExamIsInitial() ? 'Cargar' : 'Modificar' }}</span></button></div> }
+        @else { <p class="section-free-text">Sin examen físico cargado.</p> }
       </section>
       <section class="doc-section" [class.clinical-print-empty]="!printHas('systemic')"><div class="section-heading"><h3>Tratamientos sistémicos</h3></div>
         @if (treatmentRecords('systemic').length) { @for (record of treatmentRecords('systemic'); track record.id ?? $index) { <article class="doc-entry treatment-entry" [attr.data-clinical-date]="record.date"><p><strong>{{ treatmentHeading(record) }}</strong> {{ treatmentBody(record) }}</p></article> } } @else { <p class="section-free-text">Sin tratamientos sistémicos registrados.</p> }
@@ -148,6 +154,37 @@
           </div>
         </div>
         <footer class="modal-actions"><button class="tool-button" type="button" [disabled]="personalHistoryBusy()" (click)="closePersonalHistoryEditor()"><span>Cancelar</span></button><button class="tool-button primary" type="button" [disabled]="personalHistoryBusy()" (click)="savePersonalHistory()"><span>{{ personalHistoryBusy() ? 'Guardando…' : personalHistoryInitial() ? 'Cargar en historia' : 'Guardar modificación' }}</span></button></footer>
+      </section>
+    </div>
+  }
+
+  @if (physicalExamOpen()) {
+    <div class="modal-backdrop summary-plan-editor-backdrop physical-exam-editor-backdrop open" aria-hidden="false">
+      <section class="modal-card section-modal-card summary-plan-editor-modal" role="dialog" aria-modal="true" aria-labelledby="physicalExamEditorTitle" aria-describedby="physicalExamEditorDescription" tabindex="-1" (keydown)="trapSummaryPlanFocus($event)">
+        <header class="modal-header">
+          <div><span class="sheet-kicker">{{ physicalExamInitial() ? 'Cargar sección' : 'Modificar sección' }}</span><h2 id="physicalExamEditorTitle">Examen físico</h2><p id="physicalExamEditorDescription">Registre las medidas en kilogramos y centímetros. El sistema calcula IMC y superficie corporal sin modificar los datos clínicos.</p></div>
+          <button class="icon-button" type="button" title="Cerrar" aria-label="Cerrar editor de examen físico" [disabled]="physicalExamBusy()" (click)="closePhysicalExamEditor()">×</button>
+        </header>
+        <div class="modal-body summary-plan-editor-body">
+          <div class="section-structured-editor">
+            <p class="section-structured-intro">Registre medidas antropométricas y el examen físico de ingreso.</p>
+            <div class="section-structured-fields">
+              <label class="section-structured-field" for="physicalExamWeight"><span>Peso (kg)</span><input id="physicalExamWeight" type="number" inputmode="decimal" [min]="physicalExamWeightMin" [max]="physicalExamWeightMax" step="0.01" [formControl]="physicalExamWeightControl" [disabled]="physicalExamBusy()" [attr.aria-invalid]="physicalExamErrorTarget() === 'weightKg' ? 'true' : null" [attr.aria-describedby]="physicalExamErrorTarget() === 'weightKg' ? 'physicalExamEditorError' : null"></label>
+              <label class="section-structured-field" for="physicalExamHeight"><span>Talla (cm)</span><input id="physicalExamHeight" type="number" inputmode="decimal" [min]="physicalExamHeightMin" [max]="physicalExamHeightMax" step="0.1" [formControl]="physicalExamHeightControl" [disabled]="physicalExamBusy()" [attr.aria-invalid]="physicalExamErrorTarget() === 'heightCm' ? 'true' : null" [attr.aria-describedby]="physicalExamErrorTarget() === 'heightCm' ? 'physicalExamEditorError' : null"></label>
+              <label class="section-structured-field is-wide" for="physicalExamText"><span>Examen físico</span><textarea id="physicalExamText" aria-label="Examen físico" rows="8" [formControl]="physicalExamTextControl" [maxlength]="maxPhysicalExamChars" [disabled]="physicalExamBusy()" [attr.aria-invalid]="physicalExamErrorTarget() === 'physicalExam' ? 'true' : null" [attr.aria-describedby]="physicalExamErrorTarget() === 'physicalExam' ? 'physicalExamEditorError' : null"></textarea><small>{{ physicalExamCount() }} / {{ maxPhysicalExamChars }}</small></label>
+              <div class="section-exam-tools is-wide">
+                <div class="section-exam-metrics" aria-live="polite"><span><small>IMC</small><strong>{{ physicalExamBmi() }}</strong></span><span><small>Superficie corporal</small><strong>{{ physicalExamBodySurface() }}</strong></span></div>
+                <button class="ghost-button" type="button" [disabled]="physicalExamBusy()" (click)="prefillPhysicalExam()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11l3 3L22 4M16 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Usar examen físico habitual</span></button>
+              </div>
+            </div>
+            @if (!physicalExamInitial()) {
+              <label class="section-structured-field section-edit-reason" for="physicalExamReason"><span>Motivo de la modificación</span><input id="physicalExamReason" aria-label="Motivo de la modificación" autocomplete="off" [maxlength]="maxPhysicalExamChars" [formControl]="physicalExamReasonControl" [disabled]="physicalExamBusy()" [attr.aria-invalid]="physicalExamErrorTarget() === 'reason' ? 'true' : null" [attr.aria-describedby]="physicalExamErrorTarget() === 'reason' ? 'physicalExamEditorError' : null" placeholder="Explique brevemente por qué se modifica esta sección"><small>Obligatorio para conservar una trazabilidad clínica comprensible.</small></label>
+            }
+            @if (physicalExamInitial()) { <p class="summary-plan-editor-note">Esta es la carga inicial de la sección. Debe completar al menos uno de los tres campos.</p> }
+            @if (physicalExamError()) { <p class="summary-plan-editor-error" id="physicalExamEditorError" role="alert">{{ physicalExamError() }}</p> }
+          </div>
+        </div>
+        <footer class="modal-actions"><button class="tool-button" type="button" [disabled]="physicalExamBusy()" (click)="closePhysicalExamEditor()"><span>Cancelar</span></button><button class="tool-button primary" type="button" [disabled]="physicalExamBusy()" (click)="savePhysicalExam()"><span>{{ physicalExamBusy() ? 'Guardando…' : physicalExamInitial() ? 'Cargar en historia' : 'Guardar modificación' }}</span></button></footer>
       </section>
     </div>
   }

@@ -28,7 +28,7 @@ import tools.jackson.databind.node.ObjectNode;
 class ClinicalDocumentControllerPermissionTest {
 
   @Test
-  void conservaConstructoresCompatiblesAlAgregarLaAutoridadDeAntecedentesPersonales() {
+  void conservaConstructoresCompatiblesAlAgregarAutoridadesEstructuradas() {
     PatientDocumentService documents = mock(PatientDocumentService.class);
     AuthContext auth = mock(AuthContext.class);
     ObjectMapper mapper = new ObjectMapper();
@@ -38,6 +38,7 @@ class ClinicalDocumentControllerPermissionTest {
     ClinicalSummaryPlanAuthority summary = new ClinicalSummaryPlanAuthority(mapper, clock);
     ClinicalChiefComplaintAuthority chief = new ClinicalChiefComplaintAuthority(mapper, clock);
     ClinicalCurrentIllnessAuthority illness = new ClinicalCurrentIllnessAuthority(mapper, clock);
+    ClinicalPersonalHistoryAuthority personal = new ClinicalPersonalHistoryAuthority(mapper, clock);
 
     assertThatCode(() -> new ClinicalDocumentController(
         documents, auth, accessPolicy, validator, summary))
@@ -47,6 +48,9 @@ class ClinicalDocumentControllerPermissionTest {
         .doesNotThrowAnyException();
     assertThatCode(() -> new ClinicalDocumentController(
         documents, auth, accessPolicy, validator, summary, chief, illness))
+        .doesNotThrowAnyException();
+    assertThatCode(() -> new ClinicalDocumentController(
+        documents, auth, accessPolicy, validator, summary, chief, illness, personal))
         .doesNotThrowAnyException();
   }
 

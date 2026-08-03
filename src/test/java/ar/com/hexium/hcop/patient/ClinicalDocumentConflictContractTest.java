@@ -57,7 +57,8 @@ class ClinicalDocumentConflictContractTest {
         new ClinicalSummaryPlanAuthority(mapper, clock),
         new ClinicalChiefComplaintAuthority(mapper, clock),
         new ClinicalCurrentIllnessAuthority(mapper, clock),
-        new ClinicalPersonalHistoryAuthority(mapper, clock));
+        new ClinicalPersonalHistoryAuthority(mapper, clock),
+        new ClinicalPhysicalExamAuthority(mapper, clock));
     mvc = MockMvcBuilders.standaloneSetup(controller)
         .setControllerAdvice(new ApiExceptionHandler())
         .build();
@@ -411,6 +412,113 @@ class ClinicalDocumentConflictContractTest {
         }),
         eq(3L),
         eq(7L));
+  }
+
+  @Test
+  void canonizaExamenFisicoConTallaEnMetrosYSnapshotEnCentimetros() throws Exception {
+    when(auth.require(any(HttpServletRequest.class))).thenReturn(principal(42L));
+    JsonNode storedDocument = mapper.readTree("""
+        {
+          "exam": {"weightKg": "70", "heightM": "1.7"},
+          "narrative": {"physicalExam": "Afebril"},
+          "meta": {"sectionVersions": {"physicalExam": [{
+            "id": "trusted-initial",
+            "content": "Peso: 70 kg\\nTalla: 170 cm\\nEstado general: Afebril",
+            "reason": "Carga inicial",
+            "audit": {"action": "cargado", "lastName": "Profesional previo", "license": "MP-1", "at": "2026-07-01T10:00:00Z"}
+          }]}}
+        }
+        """);
+    when(repository.find(42L)).thenReturn(Optional.of(stored(42L, storedDocument, 3L)));
+    when(repository.update(eq(42L), any(JsonNode.class), eq(3L), eq(7L)))
+        .thenAnswer(invocation -> Optional.of(stored(
+            42L,
+            ((JsonNode) invocation.getArgument(1)).deepCopy(),
+            4L)));
+
+    mvc.perform(put("/api/hc")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""
+                {
+                  "meta": {
+                    "persistenceRevision": 3,
+                    "sectionVersions": {"physicalExam": [{"id": "forged"}]},
+                    "sectionAudit": {"physicalExam": {"lastName": "forged"}},
+                    "sectionChangeRequests": {
+                      "physicalExam": {"reason": "Control previo al tratamiento"}
+                    }
+                  },
+                  "exam": {"weightKg": "75", "heightM": "1.75"},
+                  "narrative": {
+                    "physicalExam": "Buen estado. Tórax: MV conservado. Abdomen: blando."
+                  }
+                }
+                """))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.ok").value(true))
+        .andExpect(jsonPath("$.state.meta.persistenceRevision").value(4))
+        .andExpect(jsonPath("$.state.exam.weightKg").value("75"))
+        .andExpect(jsonPath("$.state.exam.heightM").value("1.75"))
+        .andExpect(jsonPath("$.state.meta.sectionVersions.physicalExam.length()").value(2))
+        .andExpect(jsonPath("$.state.meta.sectionVersions.physicalExam[0].id")
+            .value("trusted-initial"))
+        .andExpect(jsonPath("$.state.meta.sectionVersions.physicalExam[1].id")
+            .value(org.hamcrest.Matchers.startsWith("sec-physicalExam-")))
+        .andExpect(jsonPath("$.state.meta.sectionVersions.physicalExam[1].reason")
+            .value("Control previo al tratamiento"))
+        .andExpect(jsonPath("$.state.meta.sectionVersions.physicalExam[1].content")
+            .value("""
+                Peso: 75 kg
+                Talla: 175 cm
+                Estado general: Buen estado.
+                Tórax: MV conservado.
+                Abdomen: blando."""))
+        .andExpect(jsonPath("$.state.meta.sectionVersions.physicalExam[1].createdAt")
+            .value("2026-08-02T16:00:00Z"))
+        .andExpect(jsonPath("$.state.meta.sectionChangeRequests").doesNotExist());
+
+    verify(repository).update(
+        eq(42L),
+        argThat(document -> {
+          JsonNode versions = document.path("meta").path("sectionVersions")
+              .path("physicalExam");
+          return versions.size() == 2
+              && "trusted-initial".equals(versions.get(0).path("id").asText())
+              && !"forged".equals(versions.get(1).path("id").asText());
+        }),
+        eq(3L),
+        eq(7L));
+  }
+
+  @Test
+  void rechazaEditarExamenFisicoSiElContenedorLegacyNoEsUnObjeto() throws Exception {
+    when(auth.require(any(HttpServletRequest.class))).thenReturn(principal(42L));
+    JsonNode storedDocument = mapper.readTree("""
+        {
+          "exam": ["legacy"],
+          "narrative": {"physicalExam": "Afebril"}
+        }
+        """);
+    when(repository.find(42L)).thenReturn(Optional.of(stored(42L, storedDocument, 3L)));
+
+    mvc.perform(put("/api/hc")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""
+                {
+                  "meta": {
+                    "persistenceRevision": 3,
+                    "sectionChangeRequests": {
+                      "physicalExam": {"reason": "Control clínico"}
+                    }
+                  },
+                  "exam": ["legacy"],
+                  "narrative": {"physicalExam": "Normohidratado"}
+                }
+                """))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("CLINICAL_PHYSICAL_EXAM_WEIGHT_INVALID"));
+
+    verify(repository, never()).update(anyLong(), any(JsonNode.class), anyLong(), anyLong());
   }
 
   @Test

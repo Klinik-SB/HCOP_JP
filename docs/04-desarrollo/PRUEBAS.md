@@ -47,11 +47,17 @@ npm run build
 
 La suite pura cubre proyecciones, normalización del workspace, edición
 estructurada de Motivo de consulta, Antecedentes de enfermedad actual,
-Antecedentes personales y Conclusión / resumen, registro de borradores sin
-contenido clínico, códigos de conflicto y comparación de revisiones. El helper
-de Antecedentes personales contiene 14 casos y 104 aserciones sobre sus cuatro
-campos, instantáneas, compatibilidad y límites. La compilación usa la
-configuración de producción y aplica sus presupuestos de tamaño.
+Antecedentes personales, Examen físico y Conclusión / resumen, registro de
+borradores sin contenido clínico, códigos de conflicto y comparación de
+revisiones. El helper de Antecedentes personales contiene 14 casos y 104
+aserciones sobre sus cuatro campos, instantáneas, compatibilidad y límites. El
+helper de Examen físico agrega unidades, rangos, talla histórica en metros o
+centímetros, filas normalizadas y métricas Du Bois: cerró con **14 casos y 83
+aserciones aprobadas**. La proyección de impresión cerró con **6 casos y 28
+aserciones aprobadas**. El recorrido Angular comprueba además que la plantilla
+nunca sobrescriba texto. La compilación de producción generó un bundle de
+**815.85 kB**: advierte por superar el presupuesto preventivo de **750 kB**, pero
+permanece por debajo del límite que hace fallar la compilación.
 
 Las pruebas Java de `ClinicalChiefComplaintAuthority`,
 `ClinicalCurrentIllnessAuthority` y `ClinicalSummaryPlanAuthority` demuestran
@@ -92,6 +98,16 @@ El corte 037 agrega el formulario Angular nativo en dos columnas de
 El arnés Docker aprobó los cinco recorridos Playwright, incluido el nuevo
 conflicto concurrente, y eliminó luego pacientes, contenedores, redes y
 volúmenes sintéticos.
+
+El corte 038 agrega **Examen físico** con Peso, Talla en cm, texto clínico,
+plantilla optativa, IMC y Superficie corporal. La validación focal de autoridad
+Java, validator, contrato MVC, permisos y OpenAPI aprobó **81/81 pruebas**. El
+arnés Docker/Playwright aprobó **6/6 escenarios** y verificó que
+`exam.heightM` vuelva a PostgreSQL en metros, que la presentación tolere
+historias antiguas en cm, que Angular y Java produzcan las mismas filas e
+instantáneas y que la plantilla no sobrescriba texto. Al finalizar eliminó los
+pacientes sintéticos, contenedores, redes y volúmenes; el corte quedó validado
+localmente y no fue publicado.
 
 En la aceptación final del 30/07/2026, la suite Java terminó con **101/101
 pruebas aprobadas**. El E2E utilizó una aplicación de cuatro drogas, interrumpió

@@ -145,6 +145,9 @@ configuración institucional y cerrar la paridad visual/E2E integrada.
 - [Corte Angular 037](CORTE-ANGULAR-037-EDITOR-ANTECEDENTES-PERSONALES.md):
   Antecedentes personales con formulario Angular nativo de cuatro campos,
   instantánea ordenada y autoridad Java sobre una única cadena de versiones.
+- [Corte Angular 038](CORTE-ANGULAR-038-EDITOR-EXAMEN-FISICO.md): Examen físico
+  con Peso, Talla en cm, texto libre, métricas Du Bois, plantilla opcional y
+  autoridad Java sobre sus unidades e historial.
 
 ## Ciclo obligatorio por capacidad
 

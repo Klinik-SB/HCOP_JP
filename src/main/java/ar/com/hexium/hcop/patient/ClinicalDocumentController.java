@@ -30,6 +30,7 @@ public class ClinicalDocumentController {
   private final ClinicalChiefComplaintAuthority chiefComplaintAuthority;
   private final ClinicalCurrentIllnessAuthority currentIllnessAuthority;
   private final ClinicalPersonalHistoryAuthority personalHistoryAuthority;
+  private final ClinicalPhysicalExamAuthority physicalExamAuthority;
 
   @Autowired
   public ClinicalDocumentController(
@@ -40,7 +41,8 @@ public class ClinicalDocumentController {
       ClinicalSummaryPlanAuthority summaryPlanAuthority,
       ClinicalChiefComplaintAuthority chiefComplaintAuthority,
       ClinicalCurrentIllnessAuthority currentIllnessAuthority,
-      ClinicalPersonalHistoryAuthority personalHistoryAuthority) {
+      ClinicalPersonalHistoryAuthority personalHistoryAuthority,
+      ClinicalPhysicalExamAuthority physicalExamAuthority) {
     this.documents = documents;
     this.auth = auth;
     this.accessPolicy = accessPolicy;
@@ -49,6 +51,29 @@ public class ClinicalDocumentController {
     this.chiefComplaintAuthority = chiefComplaintAuthority;
     this.currentIllnessAuthority = currentIllnessAuthority;
     this.personalHistoryAuthority = personalHistoryAuthority;
+    this.physicalExamAuthority = physicalExamAuthority;
+  }
+
+  /** Backward-compatible constructor retained for focused controller tests. */
+  public ClinicalDocumentController(
+      PatientDocumentService documents,
+      AuthContext auth,
+      ClinicalDocumentAccessPolicy accessPolicy,
+      ClinicalDocumentChangeValidator changeValidator,
+      ClinicalSummaryPlanAuthority summaryPlanAuthority,
+      ClinicalChiefComplaintAuthority chiefComplaintAuthority,
+      ClinicalCurrentIllnessAuthority currentIllnessAuthority,
+      ClinicalPersonalHistoryAuthority personalHistoryAuthority) {
+    this(
+        documents,
+        auth,
+        accessPolicy,
+        changeValidator,
+        summaryPlanAuthority,
+        chiefComplaintAuthority,
+        currentIllnessAuthority,
+        personalHistoryAuthority,
+        null);
   }
 
   /** Backward-compatible constructor retained for focused controller tests. */
@@ -68,6 +93,7 @@ public class ClinicalDocumentController {
         summaryPlanAuthority,
         chiefComplaintAuthority,
         currentIllnessAuthority,
+        null,
         null);
   }
 
@@ -87,6 +113,7 @@ public class ClinicalDocumentController {
         summaryPlanAuthority,
         chiefComplaintAuthority,
         null,
+        null,
         null);
   }
 
@@ -97,7 +124,16 @@ public class ClinicalDocumentController {
       ClinicalDocumentAccessPolicy accessPolicy,
       ClinicalDocumentChangeValidator changeValidator,
       ClinicalSummaryPlanAuthority summaryPlanAuthority) {
-    this(documents, auth, accessPolicy, changeValidator, summaryPlanAuthority, null, null, null);
+    this(
+        documents,
+        auth,
+        accessPolicy,
+        changeValidator,
+        summaryPlanAuthority,
+        null,
+        null,
+        null,
+        null);
   }
 
   @GetMapping
@@ -151,6 +187,12 @@ public class ClinicalDocumentController {
     }
     if (personalHistoryAuthority != null) {
       stateToSave = personalHistoryAuthority.canonicalize(
+          stateToSave,
+          current.document(),
+          principal);
+    }
+    if (physicalExamAuthority != null) {
+      stateToSave = physicalExamAuthority.canonicalize(
           stateToSave,
           current.document(),
           principal);
