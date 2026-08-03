@@ -86,7 +86,8 @@ jobs:
     if: >-
       (github.event_name == 'push' &&
         (github.ref == 'refs/heads/main' ||
-         github.ref == 'refs/heads/codex/angular-hexagonal-migration')) ||
+         github.ref == 'refs/heads/codex/angular-hexagonal-migration' ||
+         github.ref == 'refs/heads/codex/angular-full-parity-v2')) ||
       (github.event_name == 'workflow_dispatch' && inputs.publish_image)
     needs: [launcher, java, docker]
     runs-on: ubuntu-latest
@@ -108,6 +109,7 @@ jobs:
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=raw,value=angular-hexagonal-migration,enable=${{ github.ref == 'refs/heads/codex/angular-hexagonal-migration' }}
+            type=raw,value=angular-full-parity-v2,enable=${{ github.ref == 'refs/heads/codex/angular-full-parity-v2' }}
             type=sha,prefix=sha-
       - uses: docker/build-push-action@v6
         with:

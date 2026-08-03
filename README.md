@@ -1,10 +1,10 @@
 # HCOP JP
 
-> **Rama de migración:** `codex/angular-hexagonal-migration` es un canal de
-> prueba aislado. Conserva la interfaz clínica vigente mientras traslada el
-> backend por capacidades a una arquitectura hexagonal y estabiliza los
-> contratos que consumirá Angular. La versión estable continúa en `main`, con
-> la imagen `latest`, el puerto 5180 y sus volúmenes habituales.
+> **Rama Angular de paridad completa:** `codex/angular-full-parity-v2` es un
+> canal de prueba aislado. Angular gobierna el frontend real y conserva la
+> lógica clínica y la identidad visual verificadas contra la línea base. La
+> versión estable continúa en `main`, con la imagen `latest`, el puerto 5180 y
+> sus volúmenes habituales.
 
 HCOP JP reúne en un único sistema la historia clínica oncológica, diagnósticos,
 prescripciones, protocolos, farmacia, Hospital de Día, turnero por sillón,
@@ -24,13 +24,14 @@ Lira, Node.js ni MySQL para funcionar.
 Con Docker Desktop iniciado, copie esta línea completa en Windows PowerShell:
 
 ```powershell
-$hcopScript = Join-Path $env:TEMP "EJECUTAR-DOCKER-DESDE-GITHUB.ps1"; Invoke-WebRequest "https://raw.githubusercontent.com/Marcolyto/HCOP_JP/codex/angular-hexagonal-migration/EJECUTAR-DOCKER-DESDE-GITHUB.ps1" -OutFile $hcopScript; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $hcopScript -Channel Migration
+$hcopScript = Join-Path $env:TEMP "EJECUTAR-DOCKER-DESDE-GITHUB.ps1"; Invoke-WebRequest "https://raw.githubusercontent.com/Marcolyto/HCOP_JP/codex/angular-full-parity-v2/EJECUTAR-DOCKER-DESDE-GITHUB.ps1" -OutFile $hcopScript; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $hcopScript -Channel Migration
 ```
 
-La prueba abre <http://localhost:5181> y utiliza la imagen
-`ghcr.io/marcolyto/hcop_jp:angular-hexagonal-migration`, una base
-`hcop_ajp` y volúmenes `hcop_ajp_*`. Puede convivir con la versión estable:
-no modifica su imagen `latest`, su puerto 5180 ni sus datos.
+En el primer inicio el lanzador solicita puerto, usuario administrador y
+contraseña. Después abre `http://localhost:<puerto-elegido>` y utiliza la imagen
+`ghcr.io/marcolyto/hcop_jp:angular-full-parity-v2`, una base `hcop_ahjp` y
+volúmenes `hcop_ahjp_*`. Puede convivir con la versión estable y con el canal
+migratorio anterior: no modifica sus imágenes, configuraciones ni datos.
 
 La guía [Probar la rama Angular/hexagonal](docs/00-inicio/PRUEBA-RAMA-ANGULAR-HEXAGONAL.md)
 incluye inicio, actualización, estado, detención y límites actuales.
@@ -48,8 +49,8 @@ lo ejecuta; no canaliza código de Internet directamente al intérprete:
 $hcopScript = Join-Path $env:TEMP "EJECUTAR-DOCKER-DESDE-GITHUB.ps1"; Invoke-WebRequest "https://raw.githubusercontent.com/Marcolyto/HCOP_JP/main/EJECUTAR-DOCKER-DESDE-GITHUB.ps1" -OutFile $hcopScript; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $hcopScript
 ```
 
-En la primera ejecución solicita las credenciales iniciales sin mostrarlas,
-genera los demás secretos una sola vez y guarda todo en
+En la primera ejecución solicita puerto, usuario administrador y contraseña;
+la contraseña no se muestra. Genera los demás secretos una sola vez y guarda todo en
 `%LOCALAPPDATA%\HCOP_JP-Docker`. Los datos clínicos quedan en volúmenes Docker
 persistentes. El repositorio y la imagen Docker publicados son públicos, por lo
 que esta modalidad no requiere autenticación en GitHub.
@@ -76,7 +77,7 @@ instalar Docker Desktop.
 3. Acepte la instalación de Docker Desktop si Windows la solicita.
 4. Elija usuario, contraseña y puerto o presione Enter para usar los valores
    sugeridos.
-5. El instalador abre `http://localhost:5180`.
+5. El instalador abre `http://localhost:<puerto-elegido>`.
 
 El repositorio y la imagen Docker publicados son públicos. La instalación no
 requiere iniciar sesión en GitHub, GitHub CLI ni tokens personales.
@@ -90,16 +91,16 @@ la base de datos y abre el sistema.
 
 ## Ejecutar desde GitHub si ya tiene Docker
 
-Use `EJECUTAR-DOCKER-DESDE-GITHUB.ps1`. El lanzador solicita la contraseña
-inicial, genera los demás secretos, descarga las imágenes publicadas y conserva
-los datos en volúmenes Docker locales. El proyecto no incluye una contraseña
-predeterminada.
+Use `EJECUTAR-DOCKER-DESDE-GITHUB.ps1`. En el primer inicio el lanzador solicita
+puerto, usuario administrador y contraseña, genera los demás secretos, descarga
+las imágenes publicadas y conserva los datos en volúmenes Docker locales. El
+proyecto no incluye una contraseña predeterminada.
 
 Luego abra:
 
-- Aplicación: <http://localhost:5180>
-- Swagger: <http://localhost:5180/swagger-ui.html>
-- Salud: <http://localhost:5180/actuator/health>
+- Aplicación: `http://localhost:<puerto-elegido>`
+- Swagger: `http://localhost:<puerto-elegido>/swagger-ui.html`
+- Salud: `http://localhost:<puerto-elegido>/actuator/health`
 
 El usuario sugerido es `marcolyto`; la contraseña inicial siempre debe ser
 elegida durante la instalación y debe tener al menos 10 caracteres.
@@ -111,10 +112,9 @@ HCOP JP evoluciona como monolito modular hexagonal, con migración incremental:
 - cada capacidad migrada separa `domain`, `application` e `infrastructure`;
 - los puertos de entrada expresan casos de uso y los de salida aíslan
   persistencia, archivos y catálogos;
-- los módulos todavía no migrados conservan su estructura MVC mientras se
-  verifica la paridad;
-- `static` mantiene temporalmente la interfaz vigente;
-- Angular se incorporará por recorridos completos, sin una reescritura masiva;
+- Angular gobierna el frontend productivo de esta rama, sin iframe ni delegación
+  de la interfaz al JavaScript anterior;
+- la paridad visual y funcional se verifica por recorridos clínicos completos;
 - `db/migration` conserva la evolución reproducible de PostgreSQL mediante
   Flyway.
 

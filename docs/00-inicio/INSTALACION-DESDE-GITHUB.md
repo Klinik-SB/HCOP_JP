@@ -24,8 +24,8 @@ El ejecutor:
 - usa `ghcr.io/marcolyto/hcop_jp:latest` y `postgres:18.4-alpine`;
 - guarda `compose.yaml`, `.env` y registros en
   `%LOCALAPPDATA%\HCOP_JP-Docker`;
-- solicita y confirma la contraseña inicial sin mostrarla; exige al menos 10
-  caracteres;
+- solicita puerto, usuario administrador y contraseña inicial; confirma la
+  contraseña sin mostrarla y exige al menos 10 caracteres;
 - genera los secretos internos una sola vez y nunca los rota al reiniciar o
   actualizar;
 - detecta una contraseña inicial antigua de menos de 10 caracteres y permite
@@ -35,7 +35,8 @@ El ejecutor:
 - en el inicio usa las imágenes locales y sólo descarga si todavía falta alguna;
 - en la actualización descarga explícitamente `latest`;
 - espera la salud de PostgreSQL y HCOP JP;
-- abre <http://localhost:5180> únicamente cuando la aplicación está lista;
+- abre `http://localhost:<puerto-elegido>` únicamente cuando la aplicación está
+  lista;
 - conserva pacientes y documentos en los volúmenes `hcop_jp_postgres` y
   `hcop_jp_storage`.
 
@@ -250,9 +251,10 @@ La rama migratoria tiene un canal Docker propio para poder evaluarla sin
 actualizar la instalación estable:
 
 ```powershell
-$hcopScript = Join-Path $env:TEMP "EJECUTAR-DOCKER-DESDE-GITHUB.ps1"; Invoke-WebRequest "https://raw.githubusercontent.com/Marcolyto/HCOP_JP/codex/angular-hexagonal-migration/EJECUTAR-DOCKER-DESDE-GITHUB.ps1" -OutFile $hcopScript; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $hcopScript -Channel Migration
+$hcopScript = Join-Path $env:TEMP "EJECUTAR-DOCKER-DESDE-GITHUB.ps1"; Invoke-WebRequest "https://raw.githubusercontent.com/Marcolyto/HCOP_JP/codex/angular-full-parity-v2/EJECUTAR-DOCKER-DESDE-GITHUB.ps1" -OutFile $hcopScript; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $hcopScript -Channel Migration
 ```
 
-Se abre en <http://localhost:5181> y usa base, archivos e imagen independientes.
-La explicación completa está en
+El primer inicio solicita puerto, usuario y contraseña. Después se abre
+`http://localhost:<puerto-elegido>` y se usan base, archivos e imagen
+independientes. La explicación completa está en
 [Probar la rama Angular y hexagonal](PRUEBA-RAMA-ANGULAR-HEXAGONAL.md).

@@ -14,12 +14,18 @@ if ($parseErrors.Count -gt 0) {
 }
 
 foreach ($name in @(
+  "Write-Ok",
   "Write-Info",
+  "Write-Warn",
   "Write-AtomicUtf8",
+  "New-RandomHex",
   "ConvertTo-EnvLiteral",
   "ConvertFrom-EnvLiteral",
+  "Read-InitialPort",
+  "New-InitialEnvironmentContent",
   "Get-EnvironmentValues",
   "Set-EnvironmentValue",
+  "Ensure-Environment",
   "ConvertTo-ProcessArgument",
   "Invoke-ProcessWithInput",
   "Invoke-NativeCapture",
@@ -86,6 +92,31 @@ if ($decodedSecret -ne $sampleSecret) {
   throw "La codificación de secretos de .env no conserva barras y comillas."
 }
 
+$script:DefaultHostPort = 5181
+$script:PortAnswers = [Collections.Generic.Queue[string]]::new()
+$script:PortAnswers.Enqueue("")
+function Read-Host {
+  param([string]$Prompt)
+  if ($script:PortAnswers.Count -eq 0) {
+    throw "La prueba agotó las respuestas simuladas para Read-Host."
+  }
+  return $script:PortAnswers.Dequeue()
+}
+$defaultPort = Read-InitialPort
+if ($defaultPort -ne 5181) {
+  throw "El puerto vacío no seleccionó el valor predeterminado del canal."
+}
+
+$script:PortAnswers.Enqueue("0")
+$script:PortAnswers.Enqueue("65536")
+$script:PortAnswers.Enqueue("no-es-puerto")
+$script:PortAnswers.Enqueue("6123")
+$selectedPort = Read-InitialPort
+if ($selectedPort -ne 6123) {
+  throw "La selección de puerto no rechazó valores fuera de 1..65535."
+}
+Remove-Item Function:\Read-Host -Force
+
 $environmentTestRoot = Join-Path `
   ([IO.Path]::GetTempPath()) `
   ("hcop-launcher-env-test-" + [guid]::NewGuid().ToString("N"))
@@ -113,6 +144,60 @@ try {
   if ($afterRepair["HCOP_PORT"] -ne "5180") {
     throw "La reparación alteró otra variable del archivo .env."
   }
+
+  $script:DatabaseName = "hcop_ahjp"
+  $generatedEnvironmentPath = Join-Path $environmentTestRoot "generated.env"
+  $generatedEnvironment = New-InitialEnvironmentContent `
+    "admin_prueba" `
+    "clave-prueba-segura" `
+    6123
+  [IO.File]::WriteAllText(
+    $generatedEnvironmentPath,
+    $generatedEnvironment,
+    (New-Object Text.UTF8Encoding($false)))
+  $generatedValues = Get-EnvironmentValues $generatedEnvironmentPath
+  if ($generatedValues["HCOP_PORT"] -ne "6123" -or
+      $generatedValues["HCOP_PUBLIC_BASE_URL"] -ne "http://localhost:6123") {
+    throw "El puerto elegido no se aplicó a HCOP_PORT y HCOP_PUBLIC_BASE_URL."
+  }
+  if ($generatedValues["HCOP_BOOTSTRAP_USERNAME"] -ne "admin_prueba" -or
+      $generatedValues["HCOP_BOOTSTRAP_PASSWORD"] -ne "clave-prueba-segura") {
+    throw "La configuración inicial no conservó las credenciales elegidas."
+  }
+
+  $existingEnvironmentPath = Join-Path $environmentTestRoot "existing.env"
+  $existingEnvironment = @(
+    "HCOP_PORT=6199",
+    "HCOP_DB_NAME=hcop_ahjp",
+    "HCOP_DB_USER=hcop",
+    "HCOP_DB_PASSWORD='db-secret-test'",
+    "HCOP_BOOTSTRAP_USERNAME='admin_existente'",
+    "HCOP_BOOTSTRAP_PASSWORD='clave-existente-segura'",
+    "HCOP_BOOTSTRAP_SECOND_USERNAME=marcolyto2",
+    "HCOP_QR_SECRET='qr-secret-test'",
+    "HCOP_ENCRYPTION_SECRET='encryption-secret-test'",
+    "HCOP_PUBLIC_BASE_URL=http://localhost:6199"
+  ) -join "`r`n"
+  [IO.File]::WriteAllText(
+    $existingEnvironmentPath,
+    $existingEnvironment + "`r`n",
+    (New-Object Text.UTF8Encoding($false)))
+  $existingBefore = [IO.File]::ReadAllText($existingEnvironmentPath)
+  $script:UnexpectedPrompt = $false
+  function Read-InitialPort {
+    $script:UnexpectedPrompt = $true
+    throw "Una instalación existente no debe volver a pedir puerto."
+  }
+  function Read-InitialCredentials {
+    $script:UnexpectedPrompt = $true
+    throw "Una instalación existente no debe volver a pedir credenciales."
+  }
+  function Protect-EnvironmentFile { param([string]$Path) }
+  Ensure-Environment $existingEnvironmentPath "docker-no-utilizado"
+  $existingAfter = [IO.File]::ReadAllText($existingEnvironmentPath)
+  if ($script:UnexpectedPrompt -or $existingAfter -cne $existingBefore) {
+    throw "Una instalación existente no conservó su archivo .env sin preguntar."
+  }
 } finally {
   if (Test-Path -LiteralPath $environmentTestRoot) {
     Remove-Item -LiteralPath $environmentTestRoot -Recurse -Force
@@ -128,12 +213,15 @@ if ($migrationValidation.ok -ne $true) {
   throw "La validación estática del canal de migración no fue satisfactoria."
 }
 if ($migrationValidation.applicationImage -ne
-    "ghcr.io/marcolyto/hcop_jp:angular-hexagonal-migration") {
+    "ghcr.io/marcolyto/hcop_jp:angular-full-parity-v2") {
   throw "El canal de migración no seleccionó su imagen aislada."
 }
 if ([int]$migrationValidation.defaultPort -ne 5181 -or
-    $migrationValidation.postgresVolume -ne "hcop_ajp_postgres" -or
-    $migrationValidation.storageVolume -ne "hcop_ajp_storage") {
+    $migrationValidation.projectName -ne "hcop-ahjp" -or
+    $migrationValidation.databaseName -ne "hcop_ahjp" -or
+    (Split-Path -Leaf $migrationValidation.dataDirectory) -ne "HCOP_AHJP-Docker" -or
+    $migrationValidation.postgresVolume -ne "hcop_ahjp_postgres" -or
+    $migrationValidation.storageVolume -ne "hcop_ahjp_storage") {
   throw "El canal de migración no aisló puerto y volúmenes."
 }
 
@@ -145,6 +233,10 @@ if ([int]$migrationValidation.defaultPort -ne 5181 -or
   successfulProgressCaptured = $true
   environmentSecretRoundTrip = $true
   shortPasswordRepair = $true
+  defaultPortSelection = $defaultPort
+  customPortSelection = $selectedPort
+  selectedPortStoredConsistently = $true
+  existingEnvironmentPreserved = $true
   staticValidation = $validation.ok
   migrationStaticValidation = $migrationValidation.ok
   migrationIsolation = $true

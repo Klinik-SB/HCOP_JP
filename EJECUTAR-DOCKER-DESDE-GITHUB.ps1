@@ -10,14 +10,14 @@
 $ErrorActionPreference = "Stop"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-$script:ProjectName = if ($Channel -eq "Migration") { "hcop-ajp" } else { "hcop-jp" }
-$script:ResourcePrefix = if ($Channel -eq "Migration") { "hcop_ajp" } else { "hcop_jp" }
-$script:DatabaseName = if ($Channel -eq "Migration") { "hcop_ajp" } else { "hcop_jp" }
+$script:ProjectName = if ($Channel -eq "Migration") { "hcop-ahjp" } else { "hcop-jp" }
+$script:ResourcePrefix = if ($Channel -eq "Migration") { "hcop_ahjp" } else { "hcop_jp" }
+$script:DatabaseName = if ($Channel -eq "Migration") { "hcop_ahjp" } else { "hcop_jp" }
 $script:DefaultHostPort = if ($Channel -eq "Migration") { 5181 } else { 5180 }
-$defaultDirectoryName = if ($Channel -eq "Migration") { "HCOP_AJP-Docker" } else { "HCOP_JP-Docker" }
+$defaultDirectoryName = if ($Channel -eq "Migration") { "HCOP_AHJP-Docker" } else { "HCOP_JP-Docker" }
 $script:DefaultDataDirectory = Join-Path $env:LOCALAPPDATA $defaultDirectoryName
 $script:ApplicationImage = if ($Channel -eq "Migration") {
-  "ghcr.io/marcolyto/hcop_jp:angular-hexagonal-migration"
+  "ghcr.io/marcolyto/hcop_jp:angular-full-parity-v2"
 } else {
   "ghcr.io/marcolyto/hcop_jp:latest"
 }
@@ -275,6 +275,23 @@ function Read-InitialPassword([string]$Label = "Contraseña inicial") {
   }
 }
 
+function Read-InitialPort {
+  while ($true) {
+    $portText = Read-Host "Puerto web [$($script:DefaultHostPort)]"
+    if ([string]::IsNullOrWhiteSpace($portText)) {
+      return [int]$script:DefaultHostPort
+    }
+    $portText = $portText.Trim()
+    if ($portText -match "^\d{1,5}$") {
+      $port = [int]$portText
+      if ($port -ge 1 -and $port -le 65535) {
+        return $port
+      }
+    }
+    Write-Warn "El puerto debe ser un número entre 1 y 65535."
+  }
+}
+
 function Read-InitialCredentials {
   Write-Step "Credenciales iniciales"
   Write-Info "Se solicitarán una sola vez y se guardarán localmente. No se mostrarán en pantalla ni en el registro."
@@ -288,6 +305,26 @@ function Read-InitialCredentials {
     Username = $username
     Password = (Read-InitialPassword)
   }
+}
+
+function New-InitialEnvironmentContent(
+  [string]$Username,
+  [string]$Password,
+  [int]$Port
+) {
+  return (@(
+    "HCOP_PORT=$Port",
+    "HCOP_DB_NAME=$($script:DatabaseName)",
+    "HCOP_DB_USER=hcop",
+    "HCOP_DB_PASSWORD=$(ConvertTo-EnvLiteral (New-RandomHex 32))",
+    "HCOP_BOOTSTRAP_USERNAME=$(ConvertTo-EnvLiteral $Username)",
+    "HCOP_BOOTSTRAP_PASSWORD=$(ConvertTo-EnvLiteral $Password)",
+    "HCOP_BOOTSTRAP_SECOND_USERNAME=marcolyto2",
+    "HCOP_SEED_EXAMPLE_PATIENT=true",
+    "HCOP_QR_SECRET=$(ConvertTo-EnvLiteral (New-RandomHex 48))",
+    "HCOP_ENCRYPTION_SECRET=$(ConvertTo-EnvLiteral (New-RandomHex 48))",
+    "HCOP_PUBLIC_BASE_URL=http://localhost:$Port"
+  ) -join "`r`n") + "`r`n"
 }
 
 function Get-EnvironmentValues([string]$Path) {
@@ -411,21 +448,13 @@ Recupere $($script:DefaultDataDirectory)\.env desde su copia de seguridad o rest
 "@
   }
 
+  $selectedPort = Read-InitialPort
   $credentials = Read-InitialCredentials
   try {
-    $content = (@(
-      "HCOP_PORT=$($script:DefaultHostPort)",
-      "HCOP_DB_NAME=$($script:DatabaseName)",
-      "HCOP_DB_USER=hcop",
-      "HCOP_DB_PASSWORD=$(ConvertTo-EnvLiteral (New-RandomHex 32))",
-      "HCOP_BOOTSTRAP_USERNAME=$(ConvertTo-EnvLiteral $credentials.Username)",
-      "HCOP_BOOTSTRAP_PASSWORD=$(ConvertTo-EnvLiteral $credentials.Password)",
-      "HCOP_BOOTSTRAP_SECOND_USERNAME=marcolyto2",
-      "HCOP_SEED_EXAMPLE_PATIENT=true",
-      "HCOP_QR_SECRET=$(ConvertTo-EnvLiteral (New-RandomHex 48))",
-      "HCOP_ENCRYPTION_SECRET=$(ConvertTo-EnvLiteral (New-RandomHex 48))",
-      "HCOP_PUBLIC_BASE_URL=http://localhost:$($script:DefaultHostPort)"
-    ) -join "`r`n") + "`r`n"
+    $content = New-InitialEnvironmentContent `
+      $credentials.Username `
+      $credentials.Password `
+      $selectedPort
     Write-AtomicUtf8 $Path $content
     Protect-EnvironmentFile $Path
     Write-Ok "Configuración inicial creada. Los secretos permanecerán estables en este equipo."
@@ -895,6 +924,9 @@ function Invoke-ValidateOnly {
     mode = "ValidateOnly"
     channel = $Channel
     applicationImage = $script:ApplicationImage
+    projectName = $script:ProjectName
+    databaseName = $script:DatabaseName
+    dataDirectory = $script:DefaultDataDirectory
     defaultPort = $script:DefaultHostPort
     postgresVolume = $script:PostgresVolume
     storageVolume = $script:StorageVolume

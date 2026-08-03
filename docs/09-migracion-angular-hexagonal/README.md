@@ -1,13 +1,13 @@
 # Migración Angular y arquitectura hexagonal
 
-Esta carpeta gobierna la migración de HCOP JP. El objetivo es reemplazar el
-frontend estático por Angular y evolucionar el backend hacia un monolito
-modular hexagonal sin perder comportamiento, datos, permisos, documentación ni
-capacidad de despliegue.
+Esta carpeta gobierna la migración de HCOP JP. En la rama
+`codex/angular-full-parity-v2`, Angular ya gobierna el frontend real y el backend
+evoluciona hacia un monolito modular hexagonal sin perder comportamiento, datos,
+permisos, documentación ni capacidad de despliegue.
 
 La versión operativa permanece disponible durante toda la transición. Cada
-capacidad nueva se compara contra la línea base antes de habilitarse y el
-frontend anterior sólo se retira cuando la matriz de paridad está completa.
+capacidad nueva se compara contra la línea base antes de habilitarse; el canal
+v2 no usa iframe ni delega la interfaz al frontend anterior.
 
 La biblioteca declarativa Angular conserva el inventario completo y tiene
 **57 de 57 calculadoras** portadas con pruebas doradas. Esto completa las
@@ -183,5 +183,6 @@ configuración institucional y cerrar la paridad visual/E2E integrada.
 - La validación local usa el puerto 5181 y recursos Docker con prefijo
   `hcop_ajp_validation`.
 - La imagen publicada para probar esta rama usa la etiqueta
-  `angular-hexagonal-migration` y recursos persistentes `hcop_ajp_*`; nunca
-  reemplaza `latest` ni los volúmenes estables.
+  `angular-full-parity-v2` y recursos persistentes `hcop_ahjp_*`; nunca
+  reemplaza `latest`, los volúmenes estables ni los del canal migratorio
+  anterior.

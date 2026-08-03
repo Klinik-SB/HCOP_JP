@@ -41,23 +41,27 @@ un defecto que deben detectar las pruebas de release.
 
 ## Canal aislado de migración
 
-La rama `codex/angular-hexagonal-migration` se prueba sin reemplazar la versión
+La rama `codex/angular-full-parity-v2` se prueba sin reemplazar la versión
 estable. Copie esta línea completa:
 
 ```powershell
-$hcopScript = Join-Path $env:TEMP "EJECUTAR-DOCKER-DESDE-GITHUB.ps1"; Invoke-WebRequest "https://raw.githubusercontent.com/Marcolyto/HCOP_JP/codex/angular-hexagonal-migration/EJECUTAR-DOCKER-DESDE-GITHUB.ps1" -OutFile $hcopScript; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $hcopScript -Channel Migration
+$hcopScript = Join-Path $env:TEMP "EJECUTAR-DOCKER-DESDE-GITHUB.ps1"; Invoke-WebRequest "https://raw.githubusercontent.com/Marcolyto/HCOP_JP/codex/angular-full-parity-v2/EJECUTAR-DOCKER-DESDE-GITHUB.ps1" -OutFile $hcopScript; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $hcopScript -Channel Migration
 ```
 
 El canal usa:
 
-- imagen `ghcr.io/marcolyto/hcop_jp:angular-hexagonal-migration`;
-- puerto 5181;
-- proyecto Compose `hcop-ajp`;
-- base `hcop_ajp`;
-- volúmenes `hcop_ajp_postgres` y `hcop_ajp_storage`;
-- carpeta `%LOCALAPPDATA%\HCOP_AJP-Docker`.
+- imagen `ghcr.io/marcolyto/hcop_jp:angular-full-parity-v2`;
+- puerto elegido en el primer inicio; se sugiere 5181;
+- proyecto Compose `hcop-ahjp`;
+- base `hcop_ahjp`;
+- volúmenes `hcop_ahjp_postgres` y `hcop_ahjp_storage`;
+- carpeta `%LOCALAPPDATA%\HCOP_AHJP-Docker`.
 
-La versión estable continúa en 5180 y sus datos no se comparten. Consulte la
+El primer inicio solicita puerto, usuario administrador y contraseña. La
+aplicación y Swagger quedan en `http://localhost:<puerto-elegido>` y
+`http://localhost:<puerto-elegido>/swagger-ui.html`. La versión estable y el
+canal migratorio anterior conservan sus propias carpetas, bases y volúmenes; sus
+datos no se comparten. Consulte la
 [guía de prueba de la rama](../00-inicio/PRUEBA-RAMA-ANGULAR-HEXAGONAL.md).
 
 ## Comandos desde un checkout del repositorio
@@ -100,6 +104,6 @@ opción elimina la base.
 - `compose.github.yaml`: usa la imagen publicada;
 - `.env`: secretos locales, nunca se sube a GitHub.
 
-La interfaz visible también está dentro de esta misma aplicación: Spring Boot
-sirve `src/main/resources/static` desde el `.jar`. No hay que instalar ni
-levantar un segundo front ni conservar una copia de `HCOP_lira`.
+La interfaz Angular compilada también está dentro de esta misma aplicación:
+Spring Boot la sirve desde el `.jar`. No hay que instalar ni levantar un segundo
+frontend ni conservar una copia de `HCOP_lira`.
