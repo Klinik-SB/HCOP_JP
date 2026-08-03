@@ -39,6 +39,23 @@ test('una hoja parcial imprime únicamente las secciones con contenido clínico'
   equal(clinicalPrintSectionHasContent(state, 'currentIllness'), false);
 });
 
+test('imprime la ultima instantanea legacy sin revivirla en modo estructurado', () => {
+  const legacy = {
+    narrative: {},
+    meta: {
+      liraImport: { origin: 'migration' },
+      sectionVersions: { personalHistory: [{ content: 'Antecedentes importados' }] },
+      sectionFormModes: {}
+    }
+  };
+  equal(clinicalPrintSectionHasContent(legacy, 'personalHistory'), true);
+  equal(clinicalPrintSectionHasContent({
+    ...legacy,
+    narrative: { backgroundClinical: { formato: 'legacy-invalido' } },
+    meta: { ...legacy.meta, sectionFormModes: { personalHistory: 'structured' } }
+  }, 'personalHistory'), false);
+});
+
 test('la impresión reutiliza la proyección unificada de tratamientos', () => {
   const state = {
     evolutions: [

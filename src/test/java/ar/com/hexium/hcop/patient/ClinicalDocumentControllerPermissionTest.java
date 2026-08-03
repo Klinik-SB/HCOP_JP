@@ -1,6 +1,7 @@
 package ar.com.hexium.hcop.patient;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -25,6 +26,29 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 
 class ClinicalDocumentControllerPermissionTest {
+
+  @Test
+  void conservaConstructoresCompatiblesAlAgregarLaAutoridadDeAntecedentesPersonales() {
+    PatientDocumentService documents = mock(PatientDocumentService.class);
+    AuthContext auth = mock(AuthContext.class);
+    ObjectMapper mapper = new ObjectMapper();
+    Clock clock = Clock.fixed(Instant.parse("2026-08-02T21:30:00Z"), ZoneOffset.UTC);
+    ClinicalDocumentAccessPolicy accessPolicy = new ClinicalDocumentAccessPolicy();
+    ClinicalDocumentChangeValidator validator = new ClinicalDocumentChangeValidator();
+    ClinicalSummaryPlanAuthority summary = new ClinicalSummaryPlanAuthority(mapper, clock);
+    ClinicalChiefComplaintAuthority chief = new ClinicalChiefComplaintAuthority(mapper, clock);
+    ClinicalCurrentIllnessAuthority illness = new ClinicalCurrentIllnessAuthority(mapper, clock);
+
+    assertThatCode(() -> new ClinicalDocumentController(
+        documents, auth, accessPolicy, validator, summary))
+        .doesNotThrowAnyException();
+    assertThatCode(() -> new ClinicalDocumentController(
+        documents, auth, accessPolicy, validator, summary, chief))
+        .doesNotThrowAnyException();
+    assertThatCode(() -> new ClinicalDocumentController(
+        documents, auth, accessPolicy, validator, summary, chief, illness))
+        .doesNotThrowAnyException();
+  }
 
   @Test
   void ocultaPrescripcionesSinPermisoDeLectura() {

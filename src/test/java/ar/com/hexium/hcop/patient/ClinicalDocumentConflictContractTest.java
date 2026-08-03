@@ -56,7 +56,8 @@ class ClinicalDocumentConflictContractTest {
         new ClinicalDocumentChangeValidator(),
         new ClinicalSummaryPlanAuthority(mapper, clock),
         new ClinicalChiefComplaintAuthority(mapper, clock),
-        new ClinicalCurrentIllnessAuthority(mapper, clock));
+        new ClinicalCurrentIllnessAuthority(mapper, clock),
+        new ClinicalPersonalHistoryAuthority(mapper, clock));
     mvc = MockMvcBuilders.standaloneSetup(controller)
         .setControllerAdvice(new ApiExceptionHandler())
         .build();
@@ -324,6 +325,86 @@ class ClinicalDocumentConflictContractTest {
         argThat(document -> {
           JsonNode versions = document.path("meta").path("sectionVersions")
               .path("currentIllness");
+          return versions.size() == 2
+              && "trusted-initial".equals(versions.get(0).path("id").asText())
+              && !"forged".equals(versions.get(1).path("id").asText());
+        }),
+        eq(3L),
+        eq(7L));
+  }
+
+  @Test
+  void canonizaAntecedentesPersonalesComoUnaSeccionYDescartaMetadataFalsificada()
+      throws Exception {
+    when(auth.require(any(HttpServletRequest.class))).thenReturn(principal(42L));
+    JsonNode storedDocument = mapper.readTree("""
+        {
+          "narrative": {
+            "backgroundClinical": "HTA",
+            "currentMedication": "Losartán",
+            "familyOncology": "Niega",
+            "gynecology": ""
+          },
+          "meta": {"sectionVersions": {"personalHistory": [{
+            "id": "trusted-initial",
+            "content": "Clínicos / quirúrgicos: HTA",
+            "reason": "Carga inicial",
+            "audit": {"action": "cargado", "lastName": "Profesional previo", "license": "MP-1", "at": "2026-07-01T10:00:00Z"}
+          }]}}
+        }
+        """);
+    when(repository.find(42L)).thenReturn(Optional.of(stored(42L, storedDocument, 3L)));
+    when(repository.update(eq(42L), any(JsonNode.class), eq(3L), eq(7L)))
+        .thenAnswer(invocation -> Optional.of(stored(
+            42L,
+            ((JsonNode) invocation.getArgument(1)).deepCopy(),
+            4L)));
+
+    mvc.perform(put("/api/hc")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""
+                {
+                  "meta": {
+                    "persistenceRevision": 3,
+                    "sectionVersions": {"personalHistory": [{"id": "forged"}]},
+                    "sectionAudit": {"personalHistory": {"lastName": "forged"}},
+                    "sectionChangeRequests": {
+                      "personalHistory": {"reason": "Actualización integral"}
+                    }
+                  },
+                  "narrative": {
+                    "backgroundClinical": "HTA y colecistectomía",
+                    "currentMedication": "Losartán 50 mg",
+                    "familyOncology": "Madre con cáncer de mama",
+                    "gynecology": "G2 P2"
+                  }
+                }
+                """))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.ok").value(true))
+        .andExpect(jsonPath("$.state.meta.persistenceRevision").value(4))
+        .andExpect(jsonPath("$.state.meta.sectionVersions.personalHistory.length()").value(2))
+        .andExpect(jsonPath("$.state.meta.sectionVersions.personalHistory[0].id")
+            .value("trusted-initial"))
+        .andExpect(jsonPath("$.state.meta.sectionVersions.personalHistory[1].id")
+            .value(org.hamcrest.Matchers.startsWith("sec-personalHistory-")))
+        .andExpect(jsonPath("$.state.meta.sectionVersions.personalHistory[1].reason")
+            .value("Actualización integral"))
+        .andExpect(jsonPath("$.state.meta.sectionVersions.personalHistory[1].content")
+            .value("""
+                Clínicos / quirúrgicos: HTA y colecistectomía
+                Medicación habitual: Losartán 50 mg
+                Oncofamiliares: Madre con cáncer de mama
+                Gineco-obstétricos: G2 P2"""))
+        .andExpect(jsonPath("$.state.meta.sectionVersions.personalHistory[1].createdAt")
+            .value("2026-08-02T16:00:00Z"))
+        .andExpect(jsonPath("$.state.meta.sectionChangeRequests").doesNotExist());
+
+    verify(repository).update(
+        eq(42L),
+        argThat(document -> {
+          JsonNode versions = document.path("meta").path("sectionVersions")
+              .path("personalHistory");
           return versions.size() == 2
               && "trusted-initial".equals(versions.get(0).path("id").asText())
               && !"forged".equals(versions.get(1).path("id").asText());

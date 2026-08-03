@@ -1,4 +1,5 @@
 import type { ClinicalPatient, ClinicalRecord, ClinicalState } from '../patients/patient-workspace.models';
+import { personalHistoryLegacySnapshot } from './clinical-personal-history-edit';
 import { ClinicalTreatmentKind, clinicalSectionTreatments } from './clinical-treatment-projection';
 
 export type ClinicalPrintSection =
@@ -36,7 +37,8 @@ export function clinicalPrintSectionHasContent(
   if (section === 'personalHistory') {
     return hasText(
       narrative['backgroundClinical'], narrative['currentMedication'],
-      narrative['familyOncology'], narrative['gynecology']
+      narrative['familyOncology'], narrative['gynecology'],
+      personalHistoryLegacySnapshot(state)
     );
   }
   if (section === 'studies') return active(state.studies).length > 0;

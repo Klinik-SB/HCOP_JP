@@ -142,6 +142,9 @@ configuración institucional y cerrar la paridad visual/E2E integrada.
 - [Corte Angular 036](CORTE-ANGULAR-036-EDITOR-ENFERMEDAD-ACTUAL.md):
   Antecedentes de enfermedad actual con editor Angular nativo, motor puro
   compartido y autoridad Java sobre su cadena de versiones.
+- [Corte Angular 037](CORTE-ANGULAR-037-EDITOR-ANTECEDENTES-PERSONALES.md):
+  Antecedentes personales con formulario Angular nativo de cuatro campos,
+  instantánea ordenada y autoridad Java sobre una única cadena de versiones.
 
 ## Ciclo obligatorio por capacidad
 

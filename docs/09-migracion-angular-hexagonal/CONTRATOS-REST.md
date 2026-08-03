@@ -183,6 +183,38 @@ narrativa compartida, reconstruye `meta.sectionVersions.currentIllness`,
 el reloj y el identificador generados por el servidor. La historia permanece en
 el JSONB de PostgreSQL y la respuesta devuelve su forma canónica.
 
+Para **Antecedentes personales**, `PUT /api/hc` trata como una unidad clínica
+los cuatro campos `narrative.backgroundClinical`,
+`narrative.currentMedication`, `narrative.familyOncology` y
+`narrative.gynecology`. Cada valor vigente permanece separado en el JSONB, pero
+una modificación genera una sola versión en `personalHistory` con una
+instantánea ordenada de los campos que tienen contenido.
+
+| Código `400` | Condición |
+|---|---|
+| `CLINICAL_PERSONAL_HISTORY_BACKGROUND_CLINICAL_INVALID` | Clínicos / quirúrgicos cambió y no es texto. |
+| `CLINICAL_PERSONAL_HISTORY_BACKGROUND_CLINICAL_TOO_LONG` | Clínicos / quirúrgicos supera 50.000 caracteres. |
+| `CLINICAL_PERSONAL_HISTORY_CURRENT_MEDICATION_INVALID` | Medicación habitual cambió y no es texto. |
+| `CLINICAL_PERSONAL_HISTORY_CURRENT_MEDICATION_TOO_LONG` | Medicación habitual supera 50.000 caracteres. |
+| `CLINICAL_PERSONAL_HISTORY_FAMILY_ONCOLOGY_INVALID` | Oncofamiliares cambió y no es texto. |
+| `CLINICAL_PERSONAL_HISTORY_FAMILY_ONCOLOGY_TOO_LONG` | Oncofamiliares supera 50.000 caracteres. |
+| `CLINICAL_PERSONAL_HISTORY_GYNECOLOGY_INVALID` | Gineco-obstétricos cambió y no es texto. |
+| `CLINICAL_PERSONAL_HISTORY_GYNECOLOGY_TOO_LONG` | Gineco-obstétricos supera 50.000 caracteres. |
+| `CLINICAL_PERSONAL_HISTORY_EMPTY` | La primera carga no contiene ninguno de los cuatro campos. |
+| `CLINICAL_PERSONAL_HISTORY_REASON_REQUIRED` | Una modificación no incluye motivo. |
+| `CLINICAL_PERSONAL_HISTORY_REASON_INVALID` | El motivo transitorio no es texto. |
+| `CLINICAL_PERSONAL_HISTORY_REASON_TOO_LONG` | El motivo supera 50.000 caracteres. |
+
+La instantánea usa siempre el orden Clínicos / quirúrgicos, Medicación
+habitual, Oncofamiliares y Gineco-obstétricos; omite líneas vacías y documenta
+`Sin datos cargados.` si una modificación elimina todo el contenido. El motivo
+viaja únicamente en `meta.sectionChangeRequests.personalHistory.reason`.
+`ClinicalPersonalHistoryAuthority` consume ese comando y reconstruye
+`meta.sectionVersions.personalHistory`, `meta.sectionAudit.personalHistory` y
+`meta.sectionFormModes.personalHistory = "structured"` con el principal, el
+reloj y el identificador del servidor. Una forma legacy no textual que no se
+modifica se conserva sin coerción ni bloqueo de otras secciones.
+
 Para los campos estructurados de **Conclusión / resumen**, `PUT /api/hc`
 compara cada valor entrante contra el documento confirmado. Sólo valida un
 campo cuando realmente cambió, para que una forma legacy atípica no impida

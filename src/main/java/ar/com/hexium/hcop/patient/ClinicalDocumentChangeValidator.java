@@ -28,6 +28,34 @@ public class ClinicalDocumentChangeValidator {
     validateTextChange(
         incoming,
         stored,
+        "backgroundClinical",
+        "El campo Clínicos / quirúrgicos",
+        "CLINICAL_PERSONAL_HISTORY_BACKGROUND_CLINICAL",
+        true);
+    validateTextChange(
+        incoming,
+        stored,
+        "currentMedication",
+        "El campo Medicación habitual",
+        "CLINICAL_PERSONAL_HISTORY_CURRENT_MEDICATION",
+        true);
+    validateTextChange(
+        incoming,
+        stored,
+        "familyOncology",
+        "El campo Oncofamiliares",
+        "CLINICAL_PERSONAL_HISTORY_FAMILY_ONCOLOGY",
+        true);
+    validateTextChange(
+        incoming,
+        stored,
+        "gynecology",
+        "El campo Gineco-obstétricos",
+        "CLINICAL_PERSONAL_HISTORY_GYNECOLOGY",
+        true);
+    validateTextChange(
+        incoming,
+        stored,
         "summary",
         "La conclusión / resumen",
         "CLINICAL_SUMMARY",

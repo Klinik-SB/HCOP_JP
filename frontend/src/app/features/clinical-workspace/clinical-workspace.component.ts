@@ -16,6 +16,13 @@ import {
   supportsStructuredCurrentIllness
 } from '../../core/clinical/clinical-current-illness-edit';
 import {
+  CLINICAL_PERSONAL_HISTORY_TEXT_LIMIT,
+  applyStructuredPersonalHistoryEdit,
+  personalHistoryBaseline,
+  personalHistoryLegacySnapshot,
+  supportsStructuredPersonalHistory
+} from '../../core/clinical/clinical-personal-history-edit';
+import {
   CLINICAL_SUMMARY_PLAN_TEXT_LIMIT,
   applyStructuredSummaryPlanEdit,
   summaryPlanBaseline,
@@ -33,6 +40,7 @@ import { PatientWorkspaceService } from '../../core/patients/patient-workspace.s
 import { ClinicalPatient, ClinicalRecord, ClinicalState } from '../../core/patients/patient-workspace.models';
 
 type SingleNarrativeSectionKey = 'chiefComplaint' | 'currentIllness';
+type PersonalHistoryErrorTarget = 'backgroundClinical' | 'currentMedication' | 'familyOncology' | 'gynecology' | 'reason' | '';
 
 @Component({ selector: 'app-clinical-workspace', imports: [ReactiveFormsModule], templateUrl: './clinical-workspace.component.html', styleUrl: './clinical-workspace.component.scss' })
 export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
@@ -57,6 +65,26 @@ export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
   private narrativeEditorDraft: ClinicalDraftHandle | null = null;
   private narrativeEditorBaseline = { value: '', initial: true };
   private narrativeEditorReturnFocus: HTMLElement | null = null;
+  readonly personalHistoryOpen = signal(false);
+  readonly personalHistoryInitial = signal(true);
+  readonly personalHistoryBusy = signal(false);
+  readonly personalHistoryError = signal('');
+  readonly personalHistoryErrorTarget = signal<PersonalHistoryErrorTarget>('');
+  readonly maxPersonalHistoryChars = CLINICAL_PERSONAL_HISTORY_TEXT_LIMIT;
+  readonly backgroundClinicalControl = new FormControl('', { nonNullable: true });
+  readonly currentMedicationControl = new FormControl('', { nonNullable: true });
+  readonly familyOncologyControl = new FormControl('', { nonNullable: true });
+  readonly gynecologyControl = new FormControl('', { nonNullable: true });
+  readonly personalHistoryReasonControl = new FormControl('', { nonNullable: true });
+  private personalHistoryDraft: ClinicalDraftHandle | null = null;
+  private personalHistoryEditorBaseline = {
+    backgroundClinical: '',
+    currentMedication: '',
+    familyOncology: '',
+    gynecology: '',
+    initial: true
+  };
+  private personalHistoryReturnFocus: HTMLElement | null = null;
   readonly summaryPlanOpen = signal(false);
   readonly summaryPlanInitial = signal(true);
   readonly summaryPlanBusy = signal(false);
@@ -83,6 +111,11 @@ export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
     this.summaryPlanReasonControl.valueChanges.subscribe(() => this.refreshSummaryPlanDirtyState());
     this.narrativeEditorControl.valueChanges.subscribe(() => this.refreshNarrativeEditorDirtyState());
     this.narrativeEditorReasonControl.valueChanges.subscribe(() => this.refreshNarrativeEditorDirtyState());
+    this.backgroundClinicalControl.valueChanges.subscribe(() => this.refreshPersonalHistoryDirtyState());
+    this.currentMedicationControl.valueChanges.subscribe(() => this.refreshPersonalHistoryDirtyState());
+    this.familyOncologyControl.valueChanges.subscribe(() => this.refreshPersonalHistoryDirtyState());
+    this.gynecologyControl.valueChanges.subscribe(() => this.refreshPersonalHistoryDirtyState());
+    this.personalHistoryReasonControl.valueChanges.subscribe(() => this.refreshPersonalHistoryDirtyState());
   }
 
   ngOnInit(): void {
@@ -91,6 +124,7 @@ export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.narrativeEditorDraft) this.clinicalDrafts.release(this.narrativeEditorDraft);
+    if (this.personalHistoryDraft) this.clinicalDrafts.release(this.personalHistoryDraft);
     if (this.summaryPlanDraft) this.clinicalDrafts.release(this.summaryPlanDraft);
   }
 
@@ -210,6 +244,131 @@ export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
       ? CLINICAL_CHIEF_COMPLAINT_TEXT_LIMIT
       : CLINICAL_CURRENT_ILLNESS_TEXT_LIMIT;
   }
+
+  canEditPersonalHistory(): boolean {
+    return Boolean(
+      this.workspaceService.workspace()
+      && !this.workspaceService.loading()
+      && this.auth.hasPermission('section.history.edit')
+      && supportsStructuredPersonalHistory(this.state())
+    );
+  }
+
+  personalHistoryHasContent(): boolean {
+    return Boolean(
+      this.narrative('backgroundClinical')
+      || this.narrative('currentMedication')
+      || this.narrative('familyOncology')
+      || this.narrative('gynecology')
+    );
+  }
+
+  personalHistoryLegacyText(): string { return personalHistoryLegacySnapshot(this.state()); }
+
+  personalHistoryIsInitial(): boolean { return personalHistoryBaseline(this.state()).initial; }
+
+  openPersonalHistoryEditor(event?: Event): void {
+    const workspace = this.workspaceService.workspace();
+    if (!workspace || this.workspaceService.loading() || !this.canEditPersonalHistory() || this.workspaceService.hasPendingClinicalWork()) return;
+    this.personalHistoryReturnFocus = event?.currentTarget instanceof HTMLElement
+      ? event.currentTarget
+      : document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const baseline = personalHistoryBaseline(workspace.state);
+    this.personalHistoryEditorBaseline = baseline;
+    this.personalHistoryInitial.set(baseline.initial);
+    this.backgroundClinicalControl.setValue(baseline.backgroundClinical, { emitEvent: false });
+    this.currentMedicationControl.setValue(baseline.currentMedication, { emitEvent: false });
+    this.familyOncologyControl.setValue(baseline.familyOncology, { emitEvent: false });
+    this.gynecologyControl.setValue(baseline.gynecology, { emitEvent: false });
+    this.personalHistoryReasonControl.setValue('', { emitEvent: false });
+    this.personalHistoryError.set('');
+    this.personalHistoryErrorTarget.set('');
+    this.personalHistoryDraft = this.clinicalDrafts.acquire({
+      patientId: workspace.patientId,
+      label: 'Antecedentes personales'
+    });
+    this.personalHistoryOpen.set(true);
+    this.refreshPersonalHistoryDirtyState();
+    this.focusSummaryPlanAfterRender('#personalHistoryBackgroundClinical');
+  }
+
+  closePersonalHistoryEditor(): void {
+    if (!this.personalHistoryOpen() || this.personalHistoryBusy()) return;
+    if (this.personalHistoryDraft && this.clinicalDrafts.isDirty(this.personalHistoryDraft)
+        && !window.confirm('¿Descartar los cambios no guardados de Antecedentes personales?')) return;
+    this.finishPersonalHistoryEditor(true);
+  }
+
+  async savePersonalHistory(): Promise<void> {
+    const workspace = this.workspaceService.workspace();
+    if (!workspace || !this.personalHistoryDraft || this.personalHistoryBusy()) return;
+    this.personalHistoryError.set('');
+    this.personalHistoryErrorTarget.set('');
+    if (workspace.patientId !== this.personalHistoryDraft.patientId) {
+      this.personalHistoryError.set('El paciente activo cambió. Cierre este editor y vuelva a abrir la sección antes de guardar.');
+      return;
+    }
+
+    let nextState: ClinicalState;
+    try {
+      const user = this.auth.session()?.user;
+      nextState = applyStructuredPersonalHistoryEdit(workspace.state, {
+        backgroundClinical: this.backgroundClinicalControl.value,
+        currentMedication: this.currentMedicationControl.value,
+        familyOncology: this.familyOncologyControl.value,
+        gynecology: this.gynecologyControl.value,
+        reason: this.personalHistoryReasonControl.value,
+        actor: {
+          userId: user?.id || '',
+          username: user?.username || '',
+          displayName: user?.displayName || user?.username || 'Profesional',
+          licenseNumber: user?.licenseNumber || ''
+        }
+      });
+    } catch (error) {
+      this.personalHistoryError.set(this.errorMessage(error, 'Revise los campos antes de guardar.'));
+      const targets: Record<string, PersonalHistoryErrorTarget> = {
+        EMPTY_PERSONAL_HISTORY: 'backgroundClinical',
+        BACKGROUND_CLINICAL_TOO_LONG: 'backgroundClinical',
+        CURRENT_MEDICATION_TOO_LONG: 'currentMedication',
+        FAMILY_ONCOLOGY_TOO_LONG: 'familyOncology',
+        GYNECOLOGY_TOO_LONG: 'gynecology',
+        REASON_REQUIRED: 'reason',
+        REASON_TOO_LONG: 'reason'
+      };
+      const target = targets[this.typedClinicalEditCode(error)] || '';
+      this.personalHistoryErrorTarget.set(target);
+      if (target) {
+        const suffixes: Record<Exclude<PersonalHistoryErrorTarget, ''>, string> = {
+          backgroundClinical: 'BackgroundClinical',
+          currentMedication: 'CurrentMedication',
+          familyOncology: 'FamilyOncology',
+          gynecology: 'Gynecology',
+          reason: 'Reason'
+        };
+        this.focusSummaryPlanAfterRender(`#personalHistory${suffixes[target]}`);
+      }
+      return;
+    }
+
+    this.personalHistoryBusy.set(true);
+    try {
+      await firstValueFrom(this.workspaceService.saveState(nextState));
+      this.clinicalDrafts.markClean(this.personalHistoryDraft);
+      this.finishPersonalHistoryEditor(true);
+    } catch (error) {
+      if (this.workspaceService.activeSaveConflict()) {
+        this.clinicalDrafts.markClean(this.personalHistoryDraft);
+        this.finishPersonalHistoryEditor(false);
+      } else {
+        this.personalHistoryError.set(this.errorMessage(error, 'No se pudieron guardar los antecedentes personales.'));
+      }
+    } finally {
+      this.personalHistoryBusy.set(false);
+    }
+  }
+
+  personalHistoryCount(control: FormControl<string>): number { return control.value.length; }
 
   canEditSummaryPlan(): boolean {
     return Boolean(
@@ -471,6 +630,35 @@ export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
     const dirty = this.narrativeEditorControl.value.trim() !== this.narrativeEditorBaseline.value
       || this.narrativeEditorReasonControl.value.trim().length > 0;
     this.clinicalDrafts.setDirty(this.narrativeEditorDraft, dirty);
+  }
+
+  private refreshPersonalHistoryDirtyState(): void {
+    if (!this.personalHistoryDraft) return;
+    const baseline = this.personalHistoryEditorBaseline;
+    const dirty = this.backgroundClinicalControl.value.trim() !== baseline.backgroundClinical
+      || this.currentMedicationControl.value.trim() !== baseline.currentMedication
+      || this.familyOncologyControl.value.trim() !== baseline.familyOncology
+      || this.gynecologyControl.value.trim() !== baseline.gynecology
+      || this.personalHistoryReasonControl.value.trim().length > 0;
+    this.clinicalDrafts.setDirty(this.personalHistoryDraft, dirty);
+  }
+
+  private releasePersonalHistoryDraft(): void {
+    if (!this.personalHistoryDraft) return;
+    this.clinicalDrafts.release(this.personalHistoryDraft);
+    this.personalHistoryDraft = null;
+  }
+
+  private finishPersonalHistoryEditor(returnFocus: boolean): void {
+    this.releasePersonalHistoryDraft();
+    this.personalHistoryOpen.set(false);
+    this.personalHistoryError.set('');
+    this.personalHistoryErrorTarget.set('');
+    const trigger = this.personalHistoryReturnFocus;
+    this.personalHistoryReturnFocus = null;
+    if (returnFocus && trigger) window.setTimeout(() => {
+      if (trigger.isConnected && !trigger.hasAttribute('disabled')) trigger.focus({ preventScroll: true });
+    }, 0);
   }
 
   private releaseNarrativeEditorDraft(): void {

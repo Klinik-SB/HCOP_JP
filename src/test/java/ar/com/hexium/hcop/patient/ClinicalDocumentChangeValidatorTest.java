@@ -23,6 +23,18 @@ class ClinicalDocumentChangeValidatorTest {
     stored.withObject("/narrative").set(
         "currentIllness",
         mapper.createArrayNode().add("legacy"));
+    stored.withObject("/narrative").set(
+        "backgroundClinical",
+        mapper.createObjectNode().put("legacy", true));
+    stored.withObject("/narrative").set(
+        "currentMedication",
+        mapper.createArrayNode().add("legacy"));
+    stored.withObject("/narrative").set(
+        "familyOncology",
+        mapper.createObjectNode().put("legacy", true));
+    stored.withObject("/narrative").set(
+        "gynecology",
+        mapper.createArrayNode().add("legacy"));
     stored.withObject("/narrative").set("summary", mapper.createObjectNode().put("legacy", true));
     stored.withObject("/narrative").set("plan", mapper.createArrayNode().add("legacy"));
 
@@ -67,7 +79,11 @@ class ClinicalDocumentChangeValidatorTest {
     ObjectNode incoming = narrative("Resumen", "Plan");
     incoming.withObject("/narrative")
         .put("chiefComplaint", "")
-        .put("currentIllness", "  \n  ");
+        .put("currentIllness", "  \n  ")
+        .put("backgroundClinical", "")
+        .put("currentMedication", "  ")
+        .putNull("familyOncology")
+        .put("gynecology", "\n");
 
     assertThatCode(() -> validator.validate(incoming, stored))
         .doesNotThrowAnyException();
@@ -88,6 +104,46 @@ class ClinicalDocumentChangeValidatorTest {
         narrative("Resumen", "Plan"),
         storedCurrentIllness,
         "CLINICAL_CURRENT_ILLNESS_INVALID");
+  }
+
+  @Test
+  void rejectsOmittingAnyNonBlankPersonalHistoryField() {
+    String[][] fields = {
+        {"backgroundClinical", "CLINICAL_PERSONAL_HISTORY_BACKGROUND_CLINICAL_INVALID"},
+        {"currentMedication", "CLINICAL_PERSONAL_HISTORY_CURRENT_MEDICATION_INVALID"},
+        {"familyOncology", "CLINICAL_PERSONAL_HISTORY_FAMILY_ONCOLOGY_INVALID"},
+        {"gynecology", "CLINICAL_PERSONAL_HISTORY_GYNECOLOGY_INVALID"}
+    };
+
+    for (String[] field : fields) {
+      ObjectNode stored = narrative("Resumen", "Plan");
+      stored.withObject("/narrative").put(field[0], "Contenido clínico real");
+      assertFailure(narrative("Resumen", "Plan"), stored, field[1]);
+    }
+  }
+
+  @Test
+  void validatesTypeAndLengthForEveryPersonalHistoryField() {
+    String[][] fields = {
+        {"backgroundClinical", "CLINICAL_PERSONAL_HISTORY_BACKGROUND_CLINICAL"},
+        {"currentMedication", "CLINICAL_PERSONAL_HISTORY_CURRENT_MEDICATION"},
+        {"familyOncology", "CLINICAL_PERSONAL_HISTORY_FAMILY_ONCOLOGY"},
+        {"gynecology", "CLINICAL_PERSONAL_HISTORY_GYNECOLOGY"}
+    };
+
+    for (String[] field : fields) {
+      ObjectNode stored = narrative("Resumen", "Plan");
+      stored.withObject("/narrative").put(field[0], "Anterior");
+      ObjectNode invalid = stored.deepCopy();
+      invalid.withObject("/narrative").set(field[0], mapper.createObjectNode());
+      assertFailure(invalid, stored, field[1] + "_INVALID");
+
+      ObjectNode oversized = stored.deepCopy();
+      oversized.withObject("/narrative").put(
+          field[0],
+          "x".repeat(ClinicalDocumentChangeValidator.MAX_NARRATIVE_FIELD_CHARS + 1));
+      assertFailure(oversized, stored, field[1] + "_TOO_LONG");
+    }
   }
 
   @Test

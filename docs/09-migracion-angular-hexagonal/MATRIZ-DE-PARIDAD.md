@@ -97,6 +97,16 @@ autoridad Java específica sobre `narrative.currentIllness`. La fila Hoja
 clínica permanece `Pendiente`: el E2E integrado del corte está aprobado, pero
 todavía faltan los restantes formularios y el historial visible por sección.
 
+El corte 037 implementa **Antecedentes personales** como formulario Angular
+nativo de dos columnas. Conserva por separado Clínicos / quirúrgicos,
+Medicación habitual, Oncofamiliares y Gineco-obstétricos, y firma una sola
+instantánea ordenada por guardado mediante autoridad Java sobre
+`personalHistory`. Incluye compatibilidad con formas legacy, borrador protegido
+y 14 casos puros con 104 aserciones. Sus 66 pruebas Java/Swagger y cinco
+recorridos E2E integrados están aprobados. La fila Hoja clínica continúa
+`Pendiente` porque todavía faltan los formularios restantes y el historial
+visible por sección.
+
 ## Evidencia requerida para marcar `Validada`
 
 1. Prueba automática de la regla o del contrato.
