@@ -23,6 +23,22 @@ El lanzador mantiene `compose.yaml`, `.env` y los registros operativos en
 `%LOCALAPPDATA%\HCOP_JP-Docker`. Conserva la base y los documentos entre
 reinicios y actualizaciones.
 
+En una base nueva también crea, por defecto, un paciente de ejemplo totalmente
+sintético con un caso compuesto de colon y melanoma.
+`HCOP_SEED_EXAMPLE_PATIENT=true` lo habilita y
+`HCOP_SEED_EXAMPLE_PATIENT=false` lo desactiva. El arranque es idempotente: no
+duplica la ficha ni la selecciona como paciente activo. Una versión nueva del
+recurso sólo actualiza la hoja si conserva la revisión administrada; cualquier
+edición humana la deja fuera de futuras actualizaciones automáticas. Cambiar a
+`false` no borra una ficha ya creada. Consulte los detalles y ubicaciones de
+`.env` en
+[Instalación desde GitHub](../00-inicio/INSTALACION-DESDE-GITHUB.md#paciente-de-ejemplo-en-una-instalación-nueva).
+
+El seed nunca bloquea el contenedor: una colisión de identidad, falta de actor
+de auditoría o conflicto concurrente no resuelto registra una advertencia y
+continúa sin crear o modificar el demo. La invalidez del recurso empaquetado es
+un defecto que deben detectar las pruebas de release.
+
 ## Canal aislado de migración
 
 La rama `codex/angular-hexagonal-migration` se prueba sin reemplazar la versión

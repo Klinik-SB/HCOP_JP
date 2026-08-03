@@ -153,6 +153,7 @@ function Write-DotEnv([string]$Path, [hashtable]$Values) {
     "HCOP_BOOTSTRAP_USERNAME",
     "HCOP_BOOTSTRAP_PASSWORD",
     "HCOP_BOOTSTRAP_SECOND_USERNAME",
+    "HCOP_SEED_EXAMPLE_PATIENT",
     "HCOP_QR_SECRET",
     "HCOP_ENCRYPTION_SECRET",
     "HCOP_PUBLIC_BASE_URL"
@@ -219,6 +220,7 @@ function Ensure-Environment([string]$Root) {
     HCOP_DB_USER = "hcop"
     HCOP_DB_PASSWORD = (New-RandomSecret 32)
     HCOP_BOOTSTRAP_SECOND_USERNAME = "marcolyto2"
+    HCOP_SEED_EXAMPLE_PATIENT = "true"
     HCOP_QR_SECRET = (New-RandomSecret 48)
     HCOP_ENCRYPTION_SECRET = (New-RandomSecret 48)
     HCOP_PUBLIC_BASE_URL = "http://localhost:$portValue"

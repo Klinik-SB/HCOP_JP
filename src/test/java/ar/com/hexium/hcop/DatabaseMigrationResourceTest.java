@@ -28,7 +28,20 @@ class DatabaseMigrationResourceTest {
                         "V008__application_workflow.sql",
                         "V009__workflow_safety_and_legacy_trace.sql",
                         "V010__treatment_creation_idempotency.sql",
-                        "V011__preparation_component_trace.sql");
+                        "V011__preparation_component_trace.sql",
+                        "V012__patient_seed_identity.sql");
+    }
+
+    @Test
+    void demoPatientSeedKeyHasADatabaseLevelIdempotencyGuard() throws Exception {
+        String sql = new ClassPathResource(
+                "db/migration/V012__patient_seed_identity.sql")
+                .getContentAsString(StandardCharsets.UTF_8);
+
+        assertThat(sql)
+                .contains("CREATE UNIQUE INDEX uq_patients_identity_seed_key")
+                .contains("identity_json ->> 'seedKey'")
+                .contains("identity_json ? 'seedKey'");
     }
 
     @Test

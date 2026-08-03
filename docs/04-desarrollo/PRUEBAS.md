@@ -36,6 +36,32 @@ Valida:
 La prueba genera pacientes sintéticos solo en la base donde se ejecuta. No la
 ejecute sobre producción.
 
+## Paciente demostrativo de arranque
+
+`DefaultDemoPatientBootstrapTest` cubre desactivación completa, creación única,
+reparación exclusiva de una hoja faltante, recuperación ante dos arranques
+concurrentes, colisiones de DNI/HC ajenas, recurso malformado y actor de
+auditoría. Las colisiones y la falta de actor deben producir warning y omisión,
+nunca una excepción que impida arrancar. La regresión versionada exige además
+tres fronteras: misma versión sin escritura, recurso más nuevo que actualiza una
+hoja aún intacta y recurso más nuevo que conserva una hoja con cualquier edición
+humana. Un conflicto optimista debe releer y aceptar al ganador o concluir como
+warning/no-op.
+
+`BootstrapConfigurationTest` fija el orden de arranque: administrador, catálogos
+y recién después paciente demostrativo. `DatabaseMigrationResourceTest`
+comprueba que el artefacto incluya las 12 migraciones y que
+`V012__patient_seed_identity.sql` contenga el índice único parcial sobre
+`identity_json.seedKey`.
+
+El entorno `compose.e2e.yaml` establece
+`HCOP_SEED_EXAMPLE_PATIENT=false`. Así los recorridos crean únicamente sus
+propios pacientes efímeros y la ficha predeterminada no altera conteos,
+búsquedas ni aislamiento. Ninguna prueba ni recurso bootstrap contiene datos
+reales. La versión 3 es un caso compuesto ficticio de colon y melanoma creado
+desde cero, no una historia pseudonimizada. La validación del recurso empaquetado
+es obligatoria para el release: un JSON inválido es un defecto del artefacto.
+
 ## Frontend Angular clínico
 
 Desde `frontend`:

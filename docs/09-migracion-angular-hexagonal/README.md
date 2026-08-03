@@ -151,6 +151,11 @@ configuración institucional y cerrar la paridad visual/E2E integrada.
 - [Corte Angular 039](CORTE-ANGULAR-039-ESTUDIOS-COORDINADOS.md): Estudios
   complementarios coordinados entre hoja y panel, proyección única, navegación
   con foco y RBAC efectivo en Angular y Java.
+- [Corte Angular 040](CORTE-ANGULAR-040-PACIENTE-EJEMPLO-SINTETICO.md): paciente
+  demostrativo compuesto de colon/melanoma, creado desde cero y versionado como
+  `demoContentVersion=3`; bootstrap best-effort que nunca bloquea el arranque,
+  actualización que no pisa una edición humana, sin activación automática de
+  sesión y protegido por Flyway `V012`.
 
 ## Ciclo obligatorio por capacidad
 

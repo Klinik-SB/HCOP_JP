@@ -24,7 +24,7 @@ navegador deben existir en la base:
 7. archivos y settings.
 
 El modelo actual completo está en el
-[diccionario de las 28 tablas](../03-base-de-datos/DICCIONARIO-DE-DATOS.md).
+[diccionario de las 34 tablas](../03-base-de-datos/DICCIONARIO-DE-DATOS.md).
 
 ## Migraciones Flyway
 
@@ -36,6 +36,7 @@ V001__core_schema.sql
 V002__rbac_seed.sql
 V003__scheduler_overlap_guard.sql
 ...
+V012__patient_seed_identity.sql
 ```
 
 Reglas:
@@ -47,6 +48,46 @@ Reglas:
 - los seeds usan claves naturales y `ON CONFLICT` cuando deben ser repetibles;
 - probar desde una base vacía y desde la versión anterior;
 - `clean` permanece deshabilitado.
+
+La instalación actual contiene 12 migraciones, de `V001` a `V012`. La última
+agrega un índice único parcial sobre `patients.identity_json ->> 'seedKey'`.
+El documento demostrativo no se inserta mediante SQL: Java lee el único recurso
+de paciente demostrativo versionado,
+`src/main/resources/bootstrap/patients/test-savatierra-v3.json`, después de
+crear el administrador y los catálogos. La combinación de búsqueda por
+`seedKey`, `ON CONFLICT DO NOTHING`, índice único e inserción condicional de la
+hoja debe producir una sola ficha incluso con reinicios o arranques
+concurrentes.
+
+Para recrear esta capacidad:
+
+- mantenga `HCOP_SEED_EXAMPLE_PATIENT=true` como valor predeterminado y acepte
+  `false` como exclusión explícita;
+- use una identidad y una historia creadas íntegramente desde cero, marcadas con
+  `meta.demo` y `meta.demoSeedKey`; jamás derive, anonimice o pseudonimice una
+  historia real para generar el recurso;
+- distribuya el caso compuesto ficticio de colon y melanoma con
+  `meta.demoContentVersion=3` y registre en
+  `meta.demoManagedRevision` la revisión escrita por el bootstrap;
+- conserve `hcop-default-test-savatierra-v1` como `meta.demoSeedKey` estable para
+  mantener la compatibilidad con instalaciones ya sembradas;
+- trate la misma versión como no-op;
+- aplique una versión más nueva únicamente si
+  `revision == meta.demoManagedRevision`; cualquier edición humana impide
+  futuras actualizaciones automáticas;
+- si existe la identidad marcada pero falta su hoja, repare únicamente esa
+  ausencia;
+- trate el seed como best-effort y nunca bloquee el arranque: una colisión de DNI
+  o historia clínica con un paciente sin la marca, o la falta del actor de
+  auditoría, debe producir warning y omisión sin apropiarse de esa fila;
+- ante un conflicto optimista concurrente, relea y acepte la escritura ganadora
+  cuando ya satisface el contrato; si no puede resolverlo, registre warning y
+  finalice como no-op;
+- no escriba `local_sessions.active_patient_id` durante el bootstrap;
+- pruebe desactivación, repetición, concurrencia, colisiones y recurso inválido;
+- considere un recurso empaquetado inválido un defecto de release y haga que la
+  validación previa a publicación rechace el artefacto, sin convertir una
+  contingencia de datos operativos en una caída del servicio.
 
 ## Elección entre columnas y JSONB
 

@@ -8,7 +8,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -60,6 +59,18 @@ public class PatientRepository {
         """, this::map, patientId).stream().findFirst();
   }
 
+  public Optional<Patient> findBySeedKey(String seedKey) {
+    return jdbc.query("""
+        SELECT source_id, document_number, medical_record_number, first_name, last_name,
+               birth_date, sex, health_insurance, health_insurance_number, phone, email,
+               address, local_only, created_at, updated_at
+          FROM patients
+         WHERE identity_json ->> 'seedKey' = ?
+         ORDER BY source_id
+         LIMIT 1
+        """, this::map, seedKey).stream().findFirst();
+  }
+
   public Optional<Patient> findDuplicate(String dni, String medicalRecord) {
     return jdbc.query("""
         SELECT source_id, document_number, medical_record_number, first_name, last_name,
@@ -90,6 +101,29 @@ public class PatientRepository {
         input.sex(), input.insurance(), input.affiliateNumber(), input.phone(),
         input.email(), input.address(), java.sql.Timestamp.from(now), java.sql.Timestamp.from(now));
     return find(id).orElseThrow();
+  }
+
+  public Optional<Patient> insertSeedIfMissing(NewPatient input, String seedKey) {
+    long id = jdbc.queryForObject("SELECT nextval('local_patient_id_sequence')", Long.class);
+    Instant now = clock.instant();
+    return jdbc.query("""
+        INSERT INTO patients (
+          source_id, document_number, medical_record_number, first_name, last_name,
+          birth_date, sex, health_insurance, health_insurance_number, phone, email,
+          address, identity_json, local_only, created_at, updated_at
+        ) VALUES (?, NULLIF(?, ''), NULLIF(?, ''), ?, ?, ?, NULLIF(?, ''),
+                  NULLIF(?, ''), NULLIF(?, ''), NULLIF(?, ''), NULLIF(?, ''),
+                  NULLIF(?, ''), jsonb_build_object('seedKey', ?), true, ?, ?)
+        ON CONFLICT DO NOTHING
+        RETURNING source_id, document_number, medical_record_number, first_name, last_name,
+                  birth_date, sex, health_insurance, health_insurance_number, phone, email,
+                  address, local_only, created_at, updated_at
+        """, this::map,
+        id, input.dni(), input.medicalRecord(), input.firstName(), input.lastName(),
+        input.birthDate() == null ? null : Date.valueOf(input.birthDate()),
+        input.sex(), input.insurance(), input.affiliateNumber(), input.phone(),
+        input.email(), input.address(), seedKey,
+        java.sql.Timestamp.from(now), java.sql.Timestamp.from(now)).stream().findFirst();
   }
 
   private Patient map(ResultSet result, int rowNumber) throws SQLException {

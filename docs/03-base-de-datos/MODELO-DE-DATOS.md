@@ -7,6 +7,10 @@ La definición exacta está en `src/main/resources/db/migration`. El
 [diccionario de datos](DICCIONARIO-DE-DATOS.md) explica las 34 tablas y sus
 relaciones sin reemplazar esas migraciones.
 
+El esquema actual se construye con **12 migraciones**, de `V001` a `V012`.
+`V012__patient_seed_identity.sql` no agrega tablas: incorpora la garantía de
+unicidad usada por el paciente demostrativo.
+
 ## Identidad y acceso
 
 - `local_users`
@@ -26,6 +30,40 @@ relaciones sin reemplazar esas migraciones.
 
 La hoja JSON conserva la estructura y el orden visual. Los dominios operativos
 críticos también se guardan en tablas relacionales.
+
+El único seed de paciente incluido con el producto es sintético. La identidad
+guarda `identity_json.seedKey = "hcop-default-test-savatierra-v1"` y la hoja
+guarda `meta.demo = true`, el mismo valor en `meta.demoSeedKey`, la versión del
+recurso en `meta.demoContentVersion` y la última revisión administrada en
+`meta.demoManagedRevision`. El índice único parcial
+`uq_patients_identity_seed_key` impide que dos filas compartan una clave de seed
+no vacía, incluso ante dos arranques concurrentes.
+
+Una versión más nueva del recurso puede reemplazar únicamente el documento
+demostrativo que continúa intacto:
+
+```text
+versiónRecurso > meta.demoContentVersion
+y revision == meta.demoManagedRevision
+```
+
+La misma versión no escribe. Si una persona guarda cualquier cambio, `revision`
+deja de coincidir con `demoManagedRevision` y el bootstrap conserva íntegramente
+esa edición, aunque exista un recurso más nuevo.
+
+El recurso vigente declara `demoContentVersion=3` y contiene un caso compuesto
+de colon y melanoma íntegramente ficticio. No es una transformación,
+anonimización ni pseudonimización de una ficha real.
+
+La ejecución es best-effort: una colisión de identidad o la falta de actor de
+auditoría sólo genera una advertencia y omite el seed. Si una actualización
+optimista pierde una carrera, relee la hoja y acepta al ganador; si el estado no
+puede confirmarse, registra una advertencia y termina sin escribir. Ninguna de
+estas condiciones bloquea el arranque.
+
+La creación o recuperación de esa ficha no escribe
+`local_sessions.active_patient_id`: el ejemplo queda disponible en el buscador,
+pero nunca se activa automáticamente para un usuario.
 
 ## Tratamiento y Hospital de Día
 

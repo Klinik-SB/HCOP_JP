@@ -33,8 +33,28 @@ PostgreSQL impone restricciones que deben resistir dos usuarios concurrentes.
 
 ### Privacidad por defecto
 
-No se incluyen pacientes en Git, imágenes Docker, fixtures ni ejemplos. Los
-logs evitan contenido clínico, cookies, contraseñas y claves.
+No se incluyen **datos de pacientes reales** en Git, imágenes Docker, fixtures
+ni ejemplos. Los logs evitan contenido clínico, cookies, contraseñas y claves.
+Una demostración puede incluir una ficha sólo cuando toda su identidad, historia,
+cronología y documentación hayan sido creadas íntegramente desde cero, esté
+marcada inequívocamente como sintética y no exista posibilidad razonable de
+asociarla a una persona real. Nunca se anonimiza, pseudonimiza ni transforma una
+historia fuente para convertirla en demostración.
+
+### Seeds demostrativos reversibles
+
+Un seed de demostración debe poder desactivarse por configuración, usar una
+clave estable separada de los identificadores clínicos y ser idempotente ante
+reinicios y concurrencia. Nunca selecciona un paciente para una sesión, nunca
+transforma datos reales en datos de prueba y nunca sobrescribe una edición
+humana. Puede actualizar contenido administrado sólo mediante una versión
+explícita y mientras la revisión actual coincida con la última revisión escrita
+por el propio seed. La misma versión no produce escrituras. Desactivarlo impide
+ejecuciones futuras; no borra silenciosamente lo ya persistido. El seed es
+**best-effort y nunca bloquea el arranque**: una colisión de DNI/HC, la ausencia
+del actor de auditoría o una carrera optimista no resoluble se registran como
+warning y omisión segura. Un recurso empaquetado inválido es, en cambio, un
+defecto de release que las pruebas deben detectar antes de publicar el artefacto.
 
 ### Cambios reproducibles
 

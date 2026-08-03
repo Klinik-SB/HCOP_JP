@@ -108,6 +108,59 @@ El asistente realiza un preflight real:
 El repositorio y la imagen publicados son públicos. La instalación estándar no
 requiere GitHub CLI, autorización por navegador ni tokens.
 
+## Paciente de ejemplo en una instalación nueva
+
+HCOP JP incorpora por defecto una ficha demostrativa completamente sintética
+para poder recorrer la hoja clínica apenas termina la instalación. La controla:
+
+```dotenv
+HCOP_SEED_EXAMPLE_PATIENT=true
+```
+
+El valor predeterminado es `true` tanto en Docker Compose como en los
+instaladores. La ficha se reconoce por el nombre
+`Test Savatierra, Tomas Alejandro`, DNI `99000002` y un caso compuesto ficticio
+de cáncer de colon y melanoma. El recurso distribuido **jamás contiene datos de
+una persona real** y no debe reemplazarse por una historia clínica verdadera.
+No deriva de una historia real anonimizada o pseudonimizada: identidad,
+cronología, hallazgos y recorrido clínico fueron creados desde cero.
+
+El arranque crea como máximo una ficha con la clave interna
+`hcop-default-test-savatierra-v1`. Reiniciar, reparar o actualizar no la duplica.
+La hoja distribuida usa `meta.demoContentVersion=3` y
+`meta.demoManagedRevision`: la misma versión es un no-op, y una versión más
+nueva del recurso sólo refresca una hoja demostrativa que permanezca intacta,
+con su revisión actual igual a la última revisión administrada por el seed. Si
+alguien editó la ficha, la revisión deja de coincidir y el arranque **nunca pisa
+esa edición humana**.
+
+El seed es best-effort y nunca impide iniciar HCOP JP. Una colisión del DNI o de
+la HC reservados, o la ausencia de un usuario habilitado para auditar la carga,
+produce una advertencia y omite el ejemplo. Ante una carrera de actualización
+optimista relee y acepta la versión ganadora; si no puede confirmarla, advierte
+y no modifica nada. Un recurso empaquetado inválido se considera un defecto de
+release que debe impedir la publicación del artefacto, no un dato que el
+operador deba reparar.
+
+El ejemplo tampoco se convierte en paciente activo: después de iniciar sesión
+la hoja permanece sin paciente hasta que el usuario abra una ficha de forma
+explícita.
+
+Para no crear el ejemplo, establezca:
+
+```dotenv
+HCOP_SEED_EXAMPLE_PATIENT=false
+```
+
+En una copia local se modifica el `.env` situado junto a `compose.yaml`. En la
+ejecución directa desde GitHub está en
+`%LOCALAPPDATA%\HCOP_JP-Docker\.env`; en la instalación administrada está en
+`%LOCALAPPDATA%\HCOP_JP\.env`. Detenga la aplicación, cambie el valor y vuelva a
+iniciarla. Para excluir la ficha desde una base vacía, configure `false` antes
+del primer arranque de la aplicación. El valor `false` evita creaciones o
+reparaciones o actualizaciones administradas futuras, pero no elimina una ficha
+demostrativa que ya exista.
+
 ## Accesos directos
 
 La instalación crea accesos separados:

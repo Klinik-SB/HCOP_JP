@@ -114,6 +114,7 @@ Con el sistema iniciado también existe una versión navegable en
 - [Corte Angular 037: editor Antecedentes personales](09-migracion-angular-hexagonal/CORTE-ANGULAR-037-EDITOR-ANTECEDENTES-PERSONALES.md)
 - [Corte Angular 038: editor Examen físico](09-migracion-angular-hexagonal/CORTE-ANGULAR-038-EDITOR-EXAMEN-FISICO.md)
 - [Corte Angular 039: Estudios complementarios coordinados](09-migracion-angular-hexagonal/CORTE-ANGULAR-039-ESTUDIOS-COORDINADOS.md)
+- [Corte Angular 040: paciente de ejemplo sintético](09-migracion-angular-hexagonal/CORTE-ANGULAR-040-PACIENTE-EJEMPLO-SINTETICO.md)
 
 ## Fuentes de verdad
 

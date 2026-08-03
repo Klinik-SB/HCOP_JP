@@ -11,7 +11,8 @@ repositorio `HCOP_JP`.
 | `src/main/java/ar/com/hexium/hcop/` | Backend Java: dominio, casos de uso, controladores, seguridad y adaptadores | Código del servidor |
 | `src/main/resources/static/` | Interfaz JavaScript vigente y activos visuales compartidos | Interfaz de convivencia en `/` |
 | `frontend/` | Aplicación Angular standalone, pruebas y construcción npm | Interfaz migrada en `/app/` |
-| `src/main/resources/db/migration/` | 11 migraciones Flyway ordenadas `V001` a `V011` | Esquema PostgreSQL |
+| `src/main/resources/db/migration/` | 12 migraciones Flyway ordenadas `V001` a `V012` | Esquema PostgreSQL |
+| `src/main/resources/bootstrap/` | Recursos sintéticos y repetibles de arranque | Datos demostrativos sin información real |
 | `src/main/resources/application.yml` | Valores de configuración Spring no secretos | Configuración base |
 | `runtime/catalogs/` | Catálogos clínicos distribuidos con la imagen | Datos de referencia |
 | `docs/` | Manuales Markdown versionados | Documentación fuente |
@@ -206,6 +207,19 @@ El paquete raíz es `src/main/java/ar/com/hexium/hcop/`.
 | `sharedkernel/domain/` | Identificadores compartidos mínimos |
 | Paquetes anteriores sin estas capas | MVC heredado todavía en convivencia |
 
+El arranque demostrativo se coordina en
+`patient/DefaultDemoPatientBootstrap.java`. Busca la clave de seed, crea como
+máximo una identidad sintética y su documento, y no modifica sesiones ni
+pacientes activos. `meta.demoContentVersion` identifica la versión del recurso;
+`meta.demoManagedRevision` identifica la revisión que todavía puede administrar
+el bootstrap. Una actualización sólo se aplica si el recurso es más nuevo y la
+revisión persistida coincide con esa marca.
+
+El contenido actual es la versión **3** de un caso compuesto de colon y melanoma
+creado desde cero. Es el único recurso de paciente demostrativo que se versiona.
+El bootstrap es best-effort: las condiciones operativas que impiden sembrarlo
+generan una advertencia y no detienen la aplicación.
+
 Configuración, Protocolos y Guías ya usan la estructura hexagonal. ArchUnit
 comprueba la dirección de sus dependencias en cada `mvn verify`.
 
@@ -213,7 +227,9 @@ comprueba la dirección de sus dependencias en cada `mvn verify`.
 
 | Ruta o recurso | Contenido |
 |---|---|
-| `src/main/resources/db/migration/V*.sql` | Tablas, índices, restricciones, seeds y evolución de esquema |
+| `src/main/resources/db/migration/V*.sql` | 12 versiones (`V001` a `V012`) con tablas, índices, restricciones, seeds y evolución de esquema |
+| `src/main/resources/db/migration/V012__patient_seed_identity.sql` | Índice único parcial que impide repetir una `identity_json.seedKey` no vacía |
+| `src/main/resources/bootstrap/patients/test-savatierra-v3.json` | Único recurso de paciente demostrativo versionado: historia ficticia de colon y melanoma, creada desde cero y sin datos reales (`demoContentVersion=3`) |
 | `runtime/catalogs/esquemas-coir-419.json` | Catálogo COIR importado |
 | `runtime/catalogs/scheme-duration-seed.json` | Duraciones y aplicaciones de esquemas |
 | `runtime/catalogs/diagnosis-equivalences.json` | Equivalencias diagnósticas iniciales |
@@ -226,7 +242,11 @@ comprueba la dirección de sus dependencias en cada `mvn verify`.
 | volumen de almacenamiento | Estudios, imágenes editadas, guías y documentos clínicos |
 
 Los catálogos versionados son semillas o referencias. La información operativa
-creada por usuarios nunca se sube a GitHub.
+creada por usuarios nunca se sube a GitHub. El paciente incluido es una
+excepción exclusivamente sintética, marcada como demostración y separada de
+los datos operativos; nunca se copia aquí una ficha real. Una versión nueva no
+sobrescribe una modificación humana: sólo renueva la hoja que conserva la
+revisión administrada por el seed.
 
 ## Scripts
 

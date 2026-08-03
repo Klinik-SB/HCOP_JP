@@ -155,6 +155,7 @@ services:
       HCOP_BOOTSTRAP_USERNAME: ${HCOP_BOOTSTRAP_USERNAME:-marcolyto}
       HCOP_BOOTSTRAP_PASSWORD: ${HCOP_BOOTSTRAP_PASSWORD:?Falta HCOP_BOOTSTRAP_PASSWORD en .env}
       HCOP_BOOTSTRAP_SECOND_USERNAME: ${HCOP_BOOTSTRAP_SECOND_USERNAME:-marcolyto2}
+      HCOP_SEED_EXAMPLE_PATIENT: ${HCOP_SEED_EXAMPLE_PATIENT:-true}
       HCOP_QR_SECRET: ${HCOP_QR_SECRET:?Falta HCOP_QR_SECRET en .env}
       HCOP_ENCRYPTION_SECRET: ${HCOP_ENCRYPTION_SECRET:?Falta HCOP_ENCRYPTION_SECRET en .env}
       HCOP_PUBLIC_BASE_URL: ${HCOP_PUBLIC_BASE_URL:-http://localhost:__HOST_PORT__}
@@ -420,6 +421,7 @@ Recupere $($script:DefaultDataDirectory)\.env desde su copia de seguridad o rest
       "HCOP_BOOTSTRAP_USERNAME=$(ConvertTo-EnvLiteral $credentials.Username)",
       "HCOP_BOOTSTRAP_PASSWORD=$(ConvertTo-EnvLiteral $credentials.Password)",
       "HCOP_BOOTSTRAP_SECOND_USERNAME=marcolyto2",
+      "HCOP_SEED_EXAMPLE_PATIENT=true",
       "HCOP_QR_SECRET=$(ConvertTo-EnvLiteral (New-RandomHex 48))",
       "HCOP_ENCRYPTION_SECRET=$(ConvertTo-EnvLiteral (New-RandomHex 48))",
       "HCOP_PUBLIC_BASE_URL=http://localhost:$($script:DefaultHostPort)"
