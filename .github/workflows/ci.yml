@@ -1,0 +1,100 @@
+# CI/CD de HCOP JP — mismo patrón que EPreliq (Klinik-product/base/12, etapas 1+2):
+# build de imagen → push a Artifact Registry → deploy a Cloud Run por digest,
+# autenticado por Workload Identity Federation (OIDC, sin keys).
+# Los tests viven en verify.yml; este pipeline solo publica y deploya.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "**.md"
+  workflow_dispatch:
+
+# Si llega un push nuevo con una corrida en curso, la vieja se cancela.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE: us-central1-docker.pkg.dev/klinik-sb-dev/products/hcop
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    # id-token es lo que habilita OIDC → Workload Identity Federation
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      digest: ${{ steps.digest.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Autenticar en GCP (WIF, sin keys)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/203789700122/locations/global/workloadIdentityPools/github/providers/github-oidc
+          service_account: hcop-deploy@klinik-sb-dev.iam.gserviceaccount.com
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configurar docker para Artifact Registry
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+
+      - name: Build de imagen
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          docker build --build-arg APP_VERSION="$SHORT_SHA" -t "$IMAGE:$SHORT_SHA" .
+
+      - name: Push y captura de digest
+        id: digest
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          docker push "$IMAGE:$SHORT_SHA"
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE:$SHORT_SHA")
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+          echo "Imagen publicada: $DIGEST"
+
+  deploy:
+    needs: build-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Autenticar en GCP (WIF, sin keys)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/203789700122/locations/global/workloadIdentityPools/github/providers/github-oidc
+          service_account: hcop-deploy@klinik-sb-dev.iam.gserviceaccount.com
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      # Se deploya el DIGEST inmutable que emitió build-push, nunca un tag.
+      # max-instances=1: Flyway migra al boot; una sola instancia evita carreras.
+      # min-instances=0: en reposo el servicio no cuesta nada.
+      # Los archivos clínicos persisten en GCS montado como volumen FUSE en el
+      # mismo path que usa el volumen Docker local (HCOP_STORAGE_ROOT).
+      - name: Deploy a Cloud Run (por digest)
+        run: |
+          gcloud run deploy hcop \
+            --image "${{ needs.build-push.outputs.digest }}" \
+            --region us-central1 \
+            --project klinik-sb-dev \
+            --service-account hcop-run@klinik-sb-dev.iam.gserviceaccount.com \
+            --add-cloudsql-instances klinik-sb-dev:us-central1:klinik-shared \
+            --add-volume "name=clinical-storage,type=cloud-storage,bucket=klinik-sb-dev-hcop-storage" \
+            --add-volume-mount "volume=clinical-storage,mount-path=/opt/hcop/runtime/storage" \
+            --port 5180 \
+            --execution-environment gen2 \
+            --cpu 1 --memory 1Gi \
+            --min-instances 0 --max-instances 1 \
+            --cpu-boost \
+            --allow-unauthenticated \
+            --set-env-vars "^;^HCOP_DB_URL=jdbc:postgresql:///hcop_jp?cloudSqlInstance=klinik-sb-dev:us-central1:klinik-shared&socketFactory=com.google.cloud.sql.postgres.SocketFactory;HCOP_DB_USER=hcop;HCOP_BOOTSTRAP_USERNAME=marcolyto;HCOP_BOOTSTRAP_SECOND_USERNAME=marcolyto2;HCOP_PUBLIC_BASE_URL=https://hcop-203789700122.us-central1.run.app;HCOP_BIND_ADDRESS=0.0.0.0;HCOP_PORT=5180" \
+            --set-secrets "HCOP_DB_PASSWORD=hcop-db-password:latest,HCOP_BOOTSTRAP_PASSWORD=hcop-bootstrap-password:latest,HCOP_QR_SECRET=hcop-qr-secret:latest,HCOP_ENCRYPTION_SECRET=hcop-encryption-secret:latest"
+
+      - name: URL del servicio
+        run: gcloud run services describe hcop --region us-central1 --project klinik-sb-dev --format='value(status.url)'
