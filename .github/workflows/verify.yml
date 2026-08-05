@@ -1,8 +1,9 @@
 name: Verificar HCOP JP
 
+# Sin trigger de push: la suite completa (job Windows 2x minutos + Docker
+# integral de ~35 min) corre solo en PRs o a demanda. El deploy automático
+# por push vive en ci.yml (Linux, solo build+deploy).
 on:
-  push:
-    branches: ["main", "master", "codex/**", "agent/**"]
   pull_request:
   workflow_dispatch:
     inputs:

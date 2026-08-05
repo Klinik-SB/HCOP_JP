@@ -10,6 +10,7 @@ on:
     paths-ignore:
       - "docs/**"
       - "**.md"
+      - ".github/workflows/verify.yml"
   workflow_dispatch:
 
 # Si llega un push nuevo con una corrida en curso, la vieja se cancela.
