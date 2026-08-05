@@ -1,0 +1,121 @@
+# Sync del fork con el upstream Marcolyto/HCOP_JP: diario y a demanda.
+# Merge limpio → push directo a main (el push con PAT dispara ci.yml, que
+# deploya a Cloud Run) + dispatch de verify.yml como chequeo informativo.
+# Conflicto → branch sync/upstream + PR para resolver a mano.
+# El push usa el secret SYNC_PUSH_TOKEN (PAT fine-grained con Contents y
+# Actions read/write): un push hecho con el GITHUB_TOKEN default no
+# dispararía el deploy (anti-recursión de GitHub Actions).
+name: Sync upstream
+
+on:
+  schedule:
+    - cron: "0 9 * * *" # 06:00 ART, diario
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+env:
+  UPSTREAM_REPO: https://github.com/Marcolyto/HCOP_JP.git
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Verificar que el secret SYNC_PUSH_TOKEN existe
+        run: |
+          if [ -z "${{ secrets.SYNC_PUSH_TOKEN }}" ]; then
+            echo "::error::Falta el secret SYNC_PUSH_TOKEN (PAT fine-grained con Contents y Actions read/write sobre este repo). Sin él, el push del sync no dispararía el deploy."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.SYNC_PUSH_TOKEN }}
+
+      - name: Configurar identidad git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Traer upstream y medir novedades
+        id: fetch
+        run: |
+          git remote add upstream "$UPSTREAM_REPO"
+          git fetch upstream main
+          NEW_COMMITS=$(git rev-list --count HEAD..upstream/main)
+          echo "new_commits=$NEW_COMMITS" >> "$GITHUB_OUTPUT"
+          if [ "$NEW_COMMITS" -eq 0 ]; then
+            echo "Sin novedades en upstream." | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Upstream trae $NEW_COMMITS commit(s) nuevo(s):" | tee -a "$GITHUB_STEP_SUMMARY"
+            git log --oneline HEAD..upstream/main | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Merge de upstream y push a main
+        id: merge
+        if: steps.fetch.outputs.new_commits != '0'
+        run: |
+          N="${{ steps.fetch.outputs.new_commits }}"
+          if git merge --no-edit -m "sync: merge upstream Marcolyto/HCOP_JP ($N commits)" upstream/main; then
+            git push origin main
+            echo "result=merged" >> "$GITHUB_OUTPUT"
+            echo "✅ Merge limpio pusheado a main ($N commits). El deploy corre solo." >> "$GITHUB_STEP_SUMMARY"
+          else
+            git merge --abort
+            echo "result=conflict" >> "$GITHUB_OUTPUT"
+            echo "⚠️ Conflicto al mergear upstream: se abre PR para resolución manual." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # Informativo, no gatea el deploy: verify.yml ya no corre en push (ahorro
+      # de minutos), pero un sync trae código ajeno sin revisar — esto avisa si
+      # upstream rompió algo. Borrar este paso si el gasto de minutos no se
+      # justifica.
+      - name: Disparar verify.yml sobre el merge
+        if: steps.merge.outputs.result == 'merged'
+        env:
+          GH_TOKEN: ${{ secrets.SYNC_PUSH_TOKEN }}
+        run: gh workflow run verify.yml --ref main --repo "$GITHUB_REPOSITORY"
+
+      - name: Abrir PR de conflicto
+        if: steps.merge.outputs.result == 'conflict'
+        env:
+          GH_TOKEN: ${{ secrets.SYNC_PUSH_TOKEN }}
+        run: |
+          git push -f origin refs/remotes/upstream/main:refs/heads/sync/upstream
+          EXISTING=$(gh pr list --head sync/upstream --base main --state open --json number --jq length)
+          if [ "$EXISTING" -eq 0 ]; then
+            cat > /tmp/pr-body.md <<'EOF'
+          El sync automático no pudo mergear `upstream/main` en `main` por conflictos.
+
+          Para resolver localmente:
+
+          ```bash
+          git fetch origin
+          git checkout main && git pull
+          git merge origin/sync/upstream   # resolver conflictos
+          git push origin main             # dispara el deploy
+          ```
+
+          Después de mergear a main, cerrar este PR (la branch `sync/upstream` se reutiliza en el próximo conflicto).
+
+          🤖 Generado por el workflow sync-upstream.
+          EOF
+            gh pr create \
+              --base main \
+              --head sync/upstream \
+              --title "sync: conflicto al mergear upstream Marcolyto/HCOP_JP" \
+              --body-file /tmp/pr-body.md
+            echo "PR de conflicto creado." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Ya hay un PR de conflicto abierto; la branch sync/upstream quedó actualizada." >> "$GITHUB_STEP_SUMMARY"
+          fi
