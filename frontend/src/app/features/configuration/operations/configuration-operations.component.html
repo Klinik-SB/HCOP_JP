@@ -18,26 +18,39 @@
   <div class="operations-body">
     @if (activeSection === 'calculators') {
       <div class="operations-workspace">
-        <aside class="operations-catalog">
-          <header><div><span>Herramientas clínicas</span><strong>Calculadoras y scores</strong></div><b>{{ calculators.length }}</b></header>
+        <aside class="operations-catalog calculator-operations-catalog">
+          <header><div><span>Herramientas clínicas</span><strong>Calculadoras y scores</strong></div><b>{{ calculatorCatalogCount }}</b></header>
           <div class="catalog-actions">
             <button class="operations-button is-primary" type="button" [disabled]="!canManage || busy" (click)="beginCalculator('formula')">+ Calculadora</button>
             <button class="operations-button" type="button" [disabled]="!canManage || busy" (click)="beginCalculator('score')">+ Score</button>
           </div>
           <label class="operations-search"><span aria-hidden="true">⌕</span><input type="search" [(ngModel)]="calculatorSearch" placeholder="Buscar por nombre o categoría" aria-label="Buscar calculadoras"></label>
-          <label class="catalog-toggle"><input type="checkbox" [(ngModel)]="showInactiveCalculators"> Mostrar desactivadas</label>
-          <div class="catalog-list" role="list">
-            @for (item of filteredCalculators; track item.id) {
-              <button type="button" role="listitem" class="catalog-item"
-                [class.active]="calculatorDraft?.id === item.id" [class.is-inactive]="!item.active" (click)="editCalculator(item)">
-                <small>{{ item.definition.mode === 'score' ? 'Score' : 'Fórmula' }} · v{{ item.revision }}</small>
-                <strong>{{ item.name }}</strong>
-                <span>{{ item.definition.category }} · {{ item.definition.fields.length }} variables</span>
-                <em>{{ item.active ? 'Activa' : 'Inactiva' }}</em>
-              </button>
-            } @empty {
-              <div class="catalog-empty">Todavía no hay calculadoras que coincidan.</div>
-            }
+          <div class="calculator-catalog-scroll">
+            <section class="built-in-calculator-catalog" aria-labelledby="builtInCalculatorHeading">
+              <header><div><strong id="builtInCalculatorHeading">Catálogo clínico integrado</strong><small>{{ enabledBuiltInCount }} de {{ builtInCalculators.length }} activas</small></div><button class="operations-button" type="button" [disabled]="!canManage || busy || !hasUnsavedCalculatorSettings" (click)="saveToolSettings()">Guardar catálogo</button></header>
+              <div class="built-in-calculator-list" role="list">
+                @for (item of filteredBuiltInCalculators; track item.key) {
+                  <div class="built-in-calculator-item" role="listitem" [class.active]="selectedBuiltInKey === item.key" [class.is-inactive]="item.disabled">
+                    <label [title]="item.disabled ? 'Activar calculadora integrada' : 'Desactivar calculadora integrada'"><input type="checkbox" [checked]="!item.disabled" [disabled]="!canManage || busy" [attr.aria-label]="'Activar ' + item.definition.title" (change)="setBuiltInEnabled(item.key, $any($event.target).checked)"></label>
+                    <button type="button" (click)="selectBuiltInCalculator(item)"><strong>{{ item.definition.title }}</strong><small>{{ item.override ? (!item.override.active ? 'Motor original activo · personalización archivada' : (item.override.definition.mode === 'builtin' ? 'Motor personalizado' : item.override.definition.mode === 'score' ? 'Score de reemplazo' : 'Fórmula de reemplazo') + ' · v' + item.override.revision) : 'Editar o personalizar' }}</small></button>
+                  </div>
+                } @empty { <div class="catalog-empty">No hay calculadoras integradas que coincidan.</div> }
+              </div>
+            </section>
+            <div class="custom-calculators-heading"><strong>Personalizaciones y nuevas</strong><label><input type="checkbox" [(ngModel)]="showInactiveCalculators"> Mostrar desactivadas</label></div>
+            <div class="catalog-list" role="list">
+              @for (item of filteredCalculators; track item.id) {
+                <button type="button" role="listitem" class="catalog-item"
+                  [class.active]="calculatorDraft?.id === item.id && !selectedBuiltInKey" [class.is-inactive]="!item.active" (click)="editCalculator(item)">
+                  <small>{{ item.definition.mode === 'score' ? 'Score' : 'Fórmula' }} · v{{ item.revision }}</small>
+                  <strong>{{ item.name }}</strong>
+                  <span>{{ item.definition.category }} · {{ item.definition.fields.length }} variables</span>
+                  <em>{{ item.active ? 'Activa' : 'Inactiva' }}</em>
+                </button>
+              } @empty {
+                <div class="catalog-empty">Todavía no hay calculadoras nuevas que coincidan.</div>
+              }
+            </div>
           </div>
         </aside>
 
@@ -46,15 +59,16 @@
             <div class="editor-empty"><span class="empty-symbol">∑</span><h2>Construya una herramienta sin programar</h2><p>Elija una calculadora existente o cree una fórmula o score. Cada versión se conserva en la base local.</p></div>
           } @else {
             <header class="editor-heading">
-              <div><span>{{ calculatorDraft.id ? 'Herramienta versionada' : 'Nueva herramienta' }}</span><h2>{{ calculatorDraft.name || 'Sin nombre' }}</h2><p>{{ calculatorDraft.id ? 'Versión ' + calculatorDraft.revision : 'Sin guardar' }} · {{ calculatorDraft.active ? 'activa' : 'desactivada' }}</p></div>
+              <div><span>{{ calculatorDraft.id ? 'Herramienta versionada' : selectedBuiltInKey ? 'Calculadora clínica integrada' : 'Nueva herramienta' }}</span><h2>{{ calculatorDraft.name || 'Sin nombre' }}</h2><p>{{ calculatorDraft.id ? 'Versión ' + calculatorDraft.revision : selectedBuiltInKey ? 'Motor original · personalización sin guardar' : 'Sin guardar' }} · {{ calculatorDraft.active ? 'activa' : 'desactivada' }}</p></div>
               <div class="editor-actions">
                 @if (calculatorDraft.id) {
-                  <button class="operations-button is-danger" type="button" [disabled]="!canManage || busy" (click)="archiveCalculator()">{{ calculatorDraft.active ? 'Desactivar' : 'Reactivar' }}</button>
+                  <button class="operations-button is-danger" type="button" [disabled]="!canManage || busy" (click)="archiveCalculator()">{{ selectedBuiltInKey ? (calculatorDraft.active ? 'Restaurar original' : 'Reactivar personalización') : (calculatorDraft.active ? 'Desactivar' : 'Reactivar') }}</button>
                 }
-                <button class="operations-button is-primary" type="button" [disabled]="!canManage || busy" (click)="saveCalculator()">Guardar</button>
+                <button class="operations-button is-primary" type="button" [disabled]="!canManage || busy" (click)="saveCalculator()">{{ selectedBuiltInKey ? 'Guardar personalización' : 'Guardar' }}</button>
               </div>
             </header>
 
+            <fieldset class="operations-readonly-fieldset" [disabled]="!canManage || busy">
             @if (calculatorIssues.length) {
               <div class="validation-summary" role="alert"><strong>Revise {{ calculatorIssues.length }} dato(s).</strong><ul>@for (issue of calculatorIssues; track issue.path) { <li>{{ issue.message }}</li> }</ul></div>
             }
@@ -63,38 +77,43 @@
               <header><div><b>1</b><span><strong>Identificación y modo</strong><small>Define cómo aparecerá en Herramientas.</small></span></div></header>
               <div class="field-grid columns-4">
                 <label class="field span-2" [class.has-error]="hasIssue(calculatorIssues, 'name')"><span>Nombre *</span><input [(ngModel)]="calculatorDraft.name" maxlength="180"></label>
-                <label class="field"><span>Tipo de herramienta</span><select [(ngModel)]="calculatorDraft.mode" (ngModelChange)="calculatorModeChanged($event)"><option value="formula">Calculadora por fórmula</option><option value="score">Score por puntos</option></select></label>
-                <label class="field"><span>Categoría</span><select [(ngModel)]="calculatorDraft.category"><option value="general">General</option><option value="oncologia">Oncología</option><option value="toxicidad">Toxicidad</option><option value="pronostico">Pronóstico</option><option value="estadificacion">Estadificación</option><option value="farmacia">Farmacia</option></select></label>
+                <label class="field"><span>Tipo de herramienta</span><select [(ngModel)]="calculatorDraft.mode" (ngModelChange)="calculatorModeChanged($event)"><option value="formula">Calculadora por fórmula</option><option value="score">Score por puntos</option>@if (selectedBuiltInKey) { <option value="builtin">Motor clínico original</option> }</select></label>
+                <label class="field"><span>Categoría</span><input [(ngModel)]="calculatorDraft.category" list="calculatorCategoryOptions"><datalist id="calculatorCategoryOptions"><option value="general"></option><option value="mama"></option><option value="pulmon"></option><option value="ginecologia"></option><option value="digestivo"></option><option value="hematologia"></option><option value="prostata"></option><option value="vejiga"></option><option value="renal"></option><option value="testiculo"></option><option value="radioterapia"></option><option value="toxicidad"></option><option value="pronostico"></option><option value="estadificacion"></option><option value="farmacia"></option></datalist></label>
                 <label class="field span-2"><span>Descripción / uso clínico</span><textarea rows="3" [(ngModel)]="calculatorDraft.description"></textarea></label>
                 <label class="field"><span>Fuente o referencia</span><input [(ngModel)]="calculatorDraft.source"></label>
-                <label class="toggle-field"><input type="checkbox" [(ngModel)]="calculatorDraft.active"><span><b>Disponible</b><small>Visible en Herramientas</small></span></label>
+                <label class="toggle-field"><input type="checkbox" [(ngModel)]="calculatorDraft.active" [disabled]="calculatorDraft.mode === 'builtin'"><span><b>Personalización disponible</b><small>{{ calculatorDraft.mode === 'builtin' ? 'Use el catálogo o la acción de reactivar/desactivar' : 'Visible en Herramientas' }}</small></span></label>
               </div>
             </section>
 
+            @if (calculatorDraft.mode === 'builtin') {
+              <div class="calculator-safety-notice"><strong>Motor clínico protegido</strong><span>Puede adaptar nombres, descripciones, etiquetas y ayudas. Las claves, tipos y valores que sostienen el cálculo original permanecen bloqueados.</span></div>
+            }
+
             <section class="editor-section">
-              <header><div><b>2</b><span><strong>Variables</strong><small>Campos que completará el usuario.</small></span></div><button class="operations-button" type="button" [disabled]="!canManage" (click)="addCalculatorField()">+ Variable</button></header>
+              <header><div><b>2</b><span><strong>Variables</strong><small>{{ calculatorDraft.mode === 'builtin' ? 'Adapte únicamente los textos visibles del motor protegido.' : 'Arrastre los campos o use las flechas para ordenar.' }}</small></span></div>@if (calculatorDraft.mode !== 'builtin') { <button class="operations-button" type="button" [disabled]="!canManage" (click)="addCalculatorField()">+ Variable</button> }</header>
               <div class="builder-list">
                 @for (field of calculatorDraft.fields; track field.clientId; let index = $index) {
-                  <article class="builder-card" [class.has-error]="hasIssue(calculatorIssues, 'fields.' + index)">
-                    <header><span class="builder-order">{{ index + 1 }}</span><div><strong>{{ field.label || 'Variable sin nombre' }}</strong><small>{{ field.key || 'sin_clave' }} · {{ field.type }}</small></div><div class="builder-actions"><button type="button" title="Subir" [disabled]="index === 0" (click)="moveCalculatorField(index, -1)">↑</button><button type="button" title="Bajar" [disabled]="index === calculatorDraft.fields.length - 1" (click)="moveCalculatorField(index, 1)">↓</button><button type="button" title="Eliminar" (click)="removeCalculatorField(index)">×</button></div></header>
+                  <article class="builder-card" [class.has-error]="hasIssue(calculatorIssues, 'fields.' + index)" [class.is-dragging]="calculatorDragIndex === index" [class.drag-before]="calculatorDropIndex === index && !calculatorDropAfter && calculatorDragIndex !== index" [class.drag-after]="calculatorDropIndex === index && calculatorDropAfter && calculatorDragIndex !== index" (dragover)="calculatorFieldDragOver(index, $event)" (drop)="dropCalculatorField(index, $event)">
+                    <header><button class="builder-drag-handle" type="button" draggable="true" [disabled]="calculatorDraft.mode === 'builtin'" title="Arrastrar para reordenar" [attr.aria-label]="'Arrastrar ' + (field.label || 'variable') + ' para reordenar'" (dragstart)="startCalculatorFieldDrag(index, $event)" (dragend)="endCalculatorFieldDrag()">⠿</button><span class="builder-order">{{ index + 1 }}</span><div><strong>{{ field.label || 'Variable sin nombre' }}</strong><small>{{ field.key || 'sin_clave' }} · {{ field.type }}</small></div><div class="builder-actions"><button type="button" title="Subir" [attr.aria-label]="'Subir ' + (field.label || 'variable')" [disabled]="index === 0 || calculatorDraft.mode === 'builtin'" (click)="moveCalculatorField(index, -1)">↑</button><button type="button" title="Bajar" [attr.aria-label]="'Bajar ' + (field.label || 'variable')" [disabled]="index === calculatorDraft.fields.length - 1 || calculatorDraft.mode === 'builtin'" (click)="moveCalculatorField(index, 1)">↓</button>@if (calculatorDraft.mode !== 'builtin') { <button type="button" title="Eliminar" [attr.aria-label]="'Eliminar ' + (field.label || 'variable')" (click)="removeCalculatorField(index)">×</button> }</div></header>
                     <div class="field-grid columns-4 compact">
                       <label class="field"><span>Etiqueta *</span><input [(ngModel)]="field.label"></label>
-                      <label class="field"><span>Clave *</span><input [(ngModel)]="field.key" pattern="[a-z][a-z0-9_]+"></label>
-                      <label class="field"><span>Tipo</span><select [(ngModel)]="field.type" (ngModelChange)="calculatorFieldTypeChanged(field)">@for (type of fieldTypes; track type.value) { <option [value]="type.value">{{ type.label }}</option> }</select></label>
-                      <label class="field"><span>Unidad</span><input [(ngModel)]="field.unit" placeholder="kg, cm, mg…"></label>
+                      <label class="field"><span>Clave *</span><input [(ngModel)]="field.key" [readOnly]="calculatorDraft.mode === 'builtin'" pattern="[A-Za-z_][A-Za-z0-9_]*" (ngModelChange)="calculatorFieldKeyChanged()"></label>
+                      <label class="field"><span>Tipo</span><select [(ngModel)]="field.type" [disabled]="calculatorDraft.mode === 'builtin'" (ngModelChange)="calculatorFieldTypeChanged(field)">@for (type of calculatorFieldTypes; track type.value) { <option [value]="type.value">{{ type.label }}</option> }</select></label>
+                      <label class="field"><span>Unidad</span><input [(ngModel)]="field.unit" [readOnly]="calculatorDraft.mode === 'builtin'" placeholder="kg, cm, mg…"></label>
+                      <label class="field span-2"><span>Ayuda / explicación</span><input [(ngModel)]="field.help" placeholder="Texto breve para quien completa la herramienta"></label>
                       @if (field.type === 'number') {
-                        <label class="field"><span>Mínimo</span><input type="number" [(ngModel)]="field.min"></label>
-                        <label class="field"><span>Máximo</span><input type="number" [(ngModel)]="field.max"></label>
+                        <label class="field"><span>Mínimo</span><input type="number" [(ngModel)]="field.min" [readOnly]="calculatorDraft.mode === 'builtin'"></label>
+                        <label class="field"><span>Máximo</span><input type="number" [(ngModel)]="field.max" [readOnly]="calculatorDraft.mode === 'builtin'"></label>
                       }
                       @if (calculatorDraft.mode === 'score' && field.type === 'checkbox') {
                         <label class="field"><span>Puntos al marcar</span><input type="number" [(ngModel)]="field.checkedPoints" (input)="calculatePreview()"></label>
                       }
-                      <label class="toggle-field small"><input type="checkbox" [(ngModel)]="field.required"><span><b>Obligatoria</b><small>Exige un valor</small></span></label>
+                      <label class="toggle-field small"><input type="checkbox" [(ngModel)]="field.required" [disabled]="calculatorDraft.mode === 'builtin'"><span><b>Obligatoria</b><small>Exige un valor</small></span></label>
                     </div>
                     @if (field.type === 'select') {
-                      <div class="sub-builder"><header><strong>Opciones{{ calculatorDraft.mode === 'score' ? ' y puntos' : '' }}</strong><button type="button" (click)="addCalculatorOption(field)">+ Opción</button></header>
+                      <div class="sub-builder"><header><strong>Opciones{{ calculatorDraft.mode === 'score' ? ' y puntos' : '' }}</strong>@if (calculatorDraft.mode !== 'builtin') { <button type="button" (click)="addCalculatorOption(field)">+ Opción</button> }</header>
                         @for (option of field.options; track option.clientId; let optionIndex = $index) {
-                          <div class="option-row"><input [(ngModel)]="option.value" placeholder="valor"><input [(ngModel)]="option.label" placeholder="Etiqueta visible">@if (calculatorDraft.mode === 'score') { <input class="short" type="number" [(ngModel)]="option.points" (input)="calculatePreview()" aria-label="Puntos"> }<button type="button" title="Eliminar opción" (click)="removeCalculatorOption(field, optionIndex)">×</button></div>
+                          <div class="option-row"><input [(ngModel)]="option.value" [readOnly]="calculatorDraft.mode === 'builtin'" placeholder="valor"><input [(ngModel)]="option.label" [readOnly]="calculatorDraft.mode === 'builtin'" placeholder="Etiqueta visible">@if (calculatorDraft.mode === 'score') { <input class="short" type="number" [(ngModel)]="option.points" (input)="calculatePreview()" aria-label="Puntos"> }@if (calculatorDraft.mode !== 'builtin') { <button type="button" title="Eliminar opción" (click)="removeCalculatorOption(field, optionIndex)">×</button> }</div>
                         }
                       </div>
                     }
@@ -118,16 +137,17 @@
                   <label class="field" [class.has-error]="hasIssue(calculatorIssues, 'expression')"><span>Expresión validada *</span><textarea rows="3" [(ngModel)]="calculatorDraft.expression" [readOnly]="!advancedFormula" (ngModelChange)="calculatePreview()"></textarea><small>{{ advancedFormula ? 'Edición manual habilitada: se verificará sintaxis y variables.' : 'Use los botones para evitar errores de escritura.' }}</small></label>
                 </div>
               </section>
-            } @else {
+            } @else if (calculatorDraft.mode === 'score') {
               <section class="editor-section"><header><div><b>3</b><span><strong>Base del score</strong><small>Las reglas suman o restan puntos sobre este valor.</small></span></div></header><div class="field-grid columns-4"><label class="field"><span>Puntaje inicial</span><input type="number" [(ngModel)]="calculatorDraft.basePoints" (input)="calculatePreview()"></label></div></section>
             }
 
-            <section class="editor-section">
+            @if (calculatorDraft.mode !== 'builtin') { <section class="editor-section">
               <header><div><b>4</b><span><strong>Resultado e interpretación</strong><small>Presentación y rangos clínicos.</small></span></div><button class="operations-button" type="button" (click)="addCalculatorRange()">+ Rango</button></header>
               <div class="field-grid columns-4"><label class="field span-2"><span>Etiqueta del resultado</span><input [(ngModel)]="calculatorDraft.resultLabel"></label><label class="field"><span>Unidad</span><input [(ngModel)]="calculatorDraft.resultUnit"></label><label class="field"><span>Decimales</span><input type="number" min="0" max="6" [(ngModel)]="calculatorDraft.decimals" (input)="calculatePreview()"></label></div>
               <div class="range-list">@for (range of calculatorDraft.ranges; track range.clientId; let rangeIndex = $index) { <div class="range-row"><input type="number" [(ngModel)]="range.min" placeholder="Desde"><input type="number" [(ngModel)]="range.max" placeholder="Hasta"><input [(ngModel)]="range.label" placeholder="Interpretación"><select [(ngModel)]="range.severity"><option value="info">Informativo</option><option value="good">Favorable</option><option value="warn">Atención</option><option value="bad">Alto riesgo</option></select><button type="button" (click)="removeCalculatorRange(rangeIndex)">×</button></div> }</div>
               <div class="live-preview"><span>Vista previa en vivo</span><div class="preview-controls">@for (field of calculatorDraft.fields; track field.clientId) { @if (field.type !== 'section') { <label><small>{{ field.label }}</small>@if (field.type === 'select') { <select [(ngModel)]="calculatorPreviewValues[field.key]" (ngModelChange)="calculatePreview()">@for (option of field.options; track option.clientId) { <option [value]="option.value">{{ option.label }}</option> }</select> } @else if (field.type === 'checkbox') { <input type="checkbox" [(ngModel)]="calculatorPreviewValues[field.key]" (ngModelChange)="calculatePreview()"> } @else { <input [type]="field.type === 'number' ? 'number' : 'text'" [(ngModel)]="calculatorPreviewValues[field.key]" (ngModelChange)="calculatePreview()"> }</label> } }</div>@if (calculatorPreviewValue != null) { <strong>{{ calculatorDraft.resultLabel }}: {{ calculatorPreviewValue | number:('1.' + calculatorDraft.decimals + '-' + calculatorDraft.decimals) }} {{ calculatorDraft.resultUnit }}</strong><small>{{ calculatorPreviewRange }}</small> } @else { <strong>Resultado pendiente</strong><small>{{ calculatorPreviewError }}</small> }</div>
-            </section>
+            </section> }
+            </fieldset>
           }
         </main>
       </div>
@@ -143,32 +163,38 @@
         <main class="operations-editor">
           @if (!researchDraft) { <div class="editor-empty"><span class="empty-symbol">▤</span><h2>Diseñe formularios sin programar</h2><p>Los campos, etiquetas, opciones y orden se guardan versionados y aparecen en Investigación.</p></div> }
           @else {
-            <header class="editor-heading"><div><span>Formulario configurable</span><h2>{{ researchDraft.name }}</h2><p>{{ researchDraft.id ? 'Versión ' + researchDraft.revision : 'Sin guardar' }} · {{ researchDraft.active ? 'activo' : 'desactivado' }}</p></div><div class="editor-actions">@if (researchDraft.id) { <button class="operations-button is-danger" type="button" (click)="archiveResearch()">{{ researchDraft.active ? 'Desactivar' : 'Reactivar' }}</button> }<button class="operations-button is-primary" type="button" [disabled]="!canManage || busy" (click)="saveResearch()">Guardar</button></div></header>
+            <header class="editor-heading"><div><span>Formulario configurable</span><h2>{{ researchDraft.name }}</h2><p>{{ researchDraft.id ? 'Versión ' + researchDraft.revision : 'Sin guardar' }} · {{ researchDraft.active ? 'activo' : 'desactivado' }}</p></div><div class="editor-actions">@if (researchDraft.id) { <button class="operations-button is-danger" type="button" [disabled]="!canManage || busy" (click)="archiveResearch()">{{ researchDraft.active ? 'Desactivar' : 'Reactivar' }}</button> }<button class="operations-button is-primary" type="button" [disabled]="!canManage || busy" (click)="saveResearch()">Guardar</button></div></header>
+            <fieldset class="operations-readonly-fieldset" [disabled]="!canManage || busy">
             @if (researchIssues.length) { <div class="validation-summary"><strong>Revise {{ researchIssues.length }} dato(s).</strong><ul>@for (issue of researchIssues; track issue.path) { <li>{{ issue.message }}</li> }</ul></div> }
             <section class="editor-section"><header><div><b>1</b><span><strong>Datos generales</strong><small>Nombre, grupo e indicaciones para quien carga.</small></span></div></header><div class="field-grid columns-4"><label class="field span-2"><span>Nombre *</span><input [(ngModel)]="researchDraft.name"></label><label class="field"><span>Categoría *</span><input [(ngModel)]="researchDraft.category"></label><label class="toggle-field"><input type="checkbox" [(ngModel)]="researchDraft.active"><span><b>Disponible</b><small>Admite nuevas cargas</small></span></label><label class="field span-4"><span>Instrucciones</span><textarea rows="3" [(ngModel)]="researchDraft.instructions"></textarea></label></div></section>
-            <section class="editor-section"><header><div><b>2</b><span><strong>Constructor del formulario</strong><small>Ordene campos y separadores con las flechas.</small></span></div><button class="operations-button" type="button" (click)="addResearchField()">+ Elemento</button></header><div class="builder-list">
+            <section class="editor-section"><header><div><b>2</b><span><strong>Constructor del formulario</strong><small>Arrastre campos y separadores o use las flechas para ordenar.</small></span></div><button class="operations-button" type="button" [disabled]="!canManage || busy" (click)="addResearchField()">+ Elemento</button></header><div class="builder-list">
               @for (field of researchDraft.fields; track field.clientId; let index = $index) {
-                <article class="builder-card" [class.has-error]="hasIssue(researchIssues, 'fields.' + index)"><header><span class="builder-order">{{ index + 1 }}</span><div><strong>{{ field.label }}</strong><small>{{ field.key }} · {{ field.type }}</small></div><div class="builder-actions"><button type="button" [disabled]="index === 0" (click)="moveResearchField(index, -1)">↑</button><button type="button" [disabled]="index === researchDraft.fields.length - 1" (click)="moveResearchField(index, 1)">↓</button><button type="button" (click)="removeResearchField(index)">×</button></div></header><div class="field-grid columns-4 compact"><label class="field"><span>Etiqueta *</span><input [(ngModel)]="field.label"></label><label class="field"><span>Clave *</span><input [(ngModel)]="field.key"></label><label class="field"><span>Tipo</span><select [(ngModel)]="field.type">@for (type of fieldTypes; track type.value) { <option [value]="type.value">{{ type.label }}</option> }</select></label><label class="field"><span>Ayuda / ejemplo</span><input [(ngModel)]="field.placeholder"></label>@if (field.type !== 'section') { <label class="toggle-field small"><input type="checkbox" [(ngModel)]="field.required"><span><b>Obligatorio</b><small>Impide omitirlo</small></span></label> }</div>
+                <article class="builder-card" [class.has-error]="hasIssue(researchIssues, 'fields.' + index)" [class.is-dragging]="researchDragIndex === index" [class.drag-before]="researchDropIndex === index && !researchDropAfter && researchDragIndex !== index" [class.drag-after]="researchDropIndex === index && researchDropAfter && researchDragIndex !== index" (dragover)="researchFieldDragOver(index, $event)" (drop)="dropResearchField(index, $event)"><header><button class="builder-drag-handle" type="button" draggable="true" title="Arrastrar para reordenar" [attr.aria-label]="'Arrastrar ' + (field.label || 'campo') + ' para reordenar'" (dragstart)="startResearchFieldDrag(index, $event)" (dragend)="endResearchFieldDrag()">⠿</button><span class="builder-order">{{ index + 1 }}</span><div><strong>{{ field.label }}</strong><small>{{ field.key }} · {{ field.type }}</small></div><div class="builder-actions"><button type="button" title="Subir" [attr.aria-label]="'Subir ' + (field.label || 'campo')" [disabled]="index === 0" (click)="moveResearchField(index, -1)">↑</button><button type="button" title="Bajar" [attr.aria-label]="'Bajar ' + (field.label || 'campo')" [disabled]="index === researchDraft.fields.length - 1" (click)="moveResearchField(index, 1)">↓</button><button type="button" title="Eliminar" [attr.aria-label]="'Eliminar ' + (field.label || 'campo')" (click)="removeResearchField(index)">×</button></div></header><div class="field-grid columns-4 compact"><label class="field"><span>Etiqueta *</span><input [(ngModel)]="field.label"></label><label class="field"><span>Clave *</span><input [(ngModel)]="field.key"></label><label class="field"><span>Tipo</span><select [(ngModel)]="field.type">@for (type of researchFieldTypes; track type.value) { <option [value]="type.value">{{ type.label }}</option> }</select></label><label class="field"><span>Ayuda / ejemplo</span><input [(ngModel)]="field.placeholder"></label>@if (field.type !== 'section') { <label class="toggle-field small"><input type="checkbox" [(ngModel)]="field.required"><span><b>Obligatorio</b><small>Impide omitirlo</small></span></label> }</div>
                 @if (field.type === 'select') { <div class="sub-builder"><header><strong>Opciones del selector</strong><button type="button" (click)="addResearchOption(field)">+ Opción</button></header>@for (option of field.options; track option.clientId; let optionIndex = $index) { <div class="option-row"><input [(ngModel)]="option.value" placeholder="valor"><input [(ngModel)]="option.label" placeholder="Etiqueta visible"><button type="button" (click)="removeResearchOption(field, optionIndex)">×</button></div> }</div> }
                 </article>
               }
             </div></section>
+            </fieldset>
           }
         </main>
       </div>
     } @else if (activeSection === 'day-hospital') {
       <main class="single-editor">
         <header class="editor-heading"><div><span>Turnero por sillón</span><h2>Capacidad y jornada de Hospital de día</h2><p>La agenda usa estos valores para construir los casilleros y validar superposiciones.</p></div><button class="operations-button is-primary" type="button" [disabled]="!canManage || busy || !dayHospitalPlan.valid" (click)="saveDayHospital()">Guardar agenda</button></header>
+        <fieldset class="operations-readonly-fieldset" [disabled]="!canManage || busy">
         <section class="editor-section"><header><div><b>1</b><span><strong>Capacidad operativa</strong><small>Los cambios se aplican a la grilla sin modificar turnos ya registrados.</small></span></div></header><div class="field-grid columns-4"><label class="field"><span>Cantidad de sillones</span><input type="number" min="1" max="60" [(ngModel)]="dayHospital.chairCount"></label><label class="field"><span>Fracción mínima</span><select [(ngModel)]="dayHospital.slotMinutes">@for (minutes of slotOptions; track minutes) { <option [ngValue]="minutes">Cada {{ minutes }} minutos</option> }</select></label><label class="field"><span>Inicio de atención</span><input type="time" [(ngModel)]="dayHospital.startTime"></label><label class="field"><span>Fin de atención</span><input type="time" [(ngModel)]="dayHospital.endTime"></label></div></section>
         <section class="schedule-preview" [class.is-error]="!dayHospitalPlan.valid"><header><span>Vista previa de capacidad</span><strong>{{ dayHospital.chairCount }} {{ dayHospital.chairCount === 1 ? 'sillón' : 'sillones' }}</strong></header><p>{{ dayHospitalPlan.message }}</p>@if (dayHospitalPlan.valid) { <div class="schedule-metrics"><span><b>{{ dayHospitalPlan.slotsPerChair }}</b><small>casilleros por sillón</small></span><span><b>{{ dayHospitalPlan.totalSlots }}</b><small>casilleros por jornada</small></span><span><b>{{ dayHospitalPlan.rowsPerHour }} × {{ dayHospitalPlan.columnsPerHour }}</b><small>forma de cada hora</small></span></div><div class="chair-bars">@for (_ of [].constructor(dayHospital.chairCount > 12 ? 12 : dayHospital.chairCount); track $index) { <i></i> }</div> }</section>
+        </fieldset>
       </main>
     } @else if (activeSection === 'llm') {
       <main class="single-editor">
         <header class="editor-heading"><div><span>Integración opcional</span><h2>Servicio de inteligencia artificial</h2><p>El endpoint y la clave se guardan sin exponer el secreto. Pruebe antes de habilitar.</p></div><div class="editor-actions"><button class="operations-button" type="button" [disabled]="busy || !canManage" (click)="testLlm()">Probar conexión</button><button class="operations-button is-primary" type="button" [disabled]="busy || !canManage" (click)="saveLlm()">Guardar</button></div></header>
         @if (llmDraft) {
+          <fieldset class="operations-readonly-fieldset" [disabled]="!canManage || busy">
           <section class="editor-section"><header><div><b>1</b><span><strong>Proveedor y modelo</strong><small>Compatible con Gemini, OpenAI, Ollama y LM Studio.</small></span></div><label class="toggle-field small"><input type="checkbox" [(ngModel)]="llmDraft.enabled"><span><b>Servicio habilitado</b><small>Permite consultas clínicas</small></span></label></header><div class="preset-row"><span>Configuración rápida</span><button type="button" (click)="applyLlmPreset('gemini')">Gemini</button><button type="button" (click)="applyLlmPreset('lm-studio')">LM Studio local</button><button type="button" (click)="applyLlmPreset('ollama')">Ollama local</button></div><div class="field-grid columns-4"><label class="field"><span>Proveedor</span><select [(ngModel)]="llmDraft.provider" [disabled]="llmLocked('baseUrl') || llmLocked('model')"><option value="openai-compatible">OpenAI compatible</option><option value="gemini">Gemini</option><option value="lm-studio">LM Studio</option><option value="ollama">Ollama</option></select></label><label class="field span-2"><span>Endpoint</span><input type="url" [(ngModel)]="llmDraft.baseUrl" [readOnly]="llmLocked('baseUrl')"></label><label class="field"><span>Modelo</span><input [(ngModel)]="llmDraft.model" [readOnly]="llmLocked('model')"></label><label class="field"><span>Temperatura</span><input type="number" min="0" max="2" step="0.1" [(ngModel)]="llmDraft.temperature"></label><label class="field"><span>Máximo de tokens</span><input type="number" min="128" max="16000" [(ngModel)]="llmDraft.maxTokens"></label><label class="field"><span>Tiempo de espera (ms)</span><input type="number" min="5000" max="180000" step="1000" [(ngModel)]="llmDraft.timeoutMs"></label></div></section>
           <section class="editor-section"><header><div><b>2</b><span><strong>Clave privada</strong><small>{{ llmDraft.hasApiKey ? 'Hay una clave guardada; su valor no se muestra.' : 'No hay una clave guardada.' }}</small></span></div></header><div class="key-actions"><label><input type="radio" name="llmKeyAction" value="keep" [(ngModel)]="llmDraft.apiKeyAction" [disabled]="llmLocked('apiKey')"> Conservar</label><label><input type="radio" name="llmKeyAction" value="replace" [(ngModel)]="llmDraft.apiKeyAction" [disabled]="llmLocked('apiKey')"> Reemplazar</label><label><input type="radio" name="llmKeyAction" value="remove" [(ngModel)]="llmDraft.apiKeyAction" [disabled]="llmLocked('apiKey')"> Quitar</label></div>@if (llmDraft.apiKeyAction === 'replace') { <div class="field-grid columns-4"><label class="field span-2"><span>Nueva API key</span><input type="password" [(ngModel)]="llmDraft.apiKey" autocomplete="new-password"></label></div> }</section>
           <div class="connection-status" [class.is-error]="llmStatusKind === 'error'" [class.is-success]="llmStatusKind === 'success'" role="status"><b>{{ llmStatusKind === 'success' ? 'Conexión verificada' : llmStatusKind === 'error' ? 'Revisión necesaria' : 'Estado del servicio' }}</b><span>{{ llmStatus }}</span></div>
+          </fieldset>
         }
       </main>
     } @else {
@@ -190,6 +216,7 @@
     }
   </div>
 
+  <p class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ reorderAnnouncement }}</p>
   @if (busy) { <div class="operations-busy" role="status"><span></span><b>Procesando…</b></div> }
   @if (toastMessage) { <div class="operations-toast" [class.is-error]="toastError" role="status"><span>{{ toastError ? '!' : '✓' }}</span><b>{{ toastMessage }}</b></div> }
 </section>

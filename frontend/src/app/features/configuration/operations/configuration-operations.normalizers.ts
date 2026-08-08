@@ -2,6 +2,8 @@ import {
   ConfigurableCalculatorEvaluation,
   evaluateConfigurableCalculator
 } from '../../tools/calculators/configurable-calculator.engine';
+import { CalculatorDefinition as BuiltInCalculatorDefinition } from '../../tools/calculators/calculator.models';
+import { INSTITUTIONAL_CALCULATOR_LIMITS } from '../../tools/calculators/institutional-calculator-catalog.validator';
 import { SafeExpressionVariables } from '../../tools/calculators/safe-expression.engine';
 import {
   AccessIdentity,
@@ -34,10 +36,12 @@ import {
   ScoreOperator,
   ScoreRuleDraft,
   SecuritySettings,
+  ToolSettingsDefinition,
+  ToolSettingsItem,
   ValidationIssue
 } from './configuration-operations.models';
 
-const FIELD_KEY = /^[a-z][a-z0-9_]{1,63}$/;
+const FIELD_KEY = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const USERNAME = /^[a-z0-9._-]{3,96}$/;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SLOT_MINUTES = new Set([5, 10, 15, 20, 30]);
@@ -73,6 +77,15 @@ export function normalizeCalculatorMutation(payload: unknown): CalculatorItem {
   return normalizeConfigurationItem<CalculatorDefinition>(unwrapItem(payload), 'calculator', normalizeCalculatorDefinition);
 }
 
+export function normalizeToolSettingsCatalog(payload: unknown): ToolSettingsItem | null {
+  const item = collection(payload, 'items')[0];
+  return item ? normalizeConfigurationItem<ToolSettingsDefinition>(item, 'tool-settings', normalizeToolSettingsDefinition) : null;
+}
+
+export function normalizeToolSettingsMutation(payload: unknown): ToolSettingsItem {
+  return normalizeConfigurationItem<ToolSettingsDefinition>(unwrapItem(payload), 'tool-settings', normalizeToolSettingsDefinition);
+}
+
 export function normalizeResearchMutation(payload: unknown): ResearchItem {
   return normalizeConfigurationItem<ResearchDefinition>(unwrapItem(payload), 'research-form', normalizeResearchDefinition);
 }
@@ -88,7 +101,7 @@ export function normalizeDayHospitalMutation(payload: unknown): DayHospitalItem 
 
 export function blankCalculator(mode: CalculatorMode = 'formula'): CalculatorDraft {
   const draft: CalculatorDraft = {
-    id: '', revision: null, name: mode === 'score' ? 'Nuevo score' : 'Nueva calculadora',
+    id: '', revision: null, name: mode === 'score' ? 'Nuevo score' : mode === 'builtin' ? 'Calculadora integrada' : 'Nueva calculadora',
     description: '', active: true, mode, category: 'general', source: '',
     expression: mode === 'formula' ? 'sqrt(peso * altura / 3600)' : '', basePoints: 0,
     resultLabel: mode === 'score' ? 'Puntaje total' : 'Resultado',
@@ -98,10 +111,48 @@ export function blankCalculator(mode: CalculatorMode = 'formula'): CalculatorDra
   if (mode === 'formula') {
     draft.fields.push(blankCalculatorField({ key: 'peso', label: 'Peso', unit: 'kg' }));
     draft.fields.push(blankCalculatorField({ key: 'altura', label: 'Altura', unit: 'cm' }));
-  } else {
+  } else if (mode === 'score') {
     draft.fields.push(blankCalculatorField({ key: 'criterio_1', label: 'Criterio 1', type: 'checkbox', checkedPoints: 1 }));
   }
   return draft;
+}
+
+export function calculatorDraftFromBuiltIn(
+  definition: BuiltInCalculatorDefinition,
+  replacesBuiltInKey: string,
+  active = true
+): CalculatorDraft {
+  return {
+    id: '',
+    revision: null,
+    name: definition.title,
+    description: definition.clinicalUse || definition.subtitle,
+    active,
+    mode: 'builtin',
+    category: definition.category || 'general',
+    source: definition.source || 'Motor clínico original',
+    expression: '',
+    basePoints: 0,
+    resultLabel: 'Resultado',
+    resultUnit: '',
+    decimals: 2,
+    replacesBuiltInKey,
+    fields: definition.fields.map((field) => blankCalculatorField({
+      key: field.id,
+      label: field.label,
+      type: field.kind,
+      unit: field.kind === 'number' ? field.unit || '' : '',
+      help: field.help || '',
+      min: field.kind === 'number' ? field.min ?? null : null,
+      max: field.kind === 'number' ? field.max ?? null : null,
+      required: field.kind === 'section' ? false : field.required,
+      checkedPoints: field.kind === 'checkbox' ? field.weight ?? 0 : 0,
+      options: field.kind === 'select'
+        ? field.options.map((option) => ({ ...blankBuilderOption(), value: option.value, label: option.label }))
+        : []
+    })),
+    ranges: []
+  };
 }
 
 export function calculatorDraftFromItem(item: CalculatorItem): CalculatorDraft {
@@ -129,7 +180,7 @@ export function calculatorDraftFromItem(item: CalculatorItem): CalculatorDraft {
 export function blankCalculatorField(overrides: Partial<CalculatorFieldDraft> = {}): CalculatorFieldDraft {
   return {
     clientId: clientId('calc-field'), key: 'variable', label: 'Nueva variable', type: 'number',
-    unit: '', min: null, max: null, required: true, checkedPoints: 1,
+    unit: '', help: '', min: null, max: null, required: true, checkedPoints: 1,
     options: [], scoreRules: [], ...overrides
   };
 }
@@ -149,26 +200,43 @@ export function blankCalculatorRange(): CalculatorRangeDraft {
 export function validateCalculatorDraft(draft: CalculatorDraft): readonly ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   if (!draft.name.trim()) issue(issues, 'name', 'Escriba el nombre de la calculadora o score.');
-  if (!draft.fields.length) issue(issues, 'fields', 'Agregue al menos una variable.');
+  if (draft.mode !== 'builtin' && !draft.fields.length) issue(issues, 'fields', 'Agregue al menos una variable.');
+  if (draft.mode === 'builtin' && !draft.replacesBuiltInKey) {
+    issue(issues, 'replacesBuiltInKey', 'La personalización debe conservar la calculadora integrada que reemplaza.');
+  }
+  if (draft.fields.length > INSTITUTIONAL_CALCULATOR_LIMITS.fields) {
+    issue(issues, 'fields', `Use como máximo ${INSTITUTIONAL_CALCULATOR_LIMITS.fields} variables.`);
+  }
   const keys = new Set<string>();
   draft.fields.forEach((field, index) => {
     const base = `fields.${index}`;
     if (!field.label.trim()) issue(issues, `${base}.label`, 'Cada variable necesita una etiqueta.');
-    if (!FIELD_KEY.test(field.key.trim())) issue(issues, `${base}.key`, 'Use una clave en minúsculas, sin espacios, de al menos 2 caracteres.');
+    if (!FIELD_KEY.test(field.key.trim())) issue(issues, `${base}.key`, 'Use un identificador ASCII sin espacios (letras, números o guion bajo).');
     if (keys.has(field.key.trim())) issue(issues, `${base}.key`, `La clave ${field.key} está repetida.`);
     keys.add(field.key.trim());
+    if (field.type === 'date') {
+      issue(issues, `${base}.type`, 'Las calculadoras no admiten fechas como variable. Use un número derivado, por ejemplo edad o días.');
+    }
     if (field.min != null && field.max != null && field.max < field.min) issue(issues, `${base}.max`, 'El máximo no puede ser menor que el mínimo.');
     if (field.type === 'select') {
       const values = new Set<string>();
       if (!field.options.length) issue(issues, `${base}.options`, 'Agregue al menos una opción.');
+      if (field.options.length > INSTITUTIONAL_CALCULATOR_LIMITS.options) {
+        issue(issues, `${base}.options`, `Use como máximo ${INSTITUTIONAL_CALCULATOR_LIMITS.options} opciones.`);
+      }
       field.options.forEach((option, optionIndex) => {
-        if (!option.label.trim() || !option.value.trim()) issue(issues, `${base}.options.${optionIndex}`, 'Complete valor y etiqueta.');
+        if (!option.label.trim() || (draft.mode !== 'builtin' && !option.value.trim())) {
+          issue(issues, `${base}.options.${optionIndex}`, 'Complete valor y etiqueta.');
+        }
         if (values.has(option.value.trim())) issue(issues, `${base}.options.${optionIndex}.value`, 'El valor de la opción está repetido.');
         values.add(option.value.trim());
       });
     }
     if (draft.mode === 'score' && field.type === 'number') {
       if (!field.scoreRules.length) issue(issues, `${base}.scoreRules`, 'Defina al menos una regla de puntaje para la variable numérica.');
+      if (field.scoreRules.length > INSTITUTIONAL_CALCULATOR_LIMITS.rules) {
+        issue(issues, `${base}.scoreRules`, `Use como máximo ${INSTITUTIONAL_CALCULATOR_LIMITS.rules} reglas.`);
+      }
       field.scoreRules.forEach((rule, ruleIndex) => {
         if (rule.value == null) issue(issues, `${base}.scoreRules.${ruleIndex}.value`, 'Complete el valor de la regla.');
         if (rule.operator === 'between' && (rule.max == null || (rule.value != null && rule.max < rule.value))) {
@@ -181,8 +249,14 @@ export function validateCalculatorDraft(draft: CalculatorDraft): readonly Valida
     if (!range.label.trim()) issue(issues, `ranges.${index}.label`, 'Cada rango necesita una interpretación.');
     if (range.min != null && range.max != null && range.max < range.min) issue(issues, `ranges.${index}.max`, 'El máximo del rango no puede ser menor que el mínimo.');
   });
+  if (draft.ranges.length > INSTITUTIONAL_CALCULATOR_LIMITS.ranges) {
+    issue(issues, 'ranges', `Use como máximo ${INSTITUTIONAL_CALCULATOR_LIMITS.ranges} rangos.`);
+  }
   if (draft.mode === 'formula') {
     if (!draft.expression.trim()) issue(issues, 'expression', 'Arme la fórmula antes de guardar.');
+    if (draft.expression.length > INSTITUTIONAL_CALCULATOR_LIMITS.expressionLength) {
+      issue(issues, 'expression', `La fórmula no puede superar ${INSTITUTIONAL_CALCULATOR_LIMITS.expressionLength.toLocaleString('es-AR')} caracteres.`);
+    }
     if (!issues.some((entry) => entry.path.startsWith('fields.') || entry.path === 'expression')) {
       try {
         evaluateCalculatorDraft(draft, calculatorExampleValues(draft));
@@ -196,7 +270,9 @@ export function validateCalculatorDraft(draft: CalculatorDraft): readonly Valida
 
 export function calculatorSavePayload(draft: CalculatorDraft, active = draft.active): JsonRecord {
   return {
-    key: draft.id ? undefined : `calculator:${slug(draft.name)}`,
+    key: draft.id ? undefined : draft.replacesBuiltInKey
+      ? `calculator-override:${draft.replacesBuiltInKey}`
+      : `calculator:${slug(draft.name)}`,
     name: draft.name.trim(), description: draft.description.trim(), active,
     expectedRevision: draft.revision ?? undefined,
     definition: calculatorDefinitionFromDraft(draft)
@@ -210,6 +286,7 @@ export function calculatorDefinitionFromDraft(draft: CalculatorDraft): JsonRecor
     category: draft.category.trim() || 'general', source: draft.source.trim(), clinicalUse: draft.description.trim(),
     fields: draft.fields.map((field) => ({
       key: field.key.trim(), label: field.label.trim(), type: field.type, unit: field.unit.trim(),
+      help: field.help.trim(),
       min: field.min, max: field.max, required: field.required, checkedPoints: field.checkedPoints,
       options: field.options.map((option) => ({ value: option.value.trim(), label: option.label.trim(), points: option.points })),
       scoreRules: field.scoreRules.map((rule) => ({ operator: rule.operator, value: rule.value, max: rule.max, points: rule.points, label: rule.label.trim() }))
@@ -218,6 +295,23 @@ export function calculatorDefinitionFromDraft(draft: CalculatorDraft): JsonRecor
     resultLabel: draft.resultLabel.trim() || 'Resultado', resultUnit: draft.resultUnit.trim(),
     decimals: Math.max(0, Math.min(6, Math.round(draft.decimals))),
     ranges: draft.ranges.map((range) => ({ min: range.min, max: range.max, label: range.label.trim(), severity: range.severity }))
+  };
+}
+
+export function toolSettingsSavePayload(
+  item: ToolSettingsItem | null,
+  disabledBuiltInKeys: readonly string[]
+): JsonRecord {
+  return {
+    key: item?.key || 'tools-main',
+    name: item?.name || 'Herramientas incluidas',
+    description: item?.description || 'Disponibilidad de las calculadoras clínicas integradas.',
+    active: true,
+    expectedRevision: item?.revision ?? undefined,
+    definition: {
+      enabled: true,
+      disabledBuiltInKeys: [...new Set(disabledBuiltInKeys)]
+    }
   };
 }
 
@@ -232,6 +326,28 @@ export function calculatorExampleValues(draft: CalculatorDraft): SafeExpressionV
 
 export function evaluateCalculatorDraft(draft: CalculatorDraft, values: SafeExpressionVariables): ConfigurableCalculatorEvaluation {
   return evaluateConfigurableCalculator(calculatorDefinitionFromDraft(draft), values);
+}
+
+export function reorderMutableItems<T>(items: T[], fromIndex: number, toIndex: number): boolean {
+  if (!Number.isInteger(fromIndex) || !Number.isInteger(toIndex) || fromIndex < 0 || fromIndex >= items.length) return false;
+  const boundedDestination = Math.max(0, Math.min(items.length - 1, toIndex));
+  if (boundedDestination === fromIndex) return false;
+  const [item] = items.splice(fromIndex, 1);
+  if (item === undefined) return false;
+  items.splice(boundedDestination, 0, item);
+  return true;
+}
+
+export function droppedItemDestination(
+  fromIndex: number,
+  targetIndex: number,
+  afterTarget: boolean,
+  itemCount: number
+): number {
+  if (itemCount < 1) return 0;
+  let insertionIndex = Math.max(0, Math.min(itemCount, targetIndex + (afterTarget ? 1 : 0)));
+  if (fromIndex < insertionIndex) insertionIndex -= 1;
+  return Math.max(0, Math.min(itemCount - 1, insertionIndex));
 }
 
 export function blankResearch(): ResearchDraft {
@@ -273,8 +389,12 @@ export function validateResearchDraft(draft: ResearchDraft): readonly Validation
     if (keys.has(field.key.trim())) issue(issues, `${base}.key`, `La clave ${field.key} está repetida.`);
     keys.add(field.key.trim());
     if (field.type === 'select' && !field.options.length) issue(issues, `${base}.options`, 'Agregue opciones al selector.');
+    const optionValues = new Set<string>();
     field.options.forEach((option, optionIndex) => {
       if (!option.value.trim() || !option.label.trim()) issue(issues, `${base}.options.${optionIndex}`, 'Complete valor y etiqueta.');
+      const value = option.value.trim();
+      if (value && optionValues.has(value)) issue(issues, `${base}.options.${optionIndex}.value`, 'El valor de la opción está repetido.');
+      if (value) optionValues.add(value);
     });
   });
   return issues;
@@ -516,14 +636,23 @@ export function normalizedSearch(value: string): string {
 
 function normalizeCalculatorDefinition(value: unknown): CalculatorDefinition {
   const definition = record(value);
+  const mode = definition['mode'] === 'score' ? 'score' : definition['mode'] === 'builtin' ? 'builtin' : 'formula';
   return {
-    mode: definition['mode'] === 'score' ? 'score' : 'formula',
+    mode,
     category: text(definition['category']) || 'general', source: text(definition['source']),
     clinicalUse: text(definition['clinicalUse']), fields: collection(definition['fields']).map(record),
     expression: text(definition['expression']), basePoints: number(definition['basePoints'], 0),
     resultLabel: text(definition['resultLabel']) || 'Resultado', resultUnit: text(definition['resultUnit']),
     decimals: boundedInteger(definition['decimals'], 0, 6, 2), ranges: collection(definition['ranges']).map(record),
     replacesBuiltInKey: text(definition['replacesBuiltInKey']) || undefined
+  };
+}
+
+function normalizeToolSettingsDefinition(value: unknown): ToolSettingsDefinition {
+  const definition = record(value);
+  return {
+    enabled: boolean(definition['enabled'], true),
+    disabledBuiltInKeys: [...new Set(collection(definition['disabledBuiltInKeys']).map(text).filter(Boolean))]
   };
 }
 
@@ -565,6 +694,7 @@ function calculatorFieldFromRecord(value: unknown): CalculatorFieldDraft {
   const type = normalizeFieldType(field['type'], 'number');
   return blankCalculatorField({
     key: text(field['key']), label: text(field['label']), type, unit: text(field['unit']),
+    help: text(field['help'] ?? field['placeholder']),
     min: nullableNumber(field['min']), max: nullableNumber(field['max']), required: boolean(field['required'], true),
     checkedPoints: number(field['checkedPoints'], 0),
     options: collection(field['options']).map((raw) => {

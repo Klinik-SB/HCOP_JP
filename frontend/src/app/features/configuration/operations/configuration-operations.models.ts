@@ -1,7 +1,7 @@
 export type JsonRecord = Record<string, unknown>;
 
 export type OperationsSection = 'calculators' | 'research' | 'day-hospital' | 'llm' | 'access';
-export type CalculatorMode = 'formula' | 'score';
+export type CalculatorMode = 'formula' | 'score' | 'builtin';
 export type BuilderFieldType = 'number' | 'select' | 'checkbox' | 'text' | 'textarea' | 'date' | 'section';
 export type ScoreOperator = 'lt' | 'lte' | 'eq' | 'gte' | 'gt' | 'between';
 export type AccessView = 'users' | 'roles' | 'security';
@@ -41,6 +41,7 @@ export interface CalculatorFieldDraft {
   label: string;
   type: BuilderFieldType;
   unit: string;
+  help: string;
   min: number | null;
   max: number | null;
   required: boolean;
@@ -73,6 +74,13 @@ export interface CalculatorDefinition {
 }
 
 export type CalculatorItem = ConfigurationItem<CalculatorDefinition>;
+
+export interface ToolSettingsDefinition {
+  readonly enabled: boolean;
+  readonly disabledBuiltInKeys: readonly string[];
+}
+
+export type ToolSettingsItem = ConfigurationItem<ToolSettingsDefinition>;
 
 export interface CalculatorDraft {
   id: string;

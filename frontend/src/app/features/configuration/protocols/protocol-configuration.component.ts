@@ -32,6 +32,7 @@ import {
   duplicateProtocol,
   formatMinutes,
   promoteCatalogProtocol,
+  protocolDraftSignature,
   protocolFailureMessage,
   validateProtocolDraft
 } from './protocol-configuration.normalizers';
@@ -57,6 +58,8 @@ export class ProtocolConfigurationComponent implements OnInit, OnDestroy {
   private catalogSequence = 0;
   private detailSequence = 0;
   private draggedClientId = '';
+  private persistedDraftSignature = '';
+  private persistedDraft: ProtocolEditorDraft | null = null;
 
   @Input() autoLoad = true;
   @Input() canEdit = true;
@@ -114,7 +117,31 @@ export class ProtocolConfigurationComponent implements OnInit, OnDestroy {
   }
 
   get isReadOnly(): boolean {
-    return !this.canEdit || Boolean(this.draft?.catalogOnly) || this.saving;
+    return !this.canEdit || Boolean(this.draft?.catalogOnly) || this.loadingEditor || this.saving;
+  }
+
+  hasUnsavedChanges(): boolean {
+    const current = protocolDraftSignature(this.draft);
+    return Boolean(current && current !== this.persistedDraftSignature);
+  }
+
+  confirmDiscardChanges(
+    message = 'Hay cambios sin guardar en el protocolo. Si continúa, se perderán. ¿Desea descartarlos?'
+  ): boolean {
+    return !this.hasUnsavedChanges() || globalThis.confirm(message);
+  }
+
+  confirmDiscardAndRestore(
+    message = 'Hay cambios sin guardar en el protocolo. Si continúa, se perderán. ¿Desea descartarlos?'
+  ): boolean {
+    if (this.saving) {
+      this.showToast('Espere a que termine el guardado antes de cambiar de sección.');
+      return false;
+    }
+    if (!this.hasUnsavedChanges()) return true;
+    if (!this.confirmDiscardChanges(message)) return false;
+    this.restorePersistedDraft();
+    return true;
   }
 
   get editorEyebrow(): string {
@@ -132,40 +159,66 @@ export class ProtocolConfigurationComponent implements OnInit, OnDestroy {
   }
 
   reload(): void {
+    if (!this.confirmDiscardChanges('Actualizar descartará los cambios del protocolo que todavía no guardó. ¿Desea continuar?')) return;
+    if (!this.selectedId) {
+      this.detailSequence += 1;
+      this.draft = null;
+      this.persistedDraftSignature = '';
+      this.persistedDraft = null;
+      this.editorError = '';
+      this.validationIssues = [];
+      this.clearDrugPickers();
+    }
     this.loadCatalog(this.selectedId, true);
   }
 
   beginNewProtocol(): void {
     if (!this.canEdit || this.saving) return;
+    if (!this.confirmDiscardChanges()) return;
     this.detailSequence += 1;
     this.selectedId = '';
     this.draft = blankProtocol();
+    this.persistedDraftSignature = '';
+    this.persistedDraft = null;
     this.editorError = '';
     this.validationIssues = [];
     this.clearDrugPickers();
     this.focusProtocolName();
   }
 
-  selectProtocol(id: string): void {
+  selectProtocol(id: string, discardConfirmed = false): void {
     const normalizedId = id.trim();
     if (!normalizedId || this.saving) return;
+    if (!discardConfirmed && !this.confirmDiscardChanges()) return;
     this.selectedId = normalizedId;
+    this.draft = null;
+    this.persistedDraftSignature = '';
+    this.persistedDraft = null;
     this.editorError = '';
     this.validationIssues = [];
     this.loadingEditor = true;
+    this.clearDrugPickers();
     const sequence = ++this.detailSequence;
     this.subscriptions.add(this.service.detail(normalizedId).pipe(
       catchError((failure: unknown) => {
-        if (sequence === this.detailSequence) this.editorError = protocolFailureMessage(failure);
+        if (sequence === this.detailSequence) {
+          this.updateView(() => {
+            this.loadingEditor = false;
+            this.editorError = protocolFailureMessage(failure);
+          });
+        }
         return of(null);
       })
     ).subscribe((draft) => {
       if (sequence !== this.detailSequence) return;
-      this.loadingEditor = false;
-      if (!draft) return;
-      this.draft = draft;
-      this.selectedId = draft.id;
-      this.clearDrugPickers();
+      this.updateView(() => {
+        this.loadingEditor = false;
+        if (!draft) return;
+        this.draft = draft;
+        this.rememberPersistedDraft(draft);
+        this.selectedId = draft.id;
+        this.clearDrugPickers();
+      });
     }));
   }
 
@@ -236,7 +289,8 @@ export class ProtocolConfigurationComponent implements OnInit, OnDestroy {
 
   closeDrugPicker(component: ProtocolComponentDraft): void {
     setTimeout(() => {
-      if (this.activeDrugPicker === component.clientId) this.activeDrugPicker = '';
+      if (this.activeDrugPicker !== component.clientId) return;
+      this.updateView(() => { this.activeDrugPicker = ''; });
     }, 180);
   }
 
@@ -266,6 +320,8 @@ export class ProtocolConfigurationComponent implements OnInit, OnDestroy {
     if (!this.draft || this.draft.catalogOnly || !this.canEdit) return;
     this.selectedId = '';
     this.draft = duplicateProtocol(this.draft);
+    this.persistedDraftSignature = '';
+    this.persistedDraft = null;
     this.validationIssues = [];
     this.editorError = '';
     this.clearDrugPickers();
@@ -277,6 +333,8 @@ export class ProtocolConfigurationComponent implements OnInit, OnDestroy {
     const hadComponents = this.draft.components.length > 0;
     this.selectedId = '';
     this.draft = promoteCatalogProtocol(this.draft);
+    this.persistedDraftSignature = '';
+    this.persistedDraft = null;
     this.validationIssues = [];
     this.editorError = '';
     this.clearDrugPickers();
@@ -303,22 +361,28 @@ export class ProtocolConfigurationComponent implements OnInit, OnDestroy {
       : this.service.update(draft.id, buildSaveProtocolPayload(draft));
     this.subscriptions.add(request.pipe(
       catchError((failure: unknown) => {
-        this.editorError = protocolFailureMessage(failure);
+        this.updateView(() => {
+          this.saving = false;
+          this.editorError = protocolFailureMessage(failure);
+        });
         return of(null);
       })
     ).subscribe((saved) => {
-      this.saving = false;
-      if (!saved) return;
-      this.draft = saved;
-      this.selectedId = saved.id;
-      this.validationIssues = [];
-      const action: ProtocolChangedEvent['action'] = isNew ? 'created' : wasArchived && saved.active ? 'restored' : 'updated';
-      this.afterMutation(saved.id, action);
-      this.showToast(isNew
-        ? 'Protocolo creado y disponible en el sistema.'
-        : action === 'restored'
-          ? 'Protocolo restaurado correctamente.'
-          : 'Protocolo actualizado correctamente.');
+      this.updateView(() => {
+        this.saving = false;
+        if (!saved) return;
+        this.draft = saved;
+        this.rememberPersistedDraft(saved);
+        this.selectedId = saved.id;
+        this.validationIssues = [];
+        const action: ProtocolChangedEvent['action'] = isNew ? 'created' : wasArchived && saved.active ? 'restored' : 'updated';
+        this.afterMutation(saved.id, action);
+        this.showToast(isNew
+          ? 'Protocolo creado y disponible en el sistema.'
+          : action === 'restored'
+            ? 'Protocolo restaurado correctamente.'
+            : 'Protocolo actualizado correctamente.');
+      });
     }));
   }
 
@@ -330,21 +394,30 @@ export class ProtocolConfigurationComponent implements OnInit, OnDestroy {
       this.save();
       return;
     }
-    if (!globalThis.confirm('El protocolo dejará de aparecer al crear tratamientos. Sus datos y tratamientos históricos se conservarán. ¿Desea archivarlo?')) return;
+    const archiveMessage = this.hasUnsavedChanges()
+      ? 'Hay cambios sin guardar que se descartarán al archivar. El protocolo dejará de aparecer al crear tratamientos, pero sus datos históricos se conservarán. ¿Desea continuar?'
+      : 'El protocolo dejará de aparecer al crear tratamientos. Sus datos y tratamientos históricos se conservarán. ¿Desea archivarlo?';
+    if (!globalThis.confirm(archiveMessage)) return;
     this.saving = true;
     this.editorError = '';
     this.subscriptions.add(this.service.archive(draft.id).pipe(
       catchError((failure: unknown) => {
-        this.editorError = protocolFailureMessage(failure);
+        this.updateView(() => {
+          this.saving = false;
+          this.editorError = protocolFailureMessage(failure);
+        });
         return of(null);
       })
     ).subscribe((archived) => {
-      this.saving = false;
-      if (!archived) return;
-      this.draft = archived;
-      this.selectedId = archived.id;
-      this.afterMutation(archived.id, 'archived');
-      this.showToast('Protocolo archivado sin eliminar datos históricos.');
+      this.updateView(() => {
+        this.saving = false;
+        if (!archived) return;
+        this.draft = archived;
+        this.rememberPersistedDraft(archived);
+        this.selectedId = archived.id;
+        this.afterMutation(archived.id, 'archived');
+        this.showToast('Protocolo archivado sin eliminar datos históricos.');
+      });
     }));
   }
 
@@ -402,10 +475,12 @@ export class ProtocolConfigurationComponent implements OnInit, OnDestroy {
         this.coirCatalog = catalog.coir.filter((item) => item.entryType === 'treatment');
         if (keepSelection && this.protocols.some((item) => item.id === keepSelection)) {
           this.selectedId = keepSelection;
-          if (refreshDetail) this.selectProtocol(keepSelection);
+          if (refreshDetail) this.selectProtocol(keepSelection, true);
         } else if (keepSelection && refreshDetail) {
           this.selectedId = '';
           this.draft = null;
+          this.persistedDraftSignature = '';
+          this.persistedDraft = null;
         }
       });
     }));
@@ -415,7 +490,24 @@ export class ProtocolConfigurationComponent implements OnInit, OnDestroy {
     this.zone.run(() => {
       update();
       this.changeDetector.markForCheck();
+      this.changeDetector.detectChanges();
     });
+  }
+
+  private rememberPersistedDraft(draft: ProtocolEditorDraft): void {
+    this.persistedDraft = structuredCloneSafe(draft);
+    this.persistedDraftSignature = protocolDraftSignature(draft);
+  }
+
+  private restorePersistedDraft(): void {
+    this.detailSequence += 1;
+    this.loadingEditor = false;
+    this.draft = this.persistedDraft ? structuredCloneSafe(this.persistedDraft) : null;
+    this.selectedId = this.draft?.id ?? '';
+    this.persistedDraftSignature = protocolDraftSignature(this.draft);
+    this.editorError = '';
+    this.validationIssues = [];
+    this.clearDrugPickers();
   }
 
   private scheduleDrugSearch(component: ProtocolComponentDraft, delay = 250): void {
@@ -434,14 +526,16 @@ export class ProtocolConfigurationComponent implements OnInit, OnDestroy {
     const clientId = component.clientId;
     const sequence = (this.searchSequences.get(clientId) ?? 0) + 1;
     this.searchSequences.set(clientId, sequence);
-    this.drugSearchLoading.add(clientId);
+    this.updateView(() => { this.drugSearchLoading.add(clientId); });
     this.subscriptions.add(this.service.searchDrugs(query).pipe(
       catchError(() => of<readonly DrugCatalogItem[]>([]))
     ).subscribe((results) => {
       if (this.searchSequences.get(clientId) !== sequence || component.drugName.trim() !== query) return;
-      this.drugSearchLoading.delete(clientId);
-      this.drugResults.set(clientId, results);
-      this.activeDrugPicker = clientId;
+      this.updateView(() => {
+        this.drugSearchLoading.delete(clientId);
+        this.drugResults.set(clientId, results);
+        this.activeDrugPicker = clientId;
+      });
     }));
   }
 
@@ -483,8 +577,10 @@ export class ProtocolConfigurationComponent implements OnInit, OnDestroy {
     this.toastError = error;
     if (this.toastTimer) clearTimeout(this.toastTimer);
     this.toastTimer = setTimeout(() => {
-      this.toastMessage = '';
-      this.toastError = false;
+      this.updateView(() => {
+        this.toastMessage = '';
+        this.toastError = false;
+      });
     }, 4200);
   }
 }

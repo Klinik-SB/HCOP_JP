@@ -287,6 +287,16 @@ export function buildSaveProtocolPayload(draft: ProtocolEditorDraft): SaveProtoc
   };
 }
 
+/**
+ * Stable representation of the fields that are actually persisted for a protocol.
+ * UI-only identities and read-only COIR catalog entries deliberately do not make a
+ * configuration editor appear dirty.
+ */
+export function protocolDraftSignature(draft: ProtocolEditorDraft | null): string {
+  if (!draft || draft.catalogOnly) return '';
+  return JSON.stringify(buildSaveProtocolPayload(draft));
+}
+
 export function validateProtocolDraft(draft: ProtocolEditorDraft): readonly ProtocolValidationIssue[] {
   const issues: ProtocolValidationIssue[] = [];
   if (draft.catalogOnly) issues.push({ path: 'protocol', message: 'Convierta el registro COIR antes de editarlo.' });

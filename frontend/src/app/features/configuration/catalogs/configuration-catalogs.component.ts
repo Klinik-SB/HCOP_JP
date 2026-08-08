@@ -1,4 +1,4 @@
-import { Component, OnDestroy, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, OnDestroy, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
@@ -199,7 +199,10 @@ export class ConfigurationCatalogsComponent implements OnDestroy {
   readonly studyTemplateCategories = STUDY_TEMPLATE_CATEGORIES;
 
   constructor() {
-    effect(() => this.activate(this.initialSection(), false));
+    effect(() => {
+      const section = this.initialSection();
+      untracked(() => this.activate(section, false));
+    });
     this.guideForm.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.dirty.set(true));
     this.templateForm.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.dirty.set(true));
     this.diagnosisForm.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.dirty.set(true));
@@ -214,9 +217,7 @@ export class ConfigurationCatalogsComponent implements OnDestroy {
 
   activate(section: ConfigurationCatalogSection, protectDirty = true): void {
     if (section === this.activeSection()) return;
-    if (protectDirty && this.hasUnsavedChanges() && !globalThis.confirm('Hay cambios sin guardar. Si cambia de sección, se perderán. ¿Desea continuar?')) return;
-    this.dirty.set(false);
-    this.visibleSystemsDirty.set(false);
+    if (protectDirty && !this.confirmDiscardChanges('Hay cambios sin guardar. Si cambia de sección, se perderán. ¿Desea continuar?')) return;
     this.activeSection.set(section);
     if (section === 'guides' && !this.guides().length) this.loadGuides();
     if (section === 'templates' && !this.templates().length) this.loadTemplates();
@@ -224,6 +225,15 @@ export class ConfigurationCatalogsComponent implements OnDestroy {
   }
 
   hasUnsavedChanges(): boolean { return this.dirty() || this.visibleSystemsDirty(); }
+
+  confirmDiscardChanges(
+    prompt = 'Hay cambios sin guardar en esta sección. Si continúa, se perderán. ¿Desea descartarlos?'
+  ): boolean {
+    if (!this.hasUnsavedChanges()) return true;
+    if (!globalThis.confirm(prompt)) return false;
+    this.restoreActiveEditor();
+    return true;
+  }
 
   async loadGuides(selectName = ''): Promise<void> {
     this.guideLoading.set(true); this.guideError.set('');
@@ -609,9 +619,34 @@ export class ConfigurationCatalogsComponent implements OnDestroy {
 
   private canReplaceEditor(): boolean {
     if (!this.dirty()) return true;
-    if (!globalThis.confirm('Hay cambios sin guardar. ¿Desea descartarlos?')) return false;
+    return this.confirmDiscardChanges('Hay cambios sin guardar. ¿Desea descartarlos?');
+  }
+
+  private restoreActiveEditor(): void {
+    const section = this.activeSection();
+    if (section === 'guides') {
+      const selected = this.selectedGuide();
+      this.guideForm.reset(selected ? guideDraftFromItem(selected) : undefined, { emitEvent: false });
+      if (this.canManage()) this.guideForm.enable({ emitEvent: false });
+      else this.guideForm.disable({ emitEvent: false });
+    } else if (section === 'templates') {
+      this.cancelPendingTemplate(false);
+      const selected = this.selectedTemplate();
+      this.templateForm.reset(selected ? studyTemplateDraftFromItem(selected) : undefined, { emitEvent: false });
+      if (selected?.origin === 'bundled' || !this.canManage()) this.templateForm.disable({ emitEvent: false });
+      else this.templateForm.enable({ emitEvent: false });
+    } else {
+      const selected = this.selectedDiagnosis();
+      this.fillDiagnosisForm(selected ? diagnosisDraftFromItem(selected) : blankDiagnosisEquivalence());
+      this.resetDiagnosisSearches();
+      const setting = this.diagnosisDisplaySetting();
+      this.visibleDiagnosisSystems.set(setting.visibleSystems);
+      this.diagnosisDisplayStatus.set(setting.id
+        ? `Configuración v${setting.revision ?? 1}`
+        : 'Se muestran las tres clasificaciones.');
+    }
     this.dirty.set(false);
-    return true;
+    this.visibleSystemsDirty.set(false);
   }
 
   private showFeedback(messageText: string, kind: FeedbackKind = 'success'): void {

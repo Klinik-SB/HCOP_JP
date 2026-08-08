@@ -10,7 +10,8 @@ import {
   JsonRecord,
   LlmConfiguration,
   ResearchItem,
-  SecuritySettings
+  SecuritySettings,
+  ToolSettingsItem
 } from './configuration-operations.models';
 import {
   normalizeAccessIdentity,
@@ -24,6 +25,8 @@ import {
   normalizeRoleMutation,
   normalizeRoles,
   normalizeSecuritySettings,
+  normalizeToolSettingsCatalog,
+  normalizeToolSettingsMutation,
   normalizeUserMutation,
   normalizeUsers
 } from './configuration-operations.normalizers';
@@ -53,6 +56,21 @@ export class ConfigurationOperationsService {
   archiveCalculator(id: string): Observable<CalculatorItem> {
     return this.http.delete<unknown>(`/api/clinical/configuration/calculator/${encodeURIComponent(id)}`, this.options())
       .pipe(map(normalizeCalculatorMutation));
+  }
+
+  toolSettings(): Observable<ToolSettingsItem | null> {
+    return this.http.get<unknown>('/api/clinical/configuration/tool-settings?includeInactive=1', this.options())
+      .pipe(map(normalizeToolSettingsCatalog));
+  }
+
+  createToolSettings(payload: JsonRecord): Observable<ToolSettingsItem> {
+    return this.http.post<unknown>('/api/clinical/configuration/tool-settings', payload, this.options())
+      .pipe(map(normalizeToolSettingsMutation));
+  }
+
+  updateToolSettings(id: string, payload: JsonRecord): Observable<ToolSettingsItem> {
+    return this.http.put<unknown>(`/api/clinical/configuration/tool-settings/${encodeURIComponent(id)}`, payload, this.options())
+      .pipe(map(normalizeToolSettingsMutation));
   }
 
   researchForms(): Observable<readonly ResearchItem[]> {
@@ -161,6 +179,11 @@ export class ConfigurationOperationsService {
     globalThis.window?.dispatchEvent(new CustomEvent(CONFIGURATION_OPERATIONS_UPDATED_EVENT, {
       detail: { timestamp, calculators }
     }));
+    if (calculators) {
+      globalThis.window?.dispatchEvent(new CustomEvent(CALCULATOR_CONFIGURATION_UPDATED_EVENT, {
+        detail: { timestamp }
+      }));
+    }
   }
 
   private options(): { readonly withCredentials: true } {

@@ -98,6 +98,10 @@ export class ConfigurationHubComponent implements AfterViewInit, OnDestroy {
     this.canManage() && this.auth.hasPermission('section.protocols.edit'));
   readonly activeDescriptor = computed(() =>
     this.tabs.find((tab) => tab.id === this.activeTab()) ?? this.tabs[0]!);
+  readonly catalogSection = computed<ConfigurationCatalogSection>(() =>
+    CATALOG_TABS[this.activeTab()] ?? 'diagnoses');
+  readonly operationsSection = computed<OperationsSection>(() =>
+    OPERATIONS_TABS[this.activeTab()] ?? 'calculators');
 
   constructor() {
     this.subscriptions.add(this.route.queryParamMap.subscribe((parameters) => {
@@ -129,7 +133,6 @@ export class ConfigurationHubComponent implements AfterViewInit, OnDestroy {
   }
 
   refreshActive(): void {
-    if (!globalThis.confirm('Actualizar volverá a cargar esta sección y puede descartar cambios que todavía no guardó. ¿Desea continuar?')) return;
     const tab = this.activeTab();
     if (tab === 'protocols') {
       this.protocols?.reload();
@@ -137,6 +140,7 @@ export class ConfigurationHubComponent implements AfterViewInit, OnDestroy {
     }
     const catalog = CATALOG_TABS[tab];
     if (catalog) {
+      if (!this.catalogs?.confirmDiscardChanges('Actualizar descartará los cambios que todavía no guardó. ¿Desea continuar?')) return;
       if (catalog === 'diagnoses') void this.catalogs?.loadDiagnoses(this.catalogs.selectedDiagnosis()?.id ?? '');
       if (catalog === 'guides') void this.catalogs?.loadGuides(this.catalogs.selectedGuide()?.name ?? '');
       if (catalog === 'templates') void this.catalogs?.loadTemplates(this.catalogs.selectedTemplate()?.id ?? '');
@@ -157,24 +161,38 @@ export class ConfigurationHubComponent implements AfterViewInit, OnDestroy {
 
   @HostListener('window:beforeunload', ['$event'])
   protectBrowserClose(event: BeforeUnloadEvent): void {
-    if (!this.catalogs?.hasUnsavedChanges()) return;
+    if (!this.hasUnsavedChangesInCurrentTab()) return;
     event.preventDefault();
   }
 
   private activateChild(tab: ConfigurationHubTab, protectDirty = false): boolean {
+    if (protectDirty && !this.canLeaveCurrentTab()) return false;
     const catalog = CATALOG_TABS[tab];
     if (catalog) {
-      this.catalogs?.activate(catalog, protectDirty);
+      this.catalogs?.activate(catalog, false);
       return !this.catalogs || this.catalogs.activeSection() === catalog;
     }
     const operation = OPERATIONS_TABS[tab];
-    if (operation) this.operations?.selectSection(operation);
+    if (operation && this.operations && !this.operations.selectSection(operation)) return false;
     return true;
   }
 
   private canLeaveCurrentTab(): boolean {
-    if (!this.catalogs?.hasUnsavedChanges()) return true;
-    return globalThis.confirm('Hay cambios sin guardar en Configuración. Si sale ahora, se perderán. ¿Desea continuar?');
+    const tab = this.activeTab();
+    if (tab === 'protocols') return this.protocols?.confirmDiscardAndRestore() ?? true;
+    const catalog = CATALOG_TABS[tab];
+    if (catalog) return this.catalogs?.confirmDiscardChanges() ?? true;
+    const operation = OPERATIONS_TABS[tab];
+    return operation ? this.operations?.confirmDiscardChanges(operation) ?? true : true;
+  }
+
+  private hasUnsavedChangesInCurrentTab(): boolean {
+    const tab = this.activeTab();
+    if (tab === 'protocols') return this.protocols?.hasUnsavedChanges() ?? false;
+    const catalog = CATALOG_TABS[tab];
+    if (catalog) return this.catalogs?.hasUnsavedChanges() ?? false;
+    const operation = OPERATIONS_TABS[tab];
+    return operation ? this.operations?.hasUnsavedChanges(operation) ?? false : false;
   }
 
   private asTab(value: string | null): ConfigurationHubTab | null {

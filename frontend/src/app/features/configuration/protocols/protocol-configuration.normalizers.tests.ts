@@ -8,6 +8,7 @@ import {
   normalizeProtocolCatalog,
   normalizeProtocolDetail,
   promoteCatalogProtocol,
+  protocolDraftSignature,
   protocolFailureMessage,
   validateProtocolDraft
 } from './protocol-configuration.normalizers';
@@ -77,6 +78,13 @@ equal(detail.components[0]?.drugName, 'Doxorrubicina', 'normaliza droga');
 equal(detail.components[0]?.preparation.reconstituent, 'SF', 'normaliza preparación');
 equal(detail.components[0]?.preparation.dirty, false, 'preparación cargada no se marca modificada');
 equal(detail.components[0]?.presentationCount, 1, 'cuenta presentaciones');
+const persistedSignature = protocolDraftSignature(detail);
+const renamedDetail = structuredClone(detail);
+renamedDetail.name = 'Mama - AC modificado';
+ok(protocolDraftSignature(renamedDetail) !== persistedSignature, 'detecta cambios persistibles sin guardar');
+const visualOnlyDetail = structuredClone(detail);
+visualOnlyDetail.components[0]!.clientId = 'identidad-visual-distinta';
+equal(protocolDraftSignature(visualOnlyDetail), persistedSignature, 'ignora identidades internas que no se persisten');
 
 const drugs = normalizeDrugCatalog({
   drugs: [{
@@ -117,6 +125,7 @@ ok(duplicate.components[0]?.clientId !== detail.components[0]?.clientId, 'duplic
 const catalogDetail = normalizeProtocolDetail({ protocol: {
   id: 'coir:77', coirSchemeId: '77', name: 'AC', catalogOnly: true, cycleDays: 21, components: []
 } });
+equal(protocolDraftSignature(catalogDetail), '', 'un registro COIR de solo lectura no queda marcado como modificado');
 const promoted = promoteCatalogProtocol(catalogDetail);
 equal(promoted.id, '', 'promoción crea protocolo local');
 equal(promoted.coirSchemeId, '77', 'promoción conserva vínculo COIR');

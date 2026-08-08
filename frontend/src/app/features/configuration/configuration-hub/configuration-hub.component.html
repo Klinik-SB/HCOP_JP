@@ -51,13 +51,13 @@
       <div class="configuration-panel" id="configuration-panel-catalogs" role="tabpanel"
         [class.active]="activeTab() === 'diagnoses' || activeTab() === 'guides' || activeTab() === 'templates'"
         [attr.aria-hidden]="!(activeTab() === 'diagnoses' || activeTab() === 'guides' || activeTab() === 'templates')">
-        <app-configuration-catalogs [initialSection]="'diagnoses'" [showSectionTabs]="false" [canManage]="canManage()" />
+        <app-configuration-catalogs [initialSection]="catalogSection()" [showSectionTabs]="false" [canManage]="canManage()" />
       </div>
 
       <div class="configuration-panel" id="configuration-panel-operations" role="tabpanel"
         [class.active]="activeTab() === 'calculators' || activeTab() === 'research' || activeTab() === 'day-hospital' || activeTab() === 'llm' || activeTab() === 'access'"
         [attr.aria-hidden]="!(activeTab() === 'calculators' || activeTab() === 'research' || activeTab() === 'day-hospital' || activeTab() === 'llm' || activeTab() === 'access')">
-        <app-configuration-operations [autoLoad]="false" [initialSection]="'calculators'" [canManage]="canManage()" />
+        <app-configuration-operations [autoLoad]="false" [initialSection]="operationsSection()" [canManage]="canManage()" />
       </div>
     </section>
   } @else {
