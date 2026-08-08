@@ -1,0 +1,101 @@
+@if (open()) {
+  <div class="modal-backdrop open diagnostic-classification-modal-backdrop" aria-hidden="false">
+    <section class="modal-card diagnostic-classification-modal-card" role="dialog" aria-modal="true" aria-labelledby="angularDiagnosisEntryTitle" aria-describedby="angularDiagnosisEntryDescription" [attr.aria-busy]="busy()">
+      <header class="modal-header">
+        <div>
+          <span class="sheet-kicker">Diagnóstico oncológico</span>
+          <h2 id="angularDiagnosisEntryTitle">Agregar diagnóstico</h2>
+          <p id="angularDiagnosisEntryDescription">Cada alta se agrega sin reemplazar diagnósticos anteriores. Complete AJCC y TNM; luego confirme SNOMED CT y CIE-10.</p>
+        </div>
+        <button class="icon-button" type="button" title="Cerrar" aria-label="Cerrar diagnóstico" [disabled]="busy()" (click)="requestClose()">×</button>
+      </header>
+
+      <section class="modal-body diagnostic-classification-modal-body">
+        @if (loadingCatalog()) {
+          <div class="clinical-entry-loading" role="status"><strong>Preparando diagnóstico…</strong><span>Cargando AJCC 8 y equivalencias locales.</span></div>
+        } @else {
+          <div class="diagnostic-classification-workspace" data-diagnostic-workspace>
+            <dl class="diagnostic-classification-summary">
+              <div class="diagnostic-classification-summary-row"><dt>AJCC</dt><dd><strong>{{ selectedClassification('ajcc').display || 'Sin selección' }}</strong>@if (selectedSiteId()) { <small>{{ selectedSiteId() }}</small> }</dd></div>
+              <div class="diagnostic-classification-summary-row"><dt>SNOMED CT</dt><dd><strong>{{ selectedClassification('snomed').display || 'Sin selección' }}</strong>@if (selectedClassification('snomed').code) { <small>{{ selectedClassification('snomed').code }}</small> }</dd></div>
+              <div class="diagnostic-classification-summary-row"><dt>CIE-10</dt><dd><strong>{{ selectedClassification('cie10').display || 'Sin selección' }}</strong>@if (selectedClassification('cie10').code) { <small>{{ selectedClassification('cie10').code }}</small> }</dd></div>
+              <div class="diagnostic-classification-summary-row"><dt>TNM / estadio</dt><dd><strong class="diagnostic-classification-summary-tnm">{{ tnmSummary() }}</strong><small>{{ stage() ? 'Estadio ' + stage() : 'Sin estadio' }}</small></dd></div>
+            </dl>
+
+            <section class="diagnostic-classification-ajcc">
+              <div class="diagnostic-classification-panel diagnostic-classification-panel--ajcc">
+                <header class="diagnostic-classification-panel-header"><strong>AJCC 8 · sitio primario</strong><span [class.is-selected]="selectedSiteId()">{{ selectedSite()?.display || 'Sin selección' }}</span></header>
+                <label class="diagnostic-classification-select-label" for="angularDiagnosisAjccSite">
+                  <span>Sitio AJCC *</span>
+                  <select id="angularDiagnosisAjccSite" data-entry-field="ajcc" required [ngModel]="selectedSiteId()" [ngModelOptions]="standalone" [disabled]="busy()" (ngModelChange)="selectSite($event)">
+                    <option value="">Seleccione el sitio tumoral</option>
+                    @for (group of catalog().groups; track group.name) {
+                      <optgroup [label]="group.name">@for (site of group.sites; track site.id) { <option [value]="site.id">{{ site.display }}</option> }</optgroup>
+                    }
+                  </select>
+                </label>
+              </div>
+
+              <div class="diagnostic-ajcc-host">
+                @if (loadingDetail()) {
+                  <section class="diagnostic-ajcc-staging is-loading"><strong>Estadificación TNM</strong><span>Cargando criterios AJCC 8…</span></section>
+                } @else if (detail(); as siteDetail) {
+                  <section class="diagnostic-ajcc-staging">
+                    <header><div><small>AJCC Cancer Staging Manual · 8.ª edición</small><strong>{{ selectedSite()?.display || siteDetail.name }}</strong></div><span class="diagnostic-ajcc-local-badge">Cálculo local</span></header>
+                    <div class="diagnostic-ajcc-context">
+                      <label><span>Tipo</span><select data-entry-field="prefix" [ngModel]="prefix()" [ngModelOptions]="standalone" [disabled]="busy()" (ngModelChange)="changePrefix($event)"><option value="c">c · clínico</option><option value="p">p · patológico</option><option value="yc">yc · clínico postratamiento</option><option value="yp">yp · patológico postratamiento</option><option value="r">r · recurrencia</option></select></label>
+                      <label><span>Fecha</span><input data-entry-field="date" type="date" [ngModel]="date()" [ngModelOptions]="standalone" [disabled]="busy()" (ngModelChange)="changeDate($event)"></label>
+                    </div>
+                    <div class="diagnostic-ajcc-axes">
+                      @for (key of coreAxes; track key) {
+                        <label class="diagnostic-ajcc-axis"><span>{{ key }}</span><select [attr.data-entry-field]="'axis:' + key" [ngModel]="axisValue(key)" [ngModelOptions]="standalone" [disabled]="busy()" (ngModelChange)="changeAxis(key, $event)"><option value="">Seleccione</option>@for (category of axisCategories(key); track category.code) { <option [value]="category.code">{{ category.code }}</option> }</select><small class="diagnostic-ajcc-axis-detail"><strong>{{ axisLabel(key) }}</strong><span>{{ axisDefinition(key) }}</span></small></label>
+                      }
+                    </div>
+                    @if (extraAxes().length) {
+                      <fieldset class="diagnostic-ajcc-factors"><legend>Factores necesarios para agrupar el estadio</legend><div>
+                        @for (key of extraAxes(); track key) { <label class="diagnostic-ajcc-factor"><span>{{ axisLabel(key) }}</span><select [attr.data-entry-field]="'axis:' + key" [ngModel]="axisValue(key)" [ngModelOptions]="standalone" [disabled]="busy()" (ngModelChange)="changeAxis(key, $event)"><option value="">Seleccione</option>@for (category of axisCategories(key); track category.code) { <option [value]="category.code">{{ category.code }} · {{ category.description }}</option> }</select><small>{{ axisDefinition(key) }}</small></label> }
+                      </div></fieldset>
+                    }
+                    <div class="diagnostic-ajcc-result" [class.is-ready]="stage()">
+                      <label class="diagnostic-ajcc-stage-field"><span>Resultado · Estadio</span><input data-entry-field="stage" type="text" maxlength="120" placeholder="Ej.: IIIA" [ngModel]="stage()" [ngModelOptions]="standalone" [disabled]="busy()" (ngModelChange)="changeStage($event)"></label>
+                      <strong>{{ tnmSummary() }}{{ stage() ? ' · Estadio ' + stage() : '' }}</strong><small>{{ calculating() ? 'Calculando agrupación…' : stageMessage() }}</small>
+                    </div>
+                  </section>
+                } @else {
+                  <section class="diagnostic-ajcc-staging is-empty"><strong>Estadificación TNM</strong><span>Seleccione primero el sitio AJCC para cargar T, N, M y sus factores específicos.</span></section>
+                }
+              </div>
+            </section>
+
+            <section class="diagnostic-classification-terminology">
+              <header><strong>Codificación diagnóstica</strong><span>SNOMED CT y CIE-10 se muestran juntos. La configuración institucional define cuáles son obligatorios para guardar.</span></header>
+              <div class="diagnostic-classification-terminology-panels">
+                @for (system of terminologySystems; track system) {
+                  <section class="diagnostic-classification-panel">
+                    <header class="diagnostic-classification-panel-header"><strong>{{ system === 'snomed' ? 'SNOMED CT' : 'CIE-10' }}{{ isRequired(system) ? ' *' : ' · opcional' }}</strong><span [class.is-selected]="selectedClassification(system).code">{{ selectedClassification(system).display || 'Sin selección' }}</span></header>
+                    <label class="diagnostic-classification-search"><span>Buscar</span><input type="search" autocomplete="off" placeholder="Buscar diagnóstico…" [ngModel]="searchTerms()[system]" [ngModelOptions]="standalone" [disabled]="!selectedSiteId() || busy()" (ngModelChange)="search(system, $event)"><small>Carcinoma, cáncer y tumor maligno se consideran equivalentes al buscar.</small></label>
+                    <label class="diagnostic-classification-select-label"><span>Coincidencias</span><select [attr.data-entry-field]="system" size="4" [ngModel]="selectedCodes()[system]" [ngModelOptions]="standalone" [disabled]="!selectedSiteId() || busy()" (ngModelChange)="chooseTerminology(system, $event)"><option value="">Seleccione {{ system === 'snomed' ? 'SNOMED CT' : 'CIE-10' }}</option>@for (item of terminologyOptions(system); track item.code) { <option [value]="item.code">{{ item.code }} · {{ item.display }}</option> }</select></label>
+                    <p class="diagnostic-classification-status" [class.is-ready]="selectedClassification(system).code">{{ searching()[system] ? 'Buscando…' : selectedClassification(system).code ? 'Concepto confirmado.' : selectedSiteId() ? 'Seleccione una equivalencia o busque por texto.' : 'Seleccione primero AJCC.' }}</p>
+                  </section>
+                }
+              </div>
+            </section>
+
+            @if (!entries.canEdit()) { <p class="clinical-entry-message is-error">Su rol permite consultar la hoja, pero no agregar diagnósticos.</p> }
+            @if (entries.canEdit() && !entries.canStage()) { <p class="clinical-entry-message is-error">Su rol no tiene habilitados la consulta y el cálculo AJCC necesarios para completar el diagnóstico.</p> }
+            @if (error()) { <p class="clinical-entry-message is-error" role="alert">{{ error() }}</p> }
+            @if (discardPrompt()) {
+              <section class="clinical-entry-discard" role="alertdialog" aria-label="Cambios sin guardar"><div><strong>Hay cambios sin guardar</strong><span>Puede seguir completando o descartar este diagnóstico.</span></div><div><button class="tool-button" type="button" (click)="continueEditing()">Seguir editando</button><button class="tool-button danger" type="button" (click)="discardAndClose()">Descartar</button></div></section>
+            }
+
+            <footer class="diagnostic-classification-footer">
+              <span [class.is-ready]="validation().valid" [class.is-incomplete]="!validation().valid">{{ validation().message }}</span>
+              <button class="tool-button" type="button" [disabled]="busy()" (click)="requestClose()">Cancelar</button>
+              <button class="tool-button primary" type="button" [disabled]="!canSave()" (click)="save()"><span>{{ busy() ? 'Guardando…' : 'Guardar diagnóstico' }}</span></button>
+            </footer>
+          </div>
+        }
+      </section>
+    </section>
+  </div>
+}

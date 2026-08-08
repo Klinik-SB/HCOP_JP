@@ -1,4 +1,4 @@
-# Probar la rama Angular de paridad completa
+# Probar la rama Angular nativa
 
 Esta guía inicia el canal migratorio directamente desde GitHub, sin clonar el
 repositorio y sin reemplazar la instalación estable.
@@ -9,7 +9,7 @@ Requisitos: Windows 10/11, Docker Desktop iniciado y acceso a Internet. Copie
 la línea completa en Windows PowerShell:
 
 ```powershell
-$hcopScript = Join-Path $env:TEMP "EJECUTAR-DOCKER-DESDE-GITHUB.ps1"; Invoke-WebRequest "https://raw.githubusercontent.com/Marcolyto/HCOP_JP/codex/angular-full-parity-v2/EJECUTAR-DOCKER-DESDE-GITHUB.ps1" -OutFile $hcopScript; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $hcopScript -Channel Migration
+$hcopScript = Join-Path $env:TEMP "EJECUTAR-DOCKER-DESDE-GITHUB.ps1"; Invoke-WebRequest -UseBasicParsing "https://raw.githubusercontent.com/Marcolyto/HCOP_JP/codex/angular-full-parity-v2/EJECUTAR-DOCKER-DESDE-GITHUB.ps1" -OutFile $hcopScript; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $hcopScript -Channel Migration
 ```
 
 En el primer inicio se solicita el puerto, el usuario administrador y una
@@ -19,7 +19,7 @@ sugeridos de puerto y usuario.
 
 Cuando los contenedores estén saludables:
 
-- aplicación: `http://localhost:<puerto-elegido>`;
+- aplicación Angular: `http://localhost:<puerto-elegido>/`;
 - Swagger: `http://localhost:<puerto-elegido>/swagger-ui.html`;
 - salud: `http://localhost:<puerto-elegido>/actuator/health`.
 
@@ -62,11 +62,17 @@ No use `docker compose down --volumes`: eliminaría los datos del canal elegido.
 
 ## Alcance de este corte
 
-Angular gobierna el frontend real de este corte, sin iframe ni delegación de la
-interfaz al JavaScript anterior. Conserva el aspecto clínico y el flujo completo
-de HCOP JP. El backend de Configuración, Protocolos y Guías está delimitado por
-puertos hexagonales y se valida contra PostgreSQL real; la paridad funcional,
-visual, de permisos y de errores se controla por recorridos completos.
+Angular gobierna toda entrada operativa: `/`, `/index.html` y los aliases de
+Configuración, Protocolos y Herramientas terminan en el mismo frontend. La
+aplicación no usa iframe ni ejecuta `static/app.js`; los estilos y activos
+visuales compartidos no trasladan reglas de negocio al navegador.
+
+El backend es Java 21 con Spring MVC. Los módulos migrados separan dominio,
+aplicación e infraestructura mediante puertos hexagonales, PostgreSQL conserva
+la información operacional y Flyway instala o actualiza el esquema. La paridad
+funcional, visual, de permisos y de errores se controla por recorridos
+completos. Swagger continúa en `/swagger-ui.html`, OpenAPI en `/v3/api-docs` y
+la salud en `/actuator/health`.
 
 La matriz vigente se encuentra en
 [Matriz de paridad](../09-migracion-angular-hexagonal/MATRIZ-DE-PARIDAD.md).

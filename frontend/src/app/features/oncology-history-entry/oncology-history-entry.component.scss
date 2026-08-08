@@ -1,0 +1,149 @@
+:host { display: contents; }
+
+.oncology-history-entry-main {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.oncology-history-entry-main p {
+  min-width: 0;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.oncology-history-edit-button,
+.oncology-history-add-button {
+  flex: 0 0 auto;
+}
+
+.oncology-history-backdrop { z-index: 82; }
+
+.oncology-history-modal {
+  display: flex;
+  width: min(960px, calc(100vw - 36px));
+  max-width: 960px;
+  max-height: min(920px, calc(100vh - 30px));
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+}
+
+.oncology-history-modal .modal-header p {
+  max-width: 720px;
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.oncology-history-modal-body {
+  display: grid;
+  min-height: 0;
+  overflow-y: auto;
+  gap: 12px;
+  padding-bottom: 12px;
+  overscroll-behavior: contain;
+}
+
+.oncology-history-context {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, .9fr);
+  border: 1px solid var(--line);
+  background: #f7fbfd;
+}
+
+.oncology-history-context > div {
+  display: grid;
+  min-width: 0;
+  align-content: center;
+  gap: 2px;
+  padding: 9px 11px;
+}
+
+.oncology-history-context > div + div { border-left: 1px solid var(--line); }
+.oncology-history-context span { color: var(--muted); font-size: 10px; font-weight: 750; text-transform: uppercase; }
+.oncology-history-context strong { overflow-wrap: anywhere; color: var(--ink); font-size: 12px; }
+.oncology-history-context small { color: var(--muted); font-size: 10px; }
+
+.oncology-history-editor { display: grid; gap: 12px; }
+
+.oncology-history-fieldset {
+  min-width: 0;
+  margin: 0;
+  border: 1px solid var(--line);
+  padding: 12px;
+}
+
+.oncology-history-fieldset legend {
+  padding: 0 6px;
+  color: #40748f;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.oncology-history-fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+
+.oncology-history-fields textarea { resize: vertical; }
+.oncology-history-fields [aria-invalid="true"],
+.oncology-history-reason [aria-invalid="true"] {
+  border-color: #b55343;
+  background: #fff7f5;
+  box-shadow: 0 0 0 2px rgba(181, 83, 67, .12);
+}
+
+.oncology-history-dose-metric {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid #c8dce6;
+  background: #f4faff;
+  padding: 8px 10px;
+  color: #527184;
+  font-size: 11px;
+}
+
+.oncology-history-dose-metric strong { color: #256b91; font-size: 13px; }
+.oncology-history-metrics { margin: 0; }
+.oncology-history-reason { margin: 0; }
+
+.oncology-history-initial-note {
+  margin: 0;
+  border-left: 3px solid #84bad6;
+  background: #f3f9fc;
+  padding: 8px 10px;
+  color: #527184;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.oncology-history-error {
+  margin: 0;
+  border: 1px solid #e4b9ad;
+  background: #fff3f0;
+  padding: 9px 10px;
+  color: #934a38;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+@media (max-width: 720px) {
+  .oncology-history-modal { width: calc(100vw - 12px); max-height: calc(100vh - 12px); }
+  .oncology-history-context { grid-template-columns: 1fr; }
+  .oncology-history-context > div + div { border-top: 1px solid var(--line); border-left: 0; }
+  .oncology-history-fields { grid-template-columns: minmax(0, 1fr); }
+  .oncology-history-fields .is-wide,
+  .oncology-history-dose-metric.is-wide { grid-column: 1; }
+}
+
+@media print {
+  .oncology-history-backdrop,
+  .oncology-history-section .section-actions,
+  .oncology-history-edit-button { display: none !important; }
+}

@@ -90,7 +90,9 @@ public class StudyTemplateController {
   ResponseEntity<Map<String, Object>> create(
       @RequestParam String title,
       @RequestParam String category,
+      @RequestParam(defaultValue = "") String tags,
       @RequestParam(defaultValue = "") String author,
+      @RequestParam(defaultValue = "") String attribution,
       @RequestParam(defaultValue = "") String license,
       @RequestParam(defaultValue = "") String description,
       @RequestParam(defaultValue = "") String sourceUrl,
@@ -123,6 +125,7 @@ public class StudyTemplateController {
     definition.put("origin", "custom");
     definition.put("category", category.trim());
     definition.put("author", author.trim());
+    definition.put("attribution", attribution.trim());
     definition.put("license", license.trim());
     definition.put("sourceUrl", sourceUrl.trim());
     definition.put("licenseUrl", licenseUrl.trim());
@@ -133,9 +136,22 @@ public class StudyTemplateController {
     definition.put("mime", image.contentType());
     definition.put("bytes", image.size());
     definition.put("sha256", image.sha256());
-    definition.set("tags", mapper.createArrayNode());
-    Map<String, Object> item = configurations.create(
-        "study-template", body, auth.require(request).userId());
+    var tagArray = definition.putArray("tags");
+    for (String tag : tags.split(",")) {
+      String normalized = tag.trim();
+      if (!normalized.isBlank() && tagArray.size() < 30) tagArray.add(normalized);
+    }
+    Map<String, Object> item;
+    try {
+      item = configurations.create("study-template", body, auth.require(request).userId());
+    } catch (RuntimeException failure) {
+      try {
+        files.discardImage(image);
+      } catch (RuntimeException cleanupFailure) {
+        failure.addSuppressed(cleanupFailure);
+      }
+      throw failure;
+    }
     return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
         "ok", true,
         "item", item,

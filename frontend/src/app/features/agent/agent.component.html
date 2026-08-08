@@ -25,24 +25,61 @@
             @else { <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg> }
           </div>
           <div class="agent-message-content">
-            <p>{{ message.content }}</p>
+            @for (block of answerBlocks(message.content); track $index) {
+              @if (block.kind === 'list') {
+                <ul class="agent-response-list agent-answer-block">
+                  @for (item of block.items; track $index) {
+                    <li tabindex="0" title="Ubicar en la historia" (click)="navigate(item)" (keydown.enter)="navigate(item)">{{ item }}</li>
+                  }
+                </ul>
+              } @else {
+                <p class="agent-answer-block">{{ block.text }}</p>
+              }
+            }
             @for (artifact of message.artifacts; track $index) {
               @if (isTable(artifact)) {
                 <section class="agent-artifact"><h4>{{ artifact.title || 'Tabla clínica' }}</h4><div class="agent-table-wrap"><table class="agent-table"><thead><tr>@for (column of artifact.columns; track $index) { <th scope="col">{{ column }}</th> }</tr></thead><tbody>@for (row of artifact.rows; track $index) { <tr tabindex="0" title="Ubicar en la historia" (click)="navigate(row.join(' '))" (keydown.enter)="navigate(row.join(' '))">@for (cell of row; track $index) { <td>{{ cell }}</td> }</tr> }</tbody></table></div></section>
               } @else if (isChart(artifact)) {
-                <section class="agent-artifact"><h4>{{ artifact.title || 'Gráfico clínico' }}</h4><div class="agent-chart">
-                  <svg viewBox="0 0 300 190" role="img" [attr.aria-label]="artifact.title || 'Gráfico clínico'">
-                    <path class="agent-chart-axis" d="M20 20V170H285"/>
-                    @for (series of artifact.series; track $index; let seriesIndex = $index) {
-                      @if (artifact.chartType !== 'bar') { <polyline fill="none" [attr.stroke]="chartColor(series, seriesIndex)" stroke-width="2.5" [attr.points]="chartLine(series, artifact)"/> }
-                      @for (point of series.points; track $index; let pointIndex = $index) {
-                        @if (artifact.chartType === 'bar') { <rect [attr.x]="chartX(pointIndex, series.points.length) - barWidth(series) / 2" [attr.y]="chartY(point.y, artifact)" [attr.width]="barWidth(series)" [attr.height]="170 - chartY(point.y, artifact)" [attr.fill]="chartColor(series, seriesIndex)" tabindex="0" (click)="navigate(point.label || point.x.toString())"><title>{{ point.label || point.x }}: {{ point.y }}</title></rect> }
-                        @else { <circle [attr.cx]="chartX(pointIndex, series.points.length)" [attr.cy]="chartY(point.y, artifact)" r="4" [attr.fill]="chartColor(series, seriesIndex)" tabindex="0" (click)="navigate(point.label || point.x.toString())"><title>{{ point.label || point.x }}: {{ point.y }}</title></circle> }
-                      }
+                @let view = chartView(artifact);
+                @if (view) {
+                  <section class="agent-artifact"><h4>{{ artifact.title || 'Gráfico clínico' }}</h4><div class="agent-chart">
+                    @if (view.kind === 'cartesian') {
+                      <svg [attr.viewBox]="'0 0 ' + view.width + ' ' + view.height" role="img" [attr.aria-label]="artifact.title || 'Gráfico clínico'">
+                        <g class="agent-chart-grid" aria-hidden="true">
+                          @for (tick of view.yTicks; track $index) {
+                            <line [attr.x1]="view.plot.left" [attr.y1]="tick.y" [attr.x2]="view.plot.left + view.plot.width" [attr.y2]="tick.y" />
+                            <text [attr.x]="view.plot.left - 7" [attr.y]="(tick.y || 0) + 3" text-anchor="end">{{ tick.label }}</text>
+                          }
+                        </g>
+                        <line class="agent-chart-baseline" [attr.x1]="view.plot.left" [attr.y1]="view.baselineY" [attr.x2]="view.plot.left + view.plot.width" [attr.y2]="view.baselineY" />
+                        @for (series of view.series; track $index) {
+                          @if (view.chartType === 'line') {
+                            <polyline class="agent-chart-line" fill="none" [attr.stroke]="series.color" [attr.points]="series.line" />
+                          }
+                          @for (point of series.points; track $index) {
+                            @if (point.bar; as bar) {
+                              <rect class="agent-chart-mark agent-chart-bar" [attr.x]="bar.x" [attr.y]="bar.y" [attr.width]="bar.width" [attr.height]="bar.height" rx="2" [attr.fill]="point.color" [attr.data-chart-tooltip]="point.tooltip" tabindex="0" (click)="navigate(point.navigation)" (keydown.enter)="navigate(point.navigation)"><title>{{ point.tooltip }}</title></rect>
+                            } @else {
+                              <circle class="agent-chart-mark agent-chart-point" [attr.cx]="point.x" [attr.cy]="point.y" r="4" fill="#fff" [attr.stroke]="point.color" stroke-width="2" [attr.data-chart-tooltip]="point.tooltip" tabindex="0" (click)="navigate(point.navigation)" (keydown.enter)="navigate(point.navigation)"><title>{{ point.tooltip }}</title></circle>
+                            }
+                          }
+                        }
+                        <g class="agent-chart-x-labels" aria-hidden="true">
+                          @for (tick of view.xTicks; track $index) { <text [attr.x]="tick.x" [attr.y]="view.plot.top + view.plot.height + 17" text-anchor="middle">{{ tick.label }}</text> }
+                          @if (view.xLabel) { <text class="agent-chart-axis-title" [attr.x]="view.plot.left + view.plot.width / 2" [attr.y]="view.height - 4" text-anchor="middle">{{ view.xLabel }}</text> }
+                        </g>
+                      </svg>
+                      <div class="agent-chart-legend">@for (series of view.series; track $index) { <span [style.--legend-color]="series.color">{{ series.name }}</span> }</div>
+                    } @else {
+                      <svg class="agent-chart-pie" [attr.viewBox]="'0 0 ' + view.width + ' ' + view.height" role="img" [attr.aria-label]="artifact.title || 'Gráfico circular clínico'">
+                        @for (slice of view.slices; track $index) {
+                          <path class="agent-chart-mark" [attr.d]="slice.path" [attr.fill]="slice.color" [attr.data-chart-tooltip]="slice.tooltip" tabindex="0" (click)="navigate(slice.navigation)" (keydown.enter)="navigate(slice.navigation)"><title>{{ slice.tooltip }}</title></path>
+                        }
+                      </svg>
+                      <div class="agent-chart-legend agent-chart-legend--pie">@for (slice of view.slices; track $index) { <span [style.--legend-color]="slice.color">{{ slice.legend }}</span> }</div>
                     }
-                  </svg>
-                  <div class="agent-chart-legend">@for (series of artifact.series; track $index; let seriesIndex = $index) { <span [style.--legend-color]="chartColor(series, seriesIndex)">{{ series.name || 'Serie ' + (seriesIndex + 1) }}</span> }</div>
-                </div></section>
+                  </div></section>
+                }
               }
             }
             @if (message.followUps.length) { <div class="agent-followups">@for (prompt of message.followUps; track prompt) { <button type="button" (click)="useFollowUp(prompt)">{{ prompt }}</button> }</div> }

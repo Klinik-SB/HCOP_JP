@@ -5,6 +5,11 @@ código y describe la aplicación, la API, PostgreSQL, Docker, seguridad,
 operación y mantenimiento. Está organizada por recorridos clínicos, operativos
 y técnicos para localizar rápidamente la referencia correspondiente.
 
+La entrada operativa es `http://localhost:<puerto>/`: sirve el frontend Angular
+nativo sin iframe ni runtime JavaScript legacy. El mismo proceso Java 21/Spring
+MVC publica la API y Swagger; PostgreSQL conserva los datos y Flyway versiona
+el esquema.
+
 ## Elegir un recorrido
 
 | Necesidad | Empezar por |
@@ -17,6 +22,7 @@ y técnicos para localizar rápidamente la referencia correspondiente.
 | Revisar la auditoría de Hospital de día | [Reporte del 30/07/2026](08-auditoria/REPORTE-AUDITORIA-HOSPITAL-DIA-2026-07-30.md) y [matriz de 100 casos](08-auditoria/HOSPITAL-DIA-100-CASOS.md) |
 | Integrarse con la API | [Swagger / OpenAPI](02-arquitectura/SWAGGER-OPENAPI.md) y [endpoints](02-arquitectura/ENDPOINTS.md) |
 | Mantener el código | [Arquitectura MVC](02-arquitectura/MVC.md) y [mapa funcional](07-referencia/MAPA-FUNCIONAL.md) |
+| Encontrar un archivo o carpeta | [Estructura del repositorio](04-desarrollo/ESTRUCTURA-DEL-REPOSITORIO.md) |
 | Entender o respaldar PostgreSQL | [Modelo](03-base-de-datos/MODELO-DE-DATOS.md) y [diccionario](03-base-de-datos/DICCIONARIO-DE-DATOS.md) |
 | Configurar un servidor | [Variables de entorno](05-operacion/VARIABLES-DE-ENTORNO.md) y [seguridad](05-operacion/SEGURIDAD.md) |
 
@@ -46,6 +52,7 @@ Con el sistema iniciado también existe una versión navegable en
 - [Catálogo completo de endpoints](02-arquitectura/ENDPOINTS.md)
 - [Contratos y convenciones de API](04-desarrollo/CONTRATOS-DE-API.md)
 - [Interoperabilidad](02-arquitectura/INTEROPERABILIDAD.md)
+- [Entrada única Angular y aliases](09-migracion-angular-hexagonal/CORTE-FINAL-ENTRADA-ANGULAR.md)
 
 ## 03 · Base de datos
 
@@ -92,13 +99,14 @@ Con el sistema iniciado también existe una versión navegable en
 - [Resultado final: 100 PASS, 0 FAIL, 0 NO_DATA y 0 MANUAL](08-auditoria/resultados/hospital-dia-100-casos-20260730-100711.md)
 - [Cómo ejecutar el arnés QA](08-auditoria/README.md)
 
-## 09 · Migración Angular y arquitectura hexagonal
+## 09 · Historial de migración Angular y arquitectura hexagonal
 
 - [Programa de migración](09-migracion-angular-hexagonal/README.md)
 - [Línea base verificada](09-migracion-angular-hexagonal/BASELINE-2026-07-30.md)
 - [Matriz de paridad funcional](09-migracion-angular-hexagonal/MATRIZ-DE-PARIDAD.md)
 - [Arquitectura objetivo](09-migracion-angular-hexagonal/ARQUITECTURA-OBJETIVO.md)
 - [Contratos REST](09-migracion-angular-hexagonal/CONTRATOS-REST.md)
+- [Corte final de entrada Angular](09-migracion-angular-hexagonal/CORTE-FINAL-ENTRADA-ANGULAR.md)
 - [Configuración](09-migracion-angular-hexagonal/MIGRACION-CONFIGURACION.md),
   [Protocolos](09-migracion-angular-hexagonal/MIGRACION-PROTOCOLOS.md) y
   [Guías](09-migracion-angular-hexagonal/MIGRACION-GUIAS.md)

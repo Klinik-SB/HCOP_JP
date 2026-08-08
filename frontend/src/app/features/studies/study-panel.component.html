@@ -2,7 +2,7 @@
   <div class="study-upload-bar">
     <div class="study-upload-actions">
       <button class="tool-button primary" type="button" title="Subir archivos o pegar una imagen con Ctrl+V" [disabled]="!canUpload()" (click)="openUpload()"><span aria-hidden="true">▣</span><span>Subir estudios</span></button>
-      <button class="tool-button" type="button" disabled title="Las plantillas anatómicas se incorporan en el próximo corte Angular"><span aria-hidden="true">▧</span><span>Cargar plantilla</span></button>
+      <button class="tool-button" type="button" [disabled]="!canUpload()" title="Elegir y marcar una plantilla anatómica" (click)="openTemplateEditor()"><span aria-hidden="true">▧</span><span>Cargar plantilla</span></button>
     </div>
     <span aria-live="polite">{{ studies().length ? studies().length + (studies().length === 1 ? ' estudio' : ' estudios') : 'Sin estudios cargados' }}</span>
   </div>
@@ -40,4 +40,13 @@
       <footer class="modal-actions"><button class="tool-button" type="button" [disabled]="busy()" (click)="closeUpload()"><span>Cerrar</span></button><button class="tool-button primary" type="button" [disabled]="busy() || !uploads().some((item) => item.status === 'ready')" (click)="upload()"><span>{{ busy() ? 'Subiendo…' : 'Subir archivos' }}</span></button></footer>
     </section>
   </div>
+}
+
+@defer (when templateEditorOpen()) {
+  <app-study-template-editor
+    [open]="templateEditorOpen()"
+    [source]="null"
+    [canEdit]="canEdit()"
+    (closed)="closeTemplateEditor()"
+    (imageReady)="acceptTemplateImage($event)" />
 }

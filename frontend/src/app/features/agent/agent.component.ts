@@ -5,7 +5,8 @@ import { deidentifyClinicalContext, deidentifyClinicalText } from '../../core/cl
 import { ClinicalFocusService } from '../../core/clinical/clinical-focus.service';
 import type { PatientWorkspace } from '../../core/patients/patient-workspace.models';
 import { PatientWorkspaceService } from '../../core/patients/patient-workspace.service';
-import { AgentArtifact, AgentChartArtifact, AgentChartSeries, AgentChatResponse, AgentConversationMessage, AgentHighlight, AgentStatus, AgentTableArtifact } from './agent.models';
+import { AgentArtifact, AgentChartArtifact, AgentChatResponse, AgentConversationMessage, AgentHighlight, AgentStatus, AgentTableArtifact } from './agent.models';
+import { agentAnswerBlocks, buildAgentChartView } from './agent-presentation';
 import { AgentService } from './agent.service';
 
 interface ApiFailure {
@@ -14,7 +15,6 @@ interface ApiFailure {
 }
 
 const GREETING = 'Puedo analizar esta historia, crear resúmenes, tablas, gráficos y resaltar datos clínicos en ambos paneles.';
-const COLORS = ['#0e9aef', '#8c5aa8', '#e36b5b', '#3f9b86', '#d6a134', '#526f9f'];
 const HIGHLIGHT_COLORS = new Set(['study', 'pathology', 'chemotherapy', 'evolution', 'hormone', 'systemic', 'radiotherapy', 'surgery', 'immunotherapy', 'targeted']);
 
 @Component({
@@ -35,6 +35,8 @@ export class AgentComponent implements OnInit, OnDestroy {
   readonly busy = signal(false);
   readonly status = signal<AgentStatus | null>(null);
   readonly conversation = signal<AgentConversationMessage[]>([this.greeting()]);
+  readonly answerBlocks = agentAnswerBlocks;
+  readonly chartView = buildAgentChartView;
   private activeRequest?: Subscription;
   private requestSequence = 0;
   private patientId: string | null = null;
@@ -163,19 +165,6 @@ export class AgentComponent implements OnInit, OnDestroy {
 
   isTable(artifact: AgentArtifact): artifact is AgentTableArtifact { return artifact.type === 'table'; }
   isChart(artifact: AgentArtifact): artifact is AgentChartArtifact { return artifact.type === 'chart'; }
-  chartColor(series: AgentChartSeries, index: number): string {
-    const color = String(series.color || '').trim();
-    return /^#[0-9a-f]{3,8}$/i.test(color) ? color : COLORS[index % COLORS.length];
-  }
-  chartMax(chart: AgentChartArtifact): number {
-    return Math.max(1, ...chart.series.flatMap((series) => series.points.map((point) => Number.isFinite(Number(point.y)) ? Math.abs(Number(point.y)) : 0)));
-  }
-  chartX(index: number, count: number): number { return count <= 1 ? 150 : 20 + (index * 260 / (count - 1)); }
-  chartY(value: number, chart: AgentChartArtifact): number { return 170 - (Math.max(0, Number(value) || 0) / this.chartMax(chart) * 140); }
-  chartLine(series: AgentChartSeries, chart: AgentChartArtifact): string {
-    return series.points.map((point, index) => `${this.chartX(index, series.points.length)},${this.chartY(point.y, chart)}`).join(' ');
-  }
-  barWidth(series: AgentChartSeries): number { return Math.max(8, Math.min(28, 210 / Math.max(1, series.points.length))); }
   time(value: string): string {
     const parsed = new Date(value);
     return Number.isNaN(parsed.getTime()) ? '' : new Intl.DateTimeFormat('es-AR', { hour: '2-digit', minute: '2-digit' }).format(parsed);

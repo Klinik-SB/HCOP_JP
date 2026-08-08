@@ -2,9 +2,17 @@ import { CommonModule } from '@angular/common';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Component, OnChanges, SimpleChanges, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { DayHospitalComponent } from '../day-hospital/day-hospital.component';
 import { QrScannerComponent } from '../qr/qr-scanner.component';
+import {
+  schedulerBlockedReason,
+  schedulerInclusiveInfusionRange,
+  schedulerMedicationAvailable,
+  schedulerMedicationLabel
+} from './care-scheduler.models';
 import { PatientWorkspaceService } from '../../core/patients/patient-workspace.service';
+import { AuthService } from '../../core/auth/auth.service';
 
 type JsonObject = Record<string, unknown>;
 interface ScheduleSettings { chairCount: number; slotMinutes: number; startTime: string; endTime: string; }
@@ -20,6 +28,8 @@ export class CareSchedulerComponent implements OnChanges {
   readonly closed = output<void>();
   private readonly http = inject(HttpClient);
   private readonly workspace = inject(PatientWorkspaceService);
+  private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
   private requestVersion = 0;
   readonly date = signal(this.localDate());
   readonly loading = signal(false);
@@ -47,6 +57,11 @@ export class CareSchedulerComponent implements OnChanges {
   readonly removalReason = signal('Turno retirado de la agenda');
   readonly chairOffset = signal(0);
   readonly visibleChairCount = signal(6);
+  readonly canViewDayHospital = computed(() => this.auth.hasPermission('section.day-hospital.view'));
+  readonly canManageSchedule = computed(() => this.auth.hasPermission('application.schedule.manage'));
+  readonly canManageAdministration = computed(() => this.auth.hasPermission('application.administration.manage'));
+  readonly canEditPrescriptions = computed(() => this.auth.hasPermission('section.prescriptions.edit'));
+  readonly canViewConfiguration = computed(() => this.auth.hasPermission('section.configuration.view'));
   readonly visibleChairs = computed(() => {
     const total = this.settings().chairCount;
     const count = Math.min(this.visibleChairCount(), total);
@@ -73,8 +88,7 @@ export class CareSchedulerComponent implements OnChanges {
   });
   readonly visibleInfusions = computed(() => {
     const chairs = new Set(this.visibleChairs().map(String));
-    const query = this.normalize(this.search());
-    return this.infusions().filter(item => chairs.has(String(item['chair'] || '').replace(/\D/g, '')) && (!query || this.searchText(item).includes(query)));
+    return this.infusions().filter(item => chairs.has(String(item['chair'] || '').replace(/\D/g, '')));
   });
   readonly weekday = computed(() => new Intl.DateTimeFormat('es-AR', { weekday: 'long', timeZone: 'UTC' }).format(new Date(`${this.date()}T12:00:00Z`)).replace(/^./, value => value.toUpperCase()));
   readonly chairRange = computed(() => { const chairs = this.visibleChairs(); return chairs.length ? `Sillones ${chairs[0]}–${chairs[chairs.length - 1]}` : 'Sin sillones configurados'; });
@@ -85,8 +99,18 @@ export class CareSchedulerComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void { if (changes['open']?.currentValue) this.refresh(); }
   close(): void { this.closed.emit(); }
-  selectMode(mode: HospitalMode): void { this.activeMode.set(mode); if (mode === 'chairs') this.refresh(); }
+  openScheduleConfiguration(): void {
+    if (!this.canViewConfiguration()) return;
+    void this.router.navigate(['/configuration'], { queryParams: { tab: 'day-hospital' } });
+  }
+  selectMode(mode: HospitalMode): void {
+    if (!this.canViewDayHospital()) return;
+    if (mode === 'new-treatment' && !this.canEditPrescriptions()) return;
+    this.activeMode.set(mode);
+    if (mode === 'chairs') this.refresh();
+  }
   openQrAdministration(payload: JsonObject): void {
+    if (!this.canManageAdministration()) return;
     const patient = this.object(payload['patient']); const treatment = this.object(payload['treatment']); const infusion = this.object(payload['infusion']);
     const patientId = String(patient['id'] || infusion['patientId'] || ''); const treatmentId = String(treatment['id'] || infusion['treatmentId'] || '');
     if (!patientId || !treatmentId || Number(infusion['cycleNumber'] || 0) < 1 || Number(infusion['applicationDay'] || 0) < 1) { this.actionMessage.set('El QR no devolvió una aplicación completa.'); return; }
@@ -95,6 +119,10 @@ export class CareSchedulerComponent implements OnChanges {
     this.workspace.activateById(patientId); this.refresh();
   }
   refresh(): void {
+    if (!this.canViewDayHospital()) {
+      this.candidates.set([]); this.infusions.set([]); this.loading.set(false); this.error.set('');
+      return;
+    }
     const requestVersion = ++this.requestVersion;
     this.loading.set(true); this.error.set('');
     let completed = 0;
@@ -116,17 +144,20 @@ export class CareSchedulerComponent implements OnChanges {
     this.actionMessage.set(this.selectedCandidateId() ? `${item['patientName'] || 'Paciente'} · ${this.durationLabel(item)} · lugares disponibles en celeste` : '');
   }
   beginCandidateDrag(event: DragEvent, item: JsonObject): void {
+    if (!this.canManageSchedule()) { event.preventDefault(); return; }
     const reason = this.blockedReason(item);
     if (reason || this.busy()) { event.preventDefault(); this.actionMessage.set(reason || 'La agenda está guardando otro cambio.'); return; }
     this.drag.set({ type: 'candidate', item }); this.selectedCandidateId.set(this.itemId(item)); this.dropTarget.set(null);
     if (event.dataTransfer) { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', this.itemId(item)); }
   }
   beginInfusionDrag(event: DragEvent, item: JsonObject): void {
+    if (!this.canManageSchedule()) { event.preventDefault(); return; }
     if (this.busy()) { event.preventDefault(); return; }
     this.drag.set({ type: 'infusion', item }); this.dropTarget.set(null);
     if (event.dataTransfer) { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', this.itemId(item)); }
   }
   dragOver(event: DragEvent, slot: ScheduleSlot, chair: number): void {
+    if (!this.canManageSchedule()) return;
     const drag = this.drag(); if (!drag) return;
     event.preventDefault();
     const target = this.placement(drag.item, drag.type, chair, slot.row - 2);
@@ -136,6 +167,7 @@ export class CareSchedulerComponent implements OnChanges {
   clearDrag(): void { this.drag.set(null); this.dropTarget.set(null); }
   drop(event: DragEvent): void {
     event.preventDefault();
+    if (!this.canManageSchedule()) { this.clearDrag(); return; }
     const drag = this.drag(); const target = this.dropTarget();
     this.clearDrag();
     if (!drag || !target?.valid || this.busy()) return;
@@ -186,6 +218,7 @@ export class CareSchedulerComponent implements OnChanges {
   }
   closeDetail(): void { if (!this.busy()) { this.detailOpen.set(false); this.detailItem.set(null); this.removalRequested.set(false); } }
   confirmAppointment(): void {
+    if (!this.canManageSchedule()) return;
     const item = this.detailItem(); if (!item || this.busy()) return;
     this.busy.set(true); this.detailMessage.set('Confirmando turno...');
     this.http.patch<{ infusion?: JsonObject }>(`/api/clinical/infusions/${encodeURIComponent(this.itemId(item))}`, { expectedVersion: item['revision'] || item['version'], appointmentConfirmed: true }, { withCredentials: true }).subscribe({
@@ -198,6 +231,7 @@ export class CareSchedulerComponent implements OnChanges {
     });
   }
   removeAppointment(): void {
+    if (!this.canManageSchedule()) return;
     const item = this.detailItem(); const reason = this.removalReason().trim();
     if (!item || this.busy()) return;
     if (!reason) { this.detailMessage.set('Indique por qué se quita el turno.'); return; }
@@ -214,7 +248,12 @@ export class CareSchedulerComponent implements OnChanges {
   candidateDate(item: JsonObject): string { return this.dateLabel(String(item['suggestedDate'] || '')); }
   candidateDays(item: JsonObject): string { const value = String(item['suggestedDate'] || ''); if (!value) return 'Sin fecha'; const difference = Math.ceil((new Date(`${value}T12:00:00Z`).getTime() - new Date(`${this.localDate()}T12:00:00Z`).getTime()) / 86400000); return difference <= 0 ? (difference === 0 ? 'Hoy' : `${Math.abs(difference)} d. vencido`) : `${difference} d.`; }
   candidateNear(item: JsonObject): boolean { const value = String(item['suggestedDate'] || ''); return Boolean(value) && (new Date(`${value}T12:00:00Z`).getTime() - new Date(`${this.localDate()}T12:00:00Z`).getTime()) / 86400000 < 5; }
-  medicationLabel(item: JsonObject): string { if (this.flag(item, 'medicationReceived')) return 'Medicación recibida'; if (this.flag(item, 'medicationWithPatient')) return 'La tiene el paciente'; return 'Falta medicación'; }
+  medicationLabel(item: JsonObject): string { return schedulerMedicationLabel(item); }
+  medicationReady(item: JsonObject): boolean { return schedulerMedicationAvailable(item); }
+  infusionMatchesSearch(item: JsonObject): boolean {
+    const query = this.normalize(this.search());
+    return Boolean(query) && this.searchText(item).includes(query);
+  }
   prescriptionLabel(item: JsonObject): string { return this.flag(item, 'prescriptionConfirmed') ? 'Prescripción confirmada' : 'Falta prescripción'; }
   infusionStyle(item: JsonObject): Record<string, string> {
     const scheduled = new Date(String(item['scheduledAt'] || '')); const settings = this.settings(); const start = this.clockMinutes(settings.startTime);
@@ -223,7 +262,7 @@ export class CareSchedulerComponent implements OnChanges {
     const column = this.visibleChairs().indexOf(Number(String(item['chair'] || '').replace(/\D/g, ''))) + 2;
     return { 'grid-row': `${row} / span ${rows}`, 'grid-column': String(column) };
   }
-  infusionRange(item: JsonObject): string { const start = new Date(String(item['scheduledAt'] || '')); if (Number.isNaN(start.getTime())) return ''; const end = new Date(start.getTime() + Number(item['durationMinutes'] || 0) * 60000); return `${this.timeLabel(start)} a ${this.timeLabel(end)}`; }
+  infusionRange(item: JsonObject): string { return schedulerInclusiveInfusionRange(item['scheduledAt'], item['durationMinutes']); }
   infusionClass(item: JsonObject): string { return this.flag(item, 'appointmentConfirmed') ? 'is-confirmed' : 'is-pending'; }
   trackSlot(_: number, slot: ScheduleSlot): number { return slot.minutes; }
   trackItem(_: number, item: JsonObject): string { return String(item['id'] || `${item['patientId']}:${item['treatmentId']}:${item['cycleNumber']}:${item['applicationDay']}`); }
@@ -255,17 +294,13 @@ export class CareSchedulerComponent implements OnChanges {
   private duration(item: JsonObject): number { return Math.max(this.settings().slotMinutes, Number(item['durationMinutes'] || this.settings().slotMinutes)); }
   private durationLabel(item: JsonObject): string { const minutes = this.duration(item); return minutes >= 60 && minutes % 60 === 0 ? `${minutes / 60} h` : `${minutes} min`; }
   private blockedReason(item: JsonObject): string {
-    if (String(item['workflowStatus'] || item['continuityState'] || 'active') !== 'active') return 'El tratamiento está suspendido o discontinuado.';
-    if (!this.flag(item, 'prescriptionConfirmed')) return 'Falta confirmar la prescripción.';
-    if (!this.medicationAvailable(item)) return 'Falta confirmar la disponibilidad de la medicación.';
-    if (item['schedulingEligible'] === false) return 'Farmacia todavía no habilitó esta aplicación para recibir turno.';
-    return '';
+    return schedulerBlockedReason(item);
   }
   private loadDetailWorkflow(item: JsonObject): void {
     const path = `/api/clinical/application-workflows/${encodeURIComponent(String(item['patientId'] || ''))}/${encodeURIComponent(String(item['treatmentId'] || ''))}/${Number(item['cycleNumber'] || 1)}/${Number(item['applicationDay'] || 1)}`;
     this.http.get<{ workflow?: JsonObject }>(path, { withCredentials: true }).subscribe({ next: response => this.detailWorkflow.set(response.workflow || {}), error: () => undefined });
   }
-  private medicationAvailable(item: JsonObject): boolean { return this.flag(item, 'medicationReceived') || this.flag(item, 'medicationWithPatient') || ['reserved', 'available'].includes(String(item['stockReservationStatus'] || '')); }
+  private medicationAvailable(item: JsonObject): boolean { return schedulerMedicationAvailable(item); }
   private flag(item: JsonObject, key: string): boolean { return Boolean(item[key]); }
   private object(value: unknown): JsonObject { return value && typeof value === 'object' && !Array.isArray(value) ? value as JsonObject : {}; }
   private normalize(value: unknown): string { return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); }

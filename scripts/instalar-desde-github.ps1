@@ -949,8 +949,8 @@ function Test-HttpSmoke([int]$Port) {
     throw "La aplicación no alcanzó el estado saludable en $baseUrl."
   }
   $homeResponse = Invoke-WebRequest -UseBasicParsing -Uri "$baseUrl/" -TimeoutSec 20
-  if ($homeResponse.StatusCode -ne 200 -or $homeResponse.Content.Length -lt 500) {
-    throw "La interfaz web no respondió correctamente."
+  if ($homeResponse.StatusCode -ne 200 -or [string]$homeResponse.Content -notmatch "<app-root") {
+    throw "La interfaz web no entregó el frontend Angular esperado."
   }
   $runtime = Invoke-RestMethod -UseBasicParsing -Uri "$baseUrl/api/runtime/status" -TimeoutSec 20
   if ($null -eq $runtime -or $runtime.ok -ne $true) {

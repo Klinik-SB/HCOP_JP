@@ -37,8 +37,12 @@ export class PatientWorkspaceService {
   readonly saving = signal(false);
   readonly conflictLatestLoading = signal(false);
   readonly conflictLatestError = signal('');
+  private readonly patientScopedOperations = signal(0);
   readonly hasPendingClinicalWork = computed(() => Boolean(
-    this.activeSaveConflictDraft() || this.saving() || this.clinicalDrafts.hasActive()
+    this.activeSaveConflictDraft()
+      || this.saving()
+      || this.clinicalDrafts.hasActive()
+      || this.patientScopedOperations() > 0
   ));
   private readonly pendingSaveConflict = signal<ClinicalSaveConflictDraft | null>(null);
   private readonly conflictComparisonAuthorized = signal(true);
@@ -177,6 +181,25 @@ export class PatientWorkspaceService {
       headers: { 'X-Study-Delete-Token': deleteToken },
       withCredentials: true
     });
+  }
+
+  beginPatientScopedOperation(patientId: string): () => void {
+    const expected = patientId.trim();
+    const current = this.workspace();
+    if (!expected || current?.patientId !== expected) {
+      throw new ClinicalSaveFailure(
+        'El paciente activo cambió antes de iniciar la operación.',
+        'CLINICAL_CONTEXT_CHANGED',
+        409
+      );
+    }
+    this.patientScopedOperations.update((count) => count + 1);
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      this.patientScopedOperations.update((count) => Math.max(0, count - 1));
+    };
   }
 
   saveState(nextState: ClinicalState): Observable<ClinicalSaveResponse> {
@@ -373,7 +396,7 @@ export class PatientWorkspaceService {
       targetPatientId,
       this.saving(),
       this.loading(),
-      this.clinicalDrafts.hasActive()
+      this.clinicalDrafts.hasActive() || this.patientScopedOperations() > 0
     );
     if (!code) return null;
     return new ClinicalSaveFailure(

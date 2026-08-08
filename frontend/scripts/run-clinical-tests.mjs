@@ -17,7 +17,23 @@ const suites = [
   'src/app/core/patients/patient-workspace.normalization.tests.ts',
   'src/app/core/patients/clinical-draft-registry.tests.ts',
   'src/app/core/patients/clinical-save-conflict.tests.ts',
-  'src/app/core/patients/clinical-conflict-comparison.tests.ts'
+  'src/app/core/patients/clinical-conflict-comparison.tests.ts',
+  'src/app/core/highlighting/clinical-highlight.engine.tests.ts',
+  'src/app/features/research/research.models.tests.ts',
+  'src/app/features/clinical-inbox/clinical-inbox.models.tests.ts',
+  'src/app/features/configuration/protocols/protocol-configuration.normalizers.tests.ts',
+  'src/app/features/configuration/catalogs/configuration-catalogs.normalizers.tests.ts',
+  'src/app/features/configuration/operations/configuration-operations.normalizers.tests.ts',
+  'src/app/features/oncology-history-entry/oncology-history-entry.state.tests.ts',
+  'src/app/features/clinical-entry/clinical-entry.normalizers.tests.ts',
+  'src/app/features/treatment-workflow-actions/treatment-workflow-actions.models.tests.ts',
+  'src/app/features/treatment-documents/treatment-documents.models.tests.ts',
+  'src/app/features/day-hospital/day-hospital-triage.models.tests.ts',
+  'src/app/features/day-hospital/day-hospital-pharmacy.models.tests.ts',
+  'src/app/features/day-hospital/day-hospital-treatment.models.tests.ts',
+  'src/app/features/scheduler/care-scheduler.models.tests.ts',
+  'src/app/features/study-template-editor/study-template-editor.geometry.tests.ts',
+  'src/app/features/agent/agent-presentation.tests.ts'
 ];
 
 try {

@@ -1,4 +1,5 @@
 import { Component, OnDestroy, computed, effect, inject, input, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { CalculatorCatalogService } from './calculator-catalog.service';
 import {
@@ -67,6 +68,7 @@ const FORBIDDEN_RESULT: CalculatorResult = {
 
 @Component({
   selector: 'app-calculator-workspace',
+  imports: [RouterLink],
   host: { class: 'embedded-tools angular-calculator-workspace' },
   templateUrl: './calculator-workspace.component.html',
   styleUrl: './calculator-workspace.component.scss'

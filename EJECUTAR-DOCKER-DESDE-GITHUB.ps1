@@ -23,6 +23,7 @@ $script:ApplicationImage = if ($Channel -eq "Migration") {
 }
 $script:PostgresImage = "postgres:18.4-alpine"
 $script:ApplicationUrl = "http://localhost:$($script:DefaultHostPort)"
+$script:ApplicationEntryUrl = $script:ApplicationUrl
 $script:PostgresVolume = "$($script:ResourcePrefix)_postgres"
 $script:StorageVolume = "$($script:ResourcePrefix)_storage"
 $script:LogPath = $null
@@ -340,6 +341,7 @@ function Get-EnvironmentValues([string]$Path) {
 function Set-ApplicationUrlFromEnvironment([string]$Path) {
   if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
     $script:ApplicationUrl = "http://localhost:$($script:DefaultHostPort)"
+    $script:ApplicationEntryUrl = $script:ApplicationUrl
     return
   }
   $values = Get-EnvironmentValues $Path
@@ -348,6 +350,7 @@ function Set-ApplicationUrlFromEnvironment([string]$Path) {
     throw "HCOP_PORT no es válido en $Path."
   }
   $script:ApplicationUrl = "http://localhost:$port"
+  $script:ApplicationEntryUrl = $script:ApplicationUrl
 }
 
 function Set-EnvironmentValue(
@@ -788,8 +791,9 @@ function Test-ApplicationHealth([int]$Attempts = 12) {
 
 function Assert-ApplicationSmoke {
   $homeResponse = Get-HttpResponse "/"
-  if ($null -eq $homeResponse -or $homeResponse.StatusCode -ne 200 -or [string]::IsNullOrWhiteSpace($homeResponse.Content)) {
-    throw "La página principal no respondió correctamente."
+  if ($null -eq $homeResponse -or $homeResponse.StatusCode -ne 200 -or
+      [string]$homeResponse.Content -notmatch "<app-root") {
+    throw "La página principal no entregó el frontend Angular esperado."
   }
 
   $clinicalResponse = Get-HttpResponse "/api/clinical/status"
@@ -856,9 +860,9 @@ function Start-Hcop(
     throw "Docker informó que inició, pero $($script:ApplicationUrl)/actuator/health no respondió UP."
   }
   Assert-ApplicationSmoke
-  Write-Ok "HCOP JP está listo en $($script:ApplicationUrl)."
+  Write-Ok "HCOP JP está listo en $($script:ApplicationEntryUrl)."
   if (-not $NoOpenBrowser) {
-    Start-Process $script:ApplicationUrl
+    Start-Process $script:ApplicationEntryUrl
   }
 }
 
@@ -924,6 +928,7 @@ function Invoke-ValidateOnly {
     mode = "ValidateOnly"
     channel = $Channel
     applicationImage = $script:ApplicationImage
+    applicationEntryUrl = $script:ApplicationEntryUrl
     projectName = $script:ProjectName
     databaseName = $script:DatabaseName
     dataDirectory = $script:DefaultDataDirectory

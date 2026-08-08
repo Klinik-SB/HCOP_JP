@@ -5,6 +5,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { ClinicalStudyEntry, clinicalStudyEntries } from '../../core/clinical/clinical-study-projection';
 import { ClinicalRecord, ClinicalState, StudyUploadDescriptor } from '../../core/patients/patient-workspace.models';
 import { PatientWorkspaceService } from '../../core/patients/patient-workspace.service';
+import { StudyTemplateEditorComponent } from '../study-template-editor/study-template-editor.component';
 
 type UploadStatus = 'ready' | 'uploading' | 'uploaded' | 'error';
 
@@ -39,7 +40,7 @@ const MAX_FILE_COUNT = 30;
 
 @Component({
   selector: 'app-study-panel',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, StudyTemplateEditorComponent],
   templateUrl: './study-panel.component.html',
   styleUrl: './study-panel.component.scss'
 })
@@ -55,8 +56,10 @@ export class StudyPanelComponent {
   readonly busy = signal(false);
   readonly message = signal('');
   readonly dragActive = signal(false);
+  readonly templateEditorOpen = signal(false);
   readonly selectedKey = signal('');
   private readonly deleteAuthorizations = new Map<string, DeleteAuthorization>();
+  private pointerInside = false;
   private handledRequestId = 0;
   private uploadReturnFocus: HTMLElement | null = null;
   @ViewChild('studyUploadClose') private studyUploadClose?: ElementRef<HTMLButtonElement>;
@@ -101,6 +104,22 @@ export class StudyPanelComponent {
     queueMicrotask(() => this.studyUploadClose?.nativeElement.focus());
   }
 
+  openTemplateEditor(): void {
+    if (!this.canUpload() || this.busy()) {
+      this.message.set('Abra un paciente y finalice cualquier edición pendiente antes de cargar una plantilla.');
+      return;
+    }
+    this.message.set('');
+    this.templateEditorOpen.set(true);
+  }
+
+  closeTemplateEditor(): void { if (!this.busy()) this.templateEditorOpen.set(false); }
+
+  acceptTemplateImage(file: File): void {
+    this.templateEditorOpen.set(false);
+    this.openUpload([file]);
+  }
+
   closeUpload(): void {
     if (this.busy()) return;
     this.finishCloseUpload();
@@ -132,12 +151,18 @@ export class StudyPanelComponent {
 
   @HostListener('document:paste', ['$event'])
   onPaste(event: ClipboardEvent): void {
-    if (!this.uploadOpen() || this.busy()) return;
+    if ((!this.uploadOpen() && !this.pointerInside) || this.busy() || !this.canUpload()) return;
     const files = Array.from(event.clipboardData?.files || []).filter((file) => file.type.startsWith('image/'));
     if (!files.length) return;
     event.preventDefault();
-    this.addFiles(files);
+    this.openUpload(files);
   }
+
+  @HostListener('mouseenter')
+  onPointerEnter(): void { this.pointerInside = true; }
+
+  @HostListener('mouseleave')
+  onPointerLeave(): void { this.pointerInside = false; }
 
   async upload(): Promise<void> {
     if (this.workspace.activeSaveConflict()) {
@@ -150,15 +175,25 @@ export class StudyPanelComponent {
     if (!patientId) { this.message.set('Abra o cree un paciente antes de subir estudios.'); return; }
     if (!ready.length || this.busy()) return;
 
+    const expectedPatientId = String(patientId);
+    let releaseOperation: (() => void) | null = null;
+    try {
+      releaseOperation = this.workspace.beginPatientScopedOperation(expectedPatientId);
+    } catch (error) {
+      this.message.set(this.error(error, 'El paciente activo cambió antes de iniciar la carga.'));
+      return;
+    }
     this.busy.set(true);
     this.message.set('');
     const records: ClinicalRecord[] = [];
     try {
       for (const item of ready) {
+        this.requireActivePatient(expectedPatientId);
         this.markUpload(item.id, { status: 'uploading', error: '' });
         try {
           const studyId = `est-${this.id()}`;
-          const descriptor = await firstValueFrom(this.workspace.uploadStudy(String(patientId), studyId, item.file));
+          const descriptor = await firstValueFrom(this.workspace.uploadStudy(expectedPatientId, studyId, item.file));
+          this.requireActivePatient(expectedPatientId);
           if (!descriptor.url) throw new Error('El servidor no confirmó el archivo cargado.');
           records.push(this.studyFromUpload(studyId, item.file, descriptor));
           if (descriptor.deleteToken) {
@@ -174,7 +209,7 @@ export class StudyPanelComponent {
         }
       }
       if (records.length) {
-        const next = this.nextState((state) => ({
+        const next = this.nextState(expectedPatientId, (state) => ({
           ...state,
           studies: [...records, ...(state.studies || [])],
           meta: { ...(state.meta || {}), updatedAt: new Date().toISOString() }
@@ -188,6 +223,7 @@ export class StudyPanelComponent {
       this.message.set(this.error(error, 'Los archivos se cargaron, pero la historia no pudo guardarse.'));
     } finally {
       this.busy.set(false);
+      releaseOperation?.();
     }
   }
 
@@ -200,10 +236,18 @@ export class StudyPanelComponent {
     const authorization = this.deleteAuthorizations.get(studyId);
     if (!authorization || !authorization.storageName || this.busy()) return;
     if (!window.confirm('¿Eliminar este archivo cargado durante la sesión actual? Esta acción no se puede deshacer.')) return;
+    const patientId = String(this.workspace.workspace()?.patientId || '');
+    let releaseOperation: (() => void) | null = null;
+    try {
+      releaseOperation = this.workspace.beginPatientScopedOperation(patientId);
+    } catch (error) {
+      this.message.set(this.error(error, 'El paciente activo cambió antes de iniciar la eliminación.'));
+      return;
+    }
     this.busy.set(true);
     this.message.set('');
     try {
-      const next = this.nextState((state) => ({
+      const next = this.nextState(patientId, (state) => ({
         ...state,
         studies: (state.studies || []).filter((item) => String(item.id) !== studyId),
         meta: { ...(state.meta || {}), updatedAt: new Date().toISOString() }
@@ -217,6 +261,7 @@ export class StudyPanelComponent {
       this.message.set(this.error(error, 'No se pudo confirmar la eliminación de la imagen.'));
     } finally {
       this.busy.set(false);
+      releaseOperation?.();
     }
   }
 
@@ -259,10 +304,16 @@ export class StudyPanelComponent {
   queueKind(item: UploadItem): string { return this.kindFromExtension(item.extension); }
   queueLabel(item: UploadItem): string { return item.status === 'ready' ? 'Listo para subir' : item.status === 'uploading' ? 'Subiendo…' : item.status === 'uploaded' ? 'Cargado' : item.error || 'No se pudo cargar'; }
 
-  private nextState(mutator: (state: ClinicalState) => ClinicalState): ClinicalState {
-    const current = this.workspace.workingWorkspace()?.state;
-    if (!current) throw new Error('No hay una historia clínica activa.');
-    return mutator(structuredClone(current));
+  private nextState(patientId: string, mutator: (state: ClinicalState) => ClinicalState): ClinicalState {
+    const workspace = this.requireActivePatient(patientId);
+    return mutator(structuredClone(workspace.state));
+  }
+  private requireActivePatient(patientId: string) {
+    const current = this.workspace.workingWorkspace();
+    if (!current || current.patientId !== patientId) {
+      throw new Error('El paciente activo cambió durante la operación. No se modificó otra historia clínica.');
+    }
+    return current;
   }
   private studyFromUpload(id: string, file: File, descriptor: StudyUploadDescriptor): ClinicalRecord {
     const category = descriptor.category || this.categoryFromExtension(this.extension(file.name));

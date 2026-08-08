@@ -1,8 +1,32 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Component, OnChanges, SimpleChanges, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, OnChanges, SimpleChanges, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth/auth.service';
 import { PatientWorkspaceService } from '../../core/patients/patient-workspace.service';
+import { TreatmentDocumentKind, TreatmentDocumentsComponent } from '../treatment-documents';
+import { TreatmentWorkflowActionsComponent, TreatmentWorkflowChangedEvent, TreatmentWorkflowTreatment } from '../treatment-workflow-actions';
+import {
+  PHARMACY_PAGE_SIZE,
+  PharmacyQueueFilter,
+  PharmacyTimeScope,
+  filterPharmacyQueue,
+  groupPharmacyQueue,
+  pharmacyCanModify,
+  pharmacyCanReject,
+  pharmacyPrimaryActionLabel,
+  pharmacyTraceabilityWarning
+} from './day-hospital-pharmacy.models';
+import {
+  TriageQueueFilter,
+  filterOperationalQueue,
+  passRequiresJustification,
+  triageSafetyAlerts
+} from './day-hospital-triage.models';
+import {
+  TREATMENT_PROJECTION_LIMIT,
+  TREATMENT_UI_MAX_CYCLES,
+  treatmentCycleProjection
+} from './day-hospital-treatment.models';
 
 type JsonObject = Record<string, unknown>;
 type CareView = 'treatments' | 'applications' | 'pharmacy' | 'triage' | 'preparation' | 'administration';
@@ -48,13 +72,17 @@ const STATUS_LABELS: Record<string, string> = {
   scheduled: 'Turno registrado', completed: 'Aplicación finalizada', cancelled: 'Cancelado',
   paused: 'Pausado', checked_in: 'Admitido', ready: 'Listo', in_preparation: 'En preparación',
   released: 'Liberado a sala', in_progress: 'En curso', not_started: 'No iniciada',
-  patient_to_bring: 'La trae el paciente', received: 'Recibida', reserved: 'Reservada',
-  approved: 'Aprobado', rejected: 'Observado', failed: 'No aprobado'
+  center_stock: 'Stock del centro', patient_to_bring: 'Debe traerla',
+  patient_has_medication: 'La tiene el paciente', received_center: 'Recibida en el centro',
+  pending_supplier: 'Pendiente del proveedor', received: 'Recibida', reserved: 'Reservada',
+  none: 'Reserva pendiente', not_applicable: 'No requiere reserva',
+  approved: 'Aprobado', rejected: 'Observado', failed: 'No aprobado', active: 'Activo',
+  temporary_hold: 'Suspendido transitoriamente', discontinued: 'Suspendido definitivamente'
 };
 
 @Component({
   selector: 'app-day-hospital',
-  imports: [FormsModule],
+  imports: [FormsModule, TreatmentDocumentsComponent, TreatmentWorkflowActionsComponent],
   templateUrl: './day-hospital.component.html',
   styleUrl: './day-hospital.component.scss',
   host: { '[class.is-embedded]': 'embedded()' }
@@ -64,6 +92,7 @@ export class DayHospitalComponent implements OnChanges {
   readonly initialView = input<CareView>('treatments');
   readonly autoOpenNewTreatment = input(false);
   readonly workflowRequest = input<JsonObject | null>(null);
+  readonly workflowRequestConsumed = output<void>();
   readonly workspace = inject(PatientWorkspaceService);
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
@@ -76,6 +105,11 @@ export class DayHospitalComponent implements OnChanges {
   readonly query = signal('');
   readonly date = signal('');
   readonly status = signal('');
+  readonly queueStatusFilter = signal<TriageQueueFilter>('all');
+  readonly pharmacyTimeScope = signal<PharmacyTimeScope>('next7');
+  readonly pharmacyQueueFilter = signal<PharmacyQueueFilter>('');
+  readonly pharmacyVisibleLimit = signal(PHARMACY_PAGE_SIZE);
+  readonly pharmacyDocumentKinds: readonly TreatmentDocumentKind[] = ['qr'];
   readonly queueItems = signal<JsonObject[]>([]);
   readonly queueLoading = signal(false);
   readonly workflowLoading = signal(false);
@@ -92,7 +126,10 @@ export class DayHospitalComponent implements OnChanges {
   readonly triageWeight = signal('');
   readonly triageTemperature = signal('');
   readonly triageBloodPressure = signal('');
+  readonly triageHeartRate = signal('');
   readonly triageOxygen = signal('');
+  readonly triageHepaticFunction = signal('');
+  readonly triageEcog = signal('');
   readonly triageToxicityGrade = signal('0');
   readonly triageToxicityNotes = signal('');
   readonly triageReason = signal('');
@@ -159,18 +196,60 @@ export class DayHospitalComponent implements OnChanges {
   readonly treatmentTypeOptions = computed(() => this.array(this.treatmentOptions()['treatmentTypes']));
   readonly treatmentIntentOptions = computed(() => this.array(this.treatmentOptions()['characters']));
   readonly treatmentConsentOptions = computed(() => this.array(this.treatmentOptions()['consentStates']));
-
+  readonly activePatient = computed(() => this.workspace.workspace()?.patient || null);
+  readonly selectedTreatmentScheme = computed(() => this.schemeOptions().find((item) => this.pick(item, 'id') === this.treatmentSchemeId()) || null);
+  readonly treatmentProjection = computed(() => {
+    const scheme = this.selectedTreatmentScheme();
+    return treatmentCycleProjection({
+      firstCycleDate: this.treatmentFirstCycleDate(),
+      intervalDays: this.treatmentCycleDays(),
+      initialCycle: this.treatmentInitialCycle(),
+      cycleCount: this.treatmentCycles(),
+      durationMinutes: scheme ? this.pick(scheme, 'estimatedDurationMinutes', 'durationMinutes') : '',
+      durationText: scheme ? this.pick(scheme, 'estimatedDurationText', 'durationText') : ''
+    });
+  });
+  readonly treatmentProjectionHasMore = computed(() => this.treatmentProjection().length === TREATMENT_PROJECTION_LIMIT
+    && Number(this.treatmentCycles()) > TREATMENT_PROJECTION_LIMIT);
+  readonly treatmentUiMaxCycles = TREATMENT_UI_MAX_CYCLES;
   readonly cards = computed(() => this.filteredCards());
+  readonly triageAlerts = computed(() => triageSafetyAlerts({
+    neutrophils: this.triageNeutrophils(),
+    platelets: this.triagePlatelets(),
+    temperatureC: this.triageTemperature(),
+    oxygenSaturation: this.triageOxygen(),
+    toxicityGrade: this.triageToxicityGrade()
+  }));
+  readonly visibleQueueItems = computed(() => {
+    if (!['triage', 'administration'].includes(this.view())) return this.queueItems();
+    return filterOperationalQueue(this.queueItems(), this.query(), this.queueStatusFilter()) as JsonObject[];
+  });
+  readonly filteredPharmacyItems = computed(() => filterPharmacyQueue(
+    this.queueItems(), this.pharmacyTimeScope(), this.pharmacyQueueFilter(), this.todayIso()
+  ) as JsonObject[]);
+  readonly visiblePharmacyItems = computed(() => this.filteredPharmacyItems().slice(0, this.pharmacyVisibleLimit()));
+  readonly pharmacyGroups = computed(() => groupPharmacyQueue(this.visiblePharmacyItems()));
+  readonly pharmacyHasMore = computed(() => this.visiblePharmacyItems().length < this.filteredPharmacyItems().length);
   readonly activePatientId = computed(() => this.workspace.workspace()?.patientId || '');
+  readonly canViewDayHospital = computed(() => this.auth.hasPermission('section.day-hospital.view'));
+  readonly canEditPrescriptions = computed(() => this.auth.hasPermission('section.prescriptions.edit'));
+  readonly canManagePharmacy = computed(() => this.auth.hasPermission('application.pharmacy.manage'));
+  readonly canManageTriage = computed(() => this.auth.hasPermission('application.triage.manage'));
+  readonly canManagePreparation = computed(() => this.auth.hasPermission('application.preparation.manage'));
+  readonly canManageAdministration = computed(() => this.auth.hasPermission('application.administration.manage'));
   readonly selectedQueueLabel = computed(() => ({
     applications: 'Aplicaciones programadas', pharmacy: 'Farmacia', triage: 'Triaje clínico',
     preparation: 'Preparación estéril', administration: 'Administración'
   } as Partial<Record<CareView, string>>)[this.view()] || 'Tratamiento');
+  private treatmentOptionsRequestVersion = 0;
+  private treatmentRequirementsRequestVersion = 0;
+  private queueRequestVersion = 0;
+  private workflowRequestVersion = 0;
 
   constructor() {
     effect(() => {
       const patientId = this.activePatientId();
-      if (!patientId) {
+      if (!patientId || !this.canViewDayHospital()) {
         this.treatments.set([]); this.infusions.set([]); this.details.set({}); this.expandedId.set('');
         return;
       }
@@ -187,17 +266,35 @@ export class DayHospitalComponent implements OnChanges {
     if (changes['workflowRequest']?.currentValue) {
       this.view.set('administration');
       this.openWorkflow(changes['workflowRequest'].currentValue as JsonObject);
+      queueMicrotask(() => this.workflowRequestConsumed.emit());
     }
   }
 
   selectView(view: CareView): void {
+    if (!this.canViewDayHospital()) return;
     this.view.set(view);
+    this.queueStatusFilter.set('all');
     if (view !== 'treatments') this.loadQueue();
     if (view === 'preparation') this.loadPreparationUsers();
     if (view === 'administration') this.loadAdministrationUsers();
   }
 
+  setPharmacyTimeScope(scope: PharmacyTimeScope): void {
+    this.pharmacyTimeScope.set(scope);
+    this.pharmacyVisibleLimit.set(PHARMACY_PAGE_SIZE);
+  }
+
+  setPharmacyQueueFilter(filter: PharmacyQueueFilter): void {
+    this.pharmacyQueueFilter.set(filter);
+    this.pharmacyVisibleLimit.set(PHARMACY_PAGE_SIZE);
+  }
+
+  loadMorePharmacy(): void {
+    this.pharmacyVisibleLimit.update((current) => current + PHARMACY_PAGE_SIZE);
+  }
+
   reload(): void {
+    if (!this.canViewDayHospital()) return;
     const patientId = this.activePatientId();
     if (patientId) this.loadPatientCare(patientId);
     if (this.view() !== 'treatments') this.loadQueue();
@@ -209,31 +306,60 @@ export class DayHospitalComponent implements OnChanges {
     if (!this.details()[id]) this.loadDetail(id);
   }
   openNewTreatment(): void {
+    if (!this.canEditPrescriptions()) return;
     const patientId = this.activePatientId();
     if (!patientId) return;
+    const requestVersion = ++this.treatmentOptionsRequestVersion;
+    ++this.treatmentRequirementsRequestVersion;
+    this.resetTreatmentForm(); this.treatmentOptions.set({});
     this.newTreatmentOpen.set(true); this.newTreatmentLoading.set(true); this.newTreatmentMessage.set('');
     this.http.get<{ options?: JsonObject }>(`/api/clinical/patients/${encodeURIComponent(patientId)}/treatment-options`, { withCredentials: true }).subscribe({
-      next: (response) => { this.treatmentOptions.set(this.object(response.options)); this.newTreatmentLoading.set(false); },
-      error: (response: { error?: { error?: string } }) => { this.newTreatmentLoading.set(false); this.newTreatmentMessage.set(response?.error?.error || 'No se pudieron cargar las opciones del tratamiento.'); }
+      next: (response) => {
+        if (requestVersion !== this.treatmentOptionsRequestVersion || this.activePatientId() !== patientId || !this.newTreatmentOpen()) return;
+        this.treatmentOptions.set(this.object(response.options)); this.newTreatmentLoading.set(false);
+      },
+      error: (response: { error?: { error?: string } }) => {
+        if (requestVersion !== this.treatmentOptionsRequestVersion || this.activePatientId() !== patientId || !this.newTreatmentOpen()) return;
+        this.newTreatmentLoading.set(false); this.newTreatmentMessage.set(response?.error?.error || 'No se pudieron cargar las opciones del tratamiento.');
+      }
     });
   }
-  closeNewTreatment(): void { if (!this.newTreatmentLoading()) this.newTreatmentOpen.set(false); }
+  closeNewTreatment(): void {
+    if (this.newTreatmentLoading()) return;
+    ++this.treatmentOptionsRequestVersion; ++this.treatmentRequirementsRequestVersion;
+    this.newTreatmentOpen.set(false); this.treatmentOptions.set({}); this.resetTreatmentForm();
+  }
   selectTreatmentScheme(schemeId: string): void {
+    const requestVersion = ++this.treatmentRequirementsRequestVersion;
     this.treatmentSchemeId.set(schemeId); this.treatmentRequirements.set({}); this.treatmentRequirementsConfirmed.set(false);
+    this.newTreatmentMessage.set('');
     const scheme = this.schemeOptions().find((item) => this.pick(item, 'id') === schemeId);
     if (scheme) this.treatmentCycleDays.set(this.pick(scheme, 'cycleDays', 'duracionCiclo'));
     const patientId = this.activePatientId();
     if (!patientId || !schemeId) return;
     this.http.get<{ requirements?: JsonObject }>(`/api/clinical/patients/${encodeURIComponent(patientId)}/treatment-requirements/${encodeURIComponent(schemeId)}`, { withCredentials: true }).subscribe({
-      next: (response) => this.treatmentRequirements.set(this.object(response.requirements)),
-      error: (response: { error?: { error?: string } }) => this.newTreatmentMessage.set(response?.error?.error || 'No se pudieron cargar los requisitos del esquema.')
+      next: (response) => {
+        if (requestVersion !== this.treatmentRequirementsRequestVersion || this.activePatientId() !== patientId || this.treatmentSchemeId() !== schemeId) return;
+        this.treatmentRequirements.set(this.object(response.requirements));
+      },
+      error: (response: { error?: { error?: string } }) => {
+        if (requestVersion !== this.treatmentRequirementsRequestVersion || this.activePatientId() !== patientId || this.treatmentSchemeId() !== schemeId) return;
+        this.newTreatmentMessage.set(response?.error?.error || 'No se pudieron cargar los requisitos del esquema.');
+      }
     });
   }
   createTreatment(): void {
+    if (!this.canEditPrescriptions()) return;
     const patientId = this.activePatientId();
     if (!patientId || this.newTreatmentLoading()) return;
     if (!this.treatmentDiagnosisId() || !this.treatmentSchemeId()) {
       this.newTreatmentMessage.set('Seleccione un diagnóstico guardado y un protocolo.'); return;
+    }
+    const cycleCount = Number(this.treatmentCycles());
+    const initialCycle = Number(this.treatmentInitialCycle());
+    if (!Number.isInteger(cycleCount) || cycleCount < 1 || cycleCount > TREATMENT_UI_MAX_CYCLES
+        || !Number.isInteger(initialCycle) || initialCycle < 1 || initialCycle > TREATMENT_UI_MAX_CYCLES) {
+      this.newTreatmentMessage.set(`Cantidad de ciclos y ciclo inicial deben estar entre 1 y ${TREATMENT_UI_MAX_CYCLES}.`); return;
     }
     if (!this.treatmentRequirementsConfirmed()) {
       this.newTreatmentMessage.set('Confirme los requisitos y datos de cálculo antes de prescribir.'); return;
@@ -241,7 +367,7 @@ export class DayHospitalComponent implements OnChanges {
     const body = {
       diagnostico: this.treatmentDiagnosisId(), esquema: this.treatmentSchemeId(),
       tipoOncologico: this.treatmentType(), caracter: this.treatmentIntent(),
-      cantidadCiclos: this.number(this.treatmentCycles(), 1), cicloInicial: this.number(this.treatmentInitialCycle(), 1),
+      cantidadCiclos: cycleCount, cicloInicial: initialCycle,
       duracionCiclo: this.number(this.treatmentCycleDays(), 0), fechaCreacion: this.treatmentCreatedDate(),
       fechaPrimerCiclo: this.treatmentFirstCycleDate(), estadoConsentimiento: this.treatmentConsent(),
       peso: this.numeric(this.treatmentWeight()), talla: this.numeric(this.treatmentHeight()),
@@ -269,12 +395,65 @@ export class DayHospitalComponent implements OnChanges {
   dateLabel(value: unknown): string { return this.formatDate(this.string(value), false); }
   dateTimeLabel(value: unknown): string { return this.formatDate(this.string(value), true); }
   dayMedications(day: JsonObject): JsonObject[] { return this.array(day['medications']); }
+  dayMedicationSummary(day: JsonObject): string {
+    const medications = this.dayMedications(day);
+    return medications.length
+      ? medications.map((medication) => this.medicationLabel(medication)).join(' · ')
+      : 'Sin drogas informadas';
+  }
+  homeMedicationSummary(cycle: CareCycle): string {
+    return cycle.homeMedications.map((medication) => this.medicationLabel(medication)).join(' · ');
+  }
   medicationLabel(medication: JsonObject): string {
     const name = this.pick(medication, 'drugName', 'name', 'nombre') || 'Droga';
     const dose = this.pick(medication, 'actualDoseText', 'prescribedDoseText', 'doseText', 'dosis');
     return dose ? `${name} · ${dose}` : name;
   }
   daysFor(card: CareCard): CareCycle[] { return card.cycles; }
+  documentCycle(card: CareCard): CareCycle | null {
+    return card.cycles.find((cycle) => ['current', 'partial', 'scheduled'].includes(cycle.state))
+      || card.cycles.find((cycle) => cycle.state === 'pending')
+      || card.cycles[0]
+      || null;
+  }
+  documentDay(card: CareCard): JsonObject | null {
+    return this.documentCycle(card)?.days[0] || null;
+  }
+  documentField(value: unknown): string | number | null {
+    return typeof value === 'string' || typeof value === 'number' ? value : null;
+  }
+  workflowTreatment(card: CareCard): TreatmentWorkflowTreatment {
+    const raw = card.treatment;
+    const patient = this.workspace.workspace()?.patient;
+    const cycle = this.documentCycle(card);
+    const cycleKey = String(cycle?.number
+      || this.number(this.pick(raw, 'cycleNumber', 'currentCycle', 'cicloInicial'), 1));
+    const prescriptionStates = this.object(raw['prescriptionStates']);
+    const pendingRequestsByCycle = this.object(raw['pendingRequestIdsByCycle']);
+    const pendingRequests = this.object(pendingRequestsByCycle[cycleKey]);
+    return {
+      ...(raw as unknown as TreatmentWorkflowTreatment),
+      patientId: this.activePatientId(),
+      treatmentId: card.id,
+      patientName: this.pick(raw, 'patientName') || patient?.fullName || 'Paciente',
+      patientDni: this.pick(raw, 'patientDni', 'dni') || patient?.dni || '',
+      scheme: card.scheme,
+      drugScheme: this.pick(raw, 'drugScheme', 'scheme', 'esquema') || card.scheme,
+      diagnosis: card.diagnosis,
+      cycleNumber: cycle?.number || this.number(this.pick(raw, 'cycleNumber', 'currentCycle', 'cicloInicial'), 1),
+      totalCycles: card.cycleCount,
+      workflowStatus: this.pick(raw, 'workflowStatus', 'courseState', 'continuityState', 'status', 'estadoTratamiento'),
+      prescriptionWorkflowState: this.pick(prescriptionStates, cycleKey)
+        || this.pick(raw, 'prescriptionWorkflowState', 'prescriptionState'),
+      pendingRequestIds: this.requestIds(Object.keys(pendingRequests).length
+        ? pendingRequests
+        : raw['pendingRequestIds'])
+    };
+  }
+  treatmentWorkflowChanged(event: TreatmentWorkflowChangedEvent): void {
+    if (event.patientId !== this.activePatientId()) return;
+    this.loadPatientCare(event.patientId);
+  }
   applicationsFor(day: JsonObject): JsonObject[] {
     const id = this.pick(day, 'applicationId', 'id');
     if (!id) return [];
@@ -287,12 +466,31 @@ export class DayHospitalComponent implements OnChanges {
     if (view === 'preparation') return this.statusLabel(this.pick(item, 'preparationStatus', 'currentStep'));
     return this.statusLabel(this.pick(item, 'administrationStatus', 'currentStep', 'workflowStatus'));
   }
+  pharmacyPrimaryLabel(workflow: JsonObject): string {
+    return pharmacyPrimaryActionLabel(workflow['pharmacyValidationStatus']);
+  }
+  canModifyPharmacyWorkflow(workflow: JsonObject): boolean {
+    return this.canManagePharmacy() && pharmacyCanModify(workflow);
+  }
+  canRejectPharmacyWorkflow(workflow: JsonObject): boolean {
+    return this.canManagePharmacy() && pharmacyCanReject(workflow);
+  }
+  pharmacyTraceWarning(workflow: JsonObject): string {
+    return pharmacyTraceabilityWarning(workflow);
+  }
   queueDate(item: JsonObject): string {
     const appointment = this.object(item['appointment']);
     return this.dateTimeLabel(this.pick(appointment, 'scheduledAt') || this.pick(item, 'plannedDate'));
   }
-  trackId(index: number, item: JsonObject): string { return this.pick(item, 'id', 'treatmentId', 'applicationId') || String(index); }
+  trackId(index: number, item: JsonObject): string {
+    const workflowKey = [
+      this.pick(item, 'patientId'), this.pick(item, 'treatmentId'),
+      this.pick(item, 'cycleNumber'), this.pick(item, 'applicationDay')
+    ].filter(Boolean).join('-');
+    return workflowKey || this.pick(item, 'id', 'applicationId') || String(index);
+  }
   openWorkflow(item: JsonObject): void {
+    if (!this.canViewDayHospital()) return;
     const patientId = this.pick(item, 'patientId');
     const treatmentId = this.pick(item, 'treatmentId');
     const cycle = this.number(this.pick(item, 'cycleNumber'), 0);
@@ -301,10 +499,12 @@ export class DayHospitalComponent implements OnChanges {
       this.error.set('La aplicación no contiene una referencia clínica completa.');
       return;
     }
+    const requestVersion = ++this.workflowRequestVersion;
     this.workflowLoading.set(true); this.error.set('');
     const url = `/api/clinical/application-workflows/${encodeURIComponent(patientId)}/${encodeURIComponent(treatmentId)}/${cycle}/${day}`;
     this.http.get<{ workflow?: JsonObject }>(url, { withCredentials: true }).subscribe({
       next: (response) => {
+        if (requestVersion !== this.workflowRequestVersion) return;
         const workflow = this.object(response.workflow);
         this.selectedWorkflow.set(workflow);
         this.medicationSource.set(this.pick(workflow, 'medicationSource') || 'center_stock');
@@ -320,12 +520,19 @@ export class DayHospitalComponent implements OnChanges {
         this.workflowLoading.set(false);
       },
       error: (response: { error?: { error?: string } }) => {
+        if (requestVersion !== this.workflowRequestVersion) return;
         this.workflowLoading.set(false); this.error.set(response?.error?.error || 'No se pudo abrir el circuito de la aplicación.');
       }
     });
   }
-  closeWorkflow(): void { this.selectedWorkflow.set(null); this.workflowActionMessage.set(''); }
+  closeWorkflow(): void {
+    this.workflowRequestVersion += 1;
+    this.workflowLoading.set(false);
+    this.selectedWorkflow.set(null);
+    this.workflowActionMessage.set('');
+  }
   validatePharmacy(validated: boolean): void {
+    if (!this.canManagePharmacy()) return;
     const workflow = this.selectedWorkflow();
     if (!workflow || this.workflowActionLoading()) return;
     const notes = this.pharmacyNotes().trim();
@@ -357,6 +564,7 @@ export class DayHospitalComponent implements OnChanges {
     });
   }
   updateStockReservation(reserved: boolean): void {
+    if (!this.canManagePharmacy()) return;
     const workflow = this.selectedWorkflow();
     if (!workflow || this.workflowActionLoading()) return;
     const notes = this.stockNotes().trim();
@@ -392,15 +600,21 @@ export class DayHospitalComponent implements OnChanges {
     });
   }
   submitTriage(decision: 'PASS' | 'FAIL'): void {
+    if (!this.canManageTriage()) return;
     const workflow = this.selectedWorkflow();
     if (!workflow || this.workflowActionLoading()) return;
     const requiredForPass = [
       this.triageLaboratoryDate(), this.triageNeutrophils(), this.triagePlatelets(),
-      this.triageCreatinine(), this.triageWeight(), this.triageTemperature(),
-      this.triageBloodPressure(), this.triageToxicityGrade()
+      this.triageCreatinine(), this.triageHepaticFunction(), this.triageWeight(),
+      this.triageTemperature(), this.triageBloodPressure(), this.triageHeartRate(),
+      this.triageOxygen(), this.triageEcog(), this.triageToxicityGrade()
     ];
     if (decision === 'PASS' && requiredForPass.some((value) => !String(value).trim())) {
       this.workflowActionMessage.set('Para autorizar complete laboratorio, peso, temperatura, presión arterial y toxicidad.');
+      return;
+    }
+    if (decision === 'PASS' && passRequiresJustification(this.triageAlerts(), this.triageReason())) {
+      this.workflowActionMessage.set('Hay alertas clínicas. Revise los valores y documente una justificación de al menos 10 caracteres para emitir PASS.');
       return;
     }
     if (decision === 'FAIL' && this.triageReason().trim().length < 3) {
@@ -409,14 +623,17 @@ export class DayHospitalComponent implements OnChanges {
     }
     const laboratory = this.compactObject({
       date: this.triageLaboratoryDate(), neutrophils: this.numeric(this.triageNeutrophils()),
-      platelets: this.numeric(this.triagePlatelets()), creatinine: this.numeric(this.triageCreatinine())
+      platelets: this.numeric(this.triagePlatelets()), creatinine: this.numeric(this.triageCreatinine()),
+      hepaticFunction: this.triageHepaticFunction().trim()
     }, decision === 'FAIL');
     const vitalSigns = this.compactObject({
       weightKg: this.numeric(this.triageWeight()), temperatureC: this.numeric(this.triageTemperature()),
-      bloodPressure: this.triageBloodPressure(), oxygenSaturation: this.numeric(this.triageOxygen())
+      bloodPressure: this.triageBloodPressure(), heartRate: this.numeric(this.triageHeartRate()),
+      oxygenSaturation: this.numeric(this.triageOxygen())
     }, decision === 'FAIL');
     const toxicity = this.compactObject({
-      grade: this.numeric(this.triageToxicityGrade()), notes: this.triageToxicityNotes()
+      grade: this.numeric(this.triageToxicityGrade()), ecog: this.numeric(this.triageEcog()),
+      notes: this.triageToxicityNotes()
     }, decision === 'FAIL');
     const body = {
       expectedRevision: this.number(this.pick(workflow, 'revision'), 0),
@@ -441,7 +658,22 @@ export class DayHospitalComponent implements OnChanges {
       }
     });
   }
+  revokeTriagePass(): void {
+    const workflow = this.selectedWorkflow();
+    if (!workflow || this.pick(workflow, 'clinicalAuthorizationStatus') !== 'passed') return;
+    if (this.triageReason().trim().length < 3) {
+      this.workflowActionMessage.set('Indique el motivo clínico para revocar el PASS y postergar la aplicación.');
+      return;
+    }
+    this.submitTriage('FAIL');
+  }
+  canRevokeTriagePass(workflow: JsonObject): boolean {
+    return this.pick(workflow, 'clinicalAuthorizationStatus') === 'passed'
+      && ['not_started', 'cancelled'].includes(this.pick(workflow, 'preparationStatus') || 'not_started')
+      && this.pick(workflow, 'administrationStatus') !== 'completed';
+  }
   updatePreparation(action: 'start' | 'release'): void {
+    if (!this.canManagePreparation()) return;
     const workflow = this.selectedWorkflow();
     if (!workflow || this.workflowActionLoading()) return;
     const body = {
@@ -464,9 +696,11 @@ export class DayHospitalComponent implements OnChanges {
     });
   }
   updatePreparationDraft(index: number, field: keyof PreparationDraft, value: string): void {
+    if (!this.canManagePreparation()) return;
     this.preparationDrafts.update((current) => current.map((draft, position) => position === index ? { ...draft, [field]: String(value ?? '') } : draft));
   }
   completePreparation(): void {
+    if (!this.canManagePreparation()) return;
     const workflow = this.selectedWorkflow();
     if (!workflow || this.workflowActionLoading()) return;
     if (!this.preparationVerifiedBy()) {
@@ -516,6 +750,7 @@ export class DayHospitalComponent implements OnChanges {
     });
   }
   startAdministration(): void {
+    if (!this.canManageAdministration()) return;
     const workflow = this.selectedWorkflow();
     if (!workflow || this.workflowActionLoading()) return;
     if (!this.administrationPatientVerified() || !this.administrationLabelVerified()) {
@@ -552,6 +787,7 @@ export class DayHospitalComponent implements OnChanges {
     });
   }
   interruptAdministration(): void {
+    if (!this.canManageAdministration()) return;
     const workflow = this.selectedWorkflow();
     if (!workflow || this.workflowActionLoading()) return;
     if ([this.interruptionReason(), this.interruptionActualDose(), this.interruptionMeasures(), this.interruptionPatientCondition()].some((value) => value.trim().length < 2)) {
@@ -588,6 +824,7 @@ export class DayHospitalComponent implements OnChanges {
   }
   hasPendingInterruption(workflow: JsonObject): boolean { return Boolean(this.object(workflow['administrationData'])['interruptionPending']); }
   resolveAdministration(decision: 'resume' | 'terminate'): void {
+    if (!this.canManageAdministration()) return;
     const workflow = this.selectedWorkflow();
     if (!workflow || this.workflowActionLoading()) return;
     if (this.resolutionNotes().trim().length < 3 || this.resolutionPatientCondition().trim().length < 3) {
@@ -625,6 +862,7 @@ export class DayHospitalComponent implements OnChanges {
     });
   }
   completeAdministration(): void {
+    if (!this.canManageAdministration()) return;
     const workflow = this.selectedWorkflow();
     if (!workflow || this.workflowActionLoading()) return;
     if (this.completionActualDose().trim().length < 2 || this.completionObservation().trim().length < 3) {
@@ -681,11 +919,14 @@ export class DayHospitalComponent implements OnChanges {
     this.triageNeutrophils.set(this.pick(laboratory, 'neutrophils'));
     this.triagePlatelets.set(this.pick(laboratory, 'platelets'));
     this.triageCreatinine.set(this.pick(laboratory, 'creatinine'));
+    this.triageHepaticFunction.set(this.pick(laboratory, 'hepaticFunction', 'liverFunction'));
     this.triageWeight.set(this.pick(vitalSigns, 'weightKg'));
     this.triageTemperature.set(this.pick(vitalSigns, 'temperatureC'));
     this.triageBloodPressure.set(this.pick(vitalSigns, 'bloodPressure'));
+    this.triageHeartRate.set(this.pick(vitalSigns, 'heartRate', 'pulse', 'frecuenciaCardiaca'));
     this.triageOxygen.set(this.pick(vitalSigns, 'oxygenSaturation'));
     this.triageToxicityGrade.set(this.pick(toxicity, 'grade') || '0');
+    this.triageEcog.set(this.pick(toxicity, 'ecog'));
     this.triageToxicityNotes.set(this.pick(toxicity, 'notes'));
     this.triageReason.set(this.pick(assessment, 'reason') || this.pick(workflow, 'clinicalAuthorizationReason'));
     this.triageRescheduledDate.set(this.pick(assessment, 'rescheduledDate'));
@@ -717,6 +958,7 @@ export class DayHospitalComponent implements OnChanges {
   }
 
   private loadPreparationUsers(): void {
+    if (!this.canManagePreparation()) { this.preparationUsers.set([]); return; }
     this.http.get<{ items?: JsonObject[] }>('/api/clinical/users', {
       params: new HttpParams().set('capability', 'application.preparation.manage'), withCredentials: true
     }).subscribe({ next: (response) => this.preparationUsers.set(this.array(response.items)), error: () => this.preparationUsers.set([]) });
@@ -743,6 +985,7 @@ export class DayHospitalComponent implements OnChanges {
   }
 
   private loadAdministrationUsers(): void {
+    if (!this.canManageAdministration()) { this.administrationUsers.set([]); return; }
     this.http.get<{ items?: JsonObject[] }>('/api/clinical/users', {
       params: new HttpParams().set('capability', 'application.administration.manage'), withCredentials: true
     }).subscribe({ next: (response) => this.administrationUsers.set(this.array(response.items)), error: () => this.administrationUsers.set([]) });
@@ -770,6 +1013,7 @@ export class DayHospitalComponent implements OnChanges {
   }
 
   private loadPatientCare(patientId: string): void {
+    if (!this.canViewDayHospital()) return;
     this.loading.set(true); this.error.set('');
     this.http.get<TreatmentListResponse>(`/api/clinical/patients/${encodeURIComponent(patientId)}/treatments`, { withCredentials: true }).subscribe({
       next: (response) => {
@@ -796,6 +1040,7 @@ export class DayHospitalComponent implements OnChanges {
   }
 
   private loadInfusions(patientId: string): void {
+    if (!this.canViewDayHospital()) return;
     this.http.get<InfusionListResponse>('/api/clinical/infusions', {
       params: new HttpParams().set('patientId', patientId), withCredentials: true
     }).subscribe({
@@ -811,6 +1056,7 @@ export class DayHospitalComponent implements OnChanges {
   }
 
   private loadDetail(id: string): void {
+    if (!this.canViewDayHospital()) return;
     const patientId = this.activePatientId();
     if (!patientId) return;
     this.http.get<TreatmentDetailResponse>(`/api/clinical/patients/${encodeURIComponent(patientId)}/treatments/${encodeURIComponent(id)}/detail`, { withCredentials: true }).subscribe({
@@ -824,15 +1070,26 @@ export class DayHospitalComponent implements OnChanges {
   }
 
   loadQueue(): void {
+    if (!this.canViewDayHospital()) return;
     const selected = this.view();
     if (!['applications', 'pharmacy', 'triage', 'preparation', 'administration'].includes(selected)) return;
-    const queue = selected === 'applications' ? 'administration' : selected;
+    const queue = selected;
+    const requestVersion = ++this.queueRequestVersion;
     this.queueLoading.set(true); this.error.set('');
-    let params = new HttpParams().set('queue', queue).set('q', this.query().trim());
-    if (this.date()) params = params.set('date', this.date());
+    let params = new HttpParams().set('queue', queue);
+    if (!['triage', 'administration'].includes(queue)) params = params.set('q', this.query().trim());
+    if (selected !== 'pharmacy' && this.date()) params = params.set('date', this.date());
     this.http.get<WorkflowListResponse>('/api/clinical/application-workflows', { params, withCredentials: true }).subscribe({
-      next: (response) => { this.queueItems.set(this.array(response.items)); this.queueLoading.set(false); },
-      error: (response: { error?: { error?: string } }) => { this.queueLoading.set(false); this.error.set(response?.error?.error || 'No se pudo cargar la cola operativa.'); }
+      next: (response) => {
+        if (requestVersion !== this.queueRequestVersion || this.view() !== selected) return;
+        this.queueItems.set(this.array(response.items));
+        if (selected === 'pharmacy') this.pharmacyVisibleLimit.set(PHARMACY_PAGE_SIZE);
+        this.queueLoading.set(false);
+      },
+      error: (response: { error?: { error?: string } }) => {
+        if (requestVersion !== this.queueRequestVersion || this.view() !== selected) return;
+        this.queueLoading.set(false); this.error.set(response?.error?.error || 'No se pudo cargar la cola operativa.');
+      }
     });
   }
 
@@ -865,7 +1122,7 @@ export class DayHospitalComponent implements OnChanges {
       diagnosis: this.pick(treatment, 'diagnosis', 'diagnostico') || 'Diagnóstico no informado',
       type: this.pick(treatment, 'type', 'tipo') || 'Tratamiento oncológico',
       oncologist: this.pick(treatment, 'oncologist', 'oncologo') || 'Sin oncólogo informado',
-      status: this.pick(treatment, 'status', 'estadoTratamiento') || 'Registrado',
+      status: this.pick(treatment, 'workflowStatus', 'continuityState', 'status', 'estadoTratamiento') || 'Registrado',
       cycleCount, completedCycles,
       duration: this.pick(treatment, 'estimatedDurationText') || this.durationLabel(minutes),
       firstDate, lastDate, cycles
@@ -918,9 +1175,21 @@ export class DayHospitalComponent implements OnChanges {
     if (Number.isNaN(date.getTime())) return value;
     return new Intl.DateTimeFormat('es-AR', withTime ? { dateStyle: 'short', timeStyle: 'short' } : { dateStyle: 'short' }).format(date);
   }
+  private todayIso(): string {
+    const now = new Date();
+    const offset = now.getTimezoneOffset() * 60_000;
+    return new Date(now.getTime() - offset).toISOString().slice(0, 10);
+  }
   private pick(source: JsonObject, ...keys: string[]): string { for (const key of keys) { const value = source[key]; if (value !== undefined && value !== null && String(value).trim()) return String(value).trim(); } return ''; }
   private number(value: string, fallback: number): number { const result = Number(value); return Number.isFinite(result) && result >= 0 ? result : fallback; }
   private object(value: unknown): JsonObject { return value !== null && typeof value === 'object' && !Array.isArray(value) ? value as JsonObject : {}; }
+  private requestIds(value: unknown): Record<string, string | number | null | undefined> {
+    const result: Record<string, string | number | null | undefined> = {};
+    Object.entries(this.object(value)).forEach(([key, item]) => {
+      if (typeof item === 'string' || typeof item === 'number' || item === null || item === undefined) result[key] = item;
+    });
+    return result;
+  }
   private array(value: unknown): JsonObject[] { return Array.isArray(value) ? value.filter((item): item is JsonObject => item !== null && typeof item === 'object' && !Array.isArray(item)) : []; }
   private string(value: unknown): string { return value === undefined || value === null ? '' : String(value); }
 }

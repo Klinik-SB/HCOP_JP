@@ -26,6 +26,15 @@ export class AuthService {
     );
   }
 
+  expireSession(): void {
+    this.session.set({
+      ok: false,
+      authenticated: false,
+      loginRequired: true,
+      activePatientId: null
+    });
+  }
+
   hasPermission(permission: string): boolean {
     return Boolean(this.session()?.user?.permissions?.includes(permission));
   }

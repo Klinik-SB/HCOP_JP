@@ -1,0 +1,211 @@
+<section class="catalog-configuration" [class.without-tabs]="!showSectionTabs()" aria-label="Catálogos clínicos">
+  @if (showSectionTabs()) {
+  <nav class="catalog-tabs" role="tablist" aria-label="Catálogos de configuración">
+    <button type="button" role="tab" [class.active]="activeSection() === 'diagnoses'" [attr.aria-selected]="activeSection() === 'diagnoses'" (click)="activate('diagnoses')">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/></svg>
+      <span><b>Equivalencias diagnósticas</b><small>SNOMED, CIE-10 y AJCC</small></span>
+    </button>
+    <button type="button" role="tab" [class.active]="activeSection() === 'guides'" [attr.aria-selected]="activeSection() === 'guides'" (click)="activate('guides')">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v16l-4-2-4 2-4-2-4 2Z"/><path d="M8 7h8M8 11h6"/></svg>
+      <span><b>Guías</b><small>Biblioteca y metadatos</small></span>
+    </button>
+    <button type="button" role="tab" [class.active]="activeSection() === 'templates'" [attr.aria-selected]="activeSection() === 'templates'" (click)="activate('templates')">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16"/><circle cx="9" cy="10" r="2"/><path d="m3 17 5-4 4 3 3-2 6 5"/></svg>
+      <span><b>Plantillas anatómicas</b><small>Imágenes para Estudios</small></span>
+    </button>
+  </nav>
+  }
+
+  @if (activeSection() === 'guides') {
+    <section class="config-panel active" role="tabpanel" aria-label="Guías">
+      <header class="panel-heading">
+        <div><span>Biblioteca clínica</span><h1>Guías</h1><p>Agregue PDF, complete sus datos y decida cuáles se muestran en Herramientas.</p></div>
+        <div class="panel-heading-actions">
+          <label class="primary-button" [class.is-disabled]="busy() || !canManage()">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M4 17v4h16v-4"/></svg><span>Agregar PDF</span>
+            <input #guideFiles type="file" accept="application/pdf,.pdf" multiple [disabled]="busy() || !canManage()" (change)="uploadGuides(guideFiles.files); guideFiles.value = ''">
+          </label>
+        </div>
+      </header>
+      <div class="manager-layout">
+        <aside class="item-catalog" aria-label="Catálogo de guías">
+          <label class="catalog-search">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+            <input #guideSearch type="search" placeholder="Buscar guía…" autocomplete="off" [value]="guideQuery()" (input)="guideQuery.set(guideSearch.value)">
+          </label>
+          <div class="item-list" role="list" aria-live="polite" [attr.aria-busy]="guideLoading()">
+            @if (guideLoading()) { <div class="loading-row"><span class="spinner" aria-hidden="true"></span><span>Cargando…</span></div> }
+            @else if (guideError()) { <div class="catalog-empty is-error">{{ guideError() }}<button class="secondary-button" type="button" (click)="loadGuides()">Reintentar</button></div> }
+            @else {
+              @for (item of filteredGuides(); track item.name) {
+                <button class="item-button" type="button" role="listitem" [class.active]="selectedGuide()?.name === item.name" [class.inactive]="!item.active" (click)="selectGuide(item)">
+                  <span><strong>{{ item.title }}</strong><small>{{ item.site }} · {{ item.source }}</small></span><em>{{ item.active ? 'Activa' : 'Inactiva' }}</em>
+                </button>
+              } @empty { <div class="catalog-empty">No hay guías que coincidan.</div> }
+            }
+          </div>
+        </aside>
+        @if (selectedGuide(); as guide) {
+          <form class="editor" [formGroup]="guideForm" (ngSubmit)="saveGuide()" [attr.aria-busy]="busy()">
+            <div class="editor-top">
+              <div><span>Documento local</span><h2>{{ guide.title }}</h2><small>{{ guide.name }} · {{ bytes(guide.size) }} · revisión {{ guide.configurationRevision ?? '—' }}</small></div>
+              <div class="editor-actions">
+                <a class="secondary-button" [href]="guide.url" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3h7v7M21 3l-9 9"/><path d="M18 13v7H4V6h7"/></svg>Abrir PDF</a>
+                <button class="danger-button" type="button" [disabled]="busy() || !canManage()" (click)="toggleGuide()">{{ guide.active ? 'Desactivar' : 'Reactivar' }}</button>
+                <button class="primary-button" type="submit" [disabled]="busy() || !canManage()">Guardar</button>
+              </div>
+            </div>
+            <div class="field-grid">
+              <label class="wide"><span>Título *</span><input formControlName="title" maxlength="500" required></label>
+              <label><span>Patología / categoría</span><input formControlName="category" maxlength="200"></label>
+              <label><span>Público</span><input formControlName="audience" maxlength="200"></label>
+              <label><span>Fuente</span><input formControlName="source" maxlength="300"></label>
+              <label><span>Versión</span><input formControlName="version" maxlength="120"></label>
+              <label class="wide"><span>Etiquetas</span><input formControlName="tags" placeholder="pulmón, metastásico, seguimiento"><small>Separe las etiquetas con comas.</small></label>
+              <label class="wide"><span>Descripción</span><textarea formControlName="description" rows="4"></textarea></label>
+              <label class="toggle wide"><input type="checkbox" formControlName="active"><span><b>Disponible en Herramientas</b><small>Al desactivarla el PDF se conserva, pero deja de mostrarse.</small></span></label>
+            </div>
+          </form>
+        } @else {
+          <div class="empty-editor"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v16H4zM8 3h8M8 9h8M8 13h6"/></svg><h2>Seleccione una guía</h2><p>Puede editar los documentos existentes o agregar nuevos PDF.</p></div>
+        }
+      </div>
+    </section>
+  }
+
+  @if (activeSection() === 'templates') {
+    <section class="config-panel active" role="tabpanel" aria-label="Plantillas anatómicas">
+      <header class="panel-heading">
+        <div><span>Biblioteca visual</span><h1>Plantillas anatómicas</h1><p>Consulte la biblioteca incluida y agregue imágenes propias para usarlas al cargar Estudios.</p></div>
+        <div class="panel-heading-actions">
+          <label class="primary-button" [class.is-disabled]="busy() || !canManage()"><span>Nueva plantilla</span>
+            <input #templateFile type="file" accept="image/png,image/jpeg,image/gif,image/webp,.png,.jpg,.jpeg,.gif,.webp" [disabled]="busy() || !canManage()" (change)="beginTemplateUpload(templateFile.files); templateFile.value = ''">
+          </label>
+        </div>
+      </header>
+      <div class="manager-layout study-template-manager-layout">
+        <aside class="item-catalog study-template-catalog" aria-label="Catálogo de plantillas anatómicas">
+          <label class="catalog-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input #templateSearch type="search" placeholder="Buscar plantilla…" [value]="templateQuery()" (input)="templateQuery.set(templateSearch.value)"></label>
+          <label class="catalog-filter"><span>Categoría</span><select #categoryFilter [value]="templateCategory()" (change)="templateCategory.set(categoryFilter.value)"><option value="">Todas las categorías</option>@for (category of templateCategories(); track category) { <option [value]="category">{{ categoryLabel(category) }}</option> }</select></label>
+          <label class="show-inactive"><input #inactiveTemplates type="checkbox" [checked]="showInactiveTemplates()" (change)="showInactiveTemplates.set(inactiveTemplates.checked)"> Mostrar desactivadas</label>
+          <div class="study-template-admin-list" role="list" aria-live="polite" [attr.aria-busy]="templateLoading()">
+            @if (templateLoading()) { <div class="loading-row"><span class="spinner"></span><span>Cargando…</span></div> }
+            @else if (templateError()) { <div class="catalog-empty is-error">{{ templateError() }}<button class="secondary-button" type="button" (click)="loadTemplates()">Reintentar</button></div> }
+            @else {
+              @for (item of filteredTemplates(); track item.id) {
+                <button class="study-template-admin-item" type="button" role="listitem" [class.active]="selectedTemplate()?.id === item.id" [class.inactive]="!item.active" [class.is-unavailable]="!item.available" (click)="selectTemplate(item)">
+                  <span class="study-template-admin-thumb">@if (item.available && imageUrl(item)) { <img [src]="imageUrl(item)" alt="" loading="lazy"> } @else { <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16"/><path d="m4 18 5-5 4 3 3-2 4 4"/></svg> }</span>
+                  <span class="study-template-admin-copy"><strong>{{ item.title }}</strong><small>{{ categoryLabel(item.category) }}{{ item.tags.length ? ' · ' + item.tags.slice(0, 2).join(', ') : '' }}{{ !item.available ? ' · ' + availabilityLabel(item.availabilityReason) : '' }}</small></span>
+                  <em>{{ item.origin === 'bundled' ? 'Incluida' : !item.available ? 'Revisar' : item.active ? 'Propia' : 'Inactiva' }}</em>
+                </button>
+              } @empty { <div class="catalog-empty">No hay plantillas que coincidan.</div> }
+            }
+          </div>
+        </aside>
+        @if (selectedTemplate() || pendingTemplateFile()) {
+          <form class="editor study-template-editor" [formGroup]="templateForm" (ngSubmit)="saveTemplate()" [attr.aria-busy]="busy()">
+            <div class="editor-top">
+              <div><span>Plantilla anatómica</span><h2>{{ pendingTemplateFile() ? 'Nueva plantilla' : selectedTemplate()?.title }}</h2><small>@if (pendingTemplateFile(); as pending) { {{ pending.name }} · {{ bytes(pending.size) }} } @else { {{ selectedTemplate()?.origin === 'bundled' ? 'Biblioteca incluida con HCOP' : 'Versión ' + (selectedTemplate()?.revision ?? '—') }} }</small></div>
+              <div class="editor-actions">
+                @if (pendingTemplateFile()) { <button class="secondary-button" type="button" [disabled]="busy()" (click)="cancelPendingTemplate()">Cancelar</button> }
+                @if (selectedTemplate()?.origin === 'custom') { <button class="danger-button" type="button" [disabled]="busy() || !canManage()" (click)="toggleTemplate()">{{ selectedTemplate()?.active ? 'Desactivar' : 'Reactivar' }}</button> }
+                @if (selectedTemplate()?.origin !== 'bundled') { <button class="primary-button" type="submit" [disabled]="busy() || !canManage()">{{ pendingTemplateFile() ? 'Agregar plantilla' : 'Guardar cambios' }}</button> }
+              </div>
+            </div>
+            <section class="study-template-admin-preview">
+              <div><span>Vista previa</span><strong>{{ templateForm.controls.title.value || 'Imagen seleccionada' }}</strong><small>{{ selectedTemplate()?.description || 'Revise la imagen y complete sus derechos de uso antes de guardarla.' }}</small></div>
+              <div class="study-template-preview-frame">@if (templatePreviewUrl()) { <img [src]="templatePreviewUrl()" [alt]="'Vista previa de ' + (templateForm.controls.title.value || 'la plantilla anatómica')"> } @else { <div><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16"/><path d="m4 18 5-5 4 3 3-2 4 4"/></svg><span>Seleccione una imagen</span></div> }</div>
+            </section>
+            <div class="field-grid">
+              <label class="wide"><span>Título *</span><input formControlName="title" maxlength="200" required></label>
+              <label><span>Categoría *</span><select formControlName="category" required><option value="">Seleccione una categoría</option>@for (category of studyTemplateCategories; track category.id) { <option [value]="category.id">{{ category.label }}</option> }</select></label>
+              <label><span>Autor / institución *</span><input formControlName="author" maxlength="200" required></label>
+              <label class="wide"><span>Etiquetas</span><input formControlName="tags" maxlength="500" placeholder="frente, espalda, mama, pelvis"><small>Separe las etiquetas con comas.</small></label>
+              <label><span>Fuente</span><input formControlName="sourceUrl" type="url" maxlength="1000" placeholder="https://…"><small>Opcional; debe comenzar con https://</small></label>
+              <label><span>Licencia *</span><input formControlName="license" maxlength="200" placeholder="Propia, CC BY 4.0, dominio público…" required></label>
+              <label class="wide"><span>Enlace de la licencia</span><input formControlName="licenseUrl" type="url" maxlength="1000" placeholder="https://…"></label>
+              <label class="wide"><span>Atribución</span><textarea formControlName="attribution" rows="2" maxlength="600"></textarea></label>
+              <label class="wide"><span>Descripción</span><textarea formControlName="description" rows="3" maxlength="1000"></textarea></label>
+              <label class="toggle wide study-template-rights"><input type="checkbox" formControlName="rightsConfirmed" required><span><b>Confirmo que la institución puede usar esta imagen *</b><small>Debe contar con derechos propios, permiso o una licencia compatible con el uso clínico.</small></span></label>
+              <label class="toggle wide"><input type="checkbox" formControlName="active"><span><b>Disponible en Estudios</b><small>Al desactivarla se conserva la plantilla y deja de aparecer para nuevas cargas.</small></span></label>
+            </div>
+          </form>
+        } @else {
+          <div class="empty-editor"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16"/><path d="m4 18 5-5 4 3 3-2 4 4"/></svg><h2>Seleccione o agregue una plantilla</h2><p>Las plantillas incluidas pueden consultarse. Las imágenes propias también pueden editarse o desactivarse.</p></div>
+        }
+      </div>
+    </section>
+  }
+
+  @if (activeSection() === 'diagnoses') {
+    <section class="config-panel active diagnosis-equivalence-panel" role="tabpanel" aria-label="Equivalencias diagnósticas">
+      <header class="panel-heading">
+        <div><span>Terminología clínica</span><h1>Equivalencias diagnósticas</h1><p>Relacione conceptos SNOMED CT y CIE-10 con el capítulo AJCC que corresponde revisar.</p></div>
+        <div class="panel-heading-actions"><button class="primary-button" type="button" [disabled]="busy() || !canManage()" (click)="newDiagnosis()">Nueva equivalencia</button></div>
+      </header>
+      <section class="diagnosis-visible-settings" aria-label="Clasificaciones visibles">
+        <div><strong>Clasificaciones visibles</strong><small>Elija cuáles se solicitan al cargar un diagnóstico.</small></div>
+        <div class="diagnosis-visible-options">
+          @for (system of diagnosisSystems; track system) { <label><input #visible type="checkbox" [checked]="isVisible(system)" [disabled]="!canManage()" (change)="toggleVisibleSystem(system, visible.checked)"><span>{{ diagnosisLabels[system] }}</span></label> }
+        </div>
+        <button class="secondary-button" type="button" [disabled]="busy() || !canManage()" (click)="saveVisibleSystems()">Guardar</button>
+        <span class="diagnosis-visible-status" [class.is-error]="!visibleDiagnosisSystems().length">{{ diagnosisDisplayStatus() }}</span>
+      </section>
+      <div class="manager-layout diagnosis-equivalence-manager">
+        <aside class="item-catalog diagnosis-equivalence-catalog" aria-label="Equivalencias configuradas">
+          <label class="catalog-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input #diagnosisSearchInput type="search" placeholder="Buscar código o diagnóstico…" [value]="diagnosisQuery()" (input)="diagnosisQuery.set(diagnosisSearchInput.value)"></label>
+          <label class="show-inactive"><input #inactiveDiagnoses type="checkbox" [checked]="showInactiveDiagnoses()" (change)="showInactiveDiagnoses.set(inactiveDiagnoses.checked)"> Mostrar desactivadas</label>
+          <div class="item-list" role="list" aria-live="polite" [attr.aria-busy]="diagnosisLoading()">
+            @if (diagnosisLoading()) { <div class="loading-row"><span class="spinner"></span><span>Cargando…</span></div> }
+            @else if (diagnosisError()) { <div class="catalog-empty is-error">{{ diagnosisError() }}<button class="secondary-button" type="button" (click)="loadDiagnoses()">Reintentar</button></div> }
+            @else {
+              @for (item of filteredDiagnosisEquivalences(); track item.id) {
+                <button class="item-button" type="button" role="listitem" [class.active]="selectedDiagnosis()?.id === item.id" [class.inactive]="!item.active" (click)="selectDiagnosis(item)"><span><strong>{{ item.name }}</strong><small>{{ diagnosisSubtitle(item) }}</small></span><em>{{ item.active ? 'Activa' : 'Inactiva' }}</em></button>
+              } @empty { <div class="catalog-empty">No hay equivalencias que coincidan.</div> }
+            }
+          </div>
+        </aside>
+        @if (selectedDiagnosis() || dirty()) {
+          <form class="editor diagnosis-equivalence-editor" [formGroup]="diagnosisForm" (ngSubmit)="saveDiagnosis()" [attr.aria-busy]="busy()">
+            <div class="editor-top">
+              <div><span>Relación terminológica</span><h2>{{ selectedDiagnosis()?.name || 'Nueva equivalencia' }}</h2><small>{{ selectedDiagnosis() ? 'Versión ' + selectedDiagnosis()?.revision + ' · ' + (selectedDiagnosis()?.active ? 'activa' : 'desactivada') : 'Sin guardar' }}</small></div>
+              <div class="editor-actions">@if (selectedDiagnosis()) { <button class="danger-button" type="button" [disabled]="busy() || !canManage()" (click)="toggleDiagnosis()">{{ selectedDiagnosis()?.active ? 'Desactivar' : 'Reactivar' }}</button> }<button class="primary-button" type="submit" [disabled]="busy() || !canManage()">Guardar equivalencia</button></div>
+            </div>
+            <div class="field-grid">
+              <label class="wide"><span>Nombre de la equivalencia *</span><input formControlName="name" maxlength="500" placeholder="Ej.: Neoplasia maligna de próstata" required></label>
+              <label class="toggle wide"><input type="checkbox" formControlName="active"><span><b>Equivalencia activa</b><small>Una activa requiere completar las tres terminologías. Un borrador desactivado siempre necesita AJCC.</small></span></label>
+            </div>
+            <div class="diagnosis-equivalence-systems">
+              @for (system of diagnosisSystems; track system) {
+                <fieldset class="diagnosis-equivalence-system-card">
+                  <legend><span>{{ system === 'snomed' ? 'S' : system === 'cie10' ? 'C10' : 'A' }}</span>{{ diagnosisLabels[system] }}</legend>
+                  <label><span>Texto de búsqueda</span><input #catalogSearch type="search" [disabled]="!canManage()" [placeholder]="system === 'ajcc' ? 'Ej.: próstata' : 'Ej.: tumor maligno de próstata'" [value]="diagnosisSearch[system]().term" (input)="scheduleDiagnosisSearch(system, catalogSearch.value)"></label>
+                  <label><span>Coincidencias</span><select #catalogResults size="6" [disabled]="!canManage() || diagnosisSearch[system]().loading" (change)="applyDiagnosisResult(system, catalogResults.value); catalogResults.value = ''"><option value="">{{ diagnosisSearch[system]().loading ? 'Buscando coincidencias…' : diagnosisSearch[system]().results.length ? 'Seleccione una coincidencia' : 'Sin resultados cargados' }}</option>@for (result of diagnosisSearch[system]().results; track result.code; let index = $index) { <option [value]="index">[{{ result.code }}] {{ result.display }}{{ result.group ? ' — ' + result.group : '' }}</option> }</select></label>
+                  <p class="diagnosis-equivalence-search-status" [class]="'diagnosis-equivalence-search-status is-' + diagnosisSearch[system]().kind" role="status">{{ diagnosisSearch[system]().message }}</p>
+                  <div class="diagnosis-equivalence-code-fields">
+                    <label><span>Código {{ diagnosisLabels[system] }}</span><input [formControlName]="system + 'Code'" (input)="clearDiagnosisMetadata(system)"></label>
+                    <label><span>Descripción {{ diagnosisLabels[system] }}</span><textarea [formControlName]="system + 'Display'" rows="3" (input)="clearDiagnosisMetadata(system)"></textarea></label>
+                  </div>
+                </fieldset>
+              }
+            </div>
+            <section class="editor-section diagnosis-equivalence-criteria">
+              <header><div><b>Criterio de equivalencia</b><small>Documente la calidad y las condiciones de la relación.</small></div></header>
+              <div class="field-grid">
+                <label><span>Relación</span><select formControlName="relation"><option value="exact">Exacta</option><option value="broader">Más amplia</option><option value="conditional">Condicional</option></select></label>
+                <label><span>Confianza</span><select formControlName="confidence"><option value="high">Alta</option><option value="medium">Media</option><option value="low">Baja</option></select></label>
+                <label class="wide"><span>Notas y condiciones</span><textarea formControlName="notes" rows="4" maxlength="5000" placeholder="Ej.: confirmar histología, biomarcador o subsitio antes de aplicar AJCC."></textarea></label>
+              </div>
+            </section>
+          </form>
+        } @else {
+          <div class="empty-editor"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="18" r="2"/><path d="m8 12 8-5m-8 5 8 5"/></svg><h2>Seleccione o cree una equivalencia</h2><p>La relación vincula terminologías, pero no reemplaza la confirmación clínica ni calcula el estadio automáticamente.</p></div>
+        }
+      </div>
+    </section>
+  }
+
+  @if (feedback(); as currentFeedback) {
+    <div class="toast" [class.error]="currentFeedback.kind === 'error'" role="status" aria-live="polite"><span>{{ currentFeedback.message }}</span></div>
+  }
+</section>

@@ -208,11 +208,12 @@ class ApplicationWorkflowRepository {
 
   List<Application> list(String queue, LocalDate date, String query, String medicationSource) {
     StringBuilder where = new StringBuilder(
-        "administration".equals(queue)
+        Set.of("applications", "administration").contains(queue)
             ? " WHERE TRUE"
             : " WHERE w.administration_status <> 'completed'");
     List<Object> parameters = new ArrayList<>();
     switch (queue) {
+      case "applications" -> where.append(" AND s.id IS NOT NULL");
       case "pharmacy" -> where.append("""
            AND w.workflow_status <> 'cancelled'
           """);

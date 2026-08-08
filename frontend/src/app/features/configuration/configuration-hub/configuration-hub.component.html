@@ -1,0 +1,72 @@
+<main class="configuration-hub" [class.is-readonly]="!canManage()">
+  <header class="configuration-header">
+    <a class="configuration-back" routerLink="/" aria-label="Volver a la historia clínica" title="Volver a la historia clínica">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
+    </a>
+    <div class="configuration-title">
+      <span>HCOP · Administración</span>
+      <strong>Configuración</strong>
+      <small>{{ activeDescriptor().description }}</small>
+    </div>
+    @if (!canManage() && canView()) {
+      <span class="readonly-badge" title="Su perfil permite consultar, pero no modificar la configuración">Solo lectura</span>
+    }
+    <button class="configuration-refresh" type="button" (click)="refreshActive()" [disabled]="!canView()"
+      aria-label="Actualizar la sección activa" title="Actualizar la sección activa">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8.1 8.1 0 0 0-15.5-2M4 4v5h5"></path><path d="M4 13a8.1 8.1 0 0 0 15.5 2M20 20v-5h-5"></path></svg>
+      <span>Actualizar</span>
+    </button>
+  </header>
+
+  @if (canView()) {
+    <nav class="configuration-tabs" role="tablist" aria-label="Secciones de configuración">
+      @for (tab of tabs; track tab.id) {
+        <button type="button" role="tab" [class.active]="activeTab() === tab.id"
+          [attr.aria-selected]="activeTab() === tab.id" [attr.aria-controls]="panelId(tab.id)"
+          [title]="tab.label + ' · ' + tab.description" (click)="selectTab(tab.id)">
+          <span class="tab-icon" aria-hidden="true">
+            @switch (tab.icon) {
+              @case ('protocol') { <svg viewBox="0 0 24 24"><path d="M5 3h14v18H5z"></path><path d="M8 7h8M8 11h8M8 15h5"></path></svg> }
+              @case ('diagnosis') { <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4M11 8v6M8 11h6"></path></svg> }
+              @case ('guides') { <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5z"></path><path d="M8 8h8M8 12h6"></path></svg> }
+              @case ('templates') { <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-4-4L5 21"></path></svg> }
+              @case ('calculator') { <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20"></rect><path d="M8 6h8M8 11h1M12 11h1M16 11h1M8 15h1M12 15h1M16 15h1M8 19h1M12 19h5"></path></svg> }
+              @case ('research') { <svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v5l-5 9a3 3 0 0 0 2.6 4.5h8.8A3 3 0 0 0 19 17l-5-9V3"></path><path d="M7 15h10"></path></svg> }
+              @case ('day-hospital') { <svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V7h14v14M9 3h6v4H9z"></path><path d="M9 12h6M12 9v6M8 18h1M15 18h1"></path></svg> }
+              @case ('llm') { <svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="14"></rect><path d="M9 2h6v4M8 12h.01M16 12h.01M8 16h8"></path></svg> }
+              @case ('access') { <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"></circle><path d="M2 21a7 7 0 0 1 14 0M17 11h5M19.5 8.5v5"></path></svg> }
+            }
+          </span>
+          <span class="tab-copy"><strong>{{ tab.shortLabel }}</strong><small>{{ tab.description }}</small></span>
+        </button>
+      }
+    </nav>
+
+    <section class="configuration-content" aria-live="polite">
+      <div class="configuration-panel" id="configuration-panel-protocols" role="tabpanel"
+        [class.active]="activeTab() === 'protocols'" [attr.aria-hidden]="activeTab() !== 'protocols'">
+        <app-protocol-configuration [embedded]="true" [autoLoad]="true" [canEdit]="canEditProtocols()" />
+      </div>
+
+      <div class="configuration-panel" id="configuration-panel-catalogs" role="tabpanel"
+        [class.active]="activeTab() === 'diagnoses' || activeTab() === 'guides' || activeTab() === 'templates'"
+        [attr.aria-hidden]="!(activeTab() === 'diagnoses' || activeTab() === 'guides' || activeTab() === 'templates')">
+        <app-configuration-catalogs [initialSection]="'diagnoses'" [showSectionTabs]="false" [canManage]="canManage()" />
+      </div>
+
+      <div class="configuration-panel" id="configuration-panel-operations" role="tabpanel"
+        [class.active]="activeTab() === 'calculators' || activeTab() === 'research' || activeTab() === 'day-hospital' || activeTab() === 'llm' || activeTab() === 'access'"
+        [attr.aria-hidden]="!(activeTab() === 'calculators' || activeTab() === 'research' || activeTab() === 'day-hospital' || activeTab() === 'llm' || activeTab() === 'access')">
+        <app-configuration-operations [autoLoad]="false" [initialSection]="'calculators'" [canManage]="canManage()" />
+      </div>
+    </section>
+  } @else {
+    <section class="configuration-forbidden" role="alert">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"></path></svg>
+      <span>Acceso restringido</span>
+      <h1>Su perfil no tiene acceso a Configuración</h1>
+      <p>Puede volver a la historia clínica y continuar trabajando normalmente.</p>
+      <a routerLink="/">Volver a la historia clínica</a>
+    </section>
+  }
+</main>

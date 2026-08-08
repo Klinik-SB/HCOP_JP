@@ -1,0 +1,95 @@
+<div class="treatment-workflow-actions" [class.is-compact]="compact()">
+  <button class="tool-button treatment-workflow-trigger" type="button" [disabled]="!canOpen()" [attr.aria-expanded]="menuOpen()" (click)="toggleMenu()">
+    <span aria-hidden="true">⋯</span><span>{{ buttonLabel() }}</span>
+  </button>
+  @if (menuOpen()) {
+    <div class="treatment-workflow-menu" role="menu" aria-label="Acciones del tratamiento">
+      @for (item of availableActions(); track item.action) {
+        <button type="button" role="menuitem" (click)="openAction(item.action)">
+          <span class="treatment-workflow-action-icon" aria-hidden="true">{{ actionIcon(item.action) }}</span>
+          <span><strong>{{ item.label }}</strong><small>{{ item.description }}</small></span>
+        </button>
+      }
+    </div>
+  }
+  @if (error() && !modalOpen()) { <p class="treatment-workflow-inline-error" role="alert">{{ error() }}</p> }
+</div>
+
+@if (modalOpen()) {
+  <div class="modal-backdrop care-modal-backdrop care-schedule-workflow-backdrop open" aria-hidden="false">
+    <section #workflowDialog class="modal-card care-schedule-workflow-modal treatment-workflow-modal" role="dialog" aria-modal="true" aria-labelledby="angularTreatmentWorkflowTitle" aria-describedby="angularTreatmentWorkflowDescription" tabindex="-1" [attr.aria-busy]="busy()" (keydown)="onDialogKeydown($event)">
+      <form (ngSubmit)="submit()">
+        <header class="modal-header care-schedule-workflow-header">
+          <div><span class="sheet-kicker">Gestión del ciclo</span><h2 id="angularTreatmentWorkflowTitle">{{ treatment().patientName || 'Paciente' }}</h2><p id="angularTreatmentWorkflowDescription">Ciclo {{ cycle() }} de {{ totalCycles() }} · {{ scheme() }}</p></div>
+          <button class="icon-button" type="button" title="Cerrar" aria-label="Cerrar gestión del ciclo" [disabled]="busy()" (click)="requestClose()">×</button>
+        </header>
+        <div class="modal-body care-schedule-workflow-body">
+          <section class="care-schedule-workflow-summary" aria-label="Ciclo seleccionado">
+            <div><span>Paciente</span><strong>{{ treatment().patientName || 'Paciente sin nombre' }}</strong><small>{{ patientDni() ? 'DNI ' + patientDni() : 'ID ' + treatment().patientId }}</small></div>
+            <div><span>Tratamiento</span><strong>{{ scheme() }}</strong><small>Ciclo {{ cycle() }} de {{ totalCycles() }}</small></div>
+            <div><span>Diagnóstico</span><strong>{{ treatment().diagnosis || 'No informado' }}</strong><small>Prescripción: {{ prescriptionState() }}</small></div>
+            <div class="is-wide care-schedule-workflow-current-state"><span>Estado actual</span><strong>{{ stateDescription() }}</strong></div>
+          </section>
+
+          @if (resumeFlow()) {
+            <section class="care-schedule-resume-flow" [attr.data-state]="resumeFlow()" aria-live="polite">
+              <header><span class="care-schedule-resume-flow-icon" aria-hidden="true">{{ resumeFlow() === 'ready' ? '✓' : resumeFlow() === 'waiting' ? '◷' : '▤' }}</span><div><small>Reanudación segura</small><strong>{{ resumeFlow() === 'ready' ? 'Todo listo para reanudar' : resumeFlow() === 'waiting' ? 'En espera de la prescripción' : 'Falta solicitar la prescripción' }}</strong><p>Se conserva el mismo tratamiento, el ciclo actual y todas las aplicaciones previas.</p></div></header>
+            </section>
+          }
+
+          <nav class="care-schedule-workflow-actions" aria-label="Acciones disponibles">
+            @for (item of availableActions(); track item.action) {
+              <button type="button" [class.active]="activeAction() === item.action" [attr.aria-pressed]="activeAction() === item.action" (click)="selectAction(item.action)">
+                <span class="treatment-workflow-action-icon" aria-hidden="true">{{ actionIcon(item.action) }}</span><span><strong>{{ item.label }}</strong><small>{{ item.description }}</small></span>
+              </button>
+            }
+          </nav>
+
+          @if (activeAction() === 'suspend') {
+            <section class="care-schedule-workflow-panel">
+              <div class="care-schedule-workflow-grid">
+                <label><span>Tipo de suspensión</span><select name="suspendKind" [ngModel]="suspendKind()" [ngModelOptions]="standalone" [disabled]="busy()" (ngModelChange)="update('suspendKind', $event)"><option value="temporary">Transitoria</option><option value="definitive">Definitiva</option></select></label>
+                @if (suspendKind() === 'temporary') { <label><span>Revisar o reanudar desde</span><input type="date" [ngModel]="resumeDate()" [ngModelOptions]="standalone" [disabled]="busy()" (ngModelChange)="update('resumeDate', $event)"></label> }
+                <label class="is-wide"><span>Motivo clínico u operativo</span><textarea rows="4" maxlength="2000" placeholder="Describa el motivo..." [ngModel]="reason()" [ngModelOptions]="standalone" [disabled]="busy()" (ngModelChange)="update('reason', $event)"></textarea></label>
+              </div>
+              <p class="care-schedule-workflow-warning"><span aria-hidden="true">ⓘ</span><span>La suspensión se registrará como evolución en la historia clínica y exigirá una nueva prescripción para reanudar.</span></p>
+            </section>
+          } @else if (activeAction() === 'postpone') {
+            <section class="care-schedule-workflow-panel">
+              <div class="care-schedule-workflow-grid">
+                <label><span>Nueva fecha de revisión</span><input type="date" required [ngModel]="resumeDate()" [ngModelOptions]="standalone" [disabled]="busy()" (ngModelChange)="update('resumeDate', $event)"></label>
+                <label class="is-wide"><span>Motivo de la postergación</span><textarea rows="4" maxlength="2000" placeholder="Describa por qué se posterga el ciclo..." [ngModel]="reason()" [ngModelOptions]="standalone" [disabled]="busy()" (ngModelChange)="update('reason', $event)"></textarea></label>
+              </div>
+              <p class="care-schedule-workflow-warning"><span aria-hidden="true">ⓘ</span><span>Postergar aplica una suspensión transitoria con fecha. No crea otro tratamiento ni altera ciclos ya realizados.</span></p>
+            </section>
+          } @else if (activeAction() === 'request-prescription' || activeAction() === 'request-continuity') {
+            <section class="care-schedule-workflow-panel">
+              <div class="care-schedule-workflow-grid">
+                <label class="is-wide"><span>Médico destinatario</span><select [ngModel]="assignedToUserId()" [ngModelOptions]="standalone" [disabled]="busy() || loadingUsers() || !users().length" (ngModelChange)="update('assignedToUserId', $event)"><option value="">{{ loadingUsers() ? 'Cargando médicos...' : users().length ? 'Seleccione un médico...' : 'No hay médicos habilitados' }}</option>@for (user of users(); track user.id) { <option [value]="user.id">{{ userLabel(user) }}</option> }</select></label>
+                <label class="is-wide"><span>{{ activeAction() === 'request-prescription' ? 'Mensaje para el médico' : 'Motivo de la consulta' }}</span><textarea rows="4" maxlength="2000" [placeholder]="activeAction() === 'request-prescription' ? 'Indique qué necesita prescribir o revisar...' : 'Indique el motivo de la confirmación...'" [ngModel]="message()" [ngModelOptions]="standalone" [disabled]="busy()" (ngModelChange)="update('message', $event)"></textarea></label>
+              </div>
+              <p class="care-schedule-workflow-note"><span aria-hidden="true">♧</span><span>{{ activeAction() === 'request-prescription' ? 'La solicitud aparecerá al médico y su respuesta habilitará la reanudación cuando corresponda.' : 'El médico podrá confirmar continuidad o indicar una suspensión transitoria o definitiva.' }}</span></p>
+            </section>
+          } @else if (activeAction() === 'resume') {
+            <section class="care-schedule-workflow-panel">
+              <div class="care-schedule-workflow-grid"><label class="is-wide"><span>Motivo de la reanudación</span><textarea rows="4" maxlength="2000" placeholder="Describa por qué puede continuar el ciclo actual..." [ngModel]="reason()" [ngModelOptions]="standalone" [disabled]="busy()" (ngModelChange)="update('reason', $event)"></textarea></label></div>
+              <p class="care-schedule-workflow-note"><span aria-hidden="true">✓</span><span>La prescripción está confirmada. Se reanudará este mismo tratamiento en el ciclo actual, sin duplicarlo.</span></p>
+            </section>
+          }
+
+          @if (error()) { <div class="clinical-auth-error treatment-workflow-error" role="alert">{{ error() }}</div> }
+          @if (discardPrompt()) {
+            <section class="treatment-workflow-discard" role="alertdialog" aria-label="Cambios sin guardar">
+              <div><strong>Hay cambios sin guardar</strong><span>Puede continuar o descartar este borrador.</span></div>
+              <div><button class="tool-button" type="button" (click)="continueEditing()">Seguir editando</button><button class="tool-button danger" type="button" (click)="discardAndClose()">Descartar</button></div>
+            </section>
+          }
+        </div>
+        <footer class="modal-actions">
+          <button class="tool-button" type="button" [disabled]="busy()" (click)="requestClose()"><span>Cancelar</span></button>
+          <button class="tool-button primary" type="submit" [disabled]="!canSubmit()"><span>{{ busy() ? 'Guardando…' : actionSubmitLabel() }}</span></button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}

@@ -1,0 +1,132 @@
+@if (canReceiveTasks()) {
+  <button
+    class="clinical-inbox-button"
+    [class.has-pending]="pendingCount() > 0"
+    [class.has-error]="!!refreshError()"
+    type="button"
+    [title]="pendingCount() ? pendingCount() + (pendingCount() === 1 ? ' solicitud clínica pendiente' : ' solicitudes clínicas pendientes') : 'Sin solicitudes clínicas pendientes'"
+    [attr.aria-label]="pendingCount() ? 'Abrir ' + pendingCount() + (pendingCount() === 1 ? ' solicitud clínica pendiente' : ' solicitudes clínicas pendientes') : 'Sin solicitudes clínicas pendientes'"
+    aria-haspopup="dialog"
+    aria-controls="angularClinicalInboxModal"
+    [attr.data-unseen-count]="unseenCount()"
+    [disabled]="modalBlocked() || resolving()"
+    (click)="openInbox(true)">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H7l-3 3V4Zm4 4h8M8 12h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    @if (pendingCount()) {
+      <span class="clinical-inbox-count" [attr.aria-label]="pendingCount() + (pendingCount() === 1 ? ' solicitud pendiente' : ' solicitudes pendientes')">{{ pendingCount() > 99 ? '99+' : pendingCount() }}</span>
+    }
+  </button>
+  @if (refreshError()) { <span class="clinical-inbox-refresh-error" role="alert">{{ refreshError() }}</span> }
+}
+
+@if (open() && activeItem(); as item) {
+  <div class="clinical-inbox-backdrop" id="angularClinicalInboxModal" aria-hidden="false">
+    <section
+      #inboxDialog
+      class="clinical-inbox-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="angularClinicalInboxTitle"
+      aria-describedby="angularClinicalInboxDescription"
+      [attr.aria-busy]="resolving()"
+      (keydown)="onDialogKeydown($event)">
+      <form (submit)="$event.preventDefault(); submit()">
+        <header class="clinical-inbox-header">
+          <div>
+            <span class="sheet-kicker">Revisión médica</span>
+            <h2 id="angularClinicalInboxTitle">{{ item.type === 'prescription_request' ? 'Solicitud de prescripción' : 'Confirmación de continuidad' }}</h2>
+            <p id="angularClinicalInboxDescription">{{ item.type === 'prescription_request' ? 'Confirme la prescripción para este mismo tratamiento y ciclo, o rechace la solicitud indicando el motivo.' : 'Defina si el tratamiento continúa o debe suspenderse.' }}</p>
+          </div>
+          <button class="icon-button" type="button" title="Cerrar" aria-label="Cerrar solicitudes clínicas" [disabled]="resolving()" (click)="close()">×</button>
+        </header>
+
+        <div class="clinical-inbox-body">
+          <section class="clinical-inbox-summary" aria-label="Resumen de la solicitud">
+            <div>
+              <span>Paciente</span>
+              <strong [title]="patientName(item)">{{ patientName(item) }}</strong>
+              <small>{{ item.patientDni ? 'DNI ' + item.patientDni : 'ID ' + (item.patientId || '—') }}</small>
+            </div>
+            <div>
+              <span>Tratamiento</span>
+              <strong [title]="treatmentName(item)">{{ treatmentName(item) }}</strong>
+              <small>Ciclo {{ item.cycleNumber || '—' }}</small>
+            </div>
+            <div>
+              <span>Diagnóstico</span>
+              <strong [title]="item.diagnosis || 'Sin diagnóstico informado'">{{ item.diagnosis || 'Sin diagnóstico informado' }}</strong>
+              <small>{{ createdAtLabel(item.createdAt) }}</small>
+            </div>
+            <div class="is-wide">
+              <span>Solicitado por {{ requestedBy(item) }}</span>
+              <p>{{ item.message || 'Sin mensaje adicional.' }}</p>
+            </div>
+            @if (item.type === 'prescription_request') {
+              <div class="is-wide clinical-inbox-cycle-scope">
+                <span>Alcance de la confirmación</span>
+                <p>Se aplicará al tratamiento existente (ID {{ item.treatmentId || 'sin informar' }}) y al ciclo {{ item.cycleNumber || 'actual' }}. Los ciclos previos y las sesiones realizadas no cambian; confirmar no crea otro tratamiento.</p>
+              </div>
+            }
+          </section>
+
+          <label class="is-wide" for="angularClinicalInboxResolution">
+            <span>Decisión</span>
+            <select
+              #resolutionSelect
+              id="angularClinicalInboxResolution"
+              name="resolution"
+              required
+              [disabled]="resolving()"
+              [ngModel]="resolution()"
+              (ngModelChange)="onResolutionChanged($event)">
+              <option value="">Seleccione una decisión...</option>
+              @for (option of resolutionOptions(); track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="is-wide" for="angularClinicalInboxReason">
+            <span>{{ resolution() === 'temporary_hold' || resolution() === 'discontinued' ? 'Causa de la suspensión' : resolution() === 'prescription_rejected' ? 'Motivo del rechazo' : 'Nota clínica' }}</span>
+            <textarea
+              id="angularClinicalInboxReason"
+              name="reason"
+              rows="5"
+              maxlength="3000"
+              [required]="needsReason()"
+              [disabled]="resolving()"
+              [ngModel]="reason()"
+              (ngModelChange)="reason.set($event); error.set('')"
+              [placeholder]="needsReason() ? 'La causa es obligatoria...' : 'Agregue una nota clínica si corresponde...'"></textarea>
+            @if (needsReason()) { <small class="field-hint">Indique al menos 3 caracteres.</small> }
+          </label>
+
+          @if (resolution() === 'temporary_hold') {
+            <label for="angularClinicalInboxResumeDate">
+              <span>Revisar o reanudar desde</span>
+              <input id="angularClinicalInboxResumeDate" name="resumeDate" type="date" [disabled]="resolving()" [ngModel]="resumeDate()" (ngModelChange)="resumeDate.set($event)">
+            </label>
+            <p class="clinical-inbox-warning">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 21h20L12 3Zm0 6v5m0 3h.01" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>Al suspender transitoriamente, el tratamiento deberá habilitarse y contar con una nueva prescripción antes de volver a dar turno.</span>
+            </p>
+          }
+
+          @if (error()) { <div class="clinical-inbox-error is-wide" role="alert">{{ error() }}</div> }
+        </div>
+
+        <footer class="clinical-inbox-footer">
+          <span>{{ position() }}</span>
+          <button class="tool-button" type="button" [disabled]="resolving()" (click)="close()">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <span>Revisar luego</span>
+          </button>
+          <button class="tool-button primary" type="submit" [disabled]="!canSubmit()">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>{{ resolving() ? 'Registrando...' : submitLabel() }}</span>
+          </button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}

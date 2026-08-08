@@ -1,6 +1,6 @@
 import { Component, ElementRef, OnDestroy, OnInit, effect, inject, input, output, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Subscription } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { ClinicalFocusRequest, ClinicalFocusService } from '../../core/clinical/clinical-focus.service';
 import {
@@ -54,17 +54,24 @@ import { ClinicalTreatmentKind, clinicalSectionTreatments, clinicalTreatmentBody
 import { ClinicalDraftHandle, ClinicalDraftRegistryService } from '../../core/patients/clinical-draft-registry.service';
 import { PatientWorkspaceService } from '../../core/patients/patient-workspace.service';
 import { ClinicalPatient, ClinicalRecord, ClinicalState } from '../../core/patients/patient-workspace.models';
+import { ClinicalHighlightHostDirective } from '../../core/highlighting/clinical-highlight-host.directive';
+import { ClinicalHighlightMutation } from '../../core/highlighting/clinical-highlight.models';
+import { OncologyHistoryEntrySectionComponent } from '../oncology-history-entry/public-api';
+import { DiagnosisEntryModalComponent, EvolutionEntryModalComponent } from '../clinical-entry';
 
 type SingleNarrativeSectionKey = 'chiefComplaint' | 'currentIllness';
 type PersonalHistoryErrorTarget = 'backgroundClinical' | 'currentMedication' | 'familyOncology' | 'gynecology' | 'reason' | '';
 type PhysicalExamErrorTarget = 'weightKg' | 'heightCm' | 'physicalExam' | 'reason' | '';
 
-@Component({ selector: 'app-clinical-workspace', imports: [ReactiveFormsModule], templateUrl: './clinical-workspace.component.html', styleUrl: './clinical-workspace.component.scss' })
+@Component({ selector: 'app-clinical-workspace', imports: [ReactiveFormsModule, ClinicalHighlightHostDirective, OncologyHistoryEntrySectionComponent, EvolutionEntryModalComponent, DiagnosisEntryModalComponent], templateUrl: './clinical-workspace.component.html', styleUrl: './clinical-workspace.component.scss' })
 export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
   readonly printTimestamp = input('');
   readonly studiesRequested = output<{ mode: 'browse' | 'upload'; studyKey?: string }>();
   readonly workspaceService = inject(PatientWorkspaceService);
   readonly auth = inject(AuthService);
+  readonly evolutionEntryOpen = signal(false);
+  readonly diagnosisEntryOpen = signal(false);
+  readonly clinicalEntryMessage = signal('');
   private readonly clinicalFocus = inject(ClinicalFocusService);
   private readonly clinicalDrafts = inject(ClinicalDraftRegistryService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -131,6 +138,8 @@ export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
   private summaryPlanDraft: ClinicalDraftHandle | null = null;
   private summaryPlanBaseline = { summary: '', plan: '', initial: true };
   private summaryPlanReturnFocus: HTMLElement | null = null;
+  private patientSearchRequest = 0;
+  private patientSearchSubscription: Subscription | null = null;
 
   constructor() {
     effect(() => {
@@ -162,6 +171,8 @@ export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.patientSearchRequest += 1;
+    this.patientSearchSubscription?.unsubscribe();
     if (this.narrativeEditorDraft) this.clinicalDrafts.release(this.narrativeEditorDraft);
     if (this.personalHistoryDraft) this.clinicalDrafts.release(this.personalHistoryDraft);
     if (this.physicalExamDraft) this.clinicalDrafts.release(this.physicalExamDraft);
@@ -170,11 +181,39 @@ export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
 
   openPicker(): void { this.workspaceService.openPicker(); }
   closePicker(): void { this.workspaceService.pickerOpen.set(false); this.searchError.set(''); }
+  canAddClinicalEntry(): boolean {
+    return Boolean(
+      this.workspaceService.workingWorkspace()
+      && !this.workspaceService.loading()
+      && this.auth.hasPermission('section.history.edit')
+    );
+  }
+  openEvolutionEntry(): void {
+    if (!this.canAddClinicalEntry() || this.workspaceService.hasPendingClinicalWork()) return;
+    this.clinicalEntryMessage.set('');
+    this.evolutionEntryOpen.set(true);
+  }
+  openDiagnosisEntry(): void {
+    if (!this.canAddClinicalEntry() || this.workspaceService.hasPendingClinicalWork()) return;
+    this.clinicalEntryMessage.set('');
+    this.diagnosisEntryOpen.set(true);
+  }
+  clinicalEntrySaved(result: { warning: string }): void {
+    this.clinicalEntryMessage.set(result.warning || 'El registro quedó guardado en la historia clínica.');
+  }
   search(): void {
+    const request = ++this.patientSearchRequest;
+    this.patientSearchSubscription?.unsubscribe();
     this.searching.set(true); this.searchError.set('');
-    this.workspaceService.search(this.query.value.trim()).subscribe({
-      next: (response) => { this.results.set(response.patients || []); this.searching.set(false); },
-      error: (response: { error?: { error?: string } }) => { this.searchError.set(response?.error?.error || 'No se pudo buscar pacientes.'); this.searching.set(false); }
+    this.patientSearchSubscription = this.workspaceService.search(this.query.value.trim()).subscribe({
+      next: (response) => {
+        if (request !== this.patientSearchRequest) return;
+        this.results.set(response.patients || []); this.searching.set(false);
+      },
+      error: (response: { error?: { error?: string } }) => {
+        if (request !== this.patientSearchRequest) return;
+        this.searchError.set(response?.error?.error || 'No se pudo buscar pacientes.'); this.searching.set(false);
+      }
     });
   }
   open(patient: ClinicalPatient): void { this.workspaceService.activate(patient); }
@@ -718,12 +757,31 @@ export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
   }
   evolutionHeading(record: ClinicalRecord): string { return this.join(this.date(record.date), this.text(record.author) || this.text(record.reason)); }
   activityRecords(): ClinicalRecord[] {
-    return [...this.records('evolutions'), ...this.records('prescriptions')]
+    return [...this.records('evolutions'), ...this.records('prescriptions'), ...this.records('researchRecords')]
       .sort((left, right) => {
         const leftKey = [left.date || String(left.createdAt || '').slice(0, 10), left.createdAt || left.updatedAt || ''].join('|');
         const rightKey = [right.date || String(right.createdAt || '').slice(0, 10), right.createdAt || right.updatedAt || ''].join('|');
         return leftKey.localeCompare(rightKey);
       });
+  }
+  activityHighlightRecordType(record: ClinicalRecord): 'evolution' | 'prescription' | 'research' {
+    const id = String(record.id || '');
+    const research = this.records('researchRecords');
+    const prescriptions = this.records('prescriptions');
+    if (id) {
+      if (research.some((candidate) => String(candidate.id || '') === id)) return 'research';
+      if (prescriptions.some((candidate) => String(candidate.id || '') === id)) return 'prescription';
+    } else {
+      if (research.includes(record)) return 'research';
+      if (prescriptions.includes(record)) return 'prescription';
+    }
+    return 'evolution';
+  }
+  saveClinicalHighlight(event: ClinicalHighlightMutation): void {
+    this.workspaceService.saveState(event.state).subscribe({
+      next: () => event.commit(),
+      error: () => event.rollback()
+    });
   }
   activityHeading(record: ClinicalRecord): string {
     const type = this.text(record.type);

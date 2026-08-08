@@ -1,0 +1,67 @@
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  background: var(--lira-canvas, #f6f8f7);
+}
+
+.research-form-fields {
+  display: contents;
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.research-empty-state {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  min-height: 150px;
+  align-content: center;
+  border: 1px dashed var(--lira-border, #d7e0e7);
+  background: #fff;
+  padding: 20px;
+  color: #667681;
+  text-align: center;
+}
+
+.research-empty-state strong { color: #334b55; font-size: 13px; }
+.research-empty-state span { max-width: 420px; font-size: 11px; line-height: 1.45; }
+
+.research-template-status,
+.research-access-note,
+.research-message {
+  margin: 0;
+  border: 1px solid #d9e4eb;
+  background: #f7fbfe;
+  padding: 7px 9px;
+  color: #536978;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.research-template-status.is-warning { border-color: #eadcb7; background: #fffbef; color: #775f26; }
+.research-message.is-error { border-color: #ebcaca; background: #fff6f6; color: #9d3737; }
+.research-message.is-ready { border-color: #badacb; background: #f1fbf6; color: #28684c; }
+
+.research-record-copy p { display: grid; gap: 3px; }
+.research-record-copy p span { display: block; }
+.research-record-copy p b { color: #5d4a70; font-weight: 720; }
+
+.research-record-card > .icon-button {
+  width: 28px;
+  height: 28px;
+  border-color: #d8d2e0;
+  color: #715887;
+}
+
+fieldset[disabled] { opacity: .72; }
+
+@media (max-width: 760px) {
+  .research-template-picker,
+  .research-custom-form,
+  .research-grid.two,
+  .research-grid.three { grid-template-columns: 1fr; }
+}

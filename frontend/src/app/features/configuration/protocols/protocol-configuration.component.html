@@ -1,0 +1,338 @@
+<section class="protocol-admin" [class.is-embedded]="embedded" aria-label="Administrador de protocolos">
+  <header class="protocol-admin__header">
+    <div class="protocol-admin__brand">
+      <span class="protocol-admin__brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+      </span>
+      <span><strong>HCOP</strong><small>Administrador de protocolos</small></span>
+    </div>
+    <div class="protocol-admin__status" [class.is-error]="catalogError" role="status" aria-live="polite">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"></path><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"></path></svg>
+      <span>{{ statusText }}</span>
+    </div>
+    <button class="protocol-button protocol-button--subtle" type="button" [disabled]="loadingCatalog" (click)="reload()">
+      <svg viewBox="0 0 24 24" aria-hidden="true" [class.is-spinning]="loadingCatalog"><path d="M20 6v5h-5"></path><path d="M4 18v-5h5"></path><path d="M18.5 9A7 7 0 0 0 6 6.5L4 9"></path><path d="M5.5 15A7 7 0 0 0 18 17.5l2-2.5"></path></svg>
+      <span>Actualizar</span>
+    </button>
+  </header>
+
+  <div class="protocol-admin__shell">
+    <aside class="protocol-catalog" aria-label="Catálogo de protocolos">
+      <header class="protocol-catalog__header">
+        <div><span>Catálogo clínico</span><strong>{{ protocols.length }} disponibles</strong></div>
+        <button class="protocol-icon-button is-primary" type="button" title="Crear protocolo" aria-label="Crear protocolo" [disabled]="!canEdit || saving" (click)="beginNewProtocol()">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+        </button>
+      </header>
+
+      <label class="protocol-search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
+        <input type="search" autocomplete="off" placeholder="Buscar protocolo o grupo…" [(ngModel)]="search" [ngModelOptions]="{standalone: true}">
+        @if (search) {
+          <button type="button" title="Limpiar búsqueda" aria-label="Limpiar búsqueda" (click)="clearSearch()">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"></path></svg>
+          </button>
+        }
+      </label>
+
+      <div class="protocol-catalog__filters">
+        <label><input type="checkbox" [(ngModel)]="showArchived" [ngModelOptions]="{standalone: true}"><span>Archivados</span></label>
+        <label><input type="checkbox" [(ngModel)]="showCoir" [ngModelOptions]="{standalone: true}"><span>COIR sin vincular</span></label>
+      </div>
+
+      <div class="protocol-list" role="listbox" aria-label="Protocolos disponibles" [attr.aria-busy]="loadingCatalog">
+        @if (loadingCatalog && !protocols.length) {
+          <div class="protocol-list__state">
+            <svg class="is-spinning" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4"></path></svg>
+            <span>Cargando protocolos…</span>
+          </div>
+        } @else if (catalogError) {
+          <div class="protocol-list__state is-error">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9v4M12 17h.01"></path><path d="M10.3 3.7 2.5 18a2 2 0 0 0 1.8 3h15.4a2 2 0 0 0 1.8-3L13.7 3.7a2 2 0 0 0-3.4 0Z"></path></svg>
+            <strong>No se pudo cargar el catálogo</strong>
+            <span>{{ catalogError }}</span>
+            <button class="protocol-button protocol-button--subtle" type="button" (click)="reload()">Reintentar</button>
+          </div>
+        } @else if (!filteredProtocols.length) {
+          <div class="protocol-list__state">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4M8 11h6"></path></svg>
+            <strong>No hay resultados</strong>
+            <span>Pruebe otra búsqueda o active los filtros.</span>
+          </div>
+        } @else {
+          @for (item of filteredProtocols; track item.id) {
+            <button
+              class="protocol-list__item"
+              type="button"
+              role="option"
+              [class.is-active]="item.id === selectedId"
+              [class.is-archived]="!item.active"
+              [class.is-catalog]="item.catalogOnly"
+              [attr.aria-selected]="item.id === selectedId"
+              (click)="selectProtocol(item.id)">
+              <small>{{ item.category }}</small>
+              <strong>{{ item.name }}</strong>
+              <em>{{ protocolMeta(item) }}</em>
+              <span>{{ item.catalogOnly ? 'COIR' : item.id }}</span>
+            </button>
+          }
+        }
+      </div>
+    </aside>
+
+    <main class="protocol-editor" [attr.aria-busy]="loadingEditor || saving">
+      @if (loadingEditor && !draft) {
+        <div class="protocol-editor__empty">
+          <span class="protocol-editor__empty-icon"><svg class="is-spinning" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4"></path></svg></span>
+          <h2>Cargando protocolo…</h2>
+        </div>
+      } @else if (!draft) {
+        <div class="protocol-editor__empty">
+          <span class="protocol-editor__empty-icon"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"></path><path d="m9 10 2 2 4-4"></path></svg></span>
+          <h1>Administre el protocolo completo</h1>
+          <p>Seleccione un protocolo para editarlo o cree uno nuevo. Los cambios alimentan la vista de Protocolos, Farmacia, Sillones y el alta de tratamientos.</p>
+          @if (canEdit) {
+            <button class="protocol-button protocol-button--primary" type="button" (click)="beginNewProtocol()">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+              <span>Nuevo protocolo</span>
+            </button>
+          }
+        </div>
+      } @else {
+        @if (draft; as protocol) {
+          <form class="protocol-form" novalidate (ngSubmit)="save()">
+            <header class="protocol-editor__heading">
+              <div>
+                <span>{{ editorEyebrow }}</span>
+                <h1>{{ protocol.name || 'Nuevo protocolo' }}</h1>
+                <p>{{ protocol.catalogOnly ? 'Revise las drogas, la preparación y la duración importadas antes de convertirlo.' : 'Los cambios se aplican a Protocolos y al alta de tratamientos.' }}</p>
+              </div>
+              <div class="protocol-editor__actions">
+                @if (protocol.id && !protocol.catalogOnly && canEdit) {
+                  <button class="protocol-button protocol-button--subtle" type="button" [disabled]="saving" (click)="duplicateCurrent()">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12"></rect><path d="M16 8V4H4v12h4"></path></svg>
+                    <span>Duplicar</span>
+                  </button>
+                  <button class="protocol-button protocol-button--danger" type="button" [disabled]="saving" (click)="archiveOrRestore()">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M5 6l1 15h12l1-15M9 10v6M15 10v6M9 3h6l1 3H8l1-3Z"></path></svg>
+                    <span>{{ protocol.active ? 'Archivar' : 'Restaurar' }}</span>
+                  </button>
+                }
+                @if (!protocol.catalogOnly && canEdit) {
+                  <button class="protocol-button protocol-button--primary" type="submit" [disabled]="saving">
+                    @if (saving) {
+                      <svg class="is-spinning" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4"></path></svg>
+                    } @else {
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"></path><path d="M17 21v-8H7v8M7 3v5h8"></path></svg>
+                    }
+                    <span>{{ saving ? 'Guardando…' : 'Guardar protocolo' }}</span>
+                  </button>
+                }
+              </div>
+            </header>
+
+            @if (editorError) {
+              <div class="protocol-message is-error" role="alert">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9v4M12 17h.01"></path><path d="M10.3 3.7 2.5 18a2 2 0 0 0 1.8 3h15.4a2 2 0 0 0 1.8-3L13.7 3.7a2 2 0 0 0-3.4 0Z"></path></svg>
+                <span>{{ editorError }}</span>
+                @if (protocol.id) { <button type="button" (click)="selectProtocol(protocol.id)">Recargar ficha</button> }
+              </div>
+            }
+
+            @if (protocol.catalogOnly) {
+              <div class="protocol-promotion">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3-1.9 4.1L6 9l4.1 1.9L12 15l1.9-4.1L18 9l-4.1-1.9L12 3ZM5 15l-.9 2.1L2 18l2.1.9L5 21l.9-2.1L8 18l-2.1-.9L5 15ZM19 14l-.9 2.1L16 17l2.1.9L19 20l.9-2.1L22 17l-2.1-.9L19 14Z"></path></svg>
+                <div><strong>Registro operativo COIR sin protocolo clínico</strong><span>Se importan nombre, duración, drogas y preparación disponibles para que los revise antes de guardar.</span></div>
+                @if (canEdit) { <button class="protocol-button protocol-button--primary" type="button" (click)="promoteCurrent()">Crear protocolo desde aquí</button> }
+              </div>
+            }
+
+            @if (validationIssues.length) {
+              <div class="protocol-validation" role="alert">
+                <strong>Revise {{ validationIssues.length === 1 ? 'este campo' : 'estos campos' }}</strong>
+                <ul>@for (issue of validationIssues; track issue.path) { <li>{{ issue.message }}</li> }</ul>
+              </div>
+            }
+
+            <section class="protocol-section">
+              <header class="protocol-section__header">
+                <div><span>01</span><strong>Datos generales</strong><small>Identificación, ciclo y duración operativa.</small></div>
+                <b class="protocol-state" [class.is-muted]="!protocol.active || protocol.catalogOnly">{{ stateLabel }}</b>
+              </header>
+              <div class="protocol-field-grid protocol-field-grid--general">
+                <label class="protocol-field is-wide" [class.has-error]="fieldHasIssue('name')">
+                  <span>Nombre del protocolo *</span>
+                  <input #protocolNameInput maxlength="500" autocomplete="off" placeholder="Ej. PULMÓN - Carboplatino + Pemetrexed" [(ngModel)]="protocol.name" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly">
+                </label>
+                <label class="protocol-field">
+                  <span>Grupo / patología</span>
+                  <input maxlength="120" autocomplete="off" list="protocolCategoryOptions" placeholder="Se completa automáticamente" [(ngModel)]="protocol.category" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly">
+                </label>
+                <label class="protocol-field is-compact" [class.has-error]="fieldHasIssue('cycleDays')">
+                  <span>Ciclo (días)</span>
+                  <input type="number" min="1" max="365" step="1" inputmode="numeric" placeholder="21" [(ngModel)]="protocol.cycleDays" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly">
+                </label>
+                <label class="protocol-field is-compact" [class.has-error]="fieldHasIssue('durationMinutes')">
+                  <span>Duración estimada</span>
+                  <span class="protocol-input-unit"><input type="number" min="1" max="1440" step="1" inputmode="numeric" placeholder="180" [(ngModel)]="protocol.durationMinutes" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly"><b>min</b></span>
+                </label>
+                <label class="protocol-field">
+                  <span>Vínculo con agenda COIR</span>
+                  <select [(ngModel)]="protocol.coirSchemeId" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly">
+                    <option value="">Sin vínculo operativo</option>
+                    @for (item of coirCatalog; track item.coirSchemeId) {
+                      <option [value]="item.coirSchemeId">{{ item.schemeName }} · {{ item.durationText }}</option>
+                    }
+                    @if (protocol.coirSchemeId && !coirCatalog.length) { <option [value]="protocol.coirSchemeId">{{ protocol.coirSchemeId }}</option> }
+                  </select>
+                </label>
+                <label class="protocol-toggle">
+                  <input type="checkbox" [(ngModel)]="protocol.active" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly">
+                  <span><b>Disponible para usar</b><small>Si se desactiva, no aparecerá al crear tratamientos.</small></span>
+                </label>
+                <label class="protocol-field is-full">
+                  <span>Descripción / indicaciones generales</span>
+                  <textarea rows="2" maxlength="5000" placeholder="Información clínica u operativa general del esquema" [(ngModel)]="protocol.description" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly"></textarea>
+                </label>
+              </div>
+              <datalist id="protocolCategoryOptions">@for (category of categories; track category) { <option [value]="category"></option> }</datalist>
+            </section>
+
+            <section class="protocol-section">
+              <header class="protocol-section__header">
+                <div><span>02</span><strong>Drogas y administración</strong><small>Ordene cada componente tal como debe mostrarse y aplicarse.</small></div>
+                @if (!protocol.catalogOnly && canEdit) {
+                  <button class="protocol-button protocol-button--subtle" type="button" [disabled]="saving" (click)="addComponent()">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg><span>Agregar droga</span>
+                  </button>
+                }
+              </header>
+
+              <div class="protocol-components">
+                @for (component of protocol.components; track component.clientId; let index = $index; let first = $first; let last = $last) {
+                  <article
+                    class="protocol-component"
+                    [class.has-error]="componentHasIssue(index)"
+                    [attr.draggable]="!isReadOnly"
+                    (dragstart)="startComponentDrag(component, $event)"
+                    (dragover)="allowComponentDrop($event)"
+                    (drop)="dropComponent(index, $event)">
+                    <header class="protocol-component__header">
+                      <span class="protocol-component__grip" title="Arrastre para reordenar" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><circle cx="9" cy="6" r="1"></circle><circle cx="15" cy="6" r="1"></circle><circle cx="9" cy="12" r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle cx="9" cy="18" r="1"></circle><circle cx="15" cy="18" r="1"></circle></svg>
+                      </span>
+                      <span class="protocol-component__order">{{ (index + 1).toString().padStart(2, '0') }}</span>
+                      <div><strong>{{ component.drugName || 'Nueva droga' }}</strong><small>{{ component.drugId ? 'Vinculada a droga ' + component.drugId : 'Droga escrita manualmente, sin vínculo de catálogo' }}</small></div>
+                      @if (!isReadOnly) {
+                        <div class="protocol-component__actions">
+                          <button class="protocol-icon-button" type="button" title="Subir" aria-label="Subir droga" [disabled]="first" (click)="moveComponent(index, -1)"><svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"></path></svg></button>
+                          <button class="protocol-icon-button" type="button" title="Bajar" aria-label="Bajar droga" [disabled]="last" (click)="moveComponent(index, 1)"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg></button>
+                          <button class="protocol-icon-button is-danger" type="button" title="Quitar droga" aria-label="Quitar droga" (click)="removeComponent(index)"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"></path></svg></button>
+                        </div>
+                      }
+                    </header>
+
+                    <div class="protocol-component__body">
+                      <div class="protocol-drug-picker">
+                        <label class="protocol-field is-full" [class.has-error]="fieldHasIssue('components.' + index + '.drugName')">
+                          <span>Droga *</span>
+                          <span class="protocol-search-input">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
+                            <input maxlength="500" autocomplete="off" placeholder="Escriba al menos 2 letras para buscar y vincular…" [(ngModel)]="component.drugName" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly" (ngModelChange)="drugNameChanged(component)" (focus)="focusDrugPicker(component)" (blur)="closeDrugPicker(component)">
+                          </span>
+                        </label>
+                        @if (activeDrugPicker === component.clientId && !isReadOnly) {
+                          <div class="protocol-drug-results" role="listbox">
+                            @if (drugSearchLoading.has(component.clientId)) {
+                              <div class="protocol-drug-results__state"><svg class="is-spinning" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4"></path></svg><span>Buscando drogas…</span></div>
+                            } @else if ((drugResults.get(component.clientId) || []).length) {
+                              @for (drug of drugResults.get(component.clientId) || []; track drug.id) {
+                                <button type="button" role="option" (mousedown)="$event.preventDefault()" (click)="selectDrug(component, drug)">
+                                  <strong>{{ drug.name }}</strong><small>ID {{ drug.id }} · {{ drug.instructions.length }} preparaciones · {{ drug.presentations.length }} presentaciones</small>
+                                </button>
+                              }
+                            } @else {
+                              <div class="protocol-drug-results__state"><span>No hay coincidencias. Puede conservar el nombre sin vincular.</span></div>
+                            }
+                          </div>
+                        }
+                        @if (component.drugId) {
+                          <div class="protocol-drug-link"><span><b>{{ component.instructionCount }}</b> preparaciones</span><span><b>{{ component.presentationCount }}</b> presentaciones</span></div>
+                        }
+                      </div>
+
+                      <div class="protocol-field-grid protocol-field-grid--component">
+                        <label class="protocol-field" [class.has-error]="fieldHasIssue('components.' + index + '.day')"><span>Día / patrón *</span><input maxlength="120" placeholder="1 o 1, 8, 15" [(ngModel)]="component.day" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly"></label>
+                        <label class="protocol-field" [class.has-error]="fieldHasIssue('components.' + index + '.dose')"><span>Dosis base *</span><input maxlength="255" placeholder="500" [(ngModel)]="component.prescribedDoseText" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly"></label>
+                        <label class="protocol-field" [class.has-error]="fieldHasIssue('components.' + index + '.doseUnit')"><span>Unidad *</span><input maxlength="80" placeholder="mg, mg/m², UI…" [(ngModel)]="component.doseUnit" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly"></label>
+                        <label class="protocol-field"><span>Cálculo de dosis</span><select [(ngModel)]="component.doseCalculationMethod" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly"><option>Fija</option><option>Superficie corporal</option><option>Peso</option><option>Calvert</option><option>Otro</option></select></label>
+                        <label class="protocol-field" [class.has-error]="fieldHasIssue('components.' + index + '.route')"><span>Vía *</span><input maxlength="255" list="protocolRouteOptions" placeholder="Endovenosa" [(ngModel)]="component.route" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly"></label>
+                        <label class="protocol-field"><span>Tiempo de administración</span><input maxlength="255" placeholder="30 min" [(ngModel)]="component.administrationTime" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly"></label>
+                        <label class="protocol-toggle is-small"><input type="checkbox" [(ngModel)]="component.dayHospital" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly"><span><b>Hospital de día</b><small>Requiere aplicación en sillón.</small></span></label>
+                      </div>
+
+                      <details class="protocol-preparation">
+                        <summary>
+                          <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6M10 3v5l-5 9a3 3 0 0 0 2.6 4.5h8.8A3 3 0 0 0 19 17l-5-9V3"></path><path d="M7.5 15h9"></path></svg><b>Preparación de farmacia</b><small>{{ preparationState(component) }}</small></span>
+                          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+                        </summary>
+                        <div class="protocol-preparation__content">
+                          <div class="protocol-preparation__notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg><span>La preparación pertenece a la droga y puede reutilizarse en otros protocolos. Active la casilla para guardar los cambios.</span></div>
+                          <label class="protocol-toggle">
+                            <input type="checkbox" [(ngModel)]="component.preparation.dirty" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly || !component.drugId">
+                            <span><b>Guardar esta preparación</b><small>Crear o actualizar la instrucción vinculada a la droga.</small></span>
+                          </label>
+                          <div class="protocol-field-grid protocol-field-grid--preparation">
+                            <label class="protocol-field"><span>Presentación / referencia</span><input maxlength="1000" placeholder="Vial o presentación utilizada" [(ngModel)]="component.preparation.presentationReferences" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly" (ngModelChange)="markPreparationDirty(component)"></label>
+                            <label class="protocol-field"><span>Reconstituyente</span><input maxlength="500" placeholder="Solución para reconstituir" [(ngModel)]="component.preparation.reconstituent" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly" (ngModelChange)="markPreparationDirty(component)"></label>
+                            <label class="protocol-field"><span>Concentración</span><input maxlength="255" placeholder="mg/ml" [(ngModel)]="component.preparation.concentration" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly" (ngModelChange)="markPreparationDirty(component)"></label>
+                            <label class="protocol-field"><span>Diluyente</span><input maxlength="500" placeholder="SF, Dextrosa, etc." [(ngModel)]="component.preparation.diluent" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly" (ngModelChange)="markPreparationDirty(component)"></label>
+                            <label class="protocol-field"><span>Volumen final</span><input maxlength="255" placeholder="250 ml" [(ngModel)]="component.preparation.finalVolume" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly" (ngModelChange)="markPreparationDirty(component)"></label>
+                            <label class="protocol-field"><span>Vía de preparación</span><input maxlength="255" list="protocolRouteOptions" [(ngModel)]="component.preparation.route" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly" (ngModelChange)="markPreparationDirty(component)"></label>
+                            <label class="protocol-field"><span>Estabilidad ambiente</span><input maxlength="500" placeholder="Tiempo / temperatura" [(ngModel)]="component.preparation.stabilityRoomTemperature" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly" (ngModelChange)="markPreparationDirty(component)"></label>
+                            <label class="protocol-field"><span>Estabilidad refrigerada</span><input maxlength="500" placeholder="Tiempo / temperatura" [(ngModel)]="component.preparation.stabilityRefrigerated" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly" (ngModelChange)="markPreparationDirty(component)"></label>
+                            <label class="protocol-field"><span>Laboratorio</span><input maxlength="500" [(ngModel)]="component.preparation.laboratory" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly" (ngModelChange)="markPreparationDirty(component)"></label>
+                            <label class="protocol-toggle is-small"><input type="checkbox" [(ngModel)]="component.preparation.photosensitive" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly" (ngModelChange)="markPreparationDirty(component)"><span><b>Fotosensible</b><small>Requiere protección de la luz.</small></span></label>
+                            <label class="protocol-field is-full"><span>Guía de infusión</span><textarea rows="2" maxlength="10000" [(ngModel)]="component.preparation.infusionGuide" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly" (ngModelChange)="markPreparationDirty(component)"></textarea></label>
+                            <label class="protocol-field is-full"><span>Observaciones de preparación</span><textarea rows="2" maxlength="10000" [(ngModel)]="component.preparation.preparationObservations" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly" (ngModelChange)="markPreparationDirty(component)"></textarea></label>
+                            <label class="protocol-field is-full"><span>Observaciones de etiqueta</span><textarea rows="2" maxlength="10000" [(ngModel)]="component.preparation.labelObservations" [ngModelOptions]="{standalone: true}" [disabled]="isReadOnly" (ngModelChange)="markPreparationDirty(component)"></textarea></label>
+                          </div>
+                        </div>
+                      </details>
+                    </div>
+                  </article>
+                }
+              </div>
+              <datalist id="protocolRouteOptions"><option value="Endovenosa"></option><option value="Oral"></option><option value="Subcutánea"></option><option value="Intramuscular"></option><option value="Intratecal"></option><option value="Intravesical"></option></datalist>
+            </section>
+
+            <section class="protocol-section protocol-preview-section">
+              <header class="protocol-section__header"><div><span>03</span><strong>Vista previa</strong><small>Así se verá el contenido dentro de Protocolos.</small></div><b class="protocol-live"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>En vivo</b></header>
+              <div class="protocol-preview">
+                <article class="protocol-preview__summary">
+                  <span>{{ protocol.category || 'Grupo por definir' }}</span>
+                  <h3>{{ protocol.name || 'Protocolo sin nombre' }}</h3>
+                  <div><span><b>{{ protocol.cycleDays || '—' }}</b><small>días por ciclo</small></span><span><b>{{ protocol.components.length }}</b><small>drogas</small></span><span><b>{{ formatDuration(protocol.durationMinutes) }}</b><small>duración operativa</small></span></div>
+                </article>
+                @if (protocol.components.length) {
+                  <div class="protocol-preview__drugs">
+                    @for (component of protocol.components; track component.clientId) {
+                      <article><span>Día {{ component.day || '—' }}</span><div><strong>{{ component.drugName || 'Droga sin definir' }}</strong><small>{{ component.route || 'Sin vía' }} · {{ component.administrationTime || 'Sin tiempo' }} · {{ component.dayHospital ? 'Hospital de día' : 'Sin sillón' }}</small></div><em>{{ component.prescribedDoseText || '—' }} {{ component.doseUnit }}</em></article>
+                    }
+                  </div>
+                } @else { <div class="protocol-preview__empty">Agregue drogas para completar la vista previa.</div> }
+              </div>
+            </section>
+          </form>
+        }
+      }
+    </main>
+  </div>
+
+  @if (toastMessage) {
+    <div class="protocol-toast" [class.is-error]="toastError" role="status" aria-live="polite">
+      <svg viewBox="0 0 24 24" aria-hidden="true">@if (toastError) { <path d="M12 9v4M12 17h.01"></path><path d="M10.3 3.7 2.5 18a2 2 0 0 0 1.8 3h15.4a2 2 0 0 0 1.8-3L13.7 3.7a2 2 0 0 0-3.4 0Z"></path> } @else { <circle cx="12" cy="12" r="9"></circle><path d="m8 12 2.5 2.5L16 9"></path> }</svg>
+      <span>{{ toastMessage }}</span>
+    </div>
+  }
+</section>

@@ -1,0 +1,200 @@
+<section
+  class="doc-section oncology-history-section"
+  data-highlight-scope
+  data-highlight-kind="section"
+  [attr.data-highlight-section-key]="sectionKey()"
+  [class.clinical-print-empty]="printMode() && !records().length">
+  <div class="section-heading">
+    <h3>{{ sectionTitle() }}</h3>
+    @if (canEdit() && records().length) {
+      <div class="section-actions">
+        <button
+          class="section-action-button oncology-history-add-button"
+          type="button"
+          [title]="'Agregar ' + entryLabel()"
+          [attr.aria-label]="'Agregar ' + entryLabel()"
+          [disabled]="workspaceService.hasPendingClinicalWork()"
+          (click)="openCreate($event)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    }
+  </div>
+
+  @if (records().length) {
+    @for (record of records(); track record.id ?? $index) {
+      <article
+        class="doc-entry treatment-entry oncology-history-entry"
+        data-highlight-scope
+        data-highlight-kind="record"
+        data-highlight-record-type="treatment"
+        [attr.data-highlight-record-id]="record.id || ''"
+        [attr.data-clinical-date]="record.date">
+        <div class="oncology-history-entry-main">
+          <p><strong>{{ heading(record) }}</strong>@if (body(record)) { <span> {{ body(record) }}</span> }</p>
+          @if (canEditRecord(record)) {
+            <button
+              class="section-action-button oncology-history-edit-button"
+              type="button"
+              [title]="'Modificar ' + entryLabel()"
+              [attr.aria-label]="'Modificar ' + entryLabel() + ' ' + heading(record)"
+              [disabled]="workspaceService.hasPendingClinicalWork()"
+              (click)="openEdit(record, $event)">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          }
+        </div>
+        @if (audit(record)) { <p class="entry-audit">{{ audit(record) }}</p> }
+      </article>
+    }
+  } @else if (canEdit()) {
+    <div class="clinical-section-empty">
+      <span>{{ emptyText() }}</span>
+      <button
+        class="ghost-button"
+        type="button"
+        [attr.aria-label]="'Cargar ' + entryLabel()"
+        [disabled]="workspaceService.hasPendingClinicalWork()"
+        (click)="openCreate($event)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span>Cargar</span>
+      </button>
+    </div>
+  } @else {
+    <p class="section-free-text">{{ emptyText() }}</p>
+  }
+</section>
+
+@if (editorOpen()) {
+  <div class="modal-backdrop oncology-history-backdrop open" aria-hidden="false">
+    <form
+      class="modal-card section-modal-card oncology-history-modal"
+      [formGroup]="form"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="oncologyHistoryEditorTitle"
+      aria-describedby="oncologyHistoryEditorDescription"
+      novalidate
+      (ngSubmit)="saveEditor()"
+      (keydown)="trapFocus($event)">
+      <header class="modal-header">
+        <div>
+          <span class="sheet-kicker">Historia clínica oncológica</span>
+          <h2 id="oncologyHistoryEditorTitle">{{ editorTitle() }}</h2>
+          <p id="oncologyHistoryEditorDescription">Los datos se incorporan a la sección y también quedan documentados como una evolución plana, con fecha, autor y auditoría.</p>
+        </div>
+        <button class="icon-button" type="button" title="Cerrar" [attr.aria-label]="'Cerrar editor de ' + entryLabel()" [disabled]="editorBusy()" (click)="closeEditor()">×</button>
+      </header>
+
+      <div class="modal-body oncology-history-modal-body">
+        <section class="oncology-history-context" aria-label="Contexto del registro">
+          <div><span>Paciente</span><strong>{{ workspaceService.workingWorkspace()?.patient?.fullName }}</strong></div>
+          <div><span>Registra</span><strong>{{ actorLabel() }}</strong>@if (actorMeta()) { <small>{{ actorMeta() }}</small> }</div>
+          <div><span>Trazabilidad</span><strong>{{ originalRecord() ? 'Modificación versionada' : 'Carga inicial' }}</strong></div>
+        </section>
+
+        <div class="section-structured-editor oncology-history-editor">
+          <fieldset class="oncology-history-fieldset">
+            <legend>Datos clínicos comunes</legend>
+            <div class="section-structured-fields oncology-history-fields">
+              <label class="section-structured-field" for="oncologyHistory-date">
+                <span>Fecha de inicio *</span>
+                <input id="oncologyHistory-date" type="date" formControlName="date" [attr.aria-invalid]="isInvalid('date') || null" [disabled]="editorBusy()">
+              </label>
+              <label class="section-structured-field" for="oncologyHistory-endDate">
+                <span>Fecha de finalización</span>
+                <input id="oncologyHistory-endDate" type="date" formControlName="endDate" [attr.aria-invalid]="isInvalid('endDate') || null" [disabled]="editorBusy()">
+              </label>
+              <label class="section-structured-field is-wide" for="oncologyHistory-diagnosis">
+                <span>Diagnóstico tratado *</span>
+                <input id="oncologyHistory-diagnosis" type="text" formControlName="diagnosis" list="oncologyHistoryDiagnosisOptions" autocomplete="off" [maxlength]="shortTextLimit" [attr.aria-invalid]="isInvalid('diagnosis') || null" [disabled]="editorBusy()">
+                <datalist id="oncologyHistoryDiagnosisOptions">@for (diagnosis of diagnosisOptions(); track diagnosis) { <option [value]="diagnosis"></option> }</datalist>
+              </label>
+              <label class="section-structured-field" for="oncologyHistory-intent">
+                <span>Intención</span>
+                <input id="oncologyHistory-intent" type="text" formControlName="intent" list="oncologyHistoryIntentOptions" autocomplete="off" [maxlength]="shortTextLimit" [disabled]="editorBusy()">
+                <datalist id="oncologyHistoryIntentOptions"><option value="Curativa"></option><option value="Adyuvante"></option><option value="Neoadyuvante"></option><option value="Paliativa"></option><option value="Concomitante"></option></datalist>
+              </label>
+              <label class="section-structured-field" for="oncologyHistory-status">
+                <span>Estado</span>
+                <input id="oncologyHistory-status" type="text" formControlName="status" list="oncologyHistoryStatusOptions" autocomplete="off" [maxlength]="shortTextLimit" [disabled]="editorBusy()">
+                <datalist id="oncologyHistoryStatusOptions"><option value="Planificado"></option><option value="En curso"></option><option value="Completado"></option><option value="Suspendido"></option><option value="Interrumpido"></option></datalist>
+              </label>
+              <label class="section-structured-field" for="oncologyHistory-institution"><span>Institución</span><input id="oncologyHistory-institution" type="text" formControlName="institution" autocomplete="organization" [maxlength]="shortTextLimit" [disabled]="editorBusy()"></label>
+              <label class="section-structured-field" for="oncologyHistory-professional"><span>Profesional tratante</span><input id="oncologyHistory-professional" type="text" formControlName="professional" autocomplete="off" [maxlength]="shortTextLimit" [disabled]="editorBusy()"></label>
+            </div>
+          </fieldset>
+
+          @switch (kind()) {
+            @case ('systemic') {
+              <fieldset class="oncology-history-fieldset">
+                <legend>Tratamiento sistémico</legend>
+                <div class="section-structured-fields oncology-history-fields">
+                  <label class="section-structured-field" for="oncologyHistory-treatmentType"><span>Tipo de tratamiento</span><input id="oncologyHistory-treatmentType" type="text" formControlName="treatmentType" list="oncologyHistoryTypeOptions" autocomplete="off" [maxlength]="shortTextLimit" [disabled]="editorBusy()"><datalist id="oncologyHistoryTypeOptions"><option value="Quimioterapia"></option><option value="Inmunoterapia"></option><option value="Quimioterapia + Inmunoterapia"></option><option value="Hormonoterapia"></option><option value="Terapia dirigida"></option><option value="Bifosfonatos"></option></datalist></label>
+                  <label class="section-structured-field" for="oncologyHistory-cycles"><span>Cantidad de ciclos</span><input id="oncologyHistory-cycles" type="number" min="1" max="1000" step="1" inputmode="numeric" formControlName="cycles" [attr.aria-invalid]="isInvalid('cycles') || null" [disabled]="editorBusy()"></label>
+                  <label class="section-structured-field is-wide" for="oncologyHistory-scheme"><span>Esquema *</span><input id="oncologyHistory-scheme" type="text" formControlName="scheme" autocomplete="off" [maxlength]="shortTextLimit" [attr.aria-invalid]="isInvalid('scheme') || null" [disabled]="editorBusy()"></label>
+                  <label class="section-structured-field is-wide" for="oncologyHistory-drugs"><span>Drogas y dosis</span><textarea id="oncologyHistory-drugs" rows="3" formControlName="drugs" [maxlength]="shortTextLimit" [disabled]="editorBusy()"></textarea></label>
+                  <label class="section-structured-field" for="oncologyHistory-response"><span>Respuesta</span><input id="oncologyHistory-response" type="text" formControlName="response" autocomplete="off" [maxlength]="shortTextLimit" [disabled]="editorBusy()"></label>
+                  <label class="section-structured-field" for="oncologyHistory-toxicity"><span>Toxicidad</span><input id="oncologyHistory-toxicity" type="text" formControlName="toxicity" autocomplete="off" [maxlength]="shortTextLimit" [disabled]="editorBusy()"></label>
+                </div>
+              </fieldset>
+            }
+            @case ('radiotherapy') {
+              <fieldset class="oncology-history-fieldset">
+                <legend>Radioterapia</legend>
+                <div class="section-structured-fields oncology-history-fields">
+                  <label class="section-structured-field" for="oncologyHistory-targetSite"><span>Sitio / volumen irradiado *</span><input id="oncologyHistory-targetSite" type="text" formControlName="targetSite" autocomplete="off" [maxlength]="shortTextLimit" [attr.aria-invalid]="isInvalid('targetSite') || null" [disabled]="editorBusy()"></label>
+                  <label class="section-structured-field" for="oncologyHistory-technique"><span>Técnica *</span><input id="oncologyHistory-technique" type="text" formControlName="technique" list="oncologyHistoryTechniqueOptions" autocomplete="off" [maxlength]="shortTextLimit" [attr.aria-invalid]="isInvalid('technique') || null" [disabled]="editorBusy()"><datalist id="oncologyHistoryTechniqueOptions"><option value="3D conformada"></option><option value="IMRT"></option><option value="VMAT"></option><option value="SBRT"></option><option value="Braquiterapia"></option></datalist></label>
+                  <label class="section-structured-field" for="oncologyHistory-totalDoseGy"><span>Dosis total (Gy)</span><input id="oncologyHistory-totalDoseGy" type="number" min="0.01" max="1000" step="0.01" inputmode="decimal" formControlName="totalDoseGy" [attr.aria-invalid]="isInvalid('totalDoseGy') || null" [disabled]="editorBusy()"></label>
+                  <label class="section-structured-field" for="oncologyHistory-fractions"><span>Fracciones</span><input id="oncologyHistory-fractions" type="number" min="1" max="1000" step="1" inputmode="numeric" formControlName="fractions" [attr.aria-invalid]="isInvalid('fractions') || null" [disabled]="editorBusy()"></label>
+                  <label class="section-structured-field is-wide" for="oncologyHistory-concurrentSystemic"><span>Tratamiento sistémico concomitante</span><input id="oncologyHistory-concurrentSystemic" type="text" formControlName="concurrentSystemic" autocomplete="off" [maxlength]="shortTextLimit" [disabled]="editorBusy()"></label>
+                  <div class="oncology-history-dose-metric is-wide"><span>Dosis calculada por fracción</span><strong>{{ metrics().dosePerFractionGy }}</strong></div>
+                </div>
+              </fieldset>
+            }
+            @case ('surgery') {
+              <fieldset class="oncology-history-fieldset">
+                <legend>Cirugía oncológica</legend>
+                <div class="section-structured-fields oncology-history-fields">
+                  <label class="section-structured-field is-wide" for="oncologyHistory-procedure"><span>Procedimiento *</span><input id="oncologyHistory-procedure" type="text" formControlName="procedure" autocomplete="off" [maxlength]="shortTextLimit" [attr.aria-invalid]="isInvalid('procedure') || null" [disabled]="editorBusy()"></label>
+                  <label class="section-structured-field" for="oncologyHistory-targetSite"><span>Sitio anatómico</span><input id="oncologyHistory-targetSite" type="text" formControlName="targetSite" autocomplete="off" [maxlength]="shortTextLimit" [disabled]="editorBusy()"></label>
+                  <label class="section-structured-field" for="oncologyHistory-surgeon"><span>Cirujano/a</span><input id="oncologyHistory-surgeon" type="text" formControlName="surgeon" autocomplete="off" [maxlength]="shortTextLimit" [disabled]="editorBusy()"></label>
+                  <label class="section-structured-field is-wide" for="oncologyHistory-pathology"><span>Anatomía patológica</span><textarea id="oncologyHistory-pathology" rows="4" formControlName="pathology" [maxlength]="notesLimit" [disabled]="editorBusy()"></textarea></label>
+                  <label class="section-structured-field" for="oncologyHistory-margins"><span>Márgenes</span><input id="oncologyHistory-margins" type="text" formControlName="margins" autocomplete="off" [maxlength]="shortTextLimit" [disabled]="editorBusy()"></label>
+                  <label class="section-structured-field" for="oncologyHistory-complications"><span>Complicaciones</span><input id="oncologyHistory-complications" type="text" formControlName="complications" autocomplete="off" [maxlength]="shortTextLimit" [disabled]="editorBusy()"></label>
+                </div>
+              </fieldset>
+            }
+          }
+
+          <fieldset class="oncology-history-fieldset">
+            <legend>Medidas y observaciones</legend>
+            <div class="section-structured-fields oncology-history-fields">
+              <label class="section-structured-field" for="oncologyHistory-weightKg"><span>Peso (kg)</span><input id="oncologyHistory-weightKg" type="number" [min]="weightMin" [max]="weightMax" step="0.1" inputmode="decimal" formControlName="weightKg" [attr.aria-invalid]="isInvalid('weightKg') || null" [disabled]="editorBusy()"></label>
+              <label class="section-structured-field" for="oncologyHistory-heightCm"><span>Talla (cm)</span><input id="oncologyHistory-heightCm" type="number" [min]="heightMin" [max]="heightMax" step="0.1" inputmode="decimal" formControlName="heightCm" [attr.aria-invalid]="isInvalid('heightCm') || null" [disabled]="editorBusy()"><small>Siempre se carga y se muestra en centímetros.</small></label>
+              <div class="section-exam-metrics oncology-history-metrics is-wide" aria-live="polite"><span><small>IMC</small><strong>{{ metrics().bmi }}</strong></span><span><small>Superficie corporal</small><strong>{{ metrics().bodySurfaceM2 }}</strong></span></div>
+              <label class="section-structured-field is-wide" for="oncologyHistory-notes"><span>Observaciones</span><textarea id="oncologyHistory-notes" rows="5" formControlName="notes" [maxlength]="notesLimit" [disabled]="editorBusy()"></textarea><small>{{ form.controls.notes.value.length }} / {{ notesLimit }}</small></label>
+            </div>
+          </fieldset>
+
+          @if (originalRecord()) {
+            <label class="section-structured-field section-edit-reason oncology-history-reason" for="oncologyHistory-reason">
+              <span>Motivo de la modificación *</span>
+              <input id="oncologyHistory-reason" type="text" formControlName="reason" autocomplete="off" [maxlength]="reasonLimit" [attr.aria-invalid]="isInvalid('reason') || null" [disabled]="editorBusy()" placeholder="Explique brevemente por qué se modifica este registro">
+              <small>Obligatorio. Se conserva junto con la versión anterior y la identidad del usuario.</small>
+            </label>
+          } @else {
+            <p class="oncology-history-initial-note">Esta es la carga inicial del registro. El sistema agregará automáticamente fecha, autor y trazabilidad.</p>
+          }
+
+          @if (editorError()) { <p class="oncology-history-error" role="alert">{{ editorError() }}</p> }
+        </div>
+      </div>
+
+      <footer class="modal-actions">
+        <button class="tool-button" type="button" [disabled]="editorBusy()" (click)="closeEditor()"><span>Cancelar</span></button>
+        <button class="tool-button primary" type="submit" [disabled]="editorBusy()"><span>{{ editorBusy() ? 'Guardando…' : originalRecord() ? 'Guardar modificación' : 'Cargar en historia' }}</span></button>
+      </footer>
+    </form>
+  </div>
+}

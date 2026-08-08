@@ -9,8 +9,8 @@ repositorio `HCOP_JP`.
 | Ruta | Contenido | Autoridad |
 |---|---|---|
 | `src/main/java/ar/com/hexium/hcop/` | Backend Java: dominio, casos de uso, controladores, seguridad y adaptadores | Código del servidor |
-| `src/main/resources/static/` | Interfaz JavaScript vigente y activos visuales compartidos | Interfaz de convivencia en `/` |
-| `frontend/` | Aplicación Angular standalone, pruebas y construcción npm | Interfaz migrada en `/app/` |
+| `src/main/resources/static/` | Activos visuales, ayuda, documentación HTML y fuentes históricas no ejecutadas | Recursos empacados por Spring Boot |
+| `frontend/` | Aplicación Angular standalone, features, pruebas y construcción npm | Único frontend operativo |
 | `src/main/resources/db/migration/` | 12 migraciones Flyway ordenadas `V001` a `V012` | Esquema PostgreSQL |
 | `src/main/resources/bootstrap/` | Recursos sintéticos y repetibles de arranque | Datos demostrativos sin información real |
 | `src/main/resources/application.yml` | Valores de configuración Spring no secretos | Configuración base |
@@ -23,29 +23,33 @@ repositorio `HCOP_JP`.
 | `EJECUTAR-DOCKER-DESDE-GITHUB.ps1` | Lanzador de los canales estable y migración | Ejecución desde GHCR |
 | `target/` | Clases y `.jar` generados por Maven; no se versionan | Salida temporal |
 
-## Convivencia de interfaces
+## Entrada única de interfaz
 
-Spring Boot sirve ambas interfaces y la API desde el mismo proceso. La raíz
-`/` todavía entrega `src/main/resources/static/index.html`; `/app/` entrega el
-build de `frontend/`. No existe un segundo servidor web ni un iframe. Angular
-reutiliza temporalmente estilos y activos clínicos de `static/`, pero no ejecuta
-`static/app.js`.
+Spring Boot sirve la API y un único frontend desde el mismo proceso. El build
+Angular vive internamente en `/app/`; `/`, `/index.html` y los aliases de
+Configuración, Protocolos y Herramientas redirigen hacia él. No existe un
+segundo servidor web, no hay iframe y Angular no ejecuta `static/app.js`.
 
-### Aplicación clínica principal
+Angular puede reutilizar CSS, imágenes, videos o fuentes de `static/` durante
+la consolidación visual. Eso no convierte al JavaScript anterior en una
+dependencia de ejecución. El contrato exacto de rutas está en
+[Corte final de entrada Angular](../09-migracion-angular-hexagonal/CORTE-FINAL-ENTRADA-ANGULAR.md).
+
+### Fuentes históricas de la aplicación clínica
 
 | Archivo | Contenido |
 |---|---|
-| `static/index.html` | Estructura principal: cabecera, hoja clínica, solapas, modales y Hospital de Día |
-| `static/app.js` | Comportamiento de la aplicación clínica, API, estado de paciente, formularios, estudios y flujos |
+| `static/index.html` | Referencia de la estructura previa; `/index.html` redirige a Angular |
+| `static/app.js` | Implementación histórica utilizada para comparar paridad; no se ejecuta |
 | `static/styles.css` | Sistema visual general y composición de los paneles |
 | `static/care-scheduler.css` | Grilla de sillones, celdas, turnos, lista de espera y estados |
 | `static/care-scheduler-modal.css` | Tamaño, distribución y adaptación del modal del turnero |
 
-`app.js` sigue siendo grande porque pertenece al frontend heredado. Durante la
-migración no se agregan reglas clínicas nuevas allí: las decisiones permanecen
-en Java y los recorridos se trasladan a `frontend/src/app/features`.
+`app.js` se conserva sólo como evidencia de comparación. No deben agregarse
+reglas ni correcciones nuevas allí: las decisiones clínicas pertenecen a Java y
+la interacción de usuario a `frontend/src/app/features`.
 
-### Centro de Configuración
+### Referencias históricas de Configuración
 
 Todos estos archivos viven en `static/configuration/`:
 
@@ -60,7 +64,7 @@ Todos estos archivos viven en `static/configuration/`:
 | `expression-engine.js` | Expresiones permitidas, variables y operaciones seguras |
 | `help-init.js` | Integración del módulo común de ayuda |
 
-### Administración de protocolos
+### Referencia histórica del administrador de protocolos
 
 Todos estos archivos viven en `static/protocol-admin/`:
 
@@ -72,7 +76,7 @@ Todos estos archivos viven en `static/protocol-admin/`:
 | `scroll-fix.css` | Regla específica de desplazamiento vertical del formulario |
 | `help-init.js` | Integración de ayuda |
 
-### Herramientas oncológicas
+### Referencias históricas de Herramientas
 
 La aplicación de herramientas vive en `static/herramientas/`:
 
@@ -106,8 +110,8 @@ Las 20 páginas autocontenidas están en `static/herramientas/pages/`:
 
 | Ruta | Contenido |
 |---|---|
-| `static/help/help.js` | Apertura, navegación y acciones de ayuda |
-| `static/help/help-content.js` | Textos contextuales mostrados en la interfaz |
+| `static/help/help.js` | Referencia histórica; Maven la excluye del producto |
+| `static/help/help-content.js` | Referencia histórica; la ayuda activa vive en Angular |
 | `static/help/help.css` | Apariencia del centro de ayuda |
 | `static/help/media/*.mp4` | Videos operativos incluidos en el producto |
 | `static/docs/index.html` | Índice navegable |
@@ -132,7 +136,7 @@ Las 20 páginas autocontenidas están en `static/herramientas/pages/`:
 | `static/formulariosos/` | 5 PDF originales de formularios de referencia |
 | `static/vendor/lucide.min.js` | Iconos Lucide incluidos localmente |
 | `static/vendor/jsQR.js` | Lectura de QR en el navegador |
-| `static/__clone/vendor/jsQR.js` | Copia heredada pendiente de retirar al completar la migración |
+| `static/__clone/vendor/jsQR.js` | Copia histórica excluida del artefacto ejecutable |
 
 No se deben guardar pacientes, estudios cargados ni documentos generados
 dentro de `static/`. Esos archivos pertenecen al volumen persistente
@@ -147,28 +151,46 @@ frontend/src/app
 ├── core
 │   ├── auth
 │   ├── clinical
+│   ├── highlighting
 │   ├── patients
 │   └── visual
 ├── layout
 └── features
     ├── agent
     ├── auth
+    ├── clinical-entry
+    ├── clinical-inbox
     ├── clinical-workspace
+    ├── configuration
     ├── day-hospital
+    ├── help
+    ├── highlighting
+    ├── oncology-history-entry
     ├── patients
     ├── prescription
     ├── protocols
     ├── qr
+    ├── research
     ├── scheduler
     ├── studies
+    ├── study-template-editor
     ├── timeline
-    └── tools
+    ├── tools
+    ├── treatment-documents
+    └── treatment-workflow-actions
 ```
 
 Archivos centrales de este corte:
 
 | Ruta | Contenido |
 |---|---|
+| `frontend/src/main.ts` | Arranque único de Angular mediante `bootstrapApplication` |
+| `frontend/src/app/app.config.ts` | HTTP, router con hash y proveedores globales |
+| `frontend/src/app/app.routes.ts` | Login, Configuración, Ayuda, shell clínico y guards |
+| `frontend/src/app/layout/` | Cabecera, hoja, divisor y panel derecho que componen el sitio |
+| `frontend/src/app/core/auth/` | Sesión, permisos y guard de autenticación |
+| `frontend/src/app/core/patients/` | Workspace, borradores, conflictos y paciente activo |
+| `frontend/src/app/core/highlighting/` | Persistencia y proyección de resaltados clínicos |
 | `frontend/src/app/core/clinical/clinical-treatment-projection.ts` | Proyección, categorización y deduplicación común de tratamientos para hoja y línea temporal |
 | `frontend/src/app/core/clinical/clinical-treatment-projection.tests.ts` | Casos de regresión de fuentes relacionales/documentales, identidades, categorías y tombstones |
 | `frontend/src/app/core/clinical/clinical-print-projection.ts` | Selección pura de secciones e identidad para impresión clínica |
@@ -183,13 +205,51 @@ Archivos centrales de este corte:
 | `compose.e2e.yaml` | Aplicación, PostgreSQL, redes y volúmenes descartables para concurrencia clínica |
 | `scripts/test-clinical-conflict-e2e.ps1` | Orquesta secretos efímeros, salud, E2E y limpieza incondicional del entorno |
 | `frontend/src/app/features/clinical-workspace/` | Hoja clínica Angular y selección de paciente |
+| `frontend/src/app/features/clinical-entry/` | Evoluciones y diagnóstico estructurado |
+| `frontend/src/app/features/oncology-history-entry/` | Tratamientos históricos, radioterapia y cirugías |
+| `frontend/src/app/features/configuration/` | Hub nativo de protocolos, guías, plantillas, calculadoras, LLM y acceso |
+| `frontend/src/app/features/day-hospital/` | Tratamientos y circuito operativo por aplicación |
+| `frontend/src/app/features/scheduler/` | Turnero por sillón y lista de espera |
+| `frontend/src/app/features/treatment-documents/` | Consentimiento, prescripción, hoja, QR y etiqueta trazable |
+| `frontend/src/app/features/treatment-workflow-actions/` | Suspensión, continuidad y solicitudes auditables |
+| `frontend/src/app/features/studies/` | Estudios, archivos, anotaciones y plantillas anatómicas |
+| `frontend/src/app/features/research/` | Formularios configurables de investigación |
+| `frontend/src/app/features/clinical-inbox/` | Bandeja de solicitudes clínicas por usuario |
 | `frontend/src/app/features/timeline/` | Línea temporal y filtros clínicos |
 | `frontend/src/app/features/tools/calculators/` | Catálogo, motor y renderizador de las 57 calculadoras |
+| `frontend/src/app/features/help/` | Ayuda contextual nativa |
+| `frontend/scripts/run-clinical-tests.mjs` | Ejecutor de pruebas puras del frontend |
+| `frontend/e2e/` | Recorridos Playwright contra el producto real |
 
 El Dockerfile ejecuta `npm test` y `npm run build`, y copia
 `frontend/dist/hcop-jp-angular/browser` a `static/app` dentro del JAR. Angular
-permanecerá bajo `/app/` hasta retirar los fallbacks funcionales y completar la
-matriz de paridad; moverlo hoy a `/` ocultaría capacidades todavía vigentes.
+se sirve internamente bajo `/app/`; `WebConfiguration` convierte la raíz y los
+aliases históricos en entradas al mismo frontend.
+
+## Documentación Markdown
+
+`docs/README.md` es el índice maestro. Cada carpeta tiene una responsabilidad
+estable:
+
+| Ruta | Contenido |
+|---|---|
+| `docs/00-inicio/` | instalación, primer ingreso y prueba del canal publicado |
+| `docs/01-uso/` | manual clínico, flujo de tratamiento, roles y videos |
+| `docs/02-arquitectura/` | MVC, OpenAPI, interoperabilidad y contratos técnicos |
+| `docs/03-base-de-datos/` | modelo, diccionario y relación campo → persistencia |
+| `docs/04-desarrollo/` | entorno local, estructura, pruebas y reconstrucción |
+| `docs/05-operacion/` | Docker, variables, red, actualización, backup y seguridad |
+| `docs/06-migracion/` | consolidación histórica desde HCOP/Lira |
+| `docs/07-referencia/` | mapa pantalla → API → Java → PostgreSQL y glosario |
+| `docs/08-auditoria/` | matrices, resultados reproducibles y evidencias QA |
+| `docs/08-recrear-desde-cero/` | guía ordenada para reconstruir el producto |
+| `docs/09-migracion-angular-hexagonal/` | decisiones, cortes y evidencia histórica de la migración |
+| `docs/media/` | videos y otros artefactos documentales versionados |
+
+Los archivos generados `docs/02-arquitectura/ENDPOINTS.md` y
+`src/main/resources/static/docs/api-endpoints.html` se reconstruyen juntos con
+`scripts/generate-api-docs.ps1`. Los documentos manuales se editan en Markdown;
+la versión HTML navegable se publica bajo `/docs/`.
 
 ## Backend Java
 
@@ -205,7 +265,7 @@ El paquete raíz es `src/main/java/ar/com/hexium/hcop/`.
 | `<módulo>/infrastructure/persistence/` | PostgreSQL o almacenamiento de archivos |
 | `<módulo>/infrastructure/configuration/` | Composición de beans y transacciones |
 | `sharedkernel/domain/` | Identificadores compartidos mínimos |
-| Paquetes anteriores sin estas capas | MVC heredado todavía en convivencia |
+| Paquetes sin estas capas completas | Módulos Spring MVC que conservan el mismo contrato mientras se robustecen |
 
 El arranque demostrativo se coordina en
 `patient/DefaultDemoPatientBootstrap.java`. Busca la clave de seed, crea como

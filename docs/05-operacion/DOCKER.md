@@ -16,7 +16,7 @@ Cuando Docker Desktop ya está instalado, copie y pegue esta línea completa en
 Windows PowerShell:
 
 ```powershell
-$hcopScript = Join-Path $env:TEMP "EJECUTAR-DOCKER-DESDE-GITHUB.ps1"; Invoke-WebRequest "https://raw.githubusercontent.com/Marcolyto/HCOP_JP/main/EJECUTAR-DOCKER-DESDE-GITHUB.ps1" -OutFile $hcopScript; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $hcopScript
+$hcopScript = Join-Path $env:TEMP "EJECUTAR-DOCKER-DESDE-GITHUB.ps1"; Invoke-WebRequest -UseBasicParsing "https://raw.githubusercontent.com/Marcolyto/HCOP_JP/main/EJECUTAR-DOCKER-DESDE-GITHUB.ps1" -OutFile $hcopScript; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $hcopScript
 ```
 
 El lanzador mantiene `compose.yaml`, `.env` y los registros operativos en
@@ -45,7 +45,7 @@ La rama `codex/angular-full-parity-v2` se prueba sin reemplazar la versión
 estable. Copie esta línea completa:
 
 ```powershell
-$hcopScript = Join-Path $env:TEMP "EJECUTAR-DOCKER-DESDE-GITHUB.ps1"; Invoke-WebRequest "https://raw.githubusercontent.com/Marcolyto/HCOP_JP/codex/angular-full-parity-v2/EJECUTAR-DOCKER-DESDE-GITHUB.ps1" -OutFile $hcopScript; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $hcopScript -Channel Migration
+$hcopScript = Join-Path $env:TEMP "EJECUTAR-DOCKER-DESDE-GITHUB.ps1"; Invoke-WebRequest -UseBasicParsing "https://raw.githubusercontent.com/Marcolyto/HCOP_JP/codex/angular-full-parity-v2/EJECUTAR-DOCKER-DESDE-GITHUB.ps1" -OutFile $hcopScript; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $hcopScript -Channel Migration
 ```
 
 El canal usa:
@@ -58,7 +58,7 @@ El canal usa:
 - carpeta `%LOCALAPPDATA%\HCOP_AHJP-Docker`.
 
 El primer inicio solicita puerto, usuario administrador y contraseña. La
-aplicación y Swagger quedan en `http://localhost:<puerto-elegido>` y
+aplicación Angular y Swagger quedan en `http://localhost:<puerto-elegido>/` y
 `http://localhost:<puerto-elegido>/swagger-ui.html`. La versión estable y el
 canal migratorio anterior conservan sus propias carpetas, bases y volúmenes; sus
 datos no se comparten. Consulte la
@@ -105,5 +105,7 @@ opción elimina la base.
 - `.env`: secretos locales, nunca se sube a GitHub.
 
 La interfaz Angular compilada también está dentro de esta misma aplicación:
-Spring Boot la sirve desde el `.jar`. No hay que instalar ni levantar un segundo
-frontend ni conservar una copia de `HCOP_lira`.
+Spring Boot la sirve desde el `.jar`. La raíz y los aliases operativos ingresan
+a Angular; no se instala un segundo frontend, no hay iframe y no se ejecuta el
+runtime JavaScript legacy. Tampoco es necesario conservar una copia de
+`HCOP_lira`.

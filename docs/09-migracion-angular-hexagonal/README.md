@@ -1,19 +1,18 @@
 # Migración Angular y arquitectura hexagonal
 
-Esta carpeta gobierna la migración de HCOP JP. En la rama
-`codex/angular-full-parity-v2`, Angular ya gobierna el frontend real y el backend
-evoluciona hacia un monolito modular hexagonal sin perder comportamiento, datos,
-permisos, documentación ni capacidad de despliegue.
+Esta carpeta conserva la trazabilidad de la migración de HCOP JP. En la rama
+`codex/angular-full-parity-v2`, Angular es el único frontend operativo: la raíz,
+`/index.html` y los aliases históricos conducen a la aplicación nativa servida
+en `/app/`. No hay iframe ni ejecución de `static/app.js`.
 
-La versión operativa permanece disponible durante toda la transición. Cada
-capacidad nueva se compara contra la línea base antes de habilitarse; el canal
-v2 no usa iframe ni delega la interfaz al frontend anterior.
+El backend funciona en Java 21 con Spring MVC. Evoluciona como monolito modular
+hexagonal sin perder comportamiento, datos ni permisos; PostgreSQL es la fuente
+operacional y Flyway gobierna el esquema. Los documentos `CORTE-ANGULAR-*`
+registran estados intermedios y deben leerse como evidencia histórica, no como
+descripción del estado actual.
 
-La biblioteca declarativa Angular conserva el inventario completo y tiene
-**57 de 57 calculadoras** portadas con pruebas doradas. Esto completa las
-definiciones y reglas. El corte 023 agrega el primer renderizador Angular
-visible, nativo y diferido; la capacidad seguirá `Pendiente` hasta aplicar la
-configuración institucional y cerrar la paridad visual/E2E integrada.
+La biblioteca Angular tiene **57 de 57 calculadoras** portadas con pruebas
+doradas y un renderizador nativo integrado con la configuración institucional.
 
 ## Documentos de control
 
@@ -39,6 +38,8 @@ configuración institucional y cerrar la paridad visual/E2E integrada.
   progresiva.
 - [ADR-0003](adr/ADR-0003-CONTRATOS-DATOS-Y-ROLLBACK.md): contratos, datos y
   rollback.
+- [Corte final de entrada Angular](CORTE-FINAL-ENTRADA-ANGULAR.md): rutas
+  públicas, aliases, límites técnicos y validación del retiro operativo legacy.
 - [Corte Angular 001](CORTE-ANGULAR-001-ESPACIO-CLINICO.md): base de Angular,
   sesión, paciente activo y lectura de la hoja clínica.
 
@@ -172,14 +173,15 @@ configuración institucional y cerrar la paridad visual/E2E integrada.
 
 - La base PostgreSQL existente es la autoridad operacional.
 - Flyway es el único mecanismo autorizado para modificar el esquema.
-- Las migraciones serán aditivas mientras convivan ambas interfaces.
+- Las migraciones de base son aditivas mientras existan consumidores que
+  requieran compatibilidad de datos.
 - No se elimina una ruta, tabla o campo sin demostrar que dejó de tener
   consumidores.
 - El dominio no dependerá de Spring MVC, JDBC, JSON ni archivos.
 - La interfaz Angular no implementará reglas clínicas que pertenezcan al
   servidor.
-- `main` y la instancia estable del puerto 5180 no se utilizan para pruebas de
-  la migración.
+- `main` y la instancia estable del puerto 5180 no se modifican durante las
+  pruebas aisladas de esta rama.
 - La validación local usa el puerto 5181 y recursos Docker con prefijo
   `hcop_ajp_validation`.
 - La imagen publicada para probar esta rama usa la etiqueta

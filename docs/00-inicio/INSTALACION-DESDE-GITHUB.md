@@ -13,7 +13,7 @@ script en `%TEMP%` y después lo ejecuta como archivo; no canaliza código remot
 directamente al intérprete.
 
 ```powershell
-$hcopScript = Join-Path $env:TEMP "EJECUTAR-DOCKER-DESDE-GITHUB.ps1"; Invoke-WebRequest "https://raw.githubusercontent.com/Marcolyto/HCOP_JP/main/EJECUTAR-DOCKER-DESDE-GITHUB.ps1" -OutFile $hcopScript; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $hcopScript
+$hcopScript = Join-Path $env:TEMP "EJECUTAR-DOCKER-DESDE-GITHUB.ps1"; Invoke-WebRequest -UseBasicParsing "https://raw.githubusercontent.com/Marcolyto/HCOP_JP/main/EJECUTAR-DOCKER-DESDE-GITHUB.ps1" -OutFile $hcopScript; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $hcopScript
 ```
 
 El repositorio y la imagen `ghcr.io/marcolyto/hcop_jp:latest` son públicos. La
@@ -35,10 +35,16 @@ El ejecutor:
 - en el inicio usa las imágenes locales y sólo descarga si todavía falta alguna;
 - en la actualización descarga explícitamente `latest`;
 - espera la salud de PostgreSQL y HCOP JP;
-- abre `http://localhost:<puerto-elegido>` únicamente cuando la aplicación está
+- abre `http://localhost:<puerto-elegido>/` únicamente cuando la aplicación está
   lista;
 - conserva pacientes y documentos en los volúmenes `hcop_jp_postgres` y
   `hcop_jp_storage`.
+
+La raíz es la entrada recomendada y siempre entrega Angular. `/index.html` y
+los aliases `/configuration`, `/protocol-admin` y `/herramientas` también
+conducen al frontend Angular nativo. `/app/` es su ubicación interna canónica.
+Ninguna de esas entradas usa iframe ni ejecuta el runtime JavaScript anterior.
+Swagger, OpenAPI, Actuator y `/docs/` conservan rutas independientes.
 
 Respalde `.env`, `hcop_jp_postgres` y `hcop_jp_storage` como una sola unidad. Si
 la base ya existe pero falta `.env`, el ejecutor se detiene en vez de generar
@@ -73,7 +79,7 @@ descarga junto al `.ps1`; sin argumentos inicia HCOP JP y también acepta
    habilitar WSL 2.
 5. Si el instalador indica **Reinicio pendiente**, reinicie Windows y vuelva a
    ejecutar el mismo archivo. La instalación continúa sin perder lo realizado.
-6. Ingrese usuario, contraseña y puerto. Puede presionar Enter para usar los
+6. Ingrese puerto, usuario y contraseña. Puede presionar Enter para usar los
    valores sugeridos.
 7. Espere la validación de salud, interfaz y estado funcional. El navegador se
    abre solamente después de que las tres comprobaciones terminan bien.
@@ -251,10 +257,10 @@ La rama migratoria tiene un canal Docker propio para poder evaluarla sin
 actualizar la instalación estable:
 
 ```powershell
-$hcopScript = Join-Path $env:TEMP "EJECUTAR-DOCKER-DESDE-GITHUB.ps1"; Invoke-WebRequest "https://raw.githubusercontent.com/Marcolyto/HCOP_JP/codex/angular-full-parity-v2/EJECUTAR-DOCKER-DESDE-GITHUB.ps1" -OutFile $hcopScript; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $hcopScript -Channel Migration
+$hcopScript = Join-Path $env:TEMP "EJECUTAR-DOCKER-DESDE-GITHUB.ps1"; Invoke-WebRequest -UseBasicParsing "https://raw.githubusercontent.com/Marcolyto/HCOP_JP/codex/angular-full-parity-v2/EJECUTAR-DOCKER-DESDE-GITHUB.ps1" -OutFile $hcopScript; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $hcopScript -Channel Migration
 ```
 
 El primer inicio solicita puerto, usuario y contraseña. Después se abre
-`http://localhost:<puerto-elegido>` y se usan base, archivos e imagen
+`http://localhost:<puerto-elegido>/` y se usan base, archivos e imagen
 independientes. La explicación completa está en
 [Probar la rama Angular y hexagonal](PRUEBA-RAMA-ANGULAR-HEXAGONAL.md).

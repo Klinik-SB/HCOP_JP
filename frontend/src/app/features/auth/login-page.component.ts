@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
@@ -12,6 +12,7 @@ import { AuthService } from '../../core/auth/auth.service';
 export class LoginPageComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   readonly username = new FormControl('', { nonNullable: true });
   readonly password = new FormControl('', { nonNullable: true });
   readonly submitting = signal(false);
@@ -25,12 +26,17 @@ export class LoginPageComponent {
     this.submitting.set(true);
     this.error.set('');
     this.auth.login({ username: this.username.value.trim(), password: this.password.value }).subscribe({
-      next: () => this.router.navigateByUrl('/'),
+      next: () => this.router.navigateByUrl(this.returnUrl()),
       error: (response: { error?: { error?: string } }) => {
         this.error.set(response?.error?.error || 'No se pudo iniciar la sesión.');
         this.submitting.set(false);
       },
       complete: () => this.submitting.set(false)
     });
+  }
+
+  private returnUrl(): string {
+    const requested = String(this.route.snapshot.queryParamMap.get('returnUrl') || '/');
+    return requested.startsWith('/') && !requested.startsWith('//') ? requested : '/';
   }
 }

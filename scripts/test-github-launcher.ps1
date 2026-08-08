@@ -217,6 +217,7 @@ if ($migrationValidation.applicationImage -ne
   throw "El canal de migración no seleccionó su imagen aislada."
 }
 if ([int]$migrationValidation.defaultPort -ne 5181 -or
+    $migrationValidation.applicationEntryUrl -ne "http://localhost:5181" -or
     $migrationValidation.projectName -ne "hcop-ahjp" -or
     $migrationValidation.databaseName -ne "hcop_ahjp" -or
     (Split-Path -Leaf $migrationValidation.dataDirectory) -ne "HCOP_AHJP-Docker" -or

@@ -1,0 +1,17 @@
+{
+  "extends": "../../../../../tsconfig.app.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "../../../.."
+  },
+  "files": [
+    "protocol-configuration.models.ts",
+    "protocol-configuration.normalizers.ts",
+    "protocol-configuration.service.ts",
+    "protocol-configuration.component.ts"
+  ],
+  "include": [],
+  "angularCompilerOptions": {
+    "strictTemplates": true
+  }
+}

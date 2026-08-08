@@ -1,6 +1,13 @@
-# Matriz de paridad funcional
+# Matriz histórica de paridad funcional
 
-Esta matriz es el contrato de aceptación de la migración. Una capacidad sólo
+> **Documento de trazabilidad.** Los estados de esta tabla corresponden a los
+> cortes incrementales que se registran debajo y no describen por sí solos la
+> entrada vigente del producto. La aplicación operativa actual usa un único
+> frontend Angular, sin iframe ni ejecución del JavaScript anterior. Las rutas
+> y comprobaciones del corte definitivo están en
+> [Corte final de entrada Angular](CORTE-FINAL-ENTRADA-ANGULAR.md).
+
+Esta matriz fue el contrato de aceptación durante la migración. Una capacidad sólo
 puede marcarse como completada cuando conserva comportamiento, permisos,
 persistencia, respuesta ante errores y apariencia clínica.
 

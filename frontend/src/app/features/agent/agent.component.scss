@@ -6,7 +6,20 @@
 .clinical-agent-head .icon-button svg, .agent-avatar svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .agent-message--error .agent-message-content { border-color: #efc4bf; background: #fff7f6; color: #893c35; }
 .agent-suggestions button:disabled { opacity: .48; cursor: default; }
-.agent-chart-axis { fill: none; stroke: #d6dde2; stroke-width: 1; }
-.agent-chart circle, .agent-chart rect { cursor: pointer; outline: none; }
-.agent-chart circle:focus, .agent-chart rect:focus { filter: drop-shadow(0 0 3px rgb(14 154 239 / 80%)); }
+.agent-answer-block + .agent-answer-block { margin-top: 7px; }
+.agent-table th { position: sticky; z-index: 1; top: 0; }
+.agent-table tbody tr:nth-child(even) { background: rgb(240 247 250 / 48%); }
+.agent-chart-grid line { stroke: #e4eaee; stroke-width: 1; }
+.agent-chart-grid text, .agent-chart-x-labels text { fill: #718096; font-size: 9px; }
+.agent-chart-x-labels text { font-size: 8px; }
+.agent-chart-x-labels .agent-chart-axis-title { fill: #526577; font-size: 9px; }
+.agent-chart-baseline { stroke: #a7b1c2; stroke-width: 1; }
+.agent-chart-line { stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
+.agent-chart-mark { cursor: pointer; outline: none; transition: filter 120ms ease, opacity 120ms ease; }
+.agent-chart-mark:hover { filter: brightness(.94) drop-shadow(0 2px 3px rgb(0 0 0 / 14%)); }
+.agent-chart-mark:focus { filter: drop-shadow(0 0 3px rgb(14 154 239 / 80%)); }
+.agent-chart-point { transition: r 120ms ease, filter 120ms ease; }
+.agent-chart-point:hover, .agent-chart-point:focus { r: 5px; }
+.agent-chart-pie { max-height: 230px; }
+.agent-chart-legend--pie { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
 .agent-composer textarea:disabled { cursor: not-allowed; opacity: .72; }

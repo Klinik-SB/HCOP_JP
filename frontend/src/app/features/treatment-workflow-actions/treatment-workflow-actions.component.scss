@@ -1,0 +1,40 @@
+:host { display: inline-block; position: relative; }
+.treatment-workflow-actions { position: relative; }
+.treatment-workflow-trigger { white-space: nowrap; }
+.is-compact .treatment-workflow-trigger span:last-child { display: none; }
+.treatment-workflow-menu {
+  position: absolute; z-index: 45; right: 0; top: calc(100% + 5px); width: min(310px, 88vw);
+  padding: 5px; border: 1px solid #cbd5e1; background: #fff; box-shadow: 0 14px 35px rgb(15 23 42 / 16%);
+}
+.treatment-workflow-menu button {
+  width: 100%; display: flex; gap: 10px; align-items: center; text-align: left; border: 0;
+  border-bottom: 1px solid #e5edf4; background: #fff; color: #17324d; padding: 9px 10px; cursor: pointer;
+}
+.treatment-workflow-menu button:last-child { border-bottom: 0; }
+.treatment-workflow-menu button:hover, .treatment-workflow-menu button:focus-visible { background: #edf8fc; outline: none; }
+.treatment-workflow-menu strong, .treatment-workflow-menu small { display: block; }
+.treatment-workflow-menu small { color: #64748b; margin-top: 2px; }
+.treatment-workflow-action-icon {
+  display: inline-grid; place-items: center; flex: 0 0 28px; min-width: 28px; height: 28px;
+  border: 1px solid #b9dbe8; background: #edf8fc; color: #19759a; font-size: 15px;
+}
+.treatment-workflow-inline-error { position: absolute; z-index: 44; right: 0; width: 320px; margin: 5px 0 0; padding: 8px 10px; border: 1px solid #fecaca; background: #fff1f2; color: #991b1b; font-size: 12px; }
+.treatment-workflow-modal { width: min(920px, 96vw); max-height: 94vh; overflow: hidden; }
+.treatment-workflow-modal form { display: flex; flex-direction: column; max-height: 94vh; min-height: 0; }
+.treatment-workflow-modal .modal-body { overflow-y: auto; min-height: 0; background: #fff; }
+.treatment-workflow-modal .care-schedule-workflow-actions { flex-wrap: wrap; }
+.treatment-workflow-modal .care-schedule-workflow-actions > button { min-width: 150px; flex: 1 1 150px; }
+.treatment-workflow-modal .care-schedule-workflow-actions > button.active { border-color: #2b9fc5; background: #e8f7fc; color: #155e75; }
+.treatment-workflow-error { display: block; margin-top: 12px; }
+.treatment-workflow-discard {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 12px;
+  padding: 12px; border: 1px solid #f0b4b4; background: #fff7f7;
+}
+.treatment-workflow-discard strong, .treatment-workflow-discard span { display: block; }
+.treatment-workflow-discard span { color: #6b7280; margin-top: 2px; }
+.treatment-workflow-discard > div:last-child { display: flex; gap: 8px; }
+@media (max-width: 720px) {
+  .treatment-workflow-modal { width: 98vw; }
+  .treatment-workflow-discard { align-items: stretch; flex-direction: column; }
+  .treatment-workflow-discard > div:last-child { justify-content: flex-end; }
+}
