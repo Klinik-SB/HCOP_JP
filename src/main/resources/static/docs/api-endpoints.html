@@ -18,7 +18,7 @@
   </header>
   <main class="doc-main" style="max-width:1500px;margin:0 auto;min-height:calc(100vh - 64px)">
     <section class="doc-hero">
-      <span class="doc-kicker">OpenAPI 1.0.0 · 112 operaciones</span>
+      <span class="doc-kicker">OpenAPI 1.0.0 · 113 operaciones</span>
       <h1>Todos los endpoints, permisos y controladores</h1>
       <p>Referencia generada desde el servidor Java. Swagger permite ejecutar las rutas con la misma cookie de sesión del sistema; nunca evita permisos ni validaciones clínicas.</p>
       <div class="doc-meta"><span class="doc-tag">Spring MVC</span><span class="doc-tag">Cookie HttpOnly</span><span class="doc-tag">RBAC</span><span class="doc-tag">OpenAPI 3</span></div>
@@ -576,6 +576,15 @@ expl&#237;cita y documentada cuando a&#250;n no existe inventario electr&#243;ni
                 <td>Cat&#225;logos</td>
                 <td><code>authenticated</code></td>
                 <td><code>LegacyCatalogController</code></td>
+              </tr>              <tr data-filter-item>
+                <td><code>GET</code></td>
+                <td class="path"><code>/api/clinical/research/forms</code></td>
+                <td><strong>Listar formularios activos de investigaci&#243;n</strong><small>Devuelve exclusivamente formularios activos para la secci&#243;n Investigaci&#243;n. No expone
+versiones inactivas ni habilita operaciones administrativas de Configuraci&#243;n.
+</small></td>
+                <td>Cat&#225;logos</td>
+                <td><code>section.research.view</code></td>
+                <td><code>ResearchFormCatalogController</code></td>
               </tr>              <tr data-filter-item>
                 <td><code>GET</code></td>
                 <td class="path"><code>/api/clinical/tools/calculators</code></td>

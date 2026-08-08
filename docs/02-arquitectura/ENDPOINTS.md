@@ -5,7 +5,7 @@
 - Especificación: `GET /v3/api-docs/hcop-jp-completa`
 - Swagger UI: `GET /swagger-ui.html`
 - Versión declarada: `1.0.0`
-- Operaciones documentadas: **112**
+- Operaciones documentadas: **113**
 - Autenticación: cookie HttpOnly `HCOP_SESSION`; las operaciones públicas se identifican expresamente.
 
 Los permisos se validan en el servidor. `authenticated` significa que la ruta exige una sesión activa pero no aplica un permiso granular adicional en el controlador.
@@ -344,7 +344,7 @@ Devuelve una fila por ciclo y día real con medicación. `pharmacy` permite filt
 fecha de hoy y se ordenan por hora del turno y sillón.
 
 - **Controlador MVC:** `InfusionApplicationWorkflowController`
-- **Operación Java/OpenAPI:** `list_9`
+- **Operación Java/OpenAPI:** `list_10`
 - **Acceso requerido:** `section.day-hospital.view`
 - **Parámetros:** `queue` (query, opcional): pharmacy, triage, preparation o administration.; `date` (query, opcional): Fecha ISO. En triaje/preparación/administración omitirla equivale a hoy.; `q` (query, opcional): Busca por paciente, DNI, esquema, diagnóstico o droga.; `medicationSource` (query, opcional): Fuente/custodia; use patient_to_bring para quienes deben traer medicación.
 - **Cuerpo:** Sin cuerpo.
@@ -805,7 +805,7 @@ Retira un protocolo de nuevas prescripciones sin romper tratamientos existentes.
 Devuelve los sitios tumorales y variables de estadificación disponibles en el catálogo local.
 
 - **Controlador MVC:** `AjccCatalogController`
-- **Operación Java/OpenAPI:** `list_10`
+- **Operación Java/OpenAPI:** `list_11`
 - **Acceso requerido:** `section.tools.view`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** Sin cuerpo.
@@ -854,6 +854,18 @@ Confirma que los catálogos empaquetados ya están disponibles y versionados.
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
 - **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+
+### `GET /api/clinical/research/forms` - Listar formularios activos de investigación
+
+Devuelve exclusivamente formularios activos para la sección Investigación. No expone
+versiones inactivas ni habilita operaciones administrativas de Configuración.
+
+- **Controlador MVC:** `ResearchFormCatalogController`
+- **Operación Java/OpenAPI:** `list_9`
+- **Acceso requerido:** `section.research.view`
+- **Parámetros:** Ninguno.
+- **Cuerpo:** Sin cuerpo.
+- **Respuestas:** `200` Catálogo activo recuperado.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/clinical/tools/calculators` - Listar calculadoras operativas
 
@@ -1040,7 +1052,7 @@ Guarda imagen, metadatos, licencia y confirmación de derechos.
 - **Controlador MVC:** `StudyTemplateController`
 - **Operación Java/OpenAPI:** `create`
 - **Acceso requerido:** `section.configuration.manage`
-- **Parámetros:** `title` (query, obligatorio): Título visible de la plantilla anatómica.; `category` (query, obligatorio): Categoría anatómica usada para ordenar y filtrar la plantilla.; `author` (query, opcional): Autor o institución responsable de la imagen.; `license` (query, opcional): Licencia o condición de uso declarada.; `description` (query, opcional): Descripción clínica y visual de la plantilla.; `sourceUrl` (query, opcional): URL de procedencia declarada; no se descarga automáticamente.; `licenseUrl` (query, opcional): URL donde puede verificarse la licencia.; `rightsConfirmed` (query, opcional): Debe valer 1 para confirmar que se poseen derechos de uso.; `name` (query, opcional): Nombre seguro del archivo o recurso.
+- **Parámetros:** `title` (query, obligatorio): Título visible de la plantilla anatómica.; `category` (query, obligatorio): Categoría anatómica usada para ordenar y filtrar la plantilla.; `tags` (query, opcional): Etiquetas separadas por comas para facilitar la búsqueda y clasificación.; `author` (query, opcional): Autor o institución responsable de la imagen.; `attribution` (query, opcional): Texto de atribución requerido por el autor o la licencia.; `license` (query, opcional): Licencia o condición de uso declarada.; `description` (query, opcional): Descripción clínica y visual de la plantilla.; `sourceUrl` (query, opcional): URL de procedencia declarada; no se descarga automáticamente.; `licenseUrl` (query, opcional): URL donde puede verificarse la licencia.; `rightsConfirmed` (query, opcional): Debe valer 1 para confirmar que se poseen derechos de uso.; `name` (query, opcional): Nombre seguro del archivo o recurso.
 - **Cuerpo:** `image/png`, `image/jpeg`, `image/gif`, `image/webp`, `image/bmp`, `image/tiff`
 - **Respuestas:** `201` Recurso creado correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `413` El archivo supera el límite permitido.; `415` El tipo declarado o la firma binaria no están permitidos.; `500` Error interno sin exposición de detalles sensibles.
 
