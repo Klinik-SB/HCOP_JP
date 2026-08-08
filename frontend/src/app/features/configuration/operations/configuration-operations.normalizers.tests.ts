@@ -198,6 +198,20 @@ test('LLM normalization never exposes a key and validation covers endpoint and r
   draft.baseUrl = 'file:///tmp/model';
   draft.apiKeyAction = 'replace';
   assert.deepEqual(validateLlmDraft(draft).map((issue) => issue.path).sort(), ['apiKey', 'baseUrl']);
+
+  const gemini = llmDraftFromConfiguration(normalizeLlmConfiguration({ llm: {
+    enabled: true, provider: 'gemini', baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+    model: 'gemini-3.5-flash', hasApiKey: false
+  } }));
+  assert.deepEqual(validateLlmDraft(gemini).map((issue) => issue.path), ['apiKey']);
+  gemini.enabled = false;
+  assert.equal(validateLlmDraft(gemini).length, 0);
+  assert.deepEqual(validateLlmDraft(gemini, true).map((issue) => issue.path), ['apiKey']);
+  gemini.apiKeyAction = 'replace';
+  gemini.apiKey = 'clave-de-prueba';
+  assert.equal(validateLlmDraft(gemini, true).length, 0);
+  gemini.apiKeyAction = 'remove';
+  assert.deepEqual(validateLlmDraft(gemini, true).map((issue) => issue.path), ['apiKey']);
 });
 
 test('RBAC normalizes permission groups and validates user and role payloads', () => {

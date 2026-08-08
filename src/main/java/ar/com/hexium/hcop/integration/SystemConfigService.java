@@ -86,13 +86,16 @@ public class SystemConfigService {
     boolean explicitLegacyKey = llmInput.has("apiKey") && action.isBlank();
     boolean preserve = Set.of("", "keep", "preserve").contains(action) && !explicitLegacyKey;
     byte[] encrypted = null;
+    String effectiveApiKey = preserve ? current.apiKey() : "";
     if ("remove".equals(action)) preserve = false;
     if ("replace".equals(action) || explicitLegacyKey) {
       String apiKey = llmInput.path("apiKey").asText("").trim();
       if (apiKey.isBlank()) throw new ApiException(HttpStatus.BAD_REQUEST, "La API key está vacía.");
       encrypted = secrets.encrypt(apiKey);
+      effectiveApiKey = apiKey;
       preserve = false;
     }
+    if (enabled) validateRequiredApiKey(provider, baseUrl, effectiveApiKey);
     settings.upsert("llm", value, encrypted, preserve, actorId);
     return publicView();
   }
@@ -102,19 +105,35 @@ public class SystemConfigService {
     if (!llm.isObject()) return internal();
     Config current = internal();
     String action = llm.path("apiKeyAction").asText("").toLowerCase(Locale.ROOT);
-    String apiKey = "replace".equals(action) || llm.has("apiKey")
-        ? llm.path("apiKey").asText("").trim() : current.apiKey();
+    String apiKey = switch (action) {
+      case "remove" -> "";
+      case "replace" -> llm.path("apiKey").asText("").trim();
+      default -> action.isBlank() && llm.has("apiKey")
+          ? llm.path("apiKey").asText("").trim() : current.apiKey();
+    };
     String baseUrl = text(llm, "baseUrl", current.baseUrl());
     validateEndpoint(baseUrl);
+    String provider = text(llm, "provider", current.provider());
+    String model = text(llm, "model", current.model());
+    validateRequiredApiKey(provider, baseUrl, apiKey);
     return new Config(
         llm.path("enabled").asBoolean(true),
-        text(llm, "provider", current.provider()),
+        provider,
         stripSlash(baseUrl),
-        text(llm, "model", current.model()),
+        model,
         bounded(llm.path("temperature").asDouble(current.temperature()), 0, 2),
         Math.max(128, Math.min(16000, llm.path("maxTokens").asInt(current.maxTokens()))),
         Math.max(5000, Math.min(180000, llm.path("timeoutMs").asInt(current.timeoutMs()))),
         apiKey);
+  }
+
+  private void validateRequiredApiKey(String provider, String baseUrl, String apiKey) {
+    if (LlmClient.requiresApiKey(provider, baseUrl) && apiKey.isBlank()) {
+      throw new ApiException(
+          HttpStatus.BAD_REQUEST,
+          "Falta configurar la API key de Gemini.",
+          "LLM_API_KEY_REQUIRED");
+    }
   }
 
   private JsonNode defaultLlm() {

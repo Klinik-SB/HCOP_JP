@@ -795,7 +795,7 @@ export class ConfigurationOperationsComponent implements OnInit, OnChanges, OnDe
   testLlm(): void {
     const draft = this.llmDraft;
     if (!draft || !this.canManage || this.busy) return;
-    const issues = validateLlmDraft(draft);
+    const issues = validateLlmDraft(draft, true);
     if (issues.length) return this.setLlmStatus(issues[0]!.message, 'error');
     this.busy = true;
     this.setLlmStatus('Probando la conexión con el modelo…', 'pending');

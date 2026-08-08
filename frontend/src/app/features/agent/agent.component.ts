@@ -207,6 +207,7 @@ export class AgentComponent implements OnInit, OnDestroy {
   private failureMessage(failure: ApiFailure): string {
     const code = String(failure?.error?.code || '');
     if (code === 'LLM_DISABLED') return 'El servicio LLM está desactivado. Puede habilitarlo en Configuración.';
+    if (code === 'LLM_API_KEY_REQUIRED') return 'Gemini no tiene una API key guardada. Agréguela y pruebe la conexión en Configuración.';
     if ((failure.status || failure?.error?.status) === 504) return 'El servicio tardó demasiado en responder. Intente nuevamente.';
     if ((failure.status || failure?.error?.status) === 403) return 'Su usuario no tiene permiso para usar el Agente clínico.';
     return failure?.error?.error || 'No se pudo completar la consulta al Agente clínico.';

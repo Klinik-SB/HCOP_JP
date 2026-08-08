@@ -2,6 +2,7 @@ package ar.com.hexium.hcop.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -16,6 +17,7 @@ import ar.com.hexium.hcop.catalog.SystemicFormCatalogService;
 import ar.com.hexium.hcop.common.ApiException;
 import ar.com.hexium.hcop.integration.LlmClient.Completion;
 import ar.com.hexium.hcop.integration.LlmClient.Message;
+import ar.com.hexium.hcop.integration.LlmClient.StructuredOutput;
 import ar.com.hexium.hcop.integration.LlmController.AgentChatRequest;
 import ar.com.hexium.hcop.integration.LlmController.AgentHistoryMessage;
 import ar.com.hexium.hcop.integration.SystemConfigService.Config;
@@ -265,7 +267,7 @@ class LlmControllerTest {
     assertThat(plainResponse.followUps()).isEmpty();
     assertThat(plainResponse.highlights()).isEmpty();
 
-    when(llm.complete(eq(config), anyList(), eq(true)))
+    when(llm.complete(eq(config), anyList(), eq(true), any(StructuredOutput.class)))
         .thenReturn(new Completion(
             "{\"artifacts\":[{\"type\":\"table\",\"columns\":[\"A\"],\"rows\":[]}]}",
             "modelo-proveedor",
@@ -349,12 +351,60 @@ class LlmControllerTest {
   }
 
   @Test
+  void informaNoConfiguradoCuandoGeminiNoTieneApiKey() {
+    Config geminiWithoutKey = new Config(
+        true,
+        "gemini",
+        "https://generativelanguage.googleapis.com/v1beta/openai",
+        "gemini-3.5-flash",
+        0.2,
+        1200,
+        60_000,
+        "");
+    when(configuration.internal()).thenReturn(geminiWithoutKey);
+
+    var response = controller.status(request);
+
+    assertThat(response.enabled()).isTrue();
+    assertThat(response.configured()).isFalse();
+  }
+
+  @Test
+  void solicitaRespuestaEstructuradaCompletaYProhibeTablasMarkdown() {
+    stubCompletion("Respuesta", "modelo-respuesta");
+
+    controller.agent(chat("Armame una tabla de PSA"), request);
+
+    @SuppressWarnings("rawtypes")
+    ArgumentCaptor<List> messages = ArgumentCaptor.forClass(List.class);
+    ArgumentCaptor<StructuredOutput> structured = ArgumentCaptor.forClass(StructuredOutput.class);
+    verify(llm).complete(eq(config), messages.capture(), eq(true), structured.capture());
+
+    assertThat((List<Message>) messages.getValue())
+        .anyMatch(message -> message.content().contains("No uses tablas Markdown"));
+    StructuredOutput output = structured.getValue();
+    assertThat(output.name()).isEqualTo("hcop_agent_response");
+    JsonNode schema = output.schema();
+    assertThat(schema.path("additionalProperties").asBoolean()).isFalse();
+    assertThat(schema.path("required"))
+        .extracting(JsonNode::asText)
+        .containsExactly("answer", "artifacts", "followUps", "highlights");
+    JsonNode artifact = schema.path("properties").path("artifacts").path("items");
+    assertThat(artifact.has("oneOf")).isFalse();
+    assertThat(artifact.path("required"))
+        .extracting(JsonNode::asText)
+        .containsExactly("type", "title", "columns", "rows", "chartType", "xLabel", "series");
+    assertThat(schema.toString()).doesNotContain("pattern", "maxLength");
+  }
+
+  @Test
   void propagaSinTraducirLosErroresExistentesDelClienteLlm() {
     ApiException upstream = new ApiException(
         HttpStatus.SERVICE_UNAVAILABLE,
         "El servicio LLM está desactivado.",
         "LLM_DISABLED");
-    when(llm.complete(eq(config), anyList(), eq(true))).thenThrow(upstream);
+    when(llm.complete(eq(config), anyList(), eq(true), any(StructuredOutput.class)))
+        .thenThrow(upstream);
 
     assertThatThrownBy(() -> controller.agent(chat("consulta"), request)).isSameAs(upstream);
   }
@@ -364,14 +414,14 @@ class LlmControllerTest {
   }
 
   private void stubCompletion(String content, String model) {
-    when(llm.complete(eq(config), anyList(), eq(true)))
+    when(llm.complete(eq(config), anyList(), eq(true), any(StructuredOutput.class)))
         .thenReturn(new Completion(content, model, mapper.createObjectNode()));
   }
 
   @SuppressWarnings({"rawtypes", "unchecked"})
   private List<Message> capturedMessages() {
     ArgumentCaptor<List> captor = ArgumentCaptor.forClass(List.class);
-    verify(llm).complete(eq(config), captor.capture(), eq(true));
+    verify(llm).complete(eq(config), captor.capture(), eq(true), any(StructuredOutput.class));
     return (List<Message>) captor.getValue();
   }
 }

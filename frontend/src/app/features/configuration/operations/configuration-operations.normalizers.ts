@@ -478,16 +478,29 @@ export function llmDraftFromConfiguration(config: LlmConfiguration): LlmDraft {
   return { ...config, apiKeyAction: 'keep', apiKey: '' };
 }
 
-export function validateLlmDraft(draft: LlmDraft): readonly ValidationIssue[] {
+export function validateLlmDraft(
+  draft: LlmDraft,
+  requireUsableConnection = draft.enabled
+): readonly ValidationIssue[] {
   const issues: ValidationIssue[] = [];
+  let hostname = '';
   try {
     const endpoint = new URL(draft.baseUrl);
+    hostname = endpoint.hostname.toLowerCase();
     if (!['http:', 'https:'].includes(endpoint.protocol) || !endpoint.hostname || endpoint.username || endpoint.password) throw new Error();
   } catch {
     issue(issues, 'baseUrl', 'El endpoint debe ser una dirección HTTP o HTTPS válida.');
   }
   if (!draft.model.trim() || draft.model.length > 200) issue(issues, 'model', 'Complete un modelo válido.');
   if (draft.apiKeyAction === 'replace' && !draft.apiKey.trim()) issue(issues, 'apiKey', 'Pegue la nueva API key o elija Conservar.');
+  const requiresApiKey = draft.provider === 'gemini' || hostname === 'generativelanguage.googleapis.com';
+  const hasEffectiveApiKey = draft.apiKeyAction === 'replace'
+    ? Boolean(draft.apiKey.trim())
+    : draft.apiKeyAction === 'keep' && draft.hasApiKey;
+  if (requireUsableConnection && requiresApiKey && !hasEffectiveApiKey
+      && !issues.some((item) => item.path === 'apiKey')) {
+    issue(issues, 'apiKey', 'Gemini necesita una API key. Elija Reemplazar y pegue la clave antes de habilitar o probar el servicio.');
+  }
   if (draft.temperature < 0 || draft.temperature > 2) issue(issues, 'temperature', 'La temperatura debe estar entre 0 y 2.');
   if (draft.maxTokens < 128 || draft.maxTokens > 16000) issue(issues, 'maxTokens', 'La respuesta debe admitir entre 128 y 16000 tokens.');
   if (draft.timeoutMs < 5000 || draft.timeoutMs > 180000) issue(issues, 'timeoutMs', 'El tiempo de espera debe estar entre 5 y 180 segundos.');

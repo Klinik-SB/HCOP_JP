@@ -5,6 +5,7 @@ import ar.com.hexium.hcop.catalog.SystemicFormCatalogService;
 import ar.com.hexium.hcop.common.ApiException;
 import ar.com.hexium.hcop.integration.LlmClient.Completion;
 import ar.com.hexium.hcop.integration.LlmClient.Message;
+import ar.com.hexium.hcop.integration.LlmClient.StructuredOutput;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.servlet.http.HttpServletRequest;
@@ -89,7 +90,7 @@ public class LlmController {
         config.enabled(),
         config.model(),
         config.provider(),
-        !config.baseUrl().isBlank());
+        LlmClient.configured(config));
   }
 
   @PostMapping("/api/llm/test")
@@ -195,12 +196,21 @@ public class LlmController {
         hormone, systemic, radiotherapy, surgery, immunotherapy y targeted.
         Los resaltados deben contener texto literal del contexto, nunca identificadores directos.
         No agregues claves distintas de las indicadas.
+        Si el usuario pide una tabla y existen datos documentados, devolvé un artifact de tipo table.
+        Si pide un gráfico y existen puntos documentados, devolvé un artifact de tipo chart.
+        No uses tablas Markdown, listas Markdown, arte ASCII ni texto para simular tablas o gráficos.
+        Todo artifact incluido debe completar todos los campos definidos por el esquema de respuesta.
+        En tablas usá chartType y xLabel vacíos y series []; en gráficos usá columns y rows [].
         """));
     String clinical = limited(body == null ? "" : body.clinicalText());
     messages.add(new Message("system", "CONTEXTO CLÍNICO:\n" + clinical));
     messages.addAll(boundedHistory(body == null ? null : body.history(), message));
     messages.add(new Message("user", message));
-    Completion response = llm.complete(configuration.internal(), messages, true);
+    Completion response = llm.complete(
+        configuration.internal(),
+        messages,
+        true,
+        new StructuredOutput("hcop_agent_response", agentResponseSchema()));
     return parseAgentResponse(response);
   }
 
@@ -229,6 +239,84 @@ public class LlmController {
             new Message("user", prompt)), true);
     JsonNode parsed = llm.parseJson(response.content());
     return Map.of("ok", true, "templateId", templateId, "fields", parsed, "model", response.model());
+  }
+
+  JsonNode agentResponseSchema() {
+    try {
+      return mapper.readTree("""
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["answer", "artifacts", "followUps", "highlights"],
+            "properties": {
+              "answer": {"type": "string"},
+              "artifacts": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["type", "title", "columns", "rows", "chartType", "xLabel", "series"],
+                  "properties": {
+                    "type": {"type": "string", "enum": ["table", "chart"]},
+                    "title": {"type": "string"},
+                    "columns": {"type": "array", "items": {"type": "string"}},
+                    "rows": {
+                      "type": "array",
+                      "items": {"type": "array", "items": {"type": "string"}}
+                    },
+                    "chartType": {"type": "string", "enum": ["", "line", "bar", "pie"]},
+                    "xLabel": {"type": "string"},
+                    "series": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["name", "color", "points"],
+                        "properties": {
+                          "name": {"type": "string"},
+                          "color": {"type": "string"},
+                          "points": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "additionalProperties": false,
+                              "required": ["x", "y", "label"],
+                              "properties": {
+                                "x": {"type": "string"},
+                                "y": {"type": "number"},
+                                "label": {"type": "string"}
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "followUps": {"type": "array", "items": {"type": "string"}},
+              "highlights": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["terms", "color"],
+                  "properties": {
+                    "terms": {"type": "array", "items": {"type": "string"}},
+                    "color": {
+                      "type": "string",
+                      "enum": ["study", "pathology", "chemotherapy", "evolution", "hormone",
+                        "systemic", "radiotherapy", "surgery", "immunotherapy", "targeted"]
+                    }
+                  }
+                }
+              }
+            }
+          }
+          """);
+    } catch (Exception invalidSchema) {
+      throw new IllegalStateException("El esquema estructurado del Agente no es válido.", invalidSchema);
+    }
   }
 
   private String limited(String value) {
