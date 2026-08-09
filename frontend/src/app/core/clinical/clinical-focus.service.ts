@@ -18,7 +18,8 @@ export class ClinicalFocusService {
   readonly request = signal<ClinicalFocusRequest>({ id: 0, highlights: [] });
 
   focus(value: { date?: string; text?: string; highlights?: ClinicalHighlight[] }): void {
-    this.request.set({ id: ++this.sequence, date: value.date, text: value.text, highlights: value.highlights || [] });
+    const highlights = value.highlights === undefined ? this.request().highlights : value.highlights;
+    this.request.set({ id: ++this.sequence, date: value.date, text: value.text, highlights });
   }
 
   highlight(highlights: ClinicalHighlight[]): void {

@@ -1,5 +1,13 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, OnDestroy, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
+import {
+  clearClinicalFocusHighlights,
+  findClinicalFocusTarget,
+  openClinicalFocusDetails,
+  renderClinicalFocusHighlights
+} from '../../core/clinical/clinical-focus.dom';
+import { ClinicalFocusRequest, ClinicalFocusService } from '../../core/clinical/clinical-focus.service';
 import { clinicalIsTreatmentRecord, clinicalTreatmentProjections } from '../../core/clinical/clinical-treatment-projection';
 import { ClinicalRecord, ClinicalState } from '../../core/patients/patient-workspace.models';
 import { PatientWorkspaceService } from '../../core/patients/patient-workspace.service';
@@ -33,8 +41,10 @@ const CATEGORY_LABELS: Record<TimelineCategory, string> = {
   templateUrl: './timeline-panel.component.html',
   styleUrl: './timeline-panel.component.scss'
 })
-export class TimelinePanelComponent {
+export class TimelinePanelComponent implements OnDestroy {
   readonly workspace = inject(PatientWorkspaceService);
+  private readonly clinicalFocus = inject(ClinicalFocusService);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   readonly query = new FormControl('', { nonNullable: true });
   readonly searchTerm = signal('');
   readonly milestonesOnly = signal(false);
@@ -54,8 +64,24 @@ export class TimelinePanelComponent {
     });
   });
   readonly years = computed(() => this.group(this.entries()));
+  private readonly querySubscription: Subscription;
+  private clinicalFocusTimer: ReturnType<typeof setTimeout> | null = null;
 
-  constructor() { this.query.valueChanges.subscribe((value) => this.searchTerm.set(value)); }
+  constructor() {
+    this.querySubscription = this.query.valueChanges.subscribe((value) => this.searchTerm.set(value));
+    effect(() => {
+      const request = this.clinicalFocus.request();
+      this.years();
+      if (!request.id) return;
+      queueMicrotask(() => this.applyClinicalFocus(request));
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.querySubscription.unsubscribe();
+    this.clearClinicalNavigationFocus();
+    clearClinicalFocusHighlights(this.host.nativeElement);
+  }
 
   toggleFilter(category: TimelineCategory): void {
     this.filters.update((current) => current.includes(category) ? current.filter((item) => item !== category) : [...current, category]);
@@ -67,11 +93,32 @@ export class TimelinePanelComponent {
   icon(category: TimelineCategory): string { return ({ diagnosis: '✚', study: '▧', pathology: '⌕', evolution: '✎', research: '⌬', prescription: '▤', certificate: '▤', study_order: '▧', indication: '▱', radiotherapy: '◉', surgery: '✚', chemotherapy: '◈', hormone: '●', immunotherapy: '⛨', targeted: '◎', systemic: '♥' } as Record<TimelineCategory, string>)[category]; }
   focus(date: string): void {
     if (!date) return;
-    const target = [...document.querySelectorAll<HTMLElement>('[data-clinical-date]')].find((node) => node.dataset['clinicalDate'] === date);
+    this.clinicalFocus.focus({ date });
+  }
+
+  private applyClinicalFocus(request: ClinicalFocusRequest): void {
+    if (this.clinicalFocus.request().id !== request.id) return;
+    const root = this.host.nativeElement;
+    this.clearClinicalNavigationFocus();
+    const rendered = renderClinicalFocusHighlights(root, request.highlights || []);
+    const target = findClinicalFocusTarget(root, request, '.right-timeline-item[data-clinical-date], .right-timeline-item')
+      || rendered.firstMark?.closest<HTMLElement>('.right-timeline-item')
+      || rendered.firstMark;
     if (!target) return;
-    target.classList.add('clinical-period-focus');
+    openClinicalFocusDetails(target);
+    target.classList.add('agent-navigation-focus');
     target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    window.setTimeout(() => target.classList.remove('clinical-period-focus'), 3500);
+    this.clinicalFocusTimer = setTimeout(() => {
+      target.classList.remove('agent-navigation-focus');
+      this.clinicalFocusTimer = null;
+    }, 5_000);
+  }
+
+  private clearClinicalNavigationFocus(): void {
+    if (this.clinicalFocusTimer) clearTimeout(this.clinicalFocusTimer);
+    this.clinicalFocusTimer = null;
+    this.host.nativeElement.querySelectorAll<HTMLElement>('.agent-navigation-focus')
+      .forEach((element) => element.classList.remove('agent-navigation-focus'));
   }
 
   private entriesFrom(state?: ClinicalState, relationalTreatments: readonly ClinicalRecord[] = []): TimelineEvent[] {

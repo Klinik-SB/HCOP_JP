@@ -9,10 +9,12 @@ import ar.com.hexium.hcop.integration.LlmClient.StructuredOutput;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.servlet.http.HttpServletRequest;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -33,16 +35,16 @@ public class LlmController {
   static final int MAX_AGENT_HISTORY_MESSAGES = 12;
   static final int MAX_AGENT_HISTORY_MESSAGE_CHARS = 8_000;
   static final int MAX_AGENT_ANSWER_CHARS = 32_000;
-  static final int MAX_AGENT_ARTIFACTS = 8;
-  static final int MAX_AGENT_FOLLOW_UPS = 8;
-  static final int MAX_AGENT_HIGHLIGHTS = 20;
+  static final int MAX_AGENT_ARTIFACTS = 2;
+  static final int MAX_AGENT_FOLLOW_UPS = 3;
+  static final int MAX_AGENT_HIGHLIGHTS = 3;
   private static final int MAX_AGENT_TITLE_CHARS = 160;
-  private static final int MAX_AGENT_COLUMNS = 12;
-  private static final int MAX_AGENT_ROWS = 100;
+  private static final int MAX_AGENT_COLUMNS = 8;
+  private static final int MAX_AGENT_ROWS = 20;
   private static final int MAX_AGENT_CELL_CHARS = 500;
-  private static final int MAX_AGENT_SERIES = 8;
-  private static final int MAX_AGENT_POINTS = 100;
-  private static final int MAX_AGENT_TERMS = 20;
+  private static final int MAX_AGENT_SERIES = 2;
+  private static final int MAX_AGENT_POINTS = 20;
+  private static final int MAX_AGENT_TERMS = 5;
   private static final int MAX_AGENT_TERM_CHARS = 160;
   private static final int MAX_AGENT_FOLLOW_UP_CHARS = 500;
   private static final Set<String> AGENT_CHART_TYPES = Set.of("line", "bar", "pie");
@@ -200,6 +202,11 @@ public class LlmController {
         Si pide un gráfico y existen puntos documentados, devolvé un artifact de tipo chart.
         No uses tablas Markdown, listas Markdown, arte ASCII ni texto para simular tablas o gráficos.
         Todo artifact incluido debe completar todos los campos definidos por el esquema de respuesta.
+        answer: máximo 3 frases. Máximo 2 artifacts; tablas de 8 columnas y 20 filas;
+        gráficos de 2 series y 20 puntos por serie; 3 followUps; 3 highlights con 5 terms cada uno.
+        En tablas, gráficos y etiquetas transcribí datos documentados. No clasifiques valores como
+        normal, alterado o elevado ni sugieras estudios, valoración o conducta, salvo que el contexto
+        documente expresamente el rango, la conclusión o la conducta. Marcá toda inferencia en answer.
         En tablas usá chartType y xLabel vacíos y series []; en gráficos usá columns y rows [].
         """));
     String clinical = limited(body == null ? "" : body.clinicalText());
@@ -211,7 +218,7 @@ public class LlmController {
         messages,
         true,
         new StructuredOutput("hcop_agent_response", agentResponseSchema()));
-    return parseAgentResponse(response);
+    return parseAgentResponse(response, clinical);
   }
 
   @PostMapping("/api/llm/fill-systemic-form")
@@ -352,23 +359,38 @@ public class LlmController {
     return value.length() <= maximum ? value : value.substring(0, maximum);
   }
 
-  private AgentChatResponse parseAgentResponse(Completion completion) {
+  private AgentChatResponse parseAgentResponse(Completion completion, String clinicalText) {
     String raw = completion.content() == null ? "" : completion.content().trim();
     JsonNode structured = tryParseAgentJson(raw);
-    if (structured == null || !structured.isObject()) {
+    if (structured == null) {
+      if (resemblesStructuredJson(raw)) throw invalidStructuredResponse();
       return textAgentResponse(raw, completion.model());
     }
+    if (!structured.isObject()) throw invalidStructuredResponse();
     String answer = structuredText(structured.path("answer"), MAX_AGENT_ANSWER_CHARS);
-    if (answer.isBlank()) {
-      return textAgentResponse(raw, completion.model());
-    }
+    if (answer.isBlank()) throw invalidStructuredResponse();
     return new AgentChatResponse(
         true,
         answer,
         safeModel(completion.model()),
         sanitizeArtifacts(structured.path("artifacts")),
         sanitizeFollowUps(structured.path("followUps")),
-        sanitizeHighlights(structured.path("highlights")));
+        sanitizeHighlights(structured.path("highlights"), clinicalText));
+  }
+
+  private ApiException invalidStructuredResponse() {
+    return new ApiException(
+        HttpStatus.BAD_GATEWAY,
+        "El servicio LLM devolvió una respuesta estructurada incompleta. Intente nuevamente.",
+        "LLM_INVALID_STRUCTURED_RESPONSE");
+  }
+
+  private boolean resemblesStructuredJson(String raw) {
+    String value = raw == null ? "" : raw.stripLeading();
+    if (value.startsWith("```")) {
+      value = value.replaceFirst("(?is)^```(?:json)?\\s*", "").stripLeading();
+    }
+    return value.startsWith("{") || value.startsWith("[");
   }
 
   private AgentChatResponse textAgentResponse(String raw, String model) {
@@ -490,8 +512,10 @@ public class LlmController {
     return List.copyOf(result);
   }
 
-  private List<JsonNode> sanitizeHighlights(JsonNode input) {
+  private List<JsonNode> sanitizeHighlights(JsonNode input, String clinicalText) {
     if (!input.isArray()) return List.of();
+    String normalizedClinicalText = normalizeSearch(clinicalText);
+    if (normalizedClinicalText.isBlank()) return List.of();
     List<JsonNode> result = new ArrayList<>(MAX_AGENT_HIGHLIGHTS);
     for (JsonNode item : input) {
       if (result.size() >= MAX_AGENT_HIGHLIGHTS) break;
@@ -502,8 +526,13 @@ public class LlmController {
       for (JsonNode term : item.path("terms")) {
         if (terms.size() >= MAX_AGENT_TERMS) break;
         String value = structuredText(term, MAX_AGENT_TERM_CHARS);
-        String key = value.toLowerCase(java.util.Locale.ROOT);
-        if (value.length() >= 3 && normalized.add(key)) terms.add(value);
+        String key = normalizeSearch(value);
+        if (value.length() >= 3
+            && !key.isBlank()
+            && normalizedClinicalText.contains(key)
+            && normalized.add(key)) {
+          terms.add(value);
+        }
       }
       if (terms.isEmpty()) continue;
       String color = item.path("color").asText("");
@@ -511,6 +540,15 @@ public class LlmController {
       result.add(output);
     }
     return List.copyOf(result);
+  }
+
+  private String normalizeSearch(String value) {
+    String text = value == null ? "" : value;
+    return Normalizer.normalize(text, Normalizer.Form.NFD)
+        .replaceAll("\\p{M}+", "")
+        .toLowerCase(Locale.forLanguageTag("es-AR"))
+        .replaceAll("\\s+", " ")
+        .trim();
   }
 
   private String structuredText(JsonNode node, int maximum) {

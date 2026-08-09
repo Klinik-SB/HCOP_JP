@@ -8,12 +8,47 @@ export interface AgentAnswerParagraph {
   readonly text: string;
 }
 
+export interface AgentAnswerHeading {
+  readonly kind: 'heading';
+  readonly level: 1 | 2 | 3 | 4 | 5 | 6;
+  readonly text: string;
+}
+
 export interface AgentAnswerList {
   readonly kind: 'list';
+  readonly ordered: boolean;
+  readonly start?: number;
   readonly items: readonly string[];
 }
 
-export type AgentAnswerBlock = AgentAnswerParagraph | AgentAnswerList;
+export interface AgentAnswerTable {
+  readonly kind: 'table';
+  readonly columns: readonly string[];
+  readonly rows: readonly (readonly string[])[];
+}
+
+export interface AgentAnswerCode {
+  readonly kind: 'code';
+  readonly language: string;
+  readonly text: string;
+}
+
+export type AgentAnswerBlock = AgentAnswerParagraph | AgentAnswerHeading | AgentAnswerList | AgentAnswerTable | AgentAnswerCode;
+
+export type AgentInlineToken =
+  | { readonly kind: 'text'; readonly text: string }
+  | { readonly kind: 'strong'; readonly text: string }
+  | { readonly kind: 'emphasis'; readonly text: string }
+  | { readonly kind: 'code'; readonly text: string };
+
+export interface AgentAnswerOptions {
+  readonly suppressFencedCode?: boolean;
+}
+
+export interface AgentNavigationTarget {
+  readonly date?: string;
+  readonly text: string;
+}
 
 export interface AgentChartPlot {
   readonly left: number;
@@ -40,7 +75,8 @@ export interface AgentChartPointView {
   readonly y: number;
   readonly color: string;
   readonly tooltip: string;
-  readonly navigation: string;
+  readonly navigationText: string;
+  readonly navigationDate: string;
   readonly bar?: AgentChartBar;
 }
 
@@ -68,7 +104,8 @@ export interface AgentPieSliceView {
   readonly path: string;
   readonly color: string;
   readonly tooltip: string;
-  readonly navigation: string;
+  readonly navigationText: string;
+  readonly navigationDate: string;
   readonly legend: string;
 }
 
@@ -87,26 +124,208 @@ interface NormalizedSeries {
   readonly points: readonly AgentChartPoint[];
 }
 
-/**
- * Conserva la presentación segura del cliente histórico sin inyectar HTML del LLM.
- * Sólo separa párrafos y listas; Angular sigue escapando todo el contenido.
- */
-export function agentAnswerBlocks(value: string): AgentAnswerBlock[] {
-  return String(value || '')
-    .replace(/\r/g, '')
-    .split(/\n{2,}/)
-    .map((block) => block.trim())
-    .filter(Boolean)
-    .map((block): AgentAnswerBlock => {
-      const lines = block.split('\n').map((line) => line.trim()).filter(Boolean);
-      if (lines.length && lines.every((line) => /^[-•*]\s+/.test(line))) {
-        return {
-          kind: 'list',
-          items: lines.map((line) => line.replace(/^[-•*]\s+/, '').trim()).filter(Boolean)
-        };
+export function agentAnswerBlocks(value: string, options: AgentAnswerOptions = {}): AgentAnswerBlock[] {
+  const lines = String(value || '').replace(/\r/g, '').split('\n');
+  const blocks: AgentAnswerBlock[] = [];
+  let index = 0;
+
+  while (index < lines.length) {
+    if (!lines[index].trim()) {
+      index += 1;
+      continue;
+    }
+
+    const fence = lines[index].trim().match(/^```([\w-]*)\s*$/);
+    if (fence) {
+      const code: string[] = [];
+      index += 1;
+      while (index < lines.length && !/^```\s*$/.test(lines[index].trim())) {
+        code.push(lines[index]);
+        index += 1;
       }
-      return { kind: 'paragraph', text: block };
-    });
+      if (index < lines.length) index += 1;
+      if (!options.suppressFencedCode && code.some((line) => line.trim())) {
+        blocks.push({ kind: 'code', language: fence[1].toLowerCase(), text: code.join('\n') });
+      }
+      continue;
+    }
+
+    const table = markdownTableAt(lines, index);
+    if (table) {
+      blocks.push(table.block);
+      index = table.nextIndex;
+      continue;
+    }
+
+    const heading = markdownHeading(lines[index]);
+    if (heading) {
+      blocks.push(heading);
+      index += 1;
+      continue;
+    }
+
+    const firstListItem = markdownListItem(lines[index]);
+    if (firstListItem) {
+      const items: string[] = [];
+      const ordered = firstListItem.ordered;
+      const start = firstListItem.ordinal;
+      while (index < lines.length) {
+        const item = markdownListItem(lines[index]);
+        if (!item || item.ordered !== ordered) break;
+        items.push(item.text);
+        index += 1;
+      }
+      blocks.push({ kind: 'list', ordered, ...(ordered && start ? { start } : {}), items });
+      continue;
+    }
+
+    const paragraph: string[] = [];
+    while (index < lines.length && lines[index].trim()) {
+      if (paragraph.length && (
+        markdownHeading(lines[index])
+        || markdownListItem(lines[index])
+        || markdownTableAt(lines, index)
+        || /^```[\w-]*\s*$/.test(lines[index].trim())
+      )) break;
+      paragraph.push(lines[index].trim());
+      index += 1;
+    }
+    if (paragraph.length) blocks.push({ kind: 'paragraph', text: paragraph.join('\n') });
+  }
+
+  return blocks;
+}
+
+/** Tokenizes the small inline Markdown subset rendered by Angular interpolation. */
+export function agentInlineTokens(value: string): AgentInlineToken[] {
+  const source = String(value ?? '');
+  const matcher = /(`[^`\n]+`|\*\*[^*\n]+\*\*|__[^_\n]+__|\*[^*\n]+\*|_[^_\n]+_)/g;
+  const tokens: AgentInlineToken[] = [];
+  let cursor = 0;
+  for (const match of source.matchAll(matcher)) {
+    const index = match.index ?? 0;
+    if (index > cursor) tokens.push({ kind: 'text', text: source.slice(cursor, index) });
+    const marked = match[0];
+    if (marked.startsWith('`')) {
+      tokens.push({ kind: 'code', text: marked.slice(1, -1) });
+    } else if (marked.startsWith('**') || marked.startsWith('__')) {
+      tokens.push({ kind: 'strong', text: marked.slice(2, -2) });
+    } else {
+      tokens.push({ kind: 'emphasis', text: marked.slice(1, -1) });
+    }
+    cursor = index + marked.length;
+  }
+  if (cursor < source.length) tokens.push({ kind: 'text', text: source.slice(cursor) });
+  return tokens.length ? tokens : [{ kind: 'text', text: source }];
+}
+
+export function agentPlainText(value: string): string {
+  return agentInlineTokens(value).map((token) => token.text).join('');
+}
+
+/** Returns a normalized clinical date found in a chart x value, never in its label. */
+export function agentNavigationDate(value: string | number): string {
+  const text = String(value ?? '').trim();
+  const iso = text.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/);
+  if (iso && isCalendarDate(Number(iso[1]), Number(iso[2]), Number(iso[3]))) {
+    return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  }
+  const local = text.match(/\b(\d{1,2})\/(\d{1,2})\/(20\d{2})\b/);
+  if (!local) return '';
+  const year = Number(local[3]);
+  const month = Number(local[2]);
+  const day = Number(local[1]);
+  return isCalendarDate(year, month, day)
+    ? `${local[3]}-${local[2].padStart(2, '0')}-${local[1].padStart(2, '0')}`
+    : '';
+}
+
+export function agentNavigationTarget(value: string, preferredDate = ''): AgentNavigationTarget | null {
+  const text = agentPlainText(value).trim();
+  if (!text) return null;
+  const date = agentNavigationDate(preferredDate) || agentNavigationDate(text);
+  return { ...(date ? { date } : {}), text };
+}
+
+function markdownHeading(line: string): AgentAnswerHeading | null {
+  const text = line.trim();
+  const markdown = text.match(/^(#{1,6})\s+(.+?)\s*#*$/);
+  if (markdown) {
+    return {
+      kind: 'heading',
+      level: markdown[1].length as AgentAnswerHeading['level'],
+      text: markdown[2].trim()
+    };
+  }
+  const strong = text.match(/^\*\*(.+)\*\*$/) || text.match(/^__(.+)__$/);
+  return strong ? { kind: 'heading', level: 3, text: strong[1].trim() } : null;
+}
+
+function markdownListItem(line: string): { readonly ordered: boolean; readonly ordinal?: number; readonly text: string } | null {
+  const ordered = line.match(/^\s*(\d+)[.)]\s+(.+?)\s*$/);
+  if (ordered) {
+    return {
+      ordered: true,
+      ordinal: Math.max(1, Math.min(9999, Number(ordered[1]) || 1)),
+      text: ordered[2].trim()
+    };
+  }
+  const unordered = line.match(/^\s*[-*+\u2022]\s+(.+?)\s*$/);
+  return unordered ? { ordered: false, text: unordered[1].trim() } : null;
+}
+
+function markdownTableAt(
+  lines: readonly string[],
+  index: number
+): { readonly block: AgentAnswerTable; readonly nextIndex: number } | null {
+  if (index + 1 >= lines.length) return null;
+  const columns = markdownTableCells(lines[index]);
+  const separator = markdownTableCells(lines[index + 1]);
+  if (columns.length < 2 || separator.length !== columns.length) return null;
+  if (!separator.every((cell) => /^:?-{3,}:?$/.test(cell.replace(/\s/g, '')))) return null;
+
+  const rows: string[][] = [];
+  let cursor = index + 2;
+  while (cursor < lines.length && lines[cursor].trim()) {
+    const cells = markdownTableCells(lines[cursor]);
+    if (cells.length < 2) break;
+    rows.push(Array.from({ length: columns.length }, (_, cellIndex) => cells[cellIndex] || ''));
+    cursor += 1;
+  }
+  return { block: { kind: 'table', columns, rows }, nextIndex: cursor };
+}
+
+function markdownTableCells(line: string): string[] {
+  let text = line.trim();
+  if (!text.includes('|')) return [];
+  if (text.startsWith('|')) text = text.slice(1);
+  if (text.endsWith('|') && !text.endsWith('\\|')) text = text.slice(0, -1);
+
+  const cells: string[] = [];
+  let current = '';
+  let escaped = false;
+  for (const character of text) {
+    if (escaped) {
+      current += character === '|' ? '|' : `\\${character}`;
+      escaped = false;
+    } else if (character === '\\') {
+      escaped = true;
+    } else if (character === '|') {
+      cells.push(current.trim());
+      current = '';
+    } else {
+      current += character;
+    }
+  }
+  if (escaped) current += '\\';
+  cells.push(current.trim());
+  return cells;
+}
+
+function isCalendarDate(year: number, month: number, day: number): boolean {
+  if (year < 2000 || year > 2099 || month < 1 || month > 12 || day < 1 || day > 31) return false;
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 }
 
 export function buildAgentChartView(chart: AgentChartArtifact): AgentChartView | null {
@@ -181,8 +400,10 @@ function buildCartesianChart(chart: AgentChartArtifact, series: readonly Normali
       const yValue = Number(point.y);
       const x = xFor(point.x);
       const y = yFor(yValue);
-      const tooltip = String(point.label || '').trim() || `${point.x}: ${formatChartNumber(yValue)}`;
-      const navigation = String(point.label || '').trim() || String(point.x);
+      const pointLabel = agentPlainText(String(point.label || '')).trim();
+      const tooltip = pointLabel || `${agentPlainText(String(point.x))}: ${formatChartNumber(yValue)}`;
+      const navigationText = pointLabel || agentPlainText(String(point.x));
+      const navigationDate = agentNavigationDate(point.x);
       if (chartType === 'bar') {
         const barX = x - (barWidth * series.length / 2) + (seriesIndex * barWidth);
         return {
@@ -190,7 +411,8 @@ function buildCartesianChart(chart: AgentChartArtifact, series: readonly Normali
           y,
           color: item.color,
           tooltip,
-          navigation,
+          navigationText,
+          navigationDate,
           bar: {
             x: barX,
             y: Math.min(y, baselineY),
@@ -199,7 +421,7 @@ function buildCartesianChart(chart: AgentChartArtifact, series: readonly Normali
           }
         };
       }
-      return { x, y, color: item.color, tooltip, navigation };
+      return { x, y, color: item.color, tooltip, navigationText, navigationDate };
     });
     return {
       name: item.name,
@@ -232,11 +454,14 @@ function buildPieChart(series: NormalizedSeries): AgentPieChartView | null {
     const end = angle + portion * Math.PI * 2;
     const path = pieSlicePath(centerX, centerY, radius, angle, end, portion);
     const color = index === 0 ? series.color : CHART_COLORS[(index + 1) % CHART_COLORS.length];
-    const tooltip = String(point.label || '').trim() || `${point.x}: ${formatChartNumber(value)}`;
-    const navigation = String(point.label || '').trim() || String(point.x);
-    const legend = `${point.x}: ${formatChartNumber(value)} (${new Intl.NumberFormat('es-AR', { maximumFractionDigits: 1 }).format(portion * 100)}%)`;
+    const pointLabel = agentPlainText(String(point.label || '')).trim();
+    const pointX = agentPlainText(String(point.x));
+    const tooltip = pointLabel || `${pointX}: ${formatChartNumber(value)}`;
+    const navigationText = pointLabel || pointX;
+    const navigationDate = agentNavigationDate(point.x);
+    const legend = `${pointX}: ${formatChartNumber(value)} (${new Intl.NumberFormat('es-AR', { maximumFractionDigits: 1 }).format(portion * 100)}%)`;
     angle = end;
-    return { path, color, tooltip, navigation, legend };
+    return { path, color, tooltip, navigationText, navigationDate, legend };
   });
   return { kind: 'pie', width, height, slices };
 }

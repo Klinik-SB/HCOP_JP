@@ -221,7 +221,12 @@ class LlmControllerTest {
         ```
         """, "modelo-proveedor");
 
-    var response = controller.agent(chat("consulta"), request);
+    var response = controller.agent(new AgentChatRequest(
+        "consulta",
+        "Se documentó neutropenia durante el tratamiento.",
+        List.of(),
+        null,
+        false), request);
 
     assertThat(response.answer()).isEqualTo("Hallazgo documentado");
     assertThat(response.artifacts()).hasSize(2);
@@ -256,7 +261,7 @@ class LlmControllerTest {
   }
 
   @Test
-  void conservaTextoPlanoYJsonIncompletoSinRomperProveedoresExistentes() {
+  void conservaTextoPlanoYNoExponeJsonIncompleto() {
     String plain = "Respuesta tradicional sin estructura";
     stubCompletion(plain, "modelo-proveedor");
 
@@ -272,10 +277,43 @@ class LlmControllerTest {
             "{\"artifacts\":[{\"type\":\"table\",\"columns\":[\"A\"],\"rows\":[]}]}",
             "modelo-proveedor",
             mapper.createObjectNode()));
-    var incompleteResponse = controller.agent(chat("otra consulta"), request);
+    assertThatThrownBy(() -> controller.agent(chat("otra consulta"), request))
+        .isInstanceOf(ApiException.class)
+        .satisfies(error -> {
+          ApiException api = (ApiException) error;
+          assertThat(api.code()).isEqualTo("LLM_INVALID_STRUCTURED_RESPONSE");
+          assertThat(api.getMessage())
+              .contains("respuesta estructurada incompleta")
+              .doesNotContain("artifacts", "columns");
+        });
+  }
 
-    assertThat(incompleteResponse.answer()).contains("\"artifacts\"");
-    assertThat(incompleteResponse.artifacts()).isEmpty();
+  @Test
+  void conservaSoloHighlightsLiteralesDelContextoNormalizado() {
+    stubCompletion("""
+        {
+          "answer":"Valores documentados.",
+          "artifacts":[],
+          "followUps":[],
+          "highlights":[
+            {"terms":["PSA TOTAL 4,2 ng/mL","PSA total 99 ng/mL"],"color":"study"},
+            {"terms":["metástasis ósea"],"color":"pathology"}
+          ]
+        }
+        """, "modelo-proveedor");
+
+    var response = controller.agent(new AgentChatRequest(
+        "consulta",
+        "Laboratorio: PSA total 4,2 ng/mL.",
+        List.of(),
+        null,
+        false), request);
+
+    assertThat(response.highlights()).hasSize(1);
+    assertThat(response.highlights().get(0).path("terms"))
+        .extracting(JsonNode::asText)
+        .containsExactly("PSA TOTAL 4,2 ng/mL");
+    assertThat(response.highlights().get(0).path("color").asText()).isEqualTo("study");
   }
 
   @Test
@@ -307,19 +345,20 @@ class LlmControllerTest {
     }
     stubCompletion(root.toString(), "m".repeat(500));
 
-    var response = controller.agent(chat("consulta"), request);
+    var response = controller.agent(new AgentChatRequest(
+        "consulta", root.path("highlights").toString(), List.of(), null, false), request);
 
     assertThat(response.answer()).hasSize(LlmController.MAX_AGENT_ANSWER_CHARS);
     assertThat(response.model()).hasSize(160);
     assertThat(response.artifacts()).hasSize(LlmController.MAX_AGENT_ARTIFACTS);
     JsonNode firstTable = response.artifacts().get(0);
-    assertThat(firstTable.path("columns")).hasSize(12);
-    assertThat(firstTable.path("rows")).hasSize(100);
-    assertThat(firstTable.path("rows").path(0)).hasSize(12);
+    assertThat(firstTable.path("columns")).hasSize(8);
+    assertThat(firstTable.path("rows")).hasSize(20);
+    assertThat(firstTable.path("rows").path(0)).hasSize(8);
     assertThat(firstTable.path("rows").path(0).path(0).asText()).hasSize(500);
     assertThat(response.followUps()).hasSize(LlmController.MAX_AGENT_FOLLOW_UPS);
     assertThat(response.highlights()).hasSize(LlmController.MAX_AGENT_HIGHLIGHTS);
-    assertThat(response.highlights().get(0).path("terms")).hasSize(20);
+    assertThat(response.highlights().get(0).path("terms")).hasSize(5);
   }
 
   @Test
@@ -381,9 +420,12 @@ class LlmControllerTest {
     verify(llm).complete(eq(config), messages.capture(), eq(true), structured.capture());
 
     assertThat((List<Message>) messages.getValue())
-        .anyMatch(message -> message.content().contains("No uses tablas Markdown"));
+        .anyMatch(message -> message.content().contains("No uses tablas Markdown")
+            && message.content().contains("20 puntos")
+            && message.content().contains("No clasifiques valores"));
     StructuredOutput output = structured.getValue();
     assertThat(output.name()).isEqualTo("hcop_agent_response");
+    assertThat(output.minimumOutputTokens()).isEqualTo(4096);
     JsonNode schema = output.schema();
     assertThat(schema.path("additionalProperties").asBoolean()).isFalse();
     assertThat(schema.path("required"))

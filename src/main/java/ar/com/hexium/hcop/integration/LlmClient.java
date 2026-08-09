@@ -18,6 +18,7 @@ import tools.jackson.databind.node.ObjectNode;
 
 @Service
 public class LlmClient {
+  static final int DEFAULT_STRUCTURED_MIN_TOKENS = 4096;
   private final ObjectMapper mapper;
   private final HttpClient http;
 
@@ -75,6 +76,12 @@ public class LlmClient {
       String content = ollama
           ? payload.path("message").path("content").asText("")
           : payload.path("choices").path(0).path("message").path("content").asText("");
+      if (structuredOutput != null && wasTruncated(payload, ollama)) {
+        throw new ApiException(
+            HttpStatus.BAD_GATEWAY,
+            "El servicio LLM truncó la respuesta estructurada. Intente nuevamente.",
+            "LLM_STRUCTURED_RESPONSE_TRUNCATED");
+      }
       if (content.isBlank()) {
         throw new ApiException(
             HttpStatus.BAD_GATEWAY,
@@ -140,13 +147,16 @@ public class LlmClient {
       node.put("role", message.role());
       node.put("content", message.content());
     });
+    int outputTokens = structuredOutput == null
+        ? config.maxTokens()
+        : Math.max(config.maxTokens(), structuredOutput.minimumOutputTokens());
     if (ollama) {
       ObjectNode options = body.putObject("options");
       options.put("temperature", config.temperature());
-      options.put("num_predict", config.maxTokens());
+      options.put("num_predict", outputTokens);
     } else {
       body.put("temperature", config.temperature());
-      body.put("max_tokens", config.maxTokens());
+      body.put("max_tokens", outputTokens);
     }
     if (requiresApiKey(config)) body.put("reasoning_effort", "low");
     if (structuredOutput != null) {
@@ -162,6 +172,13 @@ public class LlmClient {
       }
     }
     return body;
+  }
+
+  private boolean wasTruncated(JsonNode payload, boolean ollama) {
+    String reason = ollama
+        ? payload.path("done_reason").asText("")
+        : payload.path("choices").path(0).path("finish_reason").asText("");
+    return "length".equalsIgnoreCase(reason);
   }
 
   private String upstreamErrorDetail(JsonNode payload, int statusCode) {
@@ -196,13 +213,20 @@ public class LlmClient {
   public record Message(String role, String content) {
   }
 
-  public record StructuredOutput(String name, JsonNode schema) {
+  public record StructuredOutput(String name, JsonNode schema, int minimumOutputTokens) {
+    public StructuredOutput(String name, JsonNode schema) {
+      this(name, schema, DEFAULT_STRUCTURED_MIN_TOKENS);
+    }
+
     public StructuredOutput {
       if (name == null || !name.matches("[A-Za-z0-9_-]{1,64}")) {
         throw new IllegalArgumentException("El nombre del esquema estructurado no es válido.");
       }
       if (schema == null || !schema.isObject()) {
         throw new IllegalArgumentException("El esquema estructurado debe ser un objeto JSON.");
+      }
+      if (minimumOutputTokens < 128 || minimumOutputTokens > 16_000) {
+        throw new IllegalArgumentException("El presupuesto estructurado debe estar entre 128 y 16000 tokens.");
       }
       schema = schema.deepCopy();
     }

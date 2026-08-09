@@ -108,6 +108,7 @@ class LlmClientTest {
     assertThat(authorization).hasValue("Bearer secret");
     JsonNode body = mapper.readTree(requestBody.get());
     assertThat(body.path("reasoning_effort").asText()).isEqualTo("low");
+    assertThat(body.path("max_tokens").asInt()).isEqualTo(4096);
     assertThat(body.path("response_format").path("type").asText()).isEqualTo("json_schema");
     assertThat(body.path("response_format").path("json_schema").path("name").asText())
         .isEqualTo("hcop_agent_response");
@@ -128,6 +129,29 @@ class LlmClientTest {
     JsonNode body = mapper.readTree(requestBody.get());
     assertThat(body.has("response_format")).isFalse();
     assertThat(body.has("reasoning_effort")).isFalse();
+    assertThat(body.path("max_tokens").asInt()).isEqualTo(1200);
+  }
+
+  @Test
+  void informaElTruncadoEstructuradoSinEntregarElJsonParcial() throws Exception {
+    response.set(new ResponseSpec(200, """
+        {"model":"test-model","choices":[{"finish_reason":"length","message":{"content":"{\\\"answer\\\":\\\"parcial"}}]}
+        """));
+    JsonNode schema = mapper.readTree("""
+        {"type":"object","properties":{"answer":{"type":"string"}}}
+        """);
+
+    assertThatThrownBy(() -> client.complete(
+        config("openai-compatible", localBaseUrl(), ""),
+        List.of(new Message("user", "Consulta")),
+        true,
+        new StructuredOutput("hcop_agent_response", schema)))
+        .isInstanceOf(ApiException.class)
+        .satisfies(error -> {
+          ApiException api = (ApiException) error;
+          assertThat(api.code()).isEqualTo("LLM_STRUCTURED_RESPONSE_TRUNCATED");
+          assertThat(api.getMessage()).contains("truncó").doesNotContain("parcial");
+        });
   }
 
   private void assertApiKeyRequired(Config config) {

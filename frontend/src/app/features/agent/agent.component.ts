@@ -5,8 +5,9 @@ import { deidentifyClinicalContext, deidentifyClinicalText } from '../../core/cl
 import { ClinicalFocusService } from '../../core/clinical/clinical-focus.service';
 import type { PatientWorkspace } from '../../core/patients/patient-workspace.models';
 import { PatientWorkspaceService } from '../../core/patients/patient-workspace.service';
+import { AgentInlineComponent } from './agent-inline.component';
 import { AgentArtifact, AgentChartArtifact, AgentChatResponse, AgentConversationMessage, AgentHighlight, AgentStatus, AgentTableArtifact } from './agent.models';
-import { agentAnswerBlocks, buildAgentChartView } from './agent-presentation';
+import { agentAnswerBlocks, agentNavigationTarget, buildAgentChartView } from './agent-presentation';
 import { AgentService } from './agent.service';
 
 interface ApiFailure {
@@ -14,12 +15,20 @@ interface ApiFailure {
   status?: number;
 }
 
+interface AgentChartTooltipState {
+  readonly chartKey: string;
+  readonly targetKey: string;
+  readonly text: string;
+  readonly left: number;
+  readonly top: number;
+}
+
 const GREETING = 'Puedo analizar esta historia, crear resúmenes, tablas, gráficos y resaltar datos clínicos en ambos paneles.';
 const HIGHLIGHT_COLORS = new Set(['study', 'pathology', 'chemotherapy', 'evolution', 'hormone', 'systemic', 'radiotherapy', 'surgery', 'immunotherapy', 'targeted']);
 
 @Component({
   selector: 'app-agent',
-  imports: [FormsModule],
+  imports: [FormsModule, AgentInlineComponent],
   templateUrl: './agent.component.html',
   styleUrl: './agent.component.scss'
 })
@@ -35,7 +44,8 @@ export class AgentComponent implements OnInit, OnDestroy {
   readonly busy = signal(false);
   readonly status = signal<AgentStatus | null>(null);
   readonly conversation = signal<AgentConversationMessage[]>([this.greeting()]);
-  readonly answerBlocks = agentAnswerBlocks;
+  readonly selectedTarget = signal<string | null>(null);
+  readonly chartTooltip = signal<AgentChartTooltipState | null>(null);
   readonly chartView = buildAgentChartView;
   private activeRequest?: Subscription;
   private requestSequence = 0;
@@ -154,13 +164,40 @@ export class AgentComponent implements OnInit, OnDestroy {
     this.useSuggestion(prompt);
   }
 
-  navigate(value: string): void {
-    const text = value.trim();
-    if (!text) return;
-    const iso = text.match(/\b(20\d{2}-\d{2}-\d{2})\b/)?.[1];
-    const local = text.match(/\b(\d{1,2})\/(\d{1,2})\/(20\d{2})\b/);
-    const date = iso || (local ? `${local[3]}-${local[2].padStart(2, '0')}-${local[1].padStart(2, '0')}` : undefined);
-    this.focus.focus({ date, text: date ? undefined : text });
+  answerBlocksFor(message: AgentConversationMessage) {
+    return agentAnswerBlocks(message.content, {
+      suppressFencedCode: message.artifacts.some((artifact) => artifact.type === 'chart')
+    });
+  }
+
+  selectAndNavigate(key: string, value: string, preferredDate = ''): void {
+    this.selectedTarget.set(key);
+    this.navigate(value, preferredDate);
+  }
+
+  navigate(value: string, preferredDate = ''): void {
+    const target = agentNavigationTarget(value, preferredDate);
+    if (target) this.focus.focus(target);
+  }
+
+  showChartTooltip(event: Event, chartKey: string, targetKey: string, tooltipText: string): void {
+    const target = event.currentTarget;
+    if (!(target instanceof Element)) return;
+    const chart = target.closest('.agent-chart');
+    if (!(chart instanceof HTMLElement)) return;
+    const chartRect = chart.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const isPointer = event instanceof MouseEvent && event.type.startsWith('pointer');
+    const anchorX = isPointer ? event.clientX - chartRect.left : targetRect.left - chartRect.left + targetRect.width / 2;
+    const anchorY = isPointer ? event.clientY - chartRect.top : targetRect.top - chartRect.top;
+    const estimatedWidth = Math.min(180, Math.max(90, tooltipText.length * 5.2));
+    const left = Math.max(8, Math.min(anchorX + (isPointer ? 12 : -estimatedWidth / 2), chartRect.width - estimatedWidth - 8));
+    const top = Math.max(6, Math.min(anchorY - 36, chartRect.height - 34));
+    this.chartTooltip.set({ chartKey, targetKey, text: tooltipText, left, top });
+  }
+
+  hideChartTooltip(chartKey: string): void {
+    if (this.chartTooltip()?.chartKey === chartKey) this.chartTooltip.set(null);
   }
 
   isTable(artifact: AgentArtifact): artifact is AgentTableArtifact { return artifact.type === 'table'; }
@@ -229,6 +266,8 @@ export class AgentComponent implements OnInit, OnDestroy {
     this.activeRequest = undefined;
     this.busy.set(false);
     this.input.set('');
+    this.selectedTarget.set(null);
+    this.chartTooltip.set(null);
     this.conversation.set([this.greeting(revisionNotice)]);
     this.focus.clear();
     this.scrollToEnd();

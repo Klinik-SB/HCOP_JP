@@ -2,6 +2,11 @@ import { Component, ElementRef, OnDestroy, OnInit, effect, inject, input, output
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { firstValueFrom, Subscription } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
+import {
+  clearClinicalFocusHighlights,
+  findClinicalFocusTarget,
+  renderClinicalFocusHighlights
+} from '../../core/clinical/clinical-focus.dom';
 import { ClinicalFocusRequest, ClinicalFocusService } from '../../core/clinical/clinical-focus.service';
 import {
   CLINICAL_CHIEF_COMPLAINT_TEXT_LIMIT,
@@ -55,6 +60,7 @@ import { ClinicalDraftHandle, ClinicalDraftRegistryService } from '../../core/pa
 import { PatientWorkspaceService } from '../../core/patients/patient-workspace.service';
 import { ClinicalPatient, ClinicalRecord, ClinicalState } from '../../core/patients/patient-workspace.models';
 import { ClinicalHighlightHostDirective } from '../../core/highlighting/clinical-highlight-host.directive';
+import { ClinicalHighlightCoordinatorService } from '../../core/highlighting/clinical-highlight-coordinator.service';
 import { ClinicalHighlightMutation } from '../../core/highlighting/clinical-highlight.models';
 import { OncologyHistoryEntrySectionComponent } from '../oncology-history-entry/public-api';
 import { DiagnosisEntryModalComponent, EvolutionEntryModalComponent } from '../clinical-entry';
@@ -73,6 +79,7 @@ export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
   readonly diagnosisEntryOpen = signal(false);
   readonly clinicalEntryMessage = signal('');
   private readonly clinicalFocus = inject(ClinicalFocusService);
+  private readonly clinicalHighlightFeedback = inject(ClinicalHighlightCoordinatorService);
   private readonly clinicalDrafts = inject(ClinicalDraftRegistryService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   readonly query = new FormControl('', { nonNullable: true });
@@ -140,6 +147,8 @@ export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
   private summaryPlanReturnFocus: HTMLElement | null = null;
   private patientSearchRequest = 0;
   private patientSearchSubscription: Subscription | null = null;
+  private clinicalFocusTimer: ReturnType<typeof setTimeout> | null = null;
+  private missingClinicalFocusRequest = 0;
 
   constructor() {
     effect(() => {
@@ -147,6 +156,7 @@ export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
     });
     effect(() => {
       const request = this.clinicalFocus.request();
+      this.workspaceService.workingWorkspace();
       if (!request.id) return;
       queueMicrotask(() => this.applyClinicalFocus(request));
     });
@@ -177,6 +187,9 @@ export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
     if (this.personalHistoryDraft) this.clinicalDrafts.release(this.personalHistoryDraft);
     if (this.physicalExamDraft) this.clinicalDrafts.release(this.physicalExamDraft);
     if (this.summaryPlanDraft) this.clinicalDrafts.release(this.summaryPlanDraft);
+    this.clearClinicalNavigationFocus();
+    const root = this.host.nativeElement.querySelector<HTMLElement>('#clinicalDocument');
+    if (root) clearClinicalFocusHighlights(root);
   }
 
   openPicker(): void { this.workspaceService.openPicker(); }
@@ -835,35 +848,37 @@ export class ClinicalWorkspaceComponent implements OnInit, OnDestroy {
   private join(...values: string[]): string { return values.filter((value) => Boolean(value)).join(' · '); }
 
   private applyClinicalFocus(request: ClinicalFocusRequest): void {
-    const root = this.host.nativeElement;
-    const colors = ['study', 'pathology', 'chemotherapy', 'evolution', 'hormone', 'systemic', 'radiotherapy', 'surgery', 'immunotherapy', 'targeted'];
-    root.querySelectorAll<HTMLElement>('.agent-navigation-focus, .agent-highlight').forEach((element) => {
-      element.classList.remove('agent-navigation-focus', 'agent-highlight', ...colors.map((color) => `agent-highlight--${color}`));
-    });
-    const candidates = [...root.querySelectorAll<HTMLElement>('[data-clinical-date], .doc-entry, .doc-section')];
-    let first: HTMLElement | undefined;
-    for (const highlight of request.highlights || []) {
-      const terms = highlight.terms.map((term) => this.normalizeSearch(term)).filter((term) => term.length >= 3);
-      if (!terms.length) continue;
-      const color = colors.includes(String(highlight.color)) ? String(highlight.color) : 'study';
-      for (const candidate of candidates) {
-        const content = this.normalizeSearch(candidate.textContent || '');
-        if (!terms.some((term) => content.includes(term))) continue;
-        candidate.classList.add('agent-highlight', `agent-highlight--${color}`);
-        first ||= candidate;
-      }
+    if (this.clinicalFocus.request().id !== request.id) return;
+    const root = this.host.nativeElement.querySelector<HTMLElement>('#clinicalDocument');
+    if (!root) return;
+    this.clearClinicalNavigationFocus();
+    const rendered = renderClinicalFocusHighlights(root, request.highlights || []);
+    const target = findClinicalFocusTarget(root, request);
+    if (!target) {
+      if (request.date || request.text) this.announceMissingClinicalFocus(request.id);
+      else rendered.firstMark?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
     }
-    if (request.date) first = candidates.find((candidate) => candidate.dataset['clinicalDate'] === request.date) || first;
-    if (!first && request.text) {
-      const words = this.normalizeSearch(request.text).split(/\s+/).filter((word) => word.length >= 5);
-      first = candidates.find((candidate) => {
-        const content = this.normalizeSearch(candidate.textContent || '');
-        return words.some((word) => content.includes(word));
-      });
-    }
-    if (!first) return;
-    first.classList.add('agent-navigation-focus');
-    first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    this.missingClinicalFocusRequest = 0;
+    target.classList.add('agent-navigation-focus');
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    this.clinicalFocusTimer = setTimeout(() => {
+      target.classList.remove('agent-navigation-focus');
+      this.clinicalFocusTimer = null;
+    }, 5_000);
+  }
+
+  private clearClinicalNavigationFocus(): void {
+    if (this.clinicalFocusTimer) clearTimeout(this.clinicalFocusTimer);
+    this.clinicalFocusTimer = null;
+    this.host.nativeElement.querySelectorAll<HTMLElement>('.agent-navigation-focus')
+      .forEach((element) => element.classList.remove('agent-navigation-focus'));
+  }
+
+  private announceMissingClinicalFocus(requestId: number): void {
+    if (this.missingClinicalFocusRequest === requestId) return;
+    this.missingClinicalFocusRequest = requestId;
+    this.clinicalHighlightFeedback.announce('NOT_FOUND', 'No se encontró el registro en la historia clínica');
   }
 
   private normalizeSearch(value: string): string {
