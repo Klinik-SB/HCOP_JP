@@ -14,6 +14,7 @@ $CanonicalTags = @(
   "Configuración",
   "Catálogos",
   "Archivos clínicos",
+  "Investigación",
   "Administración",
   "Integraciones",
   "Estado"
