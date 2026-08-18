@@ -19,8 +19,12 @@ spring:
     username: ${HCOP_DB_USER:hcop}
     password: ${HCOP_DB_PASSWORD:hcop_local_change_me}
     hikari:
-      maximum-pool-size: ${HCOP_DB_POOL_MAX:16}
-      minimum-idle: 2
+      # La Cloud SQL klinik-shared es un db-f1-micro (~25 conexiones) compartida por 4 servicios
+      # (epreliq, hcop, hcop-backend, preliquidador): con 16 los slots se agotan y los arranques
+      # ajenos mueren con "FATAL: remaining connection slots are reserved...".
+      # Presupuesto acordado: preliquidador 5 + hcop 5 + hcop-backend 5 + hcop-bff 3.
+      maximum-pool-size: ${HCOP_DB_POOL_MAX:5}
+      minimum-idle: 1
       connection-timeout: 10000
       validation-timeout: 3000
       leak-detection-threshold: 30000
