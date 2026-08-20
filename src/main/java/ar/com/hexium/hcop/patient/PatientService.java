@@ -114,6 +114,8 @@ public class PatientService {
     return Map.of(
         "id", Long.toString(patient.id()),
         "fullName", patient.fullName(),
+        "dni", patient.dni(),
+        "medicalRecord", patient.medicalRecord(),
         "numeroDocumento", patient.dni(),
         "numeroHC", patient.medicalRecord(),
         "birthDate", patient.birthDate() == null ? "" : patient.birthDate().toString(),

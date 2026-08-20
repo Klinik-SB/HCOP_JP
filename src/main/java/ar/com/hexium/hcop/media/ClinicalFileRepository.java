@@ -62,6 +62,10 @@ public class ClinicalFileRepository {
         """, id, sessionHash, Timestamp.from(now)) == 1;
   }
 
+  public void delete(UUID id) {
+    jdbc.update("DELETE FROM clinical_files WHERE id = ?", id);
+  }
+
   private String select() {
     return """
         SELECT id, patient_id, treatment_id, file_kind, original_filename, storage_key,

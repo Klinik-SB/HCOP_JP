@@ -10,10 +10,14 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.servers.Server;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.models.responses.ApiResponse;
+import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.media.ArraySchema;
 import io.swagger.v3.oas.models.media.BooleanSchema;
+import io.swagger.v3.oas.models.media.ComposedSchema;
 import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.IntegerSchema;
+import io.swagger.v3.oas.models.media.NumberSchema;
 import io.swagger.v3.oas.models.media.ObjectSchema;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.media.StringSchema;
@@ -64,6 +68,7 @@ import org.springframework.web.method.HandlerMethod;
         @Tag(name = "Archivos clínicos", description = "Estudios, imágenes y plantillas con control de sesión."),
         @Tag(name = "Administración", description = "Usuarios, roles, permisos y seguridad."),
         @Tag(name = "Integraciones", description = "Configuración y uso opcional del LLM."),
+        @Tag(name = "Investigación", description = "Preferencias personales y evaluación futura de ensayos oncológicos."),
         @Tag(name = "Estado", description = "Salud y diagnóstico operativo del sistema.")
     })
 @SecurityScheme(
@@ -83,9 +88,9 @@ public class OpenApiConfiguration {
       doc("PatientController.search", "Buscar pacientes", "Sin consulta devuelve los pacientes recientes; con texto filtra por nombre, apellido, DNI, historia clínica o identificador local."),
       doc("PatientController.create", "Crear paciente", "Crea un paciente local, su hoja clínica en blanco y lo deja activo."),
       doc("PatientController.preview", "Previsualizar paciente", "Resume disponibilidad y cantidad de registros antes de abrir la historia."),
-      doc("PatientController.importPatient", "Abrir paciente local", "Activa una historia ya consolidada en PostgreSQL; no consulta Lira."),
-      doc("ClinicalDocumentController.get", "Leer historia clínica", "Recupera la hoja del paciente activo o la plantilla en blanco."),
-      doc("ClinicalDocumentController.put", "Guardar historia clínica", "Guarda con control optimista de revisión para evitar pisar cambios concurrentes."),
+      doc("PatientController.importPatient", "Abrir paciente local", "Activa una historia ya consolidada en PostgreSQL; no consulta Lira y proyecta las secciones según permisos."),
+      doc("ClinicalDocumentController.get", "Leer historia clínica", "Recupera la hoja del paciente activo o la plantilla en blanco; requiere acceso a Historia, omite prescriptions sin permiso de lectura de Prescripción y omite studies/externalStudies sin permiso de lectura de Estudios."),
+      doc("ClinicalDocumentController.put", "Guardar historia clínica", "Guarda con control optimista de revisión y devuelve el estado canónico confirmado. Si prescriptions cambia exige edición de Prescripción; si studies o externalStudies cambian exige edición de Estudios; si esos campos fueron ocultados, conserva sus valores existentes. Los cambios de narrative.chiefComplaint, narrative.currentIllness, narrative.backgroundClinical, narrative.currentMedication, narrative.familyOncology, narrative.gynecology, narrative.physicalExam, narrative.summary y narrative.plan deben ser texto de hasta 50.000 caracteres; exam.weightKg acepta 0.01 a 500 kg y exam.heightM conserva 0.3 a 2.5 metros aunque la UI muestre centímetros; valores legacy atípicos que no cambian se preservan. Java genera actor, fecha, versión y auditoría de Motivo de consulta, Antecedentes de enfermedad actual, Antecedentes personales, Examen físico y Conclusión / resumen usando la sesión y no confía en esos metadatos enviados por el cliente. La validación 400 de Motivo de consulta usa CLINICAL_CHIEF_COMPLAINT_INVALID, CLINICAL_CHIEF_COMPLAINT_TOO_LONG, CLINICAL_CHIEF_COMPLAINT_EMPTY, CLINICAL_CHIEF_COMPLAINT_REASON_REQUIRED, CLINICAL_CHIEF_COMPLAINT_REASON_INVALID o CLINICAL_CHIEF_COMPLAINT_REASON_TOO_LONG. Antecedentes de enfermedad actual usa CLINICAL_CURRENT_ILLNESS_INVALID, CLINICAL_CURRENT_ILLNESS_TOO_LONG, CLINICAL_CURRENT_ILLNESS_EMPTY, CLINICAL_CURRENT_ILLNESS_REASON_REQUIRED, CLINICAL_CURRENT_ILLNESS_REASON_INVALID o CLINICAL_CURRENT_ILLNESS_REASON_TOO_LONG. Antecedentes personales usa CLINICAL_PERSONAL_HISTORY_BACKGROUND_CLINICAL_INVALID, CLINICAL_PERSONAL_HISTORY_BACKGROUND_CLINICAL_TOO_LONG, CLINICAL_PERSONAL_HISTORY_CURRENT_MEDICATION_INVALID, CLINICAL_PERSONAL_HISTORY_CURRENT_MEDICATION_TOO_LONG, CLINICAL_PERSONAL_HISTORY_FAMILY_ONCOLOGY_INVALID, CLINICAL_PERSONAL_HISTORY_FAMILY_ONCOLOGY_TOO_LONG, CLINICAL_PERSONAL_HISTORY_GYNECOLOGY_INVALID, CLINICAL_PERSONAL_HISTORY_GYNECOLOGY_TOO_LONG, CLINICAL_PERSONAL_HISTORY_EMPTY, CLINICAL_PERSONAL_HISTORY_REASON_REQUIRED, CLINICAL_PERSONAL_HISTORY_REASON_INVALID o CLINICAL_PERSONAL_HISTORY_REASON_TOO_LONG. Examen físico usa CLINICAL_PHYSICAL_EXAM_WEIGHT_INVALID, CLINICAL_PHYSICAL_EXAM_WEIGHT_OUT_OF_RANGE, CLINICAL_PHYSICAL_EXAM_HEIGHT_INVALID, CLINICAL_PHYSICAL_EXAM_HEIGHT_OUT_OF_RANGE, CLINICAL_PHYSICAL_EXAM_TEXT_INVALID, CLINICAL_PHYSICAL_EXAM_TEXT_TOO_LONG, CLINICAL_PHYSICAL_EXAM_EMPTY, CLINICAL_PHYSICAL_EXAM_REASON_REQUIRED, CLINICAL_PHYSICAL_EXAM_REASON_INVALID o CLINICAL_PHYSICAL_EXAM_REASON_TOO_LONG. La validación de Conclusión / resumen usa CLINICAL_SUMMARY_INVALID, CLINICAL_SUMMARY_TOO_LONG, CLINICAL_PLAN_INVALID, CLINICAL_PLAN_TOO_LONG, CLINICAL_SUMMARY_PLAN_EMPTY, CLINICAL_SUMMARY_PLAN_REASON_REQUIRED, CLINICAL_SUMMARY_PLAN_REASON_INVALID o CLINICAL_SUMMARY_PLAN_REASON_TOO_LONG. Los conflictos 409 usan ACTIVE_PATIENT_REQUIRED, CLINICAL_REVISION_REQUIRED, CLINICAL_PATIENT_MISMATCH o VERSION_CONFLICT."),
       doc("ClinicalDocumentController.restoreDemo", "Compatibilidad de persistencia", "Confirma que la historia es persistente y que no se restaura un demo."),
       doc("DiagnosisController.list", "Listar diagnósticos", "Lista todos los diagnósticos oncológicos no archivados del paciente."),
       doc("DiagnosisController.link", "Validar diagnóstico de tratamiento", "Confirma que el diagnóstico seleccionado pertenece a la historia del paciente."),
@@ -112,12 +117,13 @@ public class OpenApiConfiguration {
       doc("TreatmentWorkflowController.inbox", "Consultar solicitudes", "Lista las solicitudes asignadas al usuario activo."),
       doc("TreatmentWorkflowController.seen", "Marcar solicitud leída", "Registra que el destinatario abrió la solicitud."),
       doc("TreatmentWorkflowController.resolve", "Resolver solicitud", "Confirma, rechaza, suspende o continúa y deja trazabilidad clínica."),
-      doc("ConfigurationController.list", "Listar configuración", "Lista elementos activos o históricos de un tipo permitido."),
-      doc("ConfigurationController.create", "Crear configuración", "Crea una definición versionada de guía, cálculo, formulario o parámetro."),
-      doc("ConfigurationController.update", "Modificar configuración", "Actualiza con revisión optimista y conserva la versión anterior."),
+      doc("ConfigurationController.list", "Listar configuración", "Lista elementos activos o históricos de un tipo permitido. trial-source describe fuentes oficiales de ensayos y trial-screening-settings conserva la política de ejecución local."),
+      doc("ConfigurationController.create", "Crear configuración", "Crea una definición versionada de guía, cálculo, formulario o parámetro. Para repositorios de ensayos rechaza secretos, endpoints arbitrarios y cualquier configuración que permita enviar PHI."),
+      doc("ConfigurationController.update", "Modificar configuración", "Actualiza con revisión optimista y conserva la versión anterior. La política de evaluación admite ejecución manual, programada cada 24 horas o en tiempo real, con un máximo de un modal y de una a tres preguntas por aviso."),
       doc("ConfigurationController.archive", "Archivar configuración", "Desactiva el elemento sin borrar su historial."),
       doc("ConfigurationController.versions", "Listar versiones", "Devuelve el historial auditable del elemento."),
       doc("ConfigurationController.version", "Leer versión", "Recupera una revisión histórica exacta."),
+      doc("CalculatorCatalogController.list", "Listar calculadoras operativas", "Devuelve únicamente las calculadoras activas y los ajustes institucionales necesarios para ejecutarlas desde Herramientas, sin exponer administración ni historial."),
       doc("ProtocolController.list", "Listar protocolos administrables", "Combina protocolos personalizados y catálogo COIR no vinculado."),
       doc("ProtocolController.get", "Abrir protocolo", "Devuelve componentes, duración, periodicidad y vínculos a drogas."),
       doc("ProtocolController.create", "Crear protocolo", "Crea un protocolo completo y actualiza inmediatamente el catálogo clínico."),
@@ -134,11 +140,11 @@ public class OpenApiConfiguration {
       doc("StudyTemplateController.create", "Crear plantilla anatómica", "Guarda imagen, metadatos, licencia y confirmación de derechos."),
       doc("LlmController.config", "Leer configuración LLM", "Devuelve endpoint, modelo y parámetros sin revelar la API key."),
       doc("LlmController.updateConfig", "Guardar configuración LLM", "Valida y cifra la API key antes de persistirla."),
-      doc("LlmController.status", "Consultar estado LLM", "Informa si la integración está habilitada y configurada."),
+      doc("LlmController.status", "Consultar estado LLM", "Requiere section.agent.view e informa proveedor, modelo y si la integración está habilitada y posee endpoint configurado. No prueba conectividad ni expone secretos."),
       doc("LlmController.test", "Probar conexión LLM", "Prueba un borrador de configuración sin guardarlo."),
       doc("LlmController.timeline", "Extraer línea de tiempo", "Solicita eventos estructurados y auditables a partir de texto clínico."),
       doc("LlmController.summarize", "Resumir eventos", "Resume hasta 250 eventos sin inventar información."),
-      doc("LlmController.agent", "Consultar agente clínico", "Responde sobre el contexto entregado y diferencia hechos de inferencias."),
+      doc("LlmController.agent", "Consultar agente clínico", "Requiere section.agent.view. Acepta una consulta de hasta 8000 caracteres y envía sólo los últimos 12 mensajes no vacíos del historial, con hasta 8000 caracteres cada uno. Solicita JSON estructurado común a proveedores OpenAI compatibles y Ollama, valida tablas, gráficos, seguimientos y resaltados, y conserva como respuesta textual cualquier salida tradicional o JSON incompleto. Si el último mensaje user repite la consulta actual, se elimina del historial antes de llamar al LLM. timelineEvents y consultAgents se aceptan por compatibilidad pero no se incorporan al prompt en esta versión."),
       doc("LlmController.fillSystemic", "Completar formulario sistémico", "Extrae únicamente campos configurados como asistidos por LLM."),
       doc("AdminController.users", "Listar usuarios", "Lista usuarios, roles y estado para administración."),
       doc("AdminController.createUser", "Crear usuario", "Crea una cuenta y asigna roles existentes."),
@@ -149,6 +155,8 @@ public class OpenApiConfiguration {
       doc("AdminController.security", "Leer seguridad", "Devuelve la política de acceso obligatorio y duración de sesión."),
       doc("AdminController.updateSecurity", "Modificar seguridad", "Mantiene login obligatorio y actualiza la duración de sesión."),
       doc("AdminController.clinicalUsers", "Buscar destinatarios clínicos", "Lista usuarios habilitados para una capacidad de flujo."),
+      doc("TrialScreeningPreferenceController.me", "Consultar preferencia personal de investigación", "Devuelve únicamente la preferencia del usuario autenticado y la combina con la política institucional vigente. proactiveActive indica que ambas preferencias permiten un modo programado o en tiempo real; effective exige además que el motor esté disponible. En este corte engineReady y effective son false porque el matching todavía no está implementado."),
+      doc("TrialScreeningPreferenceController.update", "Guardar preferencia personal de investigación", "Acepta exclusivamente researchActive y expectedRevision, aplica control optimista y nunca admite un userId enviado por el cliente. Desactivar esta preferencia sólo limita la evaluación proactiva futura; la consulta manual futura seguirá disponible."),
       doc("StatusController.clinical", "Estado clínico", "Comprueba PostgreSQL y confirma que el sistema es local, unificado e independiente."),
       doc("StatusController.liraCompatibility", "Compatibilidad Lira", "Informa que las rutas históricas operan sobre HCOP JP local."),
       doc("StatusController.runtime", "Estado de ejecución", "Expone versión y motor para diagnóstico y automatización."),
@@ -162,11 +170,11 @@ public class OpenApiConfiguration {
       doc("GuideCatalogController.upload", "Importar guía clínica", "Guarda un PDF institucional y actualiza el catálogo de guías."),
       doc("LegacyCatalogController.protocols", "Listar protocolos compatibles", "Mantiene el contrato histórico de la interfaz y responde desde los catálogos locales."),
       doc("LegacyCatalogController.protocolDetail", "Abrir protocolo compatible", "Devuelve el detalle local de un protocolo COIR o personalizado usando el contrato histórico."),
-      doc("LegacyCatalogController.medicationSearch", "Buscar medicamentos", "Busca por genérico, marca o presentación en el catálogo local de drogas."),
+      doc("LegacyCatalogController.medicationSearch", "Buscar medicamentos", "Busca por genérico, marca o presentación en el catálogo local de drogas. Requiere permiso de lectura de Prescripción."),
       doc("LegacyCatalogController.status", "Consultar catálogos locales", "Informa disponibilidad y cantidad de protocolos y esquemas TNM locales."),
       doc("LegacyCatalogController.update", "Releer catálogos locales", "Confirma que los catálogos empaquetados ya están disponibles y versionados."),
-      doc("PatientWorkspaceController.activate", "Activar paciente y abrir espacio clínico", "Asocia el paciente a la sesión y devuelve identidad, historia, tratamientos, turnos y conteos en una respuesta."),
-      doc("PatientWorkspaceController.workspace", "Abrir espacio clínico del paciente", "Devuelve el agregado de trabajo del paciente sin cambiar otra sesión."),
+      doc("PatientWorkspaceController.activate", "Activar paciente y abrir espacio clínico", "Asocia el paciente a la sesión y devuelve identidad, historia, tratamientos, turnos y conteos, omitiendo secciones sin permiso."),
+      doc("PatientWorkspaceController.workspace", "Abrir espacio clínico del paciente", "Devuelve el agregado de trabajo del paciente sin cambiar otra sesión y aplica la misma proyección por permisos."),
       doc("SeerTnmCatalogController.list", "Listar esquemas TNM", "Devuelve el catálogo SEER/TNM local disponible para las herramientas de estadificación."),
       doc("SeerTnmCatalogController.detail", "Abrir esquema TNM", "Devuelve campos, opciones y reglas del esquema TNM seleccionado."),
       doc("SystemicFormController.forms", "Listar formularios sistémicos", "Devuelve los formularios institucionales y sus campos para prescripción y documentación.")
@@ -181,15 +189,21 @@ public class OpenApiConfiguration {
       permission("AdminController.updateRole", "admin.manage-roles"),
       permission("AdminController.security", "admin.manage-security"),
       permission("AdminController.updateSecurity", "admin.manage-security"),
-      permission("ClinicalDocumentController.put", "section.history.edit"),
+      permission("ClinicalDocumentController.get", "section.history.view"),
+      permission("ClinicalDocumentController.put", "section.history.edit + permiso específico de edición si prescriptions, studies o externalStudies cambian"),
       permission("ConfigurationController.list", "section.configuration.view"),
       permission("ConfigurationController.create", "section.configuration.manage"),
       permission("ConfigurationController.update", "section.configuration.manage"),
       permission("ConfigurationController.archive", "section.configuration.manage"),
       permission("ConfigurationController.versions", "section.configuration.view"),
       permission("ConfigurationController.version", "section.configuration.view"),
+      permission("ResearchFormCatalogController.list", "section.research.view"),
+      permission("CalculatorCatalogController.list", "section.tools.use"),
       permission("DiagnosisController.list", "section.history.view"),
       permission("DiagnosisController.link", "section.history.edit"),
+      permission("AjccCatalogController.list", "section.tools.view"),
+      permission("AjccCatalogController.detail", "section.tools.view"),
+      permission("AjccCatalogController.stage", "section.tools.use"),
       permission("GuideCatalogController.list", "section.tools.view"),
       permission("GuideCatalogController.file", "section.tools.view"),
       permission("GuideCatalogController.upload", "section.configuration.manage"),
@@ -231,6 +245,9 @@ public class OpenApiConfiguration {
       permission("PatientController.importPatient", "section.history.view"),
       permission("PatientWorkspaceController.activate", "section.history.view"),
       permission("PatientWorkspaceController.workspace", "section.history.view"),
+      permission("LegacyCatalogController.medicationSearch", "section.prescriptions.view"),
+      permission("LegacyCatalogController.protocols", "section.protocols.view"),
+      permission("LegacyCatalogController.protocolDetail", "section.protocols.view"),
       permission("ProtocolController.list", "section.protocols.view"),
       permission("ProtocolController.get", "section.protocols.view"),
       permission("ProtocolController.create", "section.protocols.edit"),
@@ -257,6 +274,8 @@ public class OpenApiConfiguration {
       permission("TreatmentWorkflowController.resume", "workflow.resume"),
       permission("TreatmentWorkflowController.create", "workflow.request-prescription | workflow.request-continuity"),
       permission("TreatmentWorkflowController.resolve", "workflow.resolve-prescription | workflow.resolve-continuity"),
+      permission("TrialScreeningPreferenceController.me", "section.research.view"),
+      permission("TrialScreeningPreferenceController.update", "section.research.view"),
       permission("StatusController.stop", "admin.manage-security")
   );
 
@@ -269,7 +288,7 @@ public class OpenApiConfiguration {
       Map.entry("includeScheduled", "Incluye aplicaciones que ya poseen un turno activo; se usa en Farmacia."),
       Map.entry("id", "Identificador del recurso solicitado."),
       Map.entry("revision", "Revisión histórica exacta del recurso."),
-      Map.entry("kind", "Tipo de configuración permitido por el servicio."),
+      Map.entry("kind", "Tipo permitido: guide, study-template, diagnosis-setting, diagnosis-equivalence, calculator, tool-settings, day-hospital-settings, research-form, protocol, trial-source o trial-screening-settings."),
       Map.entry("name", "Nombre seguro del archivo o recurso."),
       Map.entry("q", "Texto de búsqueda; admite coincidencia parcial."),
       Map.entry("query", "Texto de búsqueda; admite coincidencia parcial."),
@@ -287,7 +306,9 @@ public class OpenApiConfiguration {
       Map.entry("X-Study-Delete-Token", "Token temporal emitido al subir el archivo; sólo permite eliminarlo durante esa sesión."),
       Map.entry("title", "Título visible de la plantilla anatómica."),
       Map.entry("category", "Categoría anatómica usada para ordenar y filtrar la plantilla."),
+      Map.entry("tags", "Etiquetas separadas por comas para facilitar la búsqueda y clasificación."),
       Map.entry("author", "Autor o institución responsable de la imagen."),
+      Map.entry("attribution", "Texto de atribución requerido por el autor o la licencia."),
       Map.entry("license", "Licencia o condición de uso declarada."),
       Map.entry("description", "Descripción clínica y visual de la plantilla."),
       Map.entry("sourceUrl", "URL de procedencia declarada; no se descarga automáticamente."),
@@ -335,6 +356,25 @@ public class OpenApiConfiguration {
     return openApi -> {
       if (openApi.getComponents() == null) openApi.setComponents(new Components());
       openApi.getComponents().addSchemas("ApiError", apiErrorSchema());
+      openApi.getComponents().addSchemas(
+          "AuthenticationRequired",
+          authenticationRequiredSchema());
+      openApi.getComponents().addSchemas("AgentHistoryMessage", agentHistoryMessageSchema());
+      openApi.getComponents().addSchemas("AgentChatRequest", agentChatRequestSchema());
+      openApi.getComponents().addSchemas("AgentTableArtifact", agentTableArtifactSchema());
+      openApi.getComponents().addSchemas("AgentChartPoint", agentChartPointSchema());
+      openApi.getComponents().addSchemas("AgentChartSeries", agentChartSeriesSchema());
+      openApi.getComponents().addSchemas("AgentChartArtifact", agentChartArtifactSchema());
+      openApi.getComponents().addSchemas("AgentArtifact", agentArtifactSchema());
+      openApi.getComponents().addSchemas("AgentHighlight", agentHighlightSchema());
+      openApi.getComponents().addSchemas("AgentChatResponse", agentChatResponseSchema());
+      openApi.getComponents().addSchemas("LlmStatusResponse", llmStatusResponseSchema());
+      openApi.getComponents().addSchemas(
+          "TrialScreeningPreferenceResponse",
+          trialScreeningPreferenceResponseSchema());
+      openApi.getComponents().addSchemas(
+          "TrialScreeningPreferenceUpdate",
+          trialScreeningPreferenceUpdateSchema());
       if (openApi.getPaths() == null || openApi.getTags() == null) return;
       Set<String> usedTags = new HashSet<>();
       openApi.getPaths().values().forEach(path ->
@@ -433,8 +473,56 @@ public class OpenApiConfiguration {
       describeBinaryRequest(operation, key);
       describeParameters(operation);
       describeResponses(operation, key, controller, secured, isWrite(method));
+      describeStructuredContract(operation, key);
       return operation;
     };
+  }
+
+  private static void describeStructuredContract(
+      io.swagger.v3.oas.models.Operation operation,
+      String key) {
+    if ("LlmController.agent".equals(key)) {
+      operation.setRequestBody(new RequestBody()
+          .required(true)
+          .description(
+              "Consulta clínica y conversación previa acotada. timelineEvents y consultAgents "
+                  + "se aceptan sólo por compatibilidad y no se envían al LLM.")
+          .content(jsonContent("#/components/schemas/AgentChatRequest")));
+      setSuccessSchema(operation, "#/components/schemas/AgentChatResponse");
+    } else if ("LlmController.status".equals(key)) {
+      setSuccessSchema(operation, "#/components/schemas/LlmStatusResponse");
+    } else if ("TrialScreeningPreferenceController.me".equals(key)) {
+      setSuccessSchema(operation, "#/components/schemas/TrialScreeningPreferenceResponse");
+    } else if ("TrialScreeningPreferenceController.update".equals(key)) {
+      operation.setRequestBody(new RequestBody()
+          .required(true)
+          .description("Preferencia del usuario autenticado y revisión leída previamente; no acepta identidad de usuario ni otros campos.")
+          .content(jsonContent("#/components/schemas/TrialScreeningPreferenceUpdate")));
+      setSuccessSchema(operation, "#/components/schemas/TrialScreeningPreferenceResponse");
+    }
+  }
+
+  private static void setSuccessSchema(
+      io.swagger.v3.oas.models.Operation operation,
+      String schemaReference) {
+    ApiResponses responses = operation.getResponses();
+    if (responses == null) {
+      responses = new ApiResponses();
+      operation.setResponses(responses);
+    }
+    ApiResponse success = responses.get("200");
+    if (success == null) {
+      success = new ApiResponse().description("Solicitud procesada correctamente.");
+      responses.put("200", success);
+    }
+    success.setContent(jsonContent(schemaReference));
+  }
+
+  private static Content jsonContent(String schemaReference) {
+    return new Content().addMediaType(
+        "application/json",
+        new io.swagger.v3.oas.models.media.MediaType()
+            .schema(new Schema<>().$ref(schemaReference)));
   }
 
   private static void describeBinaryRequest(
@@ -481,7 +569,11 @@ public class OpenApiConfiguration {
     if (responses == null) return;
     describeSuccessResponse(responses, key);
     if (secured) {
-      ensureErrorResponse(responses, "401", "Sesión ausente, vencida o revocada.");
+      ensureErrorResponse(
+          responses,
+          "401",
+          "Sesión ausente, vencida o revocada.",
+          "#/components/schemas/AuthenticationRequired");
       ensureErrorResponse(responses, "403", "El usuario no posee el permiso requerido.");
     } else if ("AuthController.login".equals(key)) {
       ensureErrorResponse(responses, "401", "Usuario o contraseña incorrectos.");
@@ -541,6 +633,14 @@ public class OpenApiConfiguration {
       io.swagger.v3.oas.models.responses.ApiResponses responses,
       String status,
       String description) {
+    ensureErrorResponse(responses, status, description, "#/components/schemas/ApiError");
+  }
+
+  private static void ensureErrorResponse(
+      io.swagger.v3.oas.models.responses.ApiResponses responses,
+      String status,
+      String description,
+      String schemaReference) {
     ApiResponse response = responses.get(status);
     if (response == null) {
       response = new ApiResponse();
@@ -553,7 +653,7 @@ public class OpenApiConfiguration {
       content.addMediaType(
           "application/json",
           new io.swagger.v3.oas.models.media.MediaType()
-              .schema(new Schema<>().$ref("#/components/schemas/ApiError")));
+              .schema(new Schema<>().$ref(schemaReference)));
     }
     response.setContent(content);
   }
@@ -572,6 +672,268 @@ public class OpenApiConfiguration {
         .format("int32")
         .description("Código de estado HTTP."));
     schema.setRequired(List.of("ok", "error", "status"));
+    return schema;
+  }
+
+  private static Schema<?> authenticationRequiredSchema() {
+    ObjectSchema schema = new ObjectSchema();
+    schema.setDescription(
+        "Sesión obligatoria ausente o vencida. Conserva los indicadores utilizados por la interfaz.");
+    schema.addProperty("ok", new BooleanSchema()
+        .description("Siempre false.")
+        ._default(false));
+    schema.addProperty("authenticated", new BooleanSchema()
+        .description("Siempre false para este rechazo.")
+        ._default(false));
+    schema.addProperty("loginRequired", new BooleanSchema()
+        .description("Siempre true: la interfaz debe presentar el acceso.")
+        ._default(true));
+    schema.addProperty("error", new StringSchema()
+        .description("Mensaje seguro y apto para mostrar al usuario."));
+    schema.addProperty("code", new StringSchema()
+        .description("Código estable AUTHENTICATION_REQUIRED."));
+    schema.addProperty("status", new IntegerSchema()
+        .format("int32")
+        .description("Siempre 401."));
+    schema.setRequired(List.of(
+        "ok",
+        "authenticated",
+        "loginRequired",
+        "error",
+        "code",
+        "status"));
+    return schema;
+  }
+
+  private static Schema<?> agentHistoryMessageSchema() {
+    ObjectSchema schema = new ObjectSchema();
+    schema.setDescription(
+        "Mensaje previo. Los valores vacíos se ignoran y los roles distintos de user/assistant "
+            + "se normalizan como user por compatibilidad.");
+    schema.addProperty("role", new StringSchema()
+        ._enum(List.of("user", "assistant"))
+        .description("Rol conversacional."));
+    schema.addProperty("content", new StringSchema()
+        .maxLength(8_000)
+        .description("Contenido previo; el servidor conserva como máximo 8000 caracteres."));
+    return schema;
+  }
+
+  private static Schema<?> agentChatRequestSchema() {
+    ObjectSchema schema = new ObjectSchema();
+    schema.setDescription(
+        "Consulta del agente clínico. Los campos desconocidos se ignoran para conservar compatibilidad.");
+    schema.addProperty("message", new StringSchema()
+        .minLength(1)
+        .maxLength(8_000)
+        .example("¿Qué toxicidades documentadas requieren seguimiento?")
+        .description("Consulta actual; obligatoria luego de quitar espacios exteriores."));
+    schema.addProperty("clinicalText", new StringSchema()
+        .maxLength(350_000)
+        .description("Contexto clínico desidentificado; se trunca de forma segura."));
+    schema.addProperty("history", new ArraySchema()
+        .items(new Schema<>().$ref("#/components/schemas/AgentHistoryMessage"))
+        .description(
+            "Historial cronológico. Se usan sólo los últimos 12 mensajes no vacíos; "
+                + "la consulta actual duplicada al final se descarta."));
+    schema.addProperty("timelineEvents", new ArraySchema()
+        .items(new ObjectSchema())
+        .description("Aceptado por compatibilidad; no se incorpora al prompt en esta versión."));
+    schema.addProperty("consultAgents", new BooleanSchema()
+        ._default(false)
+        .description("Aceptado por compatibilidad; no activa otros agentes en esta versión."));
+    schema.setRequired(List.of("message"));
+    return schema;
+  }
+
+  private static Schema<?> agentTableArtifactSchema() {
+    ObjectSchema schema = new ObjectSchema();
+    schema.setDescription("Tabla clínica opcional, ya acotada y validada por el servidor.");
+    schema.addProperty("type", new StringSchema()
+        ._enum(List.of("table"))
+        .description("Discriminador fijo de tabla."));
+    schema.addProperty("title", new StringSchema()
+        .maxLength(160)
+        .description("Título opcional."));
+    schema.addProperty("columns", new ArraySchema()
+        .minItems(1)
+        .maxItems(12)
+        .items(new StringSchema().maxLength(160))
+        .description("Encabezados; determinan la cantidad final de celdas por fila."));
+    schema.addProperty("rows", new ArraySchema()
+        .maxItems(100)
+        .items(new ArraySchema()
+            .maxItems(12)
+            .items(new StringSchema().maxLength(500)))
+        .description("Filas normalizadas al ancho de columns."));
+    schema.setRequired(List.of("type", "title", "columns", "rows"));
+    return schema;
+  }
+
+  private static Schema<?> agentChartPointSchema() {
+    ObjectSchema schema = new ObjectSchema();
+    schema.setDescription("Punto numérico finito de una serie clínica.");
+    schema.addProperty("x", new StringSchema().maxLength(160));
+    schema.addProperty("y", new NumberSchema().format("double"));
+    schema.addProperty("label", new StringSchema().maxLength(160));
+    schema.setRequired(List.of("x", "y", "label"));
+    return schema;
+  }
+
+  private static Schema<?> agentChartSeriesSchema() {
+    ObjectSchema schema = new ObjectSchema();
+    schema.setDescription("Serie de hasta 100 puntos válidos.");
+    schema.addProperty("name", new StringSchema().maxLength(160));
+    schema.addProperty("color", new StringSchema()
+        .pattern("^#[0-9a-fA-F]{6}$")
+        .example("#2274A5")
+        .description("Color hexadecimal opcional; cualquier otro formato se descarta."));
+    schema.addProperty("points", new ArraySchema()
+        .minItems(1)
+        .maxItems(100)
+        .items(new Schema<>().$ref("#/components/schemas/AgentChartPoint")));
+    schema.setRequired(List.of("name", "points"));
+    return schema;
+  }
+
+  private static Schema<?> agentChartArtifactSchema() {
+    ObjectSchema schema = new ObjectSchema();
+    schema.setDescription("Gráfico clínico opcional con series verificadas.");
+    schema.addProperty("type", new StringSchema()
+        ._enum(List.of("chart"))
+        .description("Discriminador fijo de gráfico."));
+    schema.addProperty("title", new StringSchema().maxLength(160));
+    schema.addProperty("chartType", new StringSchema()
+        ._enum(List.of("line", "bar", "pie"))
+        ._default("line"));
+    schema.addProperty("xLabel", new StringSchema().maxLength(160));
+    schema.addProperty("series", new ArraySchema()
+        .minItems(1)
+        .maxItems(8)
+        .items(new Schema<>().$ref("#/components/schemas/AgentChartSeries")));
+    schema.setRequired(List.of("type", "title", "chartType", "xLabel", "series"));
+    return schema;
+  }
+
+  private static Schema<?> agentArtifactSchema() {
+    ComposedSchema schema = new ComposedSchema();
+    schema.setDescription("Artefacto permitido: tabla o gráfico.");
+    schema.setOneOf(List.of(
+        new Schema<>().$ref("#/components/schemas/AgentTableArtifact"),
+        new Schema<>().$ref("#/components/schemas/AgentChartArtifact")));
+    return schema;
+  }
+
+  private static Schema<?> agentHighlightSchema() {
+    ObjectSchema schema = new ObjectSchema();
+    schema.setDescription("Términos literales y categoría visual para enfocar la historia.");
+    schema.addProperty("terms", new ArraySchema()
+        .minItems(1)
+        .maxItems(20)
+        .items(new StringSchema().minLength(3).maxLength(160)));
+    schema.addProperty("color", new StringSchema()
+        ._enum(List.of(
+            "study", "pathology", "chemotherapy", "evolution", "hormone",
+            "systemic", "radiotherapy", "surgery", "immunotherapy", "targeted"))
+        ._default("study"));
+    schema.setRequired(List.of("terms", "color"));
+    return schema;
+  }
+
+  private static Schema<?> agentChatResponseSchema() {
+    ObjectSchema schema = new ObjectSchema();
+    schema.setDescription("Respuesta estable del agente clínico.");
+    schema.addProperty("ok", new BooleanSchema()
+        ._default(true)
+        .description("Siempre true cuando el LLM respondió correctamente."));
+    schema.addProperty("answer", new StringSchema()
+        .maxLength(32_000)
+        .description("Respuesta clínica en español. Si el proveedor no entrega JSON estructurado válido, contiene su texto plano acotado."));
+    schema.addProperty("model", new StringSchema()
+        .description("Modelo informado por el proveedor."));
+    schema.addProperty("artifacts", new ArraySchema()
+        .maxItems(8)
+        .items(new Schema<>().$ref("#/components/schemas/AgentArtifact"))
+        .description("Tablas y gráficos opcionales validados; entradas inválidas se omiten."));
+    schema.addProperty("followUps", new ArraySchema()
+        .maxItems(8)
+        .items(new StringSchema().maxLength(500))
+        .description("Preguntas sugeridas no vacías y sin duplicados."));
+    schema.addProperty("highlights", new ArraySchema()
+        .maxItems(20)
+        .items(new Schema<>().$ref("#/components/schemas/AgentHighlight"))
+        .description("Grupos de términos literales aptos para enfocar la historia."));
+    schema.setRequired(List.of(
+        "ok", "answer", "model", "artifacts", "followUps", "highlights"));
+    return schema;
+  }
+
+  private static Schema<?> llmStatusResponseSchema() {
+    ObjectSchema schema = new ObjectSchema();
+    schema.setDescription("Estado no sensible de la integración LLM.");
+    schema.addProperty("ok", new BooleanSchema()
+        ._default(true)
+        .description("Siempre true cuando el estado pudo consultarse."));
+    schema.addProperty("enabled", new BooleanSchema()
+        .description("Indica si el uso del LLM está habilitado."));
+    schema.addProperty("model", new StringSchema()
+        .description("Modelo configurado."));
+    schema.addProperty("provider", new StringSchema()
+        .description("Proveedor configurado."));
+    schema.addProperty("configured", new BooleanSchema()
+        .description("Indica si existe un endpoint base; no prueba conectividad."));
+    schema.setRequired(List.of("ok", "enabled", "model", "provider", "configured"));
+    return schema;
+  }
+
+  private static Schema<?> trialScreeningPreferenceResponseSchema() {
+    ObjectSchema schema = new ObjectSchema();
+    schema.setDescription(
+        "Preferencia personal combinada con el límite institucional. No representa elegibilidad clínica.");
+    schema.addProperty("ok", new BooleanSchema()._default(true));
+    schema.addProperty("researchActive", new BooleanSchema()
+        .description("Preferencia persistida exclusivamente para el usuario autenticado."));
+    schema.addProperty("institutionalEnabled", new BooleanSchema()
+        .description("Límite de la configuración institucional trial-screening-settings."));
+    schema.addProperty("mode", new StringSchema()
+        ._enum(List.of("manual", "scheduled", "realtime"))
+        .description("Modo institucional vigente."));
+    schema.addProperty("proactiveActive", new BooleanSchema()
+        .description("true cuando usuario e institución habilitan un modo programado o en tiempo real."));
+    schema.addProperty("effective", new BooleanSchema()
+        .description("true sólo si proactiveActive y el motor están disponibles."));
+    schema.addProperty("revision", new IntegerSchema()
+        .format("int64")
+        .minimum(java.math.BigDecimal.ZERO)
+        .description("Revisión optimista personal; vale 0 cuando aún no existe una fila persistida."));
+    schema.addProperty("engineReady", new BooleanSchema()
+        ._default(false)
+        .description("false en este corte: ingesta y matching todavía no existen."));
+    schema.setRequired(List.of(
+        "ok",
+        "researchActive",
+        "institutionalEnabled",
+        "mode",
+        "proactiveActive",
+        "effective",
+        "revision",
+        "engineReady"));
+    return schema;
+  }
+
+  private static Schema<?> trialScreeningPreferenceUpdateSchema() {
+    ObjectSchema schema = new ObjectSchema();
+    schema.setAdditionalProperties(false);
+    schema.setDescription(
+        "Cuerpo cerrado y self-only. El servidor obtiene userId de la sesión y rechaza campos adicionales.");
+    schema.addProperty("researchActive", new BooleanSchema()
+        .description("Activa o desactiva sólo la futura evaluación proactiva para este usuario."));
+    schema.addProperty("expectedRevision", new IntegerSchema()
+        .format("int64")
+        .minimum(java.math.BigDecimal.ZERO)
+        .maximum(java.math.BigDecimal.valueOf(Long.MAX_VALUE))
+        .description("Revisión devuelta por GET; 0 crea la primera preferencia."));
+    schema.setRequired(List.of("researchActive", "expectedRevision"));
     return schema;
   }
 
@@ -598,6 +960,7 @@ public class OpenApiConfiguration {
     if (controller.startsWith("ClinicalFile") || controller.startsWith("StudyTemplate")) return "Archivos clínicos";
     if (controller.startsWith("Admin")) return "Administración";
     if (controller.startsWith("Llm")) return "Integraciones";
+    if (controller.startsWith("TrialScreening") || controller.startsWith("Research")) return "Investigación";
     if (controller.startsWith("Status")) return "Estado";
     return "Catálogos";
   }

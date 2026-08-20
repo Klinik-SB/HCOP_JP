@@ -1,0 +1,36 @@
+{
+  "extends": "../../../../../tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+    "importHelpers": false,
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "noEmit": false,
+    "noEmitOnError": true,
+    "outDir": ".golden-dist",
+    "rootDir": ".",
+    "sourceMap": false,
+    "types": []
+  },
+  "files": [
+    "calculator.models.ts",
+    "calculator.inventory.ts",
+    "calculator.engine.ts",
+    "core-calculator.definitions.ts",
+    "legacy-calculators-04-07.definitions.ts",
+    "legacy-calculators-08-11.definitions.ts",
+    "legacy-calculators-12-15.definitions.ts",
+    "legacy-calculators-16-19.definitions.ts",
+    "legacy-calculators-20-23.definitions.ts",
+    "legacy-calculators-24-27.definitions.ts",
+    "legacy-calculators-28-31.definitions.ts",
+    "legacy-calculators-32-35.definitions.ts",
+    "legacy-calculators-36-39.definitions.ts",
+    "legacy-calculators-40-43.definitions.ts",
+    "legacy-calculators-44-47.definitions.ts",
+    "legacy-calculators-48-51.definitions.ts",
+    "legacy-calculators-52-57.definitions.ts",
+    "ported-calculator.registry.ts",
+    "calculator.golden-tests.ts"
+  ]
+}

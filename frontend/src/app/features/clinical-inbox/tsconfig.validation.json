@@ -1,0 +1,16 @@
+{
+  "extends": "../../../../tsconfig.app.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "../../.."
+  },
+  "files": [
+    "clinical-inbox.models.ts",
+    "clinical-inbox.service.ts",
+    "clinical-inbox.component.ts"
+  ],
+  "include": [],
+  "angularCompilerOptions": {
+    "strictTemplates": true
+  }
+}

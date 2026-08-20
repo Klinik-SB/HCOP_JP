@@ -98,6 +98,20 @@ function Get-QaLocalTestText {
   return [System.IO.File]::ReadAllText($resolved)
 }
 
+function Get-QaAngularSourceText {
+  param([Parameter(Mandatory = $true)][string]$Paths)
+  $sourcePaths = @($Paths.Split("|", [System.StringSplitOptions]::RemoveEmptyEntries))
+  if ($sourcePaths.Count -eq 0) { throw "No se indicaron fuentes Angular para comprobar el contrato." }
+  $parts = foreach ($sourcePath in $sourcePaths) {
+    $normalized = $sourcePath.Trim()
+    if (-not $normalized.StartsWith("/frontend/src/app/", [System.StringComparison]::OrdinalIgnoreCase)) {
+      throw "La evidencia Angular debe permanecer dentro de /frontend/src/app/: $normalized"
+    }
+    Get-QaLocalTestText $normalized
+  }
+  return [string]::Join("`n", [string[]]$parts)
+}
+
 function Test-ObjectProperties {
   param([object]$Value, [string[]]$Names)
   foreach ($name in $Names) {
@@ -275,6 +289,33 @@ function Test-OpenApiOperation {
   return "Swagger contiene $($Method.ToUpperInvariant()) $Path."
 }
 
+function Test-TreatmentOptionCatalog {
+  param([string]$Property, [string[]]$ExpectedLabels)
+  $me = Invoke-QaJson -Path "/api/auth/me"
+  $patientId = [string](Get-Property $me "activePatientId")
+  if ([string]::IsNullOrWhiteSpace($patientId)) {
+    $patients = Invoke-QaJson -Path "/api/clinical/patients?q="
+    $patientId = [string](Get-Property (@($patients.patients) | Select-Object -First 1) "id")
+  }
+  if ([string]::IsNullOrWhiteSpace($patientId)) {
+    return @{ Status = "NO_DATA"; Evidence = "No hay un paciente QA para consultar las opciones de tratamiento." }
+  }
+  $payload = Invoke-QaJson -Path "/api/clinical/patients/$([uri]::EscapeDataString($patientId))/treatment-options"
+  $options = Get-Property $payload "options"
+  $catalog = @(Get-Property $options $Property)
+  Require-True ($catalog.Count -gt 0) "El catalogo runtime '$Property' esta vacio."
+  $labels = @($catalog | ForEach-Object {
+    $label = [string](Get-Property $_ "nombre")
+    if ([string]::IsNullOrWhiteSpace($label)) { $label = [string](Get-Property $_ "name") }
+    if ([string]::IsNullOrWhiteSpace($label)) { $label = [string](Get-Property $_ "label") }
+    $label
+  })
+  foreach ($expected in $ExpectedLabels) {
+    Require-True ($labels -contains $expected) "El catalogo '$Property' no contiene '$expected'. Disponibles: $($labels -join ', ')."
+  }
+  return @{ Status = "PASS"; Evidence = "Catalogo runtime '$Property': $($labels -join ', ')." }
+}
+
 function Add-QaCase {
   param(
     [string]$Id,
@@ -348,6 +389,11 @@ function Invoke-QaCase {
         Test-ContainsAll $text $Case.Patterns
         $evidence = "Contrato estatico encontrado en $($Case.Path): $($Case.Patterns -join ', ')."
       }
+      "angular-source" {
+        $text = Get-QaAngularSourceText $Case.Path
+        Test-ContainsAll $text $Case.Patterns
+        $evidence = "Contrato Angular encontrado en $($Case.Path.Replace('|', ', ')): $($Case.Patterns -join ', ')."
+      }
       "test-source" {
         $text = Get-QaLocalTestText $Case.Path
         Test-ContainsAll $text $Case.Patterns
@@ -356,6 +402,10 @@ function Invoke-QaCase {
       "openapi" {
         $parts = $Case.Path.Split("|", 2)
         $evidence = Test-OpenApiOperation $parts[0] $parts[1]
+      }
+      "treatment-options" {
+        $outcome = Test-TreatmentOptionCatalog $Case.Path $Case.Patterns
+        $status = [string]$outcome.Status; $evidence = [string]$outcome.Evidence
       }
       "manual" { $status = "MANUAL"; $evidence = $Case.ManualSteps }
       default { throw "Tipo de comprobacion desconocido: $($Case.Check)" }
@@ -443,7 +493,7 @@ function Write-QaReports {
   $lines += "## Interpretacion"
   $lines += ""
   $lines += "- **REAL** consulta la aplicacion QA en ejecucion sin cambiar datos."
-  $lines += "- **CONTRACT** comprueba que la interfaz o Swagger expongan el control esperado."
+  $lines += "- **CONTRACT** comprueba que las fuentes Angular actuales o Swagger expongan el control esperado; no consulta archivos legacy retirados."
   $lines += "- **MANUAL** exige interaccion humana segura; nunca se informa como aprobado automaticamente."
   $lines += "- **NO_DATA** indica que el contrato respondio, pero falta semilla QA para demostrar el comportamiento con filas reales."
   [System.IO.File]::WriteAllLines($markdownPath, [string[]]$lines, $utf8)
@@ -477,6 +527,11 @@ $login = Invoke-QaJson -Method POST -Path "/api/auth/login" -Body @{
 Require-True ([bool]$login.authenticated) "No se pudo iniciar sesion en QA."
 $script:OpenApi = Invoke-QaJson -Path "/v3/api-docs"
 
+$dayHospitalAngular = "/frontend/src/app/features/day-hospital/day-hospital.component.ts|/frontend/src/app/features/day-hospital/day-hospital.component.html|/frontend/src/app/features/day-hospital/day-hospital-pharmacy.models.ts|/frontend/src/app/features/day-hospital/day-hospital-triage.models.ts"
+$schedulerAngular = "/frontend/src/app/features/scheduler/care-scheduler.component.ts|/frontend/src/app/features/scheduler/care-scheduler.component.html|/frontend/src/app/features/scheduler/care-scheduler.models.ts"
+$documentsAngular = "/frontend/src/app/features/treatment-documents/treatment-documents.models.ts|/frontend/src/app/features/treatment-documents/treatment-documents.component.ts|/frontend/src/app/features/treatment-documents/treatment-documents.component.html"
+$qrAngular = "$schedulerAngular|/frontend/src/app/features/qr/qr-scanner.component.ts|/frontend/src/app/features/qr/qr-scanner.component.html"
+
 # FARMACIA: 25 casos
 Add-QaCase "FAR-01" "Farmacia" "REAL" "Abrir cola completa de Farmacia" "Respuesta ok/items/total sin error 500." "queue" "/api/clinical/application-workflows?queue=pharmacy"
 Add-QaCase "FAR-02" "Farmacia" "REAL" "Buscar por nombre de paciente" "La fila de origen aparece al buscar su nombre." "queue-probe" "pharmacy" "patientName"
@@ -489,18 +544,18 @@ Add-QaCase "FAR-08" "Farmacia" "REAL" "Buscar por ciclo y dia" "La consulta cicl
 Add-QaCase "FAR-09" "Farmacia" "REAL" "Buscar por fecha ISO" "La fecha yyyy-mm-dd ubica la aplicacion." "queue-probe" "pharmacy" "plannedDateIso"
 Add-QaCase "FAR-10" "Farmacia" "REAL" "Buscar por fecha local" "La fecha dd/mm/aaaa ubica la aplicacion." "queue-probe" "pharmacy" "plannedDateLocal"
 Add-QaCase "FAR-11" "Farmacia" "REAL" "Filtrar quien debe traer medicacion" "El filtro patient_to_bring responde como cola valida." "queue" "/api/clinical/application-workflows?queue=pharmacy&medicationSource=patient_to_bring"
-Add-QaCase "FAR-12" "Farmacia" "CONTRACT" "Prioridad temporal visible" "Existen Hoy, vencidas +7, vencidas +30 y todas." "static" "/index.html" "" @("careSchedulePharmacyDateScope", 'value="today"', 'value="next-7"', 'value="next-30"', 'value="all"')
-Add-QaCase "FAR-13" "Farmacia" "CONTRACT" "Filtros de estado completos" "Se distinguen pendiente, rechazada, paciente, centro y reserva." "static" "/index.html" "" @("pending-validation", 'value="rejected"', 'value="patient"', 'value="patient-has"', 'value="received-center"', 'value="pending-stock"', 'value="reserved"')
-Add-QaCase "FAR-14" "Farmacia" "CONTRACT" "Listado agrupado por fecha" "La tabla inserta cabeceras por fecha con cantidad." "static" "/app.js" "" @("carePharmacyGroupLabel", "care-pharmacy-date-group", "groupCounts")
-Add-QaCase "FAR-15" "Farmacia" "CONTRACT" "Rechazar una orden inicialmente pendiente" "El modal ofrece Rechazar orden antes de aprobar." "static" "/app.js" "" @("Rechazar orden", 'data-validated="false"', "pharmacyActionReason")
-Add-QaCase "FAR-16" "Farmacia" "CONTRACT" "Validar o revalidar la orden" "El modal expone validacion y revalidacion." "static" "/app.js" "" @("Validar orden", "Revalidar orden", 'data-validated="true"')
-Add-QaCase "FAR-17" "Farmacia" "CONTRACT" "Procedencias de medicacion no ambiguas" "Se distinguen stock, debe traer, la tiene, recibida y proveedor." "static" "/app.js" "" @("center_stock", "patient_to_bring", "patient_has_medication", "received_center", "pending_supplier")
+Add-QaCase "FAR-12" "Farmacia" "CONTRACT" "Prioridad temporal visible" "Existen Hoy, proximos 7 dias, proximos 30 dias y todas." "angular-source" $dayHospitalAngular "" @("export type PharmacyTimeScope", "'today'", "'next7'", "'next30'", "'all'", "filterPharmacyQueue")
+Add-QaCase "FAR-13" "Farmacia" "CONTRACT" "Filtros de estado completos" "Se distinguen pendiente, rechazada, paciente, centro, proveedor y reserva." "angular-source" $dayHospitalAngular "" @("export type PharmacyQueueFilter", "validation-pending", "validation-rejected", "patient-to-bring", "patient-has-medication", "received-center", "pending-supplier", "reservation-pending", "reserved")
+Add-QaCase "FAR-14" "Farmacia" "CONTRACT" "Listado agrupado por fecha" "La tabla inserta cabeceras por fecha con cantidad." "angular-source" $dayHospitalAngular "" @("export function groupPharmacyQueue", "new Map<string, T[]>", "plannedDate", "count: rows.length")
+Add-QaCase "FAR-15" "Farmacia" "CONTRACT" "Rechazar una orden inicialmente pendiente" "El modal ofrece Rechazar orden antes de aprobar." "angular-source" $dayHospitalAngular "" @("Rechazar orden", "validatePharmacy(false)", "pharmacyNotes")
+Add-QaCase "FAR-16" "Farmacia" "CONTRACT" "Validar o revalidar la orden" "El modal expone validacion y revalidacion segun el estado actual." "angular-source" $dayHospitalAngular "" @("pharmacyPrimaryActionLabel", "'Validar orden'", "'Revalidar orden'", "validatePharmacy(true)")
+Add-QaCase "FAR-17" "Farmacia" "CONTRACT" "Procedencias de medicacion no ambiguas" "Se distinguen stock, debe traer, la tiene, recibida y proveedor." "angular-source" $dayHospitalAngular "" @("center_stock", "patient_to_bring", "patient_has_medication", "received_center", "pending_supplier")
 Add-QaCase "FAR-18" "Farmacia" "CONTRACT" "Reserva y liberacion de stock documentadas" "Swagger expone el comando de reserva/liberacion." "openapi" "/api/clinical/application-workflows/{patientId}/{treatmentId}/{cycleNumber}/{applicationDay}/stock-reservation|post"
 Add-QaCase "FAR-19" "Farmacia" "REAL" "Fila con datos farmaceuticos esenciales" "La cola informa drogas, procedencia, validacion, reserva y fecha." "queue-shape" "/api/clinical/application-workflows?queue=pharmacy" "" @("applicationDrugs", "medicationSource", "pharmacyValidationStatus", "stockReservationStatus", "plannedDate")
-Add-QaCase "FAR-20" "Farmacia" "CONTRACT" "Alerta de aprobacion heredada sin traza" "Una validacion migrada sin actor/fecha se marca para revision." "static" "/app.js" "" @("pharmacyValidationTraceable", "is-untraceable", "sin traza")
-Add-QaCase "FAR-21" "Farmacia" "CONTRACT" "Historial auditable de la aplicacion" "El modal representa auditTrail con actor y revision." "static" "/app.js" "" @("careApplicationWorkflowAuditMarkup", "auditTrail", "resultingRevision")
-Add-QaCase "FAR-22" "Farmacia" "CONTRACT" "Carga incremental para listados extensos" "La interfaz limita y permite cargar 250 filas adicionales." "static" "/app.js" "" @("careSchedulePharmacyVisibleLimit", "+= 250", "data-care-pharmacy-load-more")
-Add-QaCase "FAR-23" "Farmacia" "CONTRACT" "QR por aplicacion disponible en Farmacia" "Cada fila habilitada puede abrir el QR del ciclo y dia." "static" "/app.js" "" @("care-pharmacy-qr", "documents/qr?cycle=", "applicationDay=")
+Add-QaCase "FAR-20" "Farmacia" "CONTRACT" "Alerta de aprobacion heredada sin traza" "Una validacion migrada sin actor/fecha se marca para revision." "angular-source" $dayHospitalAngular "" @("pharmacyTraceabilityWarning", "pharmacy_validation_approved", "pharmacy_validation_rejected", "pharmacyValidatedAt", "missing.push('actor')", "care-pharmacy-trace-warning")
+Add-QaCase "FAR-21" "Farmacia" "CONTRACT" "Historial auditable de la aplicacion" "El modal representa auditTrail con actor y revision." "angular-source" $dayHospitalAngular "" @("workflowAudit(workflow", "auditTrail", "resultingRevision")
+Add-QaCase "FAR-22" "Farmacia" "CONTRACT" "Carga incremental para listados extensos" "La interfaz limita y permite cargar 250 filas adicionales." "angular-source" $dayHospitalAngular "" @("pharmacyVisibleLimit", "250", "loadMorePharmacy")
+Add-QaCase "FAR-23" "Farmacia" "CONTRACT" "QR por aplicacion disponible en Farmacia" "Cada fila habilitada puede abrir el QR del ciclo y dia." "angular-source" $documentsAngular "" @("'qr'", "documents/qr?cycle=", "applicationDay=")
 Add-QaCase "FAR-24" "Farmacia" "REAL" "Encontrar un paciente en una lista de 2000 filas" "Nombre, DNI, HC, ciclo/dia y fecha deben resolverse en menos de 10 segundos." "pharmacy-load-search"
 Add-QaCase "FAR-25" "Farmacia" "CONTRACT" "Dos farmaceuticos intentan reservar el mismo stock" "Solo una reserva se consolida; el segundo intento no puede sobre-reservar y la aplicacion se serializa por revision." "test-source" "/src/test/java/ar/com/hexium/hcop/infusion/HospitalDayConcurrencySafetyTest.java" "" @("far25TwoPharmacistsCannotOverReserveTheSameInventoryLot", "far25ApplicationLockSerializesTwoPharmacistsBeforeCheckingRevision", "containsExactlyInAnyOrder(true, false)", "FOR UPDATE OF w")
 
@@ -510,53 +565,53 @@ Add-QaCase "ENF-02" "Enfermeria" "REAL" "Buscar paciente en triaje" "Nombre de u
 Add-QaCase "ENF-03" "Enfermeria" "REAL" "Orden cronologico de triaje" "Los pacientes de hoy aparecen por hora de turno." "queue-order" "triage"
 Add-QaCase "ENF-04" "Enfermeria" "REAL" "Abrir cola de preparacion" "Respuesta valida para el trabajo esteril." "queue" "/api/clinical/application-workflows?queue=preparation&date=$((Get-Date).ToString('yyyy-MM-dd'))"
 Add-QaCase "ENF-05" "Enfermeria" "REAL" "Abrir cola de administracion" "Respuesta valida para sala de hoy." "queue" "/api/clinical/application-workflows?queue=administration&date=$((Get-Date).ToString('yyyy-MM-dd'))"
-Add-QaCase "ENF-06" "Enfermeria" "CONTRACT" "Buscador de sala" "Sala permite buscar por paciente, DNI, esquema o sillon." "static" "/index.html" "" @("careRoomSearch", "Buscar aplicaciones en sala")
-Add-QaCase "ENF-07" "Enfermeria" "CONTRACT" "Buscador de triaje" "Triaje permite buscar por paciente, DNI, esquema o sillon." "static" "/index.html" "" @("careTriageSearch", "Buscar pacientes para triaje")
-Add-QaCase "ENF-08" "Enfermeria" "CONTRACT" "Filtro de triaje" "Se distinguen todos, pendientes, aptos y postergados." "static" "/index.html" "" @("careTriageFilter", 'value="pending"', 'value="pass"', 'value="fail"')
+Add-QaCase "ENF-06" "Enfermeria" "CONTRACT" "Buscador de sala" "Sala permite buscar por paciente, DNI, esquema o sillon." "angular-source" $dayHospitalAngular "" @("view() === 'administration'", "filterOperationalQueue", "item['patientName'], item['patientDni']", "item['scheme']", "appointment['chair']")
+Add-QaCase "ENF-07" "Enfermeria" "CONTRACT" "Buscador de triaje" "Triaje permite buscar por paciente, DNI, esquema o sillon." "angular-source" $dayHospitalAngular "" @("view() === 'triage'", "filterOperationalQueue", "item['patientName'], item['patientDni']", "item['scheme']", "appointment['chair']")
+Add-QaCase "ENF-08" "Enfermeria" "CONTRACT" "Filtro de triaje" "Se distinguen todos, pendientes, aptos y postergados." "angular-source" $dayHospitalAngular "" @("export type TriageQueueFilter", "'all'", "'pending'", "'passed'", "'failed'", "queueStatusFilter")
 Add-QaCase "ENF-09" "Enfermeria" "REAL" "Turno listo para operar hoy" "La fila informa turno, confirmacion y evaluacion clinica." "queue-shape" "/api/clinical/application-workflows?queue=triage&date=$((Get-Date).ToString('yyyy-MM-dd'))" "" @("appointment", "clinicalAuthorizationStatus", "clinicalAssessment")
-Add-QaCase "ENF-10" "Enfermeria" "CONTRACT" "Laboratorio pretratamiento" "Fecha, neutrofilos, plaquetas, creatinina y funcion hepatica estan disponibles." "static" "/app.js" "" @('name="labDate"', 'name="neutrophils"', 'name="platelets"', 'name="creatinine"', 'name="hepaticFunction"')
-Add-QaCase "ENF-11" "Enfermeria" "CONTRACT" "Signos vitales obligatorios" "Peso, presion y temperatura forman parte del PASS." "static" "/app.js" "" @('name="weightKg"', 'name="bloodPressure"', 'name="temperatureC"', "data-required-for-pass")
-Add-QaCase "ENF-12" "Enfermeria" "CONTRACT" "Frecuencia cardiaca visible" "El formulario y el payload incluyen heartRate." "static" "/app.js" "" @('name="heartRate"', 'heartRate: careApplicationFormNumber("heartRate")')
-Add-QaCase "ENF-13" "Enfermeria" "CONTRACT" "Saturacion visible" "El formulario y el payload incluyen oxygenSaturation." "static" "/app.js" "" @('name="oxygenSaturation"', 'oxygenSaturation: careApplicationFormNumber("oxygenSaturation")')
-Add-QaCase "ENF-14" "Enfermeria" "CONTRACT" "Toxicidad y ECOG" "Se registran ECOG 0-4 y toxicidad 0-5." "static" "/app.js" "" @('name="ecog"', 'name="toxicityGrade"', "[0,1,2,3,4,5]")
-Add-QaCase "ENF-15" "Enfermeria" "CONTRACT" "Alertas clinicas de seguridad" "Se advierten neutropenia, plaquetopenia, fiebre, hipoxemia y toxicidad." "static" "/app.js" "" @("neutrophils < 1000", "platelets < 75000", "temperature >= 38", "saturation < 92", "toxicity >= 3")
-Add-QaCase "ENF-16" "Enfermeria" "CONTRACT" "Override clinico documentado" "Un PASS con alerta exige justificacion de al menos 10 caracteres." "static" "/app.js" "" @("clinicalOverrideReason", "override.required = alerts.length > 0", "length < 10")
-Add-QaCase "ENF-17" "Enfermeria" "CONTRACT" "FAIL con motivo y nueva fecha" "La postergacion registra motivo y fecha propuesta." "static" "/app.js" "" @('name="failReason"', 'name="rescheduledDate"', 'data-decision="FAIL"')
-Add-QaCase "ENF-18" "Enfermeria" "CONTRACT" "Revocar un PASS antes de preparar" "Existe accion explicita Revocar PASS y postergar." "static" "/app.js" "" @("Revocar PASS y postergar", 'data-revoking-pass="true"', "window.confirm")
-Add-QaCase "ENF-19" "Enfermeria" "CONTRACT" "Trazabilidad de cada mezcla" "Lote, vencimiento, cantidad, diluyente, volumen, concentracion y TTL son obligatorios." "static" "/app.js" "" @('name="lot"', 'name="expiryDate"', 'name="quantity"', 'name="diluent"', 'name="finalVolume"', 'name="concentration"', 'name="ttlMinutes"')
-Add-QaCase "ENF-20" "Enfermeria" "CONTRACT" "Segundo control de preparacion" "Se declara otro profesional habilitado y la interfaz aclara que la seleccion no reemplaza una cofirma." "static" "/app.js" "" @('name="verifiedBy"', "Segundo profesional que controló", "no reemplaza la cofirma")
+Add-QaCase "ENF-10" "Enfermeria" "CONTRACT" "Laboratorio pretratamiento" "Fecha, neutrofilos, plaquetas, creatinina y funcion hepatica estan disponibles." "angular-source" $dayHospitalAngular "" @("triageLaboratoryDate", "triageNeutrophils", "triagePlatelets", "triageCreatinine", "triageHepaticFunction")
+Add-QaCase "ENF-11" "Enfermeria" "CONTRACT" "Signos vitales obligatorios" "Peso, presion y temperatura forman parte del PASS." "angular-source" $dayHospitalAngular "" @("requiredForPass", "triageWeight()", "triageBloodPressure()", "triageTemperature()")
+Add-QaCase "ENF-12" "Enfermeria" "CONTRACT" "Frecuencia cardiaca visible" "El formulario y el payload incluyen heartRate." "angular-source" $dayHospitalAngular "" @("triageHeartRate", "heartRate:")
+Add-QaCase "ENF-13" "Enfermeria" "CONTRACT" "Saturacion visible" "El formulario y el payload incluyen oxygenSaturation." "angular-source" $dayHospitalAngular "" @("triageOxygen", "oxygenSaturation:")
+Add-QaCase "ENF-14" "Enfermeria" "CONTRACT" "Toxicidad y ECOG" "Se registran ECOG 0-4 y toxicidad 0-5." "angular-source" $dayHospitalAngular "" @("triageEcog", "triageToxicityGrade", 'value="5"')
+Add-QaCase "ENF-15" "Enfermeria" "CONTRACT" "Alertas clinicas de seguridad" "Se advierten neutropenia, plaquetopenia, fiebre, hipoxemia y toxicidad." "angular-source" $dayHospitalAngular "" @("triageSafetyAlerts", "neutrophils < 1_000", "platelets < 75_000", "temperature >= 38", "saturation < 92", "toxicity >= 3")
+Add-QaCase "ENF-16" "Enfermeria" "CONTRACT" "Override clinico documentado" "Un PASS con alerta exige justificacion de al menos 10 caracteres." "angular-source" $dayHospitalAngular "" @("passRequiresJustification", "alerts.length > 0", "reason.trim().length < 10", "this.triageReason()")
+Add-QaCase "ENF-17" "Enfermeria" "CONTRACT" "FAIL con motivo y nueva fecha" "La postergacion registra motivo y fecha propuesta." "angular-source" $dayHospitalAngular "" @("triageReason", "triageRescheduledDate", "submitTriage('FAIL')")
+Add-QaCase "ENF-18" "Enfermeria" "CONTRACT" "Revocar un PASS antes de preparar" "Existe accion explicita que exige motivo, revoca el PASS y lo registra como postergacion." "angular-source" $dayHospitalAngular "" @("Revocar PASS", "revokeTriagePass(): void", "this.triageReason().trim().length < 3", "this.submitTriage('FAIL')", "canRevokeTriagePass")
+Add-QaCase "ENF-19" "Enfermeria" "CONTRACT" "Trazabilidad de cada mezcla" "Lote, vencimiento, cantidad, diluyente, volumen, concentracion y TTL son obligatorios." "angular-source" $dayHospitalAngular "" @("lot:", "expiryDate:", "quantity:", "diluent:", "finalVolume:", "concentration:", "ttlMinutes:")
+Add-QaCase "ENF-20" "Enfermeria" "CONTRACT" "Segundo control de preparacion" "Se declara otro profesional habilitado y la interfaz aclara que la seleccion no reemplaza una cofirma." "angular-source" $dayHospitalAngular "" @("care-preparation-verifier", "preparationVerifiedBy", "Segundo profesional verificador", "no reemplaza su cofirma")
 Add-QaCase "ENF-21" "Enfermeria" "CONTRACT" "Mezcla vencida y reinicio" "Swagger expone el descarte/reinicio sin borrar trazabilidad." "openapi" "/api/clinical/application-workflows/{patientId}/{treatmentId}/{cycleNumber}/{applicationDay}/preparation/restart|post"
-Add-QaCase "ENF-22" "Enfermeria" "CONTRACT" "Doble chequeo a pie de cama" "Paciente, etiqueta y segundo profesional son controles separados." "static" "/app.js" "" @('name="patientVerified"', 'name="labelVerified"', 'name="doubleCheckBy"', "Doble chequeo a pie de cama")
-Add-QaCase "ENF-23" "Enfermeria" "CONTRACT" "Inicio y cierre reales" "Se registran horas, dosis real, reaccion y observacion." "static" "/app.js" "" @('name="startedAt"', 'name="completedAt"', 'name="actualDose"', 'name="reactionOccurred"', 'name="administrationObservation"')
-Add-QaCase "ENF-24" "Enfermeria" "CONTRACT" "QR como control de identidad" "Sala permite leer el QR y abrir la ficha operativa canonica." "static" "/app.js" "" @("careQrScannerModal", "Abrir ficha de administración", 'openCareApplicationWorkflowModal("administration"')
+Add-QaCase "ENF-22" "Enfermeria" "CONTRACT" "Doble chequeo a pie de cama" "Paciente, etiqueta y segundo profesional son controles separados." "angular-source" $dayHospitalAngular "" @("administrationPatientVerified", "administrationLabelVerified", "administrationDoubleCheckBy", "Doble chequeo")
+Add-QaCase "ENF-23" "Enfermeria" "CONTRACT" "Inicio y cierre reales" "Se registran horas, dosis real, reaccion y observacion." "angular-source" $dayHospitalAngular "" @("startedAt:", "completedAt:", "actualDose:", "reactionOccurred:", "observation:")
+Add-QaCase "ENF-24" "Enfermeria" "CONTRACT" "QR como control de identidad" "Sala permite leer el QR y abrir la ficha operativa canonica." "angular-source" $qrAngular "" @("app-qr-scanner", "requestAdministration", "openQrAdministration", "qrWorkflowRequest")
 Add-QaCase "ENF-25" "Enfermeria" "CONTRACT" "Reaccion aguda o administracion parcial" "Debe poder detener, documentar droga/dosis parcial, medidas y escalar sin cerrar todo como completado." "test-source" "/scripts/integration-test.ps1" "" @("La prueba de seguridad requiere un protocolo multidroga", 'administration/interrupt', 'actualDose = $partialDose', "actualDoseAtInterruption", "interruptionPending", 'administration/resolve')
 
 # ONCOLOGIA: 25 casos
-Add-QaCase "ONC-01" "Oncologia" "CONTRACT" "Nuevo tratamiento es el primer paso" "La primera pestana del Hospital de dia es Nuevo tratamiento." "static" "/index.html" "" @('data-care-hospital-tab="new-treatment"', "Nuevo tratamiento")
-Add-QaCase "ONC-02" "Oncologia" "CONTRACT" "Contexto de paciente activo" "El modal distingue claramente paciente activo o ausencia de paciente." "static" "/index.html" "" @("careHospitalPatientContext", "careHospitalPatientName", "Sin paciente activo")
-Add-QaCase "ONC-03" "Oncologia" "CONTRACT" "Diagnostico obligatorio" "El alta de tratamiento exige elegir un diagnostico guardado." "static" "/index.html" "" @('id="careTreatmentDiagnosis"', 'name="diagnostico"', "required")
-Add-QaCase "ONC-04" "Oncologia" "CONTRACT" "Caracter terapeutico obligatorio" "Se puede elegir curativo, adyuvante, neoadyuvante, paliativo o soporte." "static" "/index.html" "" @("careTreatmentCharacter", "curative", "adjuvant", "neoadjuvant", "palliative", "supportive")
-Add-QaCase "ONC-05" "Oncologia" "CONTRACT" "Tipo oncologico obligatorio" "Quimio, inmuno, dirigida, hormona y soporte estan disponibles." "static" "/index.html" "" @("careTreatmentType", "chemotherapy", "immunotherapy", "targeted", "hormone")
-Add-QaCase "ONC-06" "Oncologia" "CONTRACT" "Selector de esquema" "El formulario selecciona esquema, no estadio." "static" "/index.html" "" @('id="careTreatmentScheme"', 'name="esquema"', "Seleccione...")
+Add-QaCase "ONC-01" "Oncologia" "CONTRACT" "Nuevo tratamiento es el primer paso" "La primera pestana del Hospital de dia es Nuevo tratamiento." "angular-source" $schedulerAngular "" @("activeMode() === 'new-treatment'", "selectMode('new-treatment')", "Nuevo tratamiento")
+Add-QaCase "ONC-02" "Oncologia" "CONTRACT" "Contexto de paciente activo" "El modal distingue claramente paciente activo o ausencia de paciente." "angular-source" $dayHospitalAngular "" @("care-new-treatment-patient-context", "activePatient()", "No hay un paciente activo")
+Add-QaCase "ONC-03" "Oncologia" "CONTRACT" "Diagnostico obligatorio" "El alta de tratamiento exige elegir un diagnostico guardado." "angular-source" $dayHospitalAngular "" @('data-new-treatment-field="diagnosis"', "treatmentDiagnosisId", "!this.treatmentDiagnosisId()")
+Add-QaCase "ONC-04" "Oncologia" "CONTRACT" "Caracter terapeutico obligatorio" "El catalogo runtime ofrece curativo, adyuvante, neoadyuvante y paliativo." "treatment-options" "characters" "" @("Curativo", "Adyuvante", "Neoadyuvante", "Paliativo")
+Add-QaCase "ONC-05" "Oncologia" "CONTRACT" "Tipo oncologico obligatorio" "El catalogo runtime ofrece quimioterapia, inmunoterapia, terapia dirigida y hormonoterapia." "treatment-options" "treatmentTypes" "" @("Quimioterapia", "Inmunoterapia", "Terapia dirigida", "Hormonoterapia")
+Add-QaCase "ONC-06" "Oncologia" "CONTRACT" "Selector de esquema" "El formulario selecciona esquema, no estadio." "angular-source" $dayHospitalAngular "" @('data-new-treatment-field="scheme"', "Seleccionar protocolo", "treatmentSchemeId")
 Add-QaCase "ONC-07" "Oncologia" "REAL" "Catalogo de protocolos accesible" "El catalogo responde sin modificar configuracion." "json-shape" "/api/clinical/protocols" "" @("ok")
 Add-QaCase "ONC-08" "Oncologia" "REAL" "Catalogo de esquemas prescribibles" "Los esquemas disponibles responden desde la base local." "json-shape" "/api/clinical/schemes" "" @("ok")
 Add-QaCase "ONC-09" "Oncologia" "CONTRACT" "Opciones por paciente documentadas" "Swagger expone diagnosticos y esquemas elegibles." "openapi" "/api/clinical/patients/{patientId}/treatment-options|get"
 Add-QaCase "ONC-10" "Oncologia" "CONTRACT" "Requisitos del esquema documentados" "Swagger expone los requisitos previos por esquema." "openapi" "/api/clinical/patients/{patientId}/treatment-requirements/{schemeId}|get"
-Add-QaCase "ONC-11" "Oncologia" "CONTRACT" "Incompatibilidad diagnostico-protocolo" "La excepcion exige confirmacion y motivo clinico." "static" "/index.html" "" @("careTreatmentProtocolWarning", "careTreatmentProtocolMismatchConfirmed", "careTreatmentProtocolMismatchReason", 'minlength="10"')
-Add-QaCase "ONC-12" "Oncologia" "CONTRACT" "Cantidad de ciclos acotada" "Ciclos previstos admite 1 a 50." "static" "/index.html" "" @('id="careTreatmentCycles"', 'min="1"', 'max="50"')
-Add-QaCase "ONC-13" "Oncologia" "CONTRACT" "Ciclo inicial explicito" "Se puede iniciar o reanudar desde un numero de ciclo valido." "static" "/index.html" "" @('id="careTreatmentInitialCycle"', 'name="cicloInicial"', 'value="1"')
-Add-QaCase "ONC-14" "Oncologia" "CONTRACT" "Fecha del primer ciclo" "La fecha es obligatoria y alimenta la proyeccion." "static" "/index.html" "" @('id="careTreatmentFirstCycleDate"', 'name="fechaPrimerCiclo"', "required")
-Add-QaCase "ONC-15" "Oncologia" "CONTRACT" "Proyeccion previa de ciclos" "Antes de guardar se muestran fechas calculadas." "static" "/index.html" "" @("careTreatmentProjection", "Seleccione un esquema y una fecha para proyectar los ciclos")
-Add-QaCase "ONC-16" "Oncologia" "CONTRACT" "Estado de consentimiento" "Pendiente, firmado o no requerido son opciones explicitas." "static" "/index.html" "" @("careTreatmentConsent", 'value="pending"', 'value="signed"', 'value="not-required"')
-Add-QaCase "ONC-17" "Oncologia" "CONTRACT" "Requisitos confirmados antes de guardar" "Los datos dinamicos del protocolo requieren confirmacion." "static" "/app.js" "" @("careTreatmentRequirementsConfirmed", "data-care-requirements-confirm", "Datos verificados")
+Add-QaCase "ONC-11" "Oncologia" "CONTRACT" "Incompatibilidad diagnostico-protocolo" "La excepcion exige confirmacion y motivo clinico." "angular-source" $dayHospitalAngular "" @("treatmentMismatchConfirmed", "treatmentMismatchReason", "al menos 10 caracteres")
+Add-QaCase "ONC-12" "Oncologia" "CONTRACT" "Cantidad de ciclos acotada" "La UI de prescripcion admite 1 a 50 ciclos; el backend conserva compatibilidad historica hasta 500." "angular-source" $dayHospitalAngular "" @('data-new-treatment-field="cycles"', 'min="1"', 'max="50"', "TREATMENT_UI_MAX_CYCLES")
+Add-QaCase "ONC-13" "Oncologia" "CONTRACT" "Ciclo inicial explicito" "Se puede iniciar o reanudar desde un numero de ciclo valido." "angular-source" $dayHospitalAngular "" @('data-new-treatment-field="initialCycle"', "treatmentInitialCycle", "cicloInicial:")
+Add-QaCase "ONC-14" "Oncologia" "CONTRACT" "Fecha del primer ciclo" "La fecha es obligatoria y alimenta la proyeccion." "angular-source" $dayHospitalAngular "" @('data-new-treatment-field="firstCycleDate"', "treatmentFirstCycleDate", "fechaPrimerCiclo:")
+Add-QaCase "ONC-15" "Oncologia" "CONTRACT" "Proyeccion previa de ciclos" "Antes de guardar se muestran fechas, intervalos y duraciones calculadas." "angular-source" $dayHospitalAngular "" @("data-new-treatment-projection", "treatmentProjection()", "TREATMENT_PROJECTION_LIMIT", "row.intervalLabel", "row.durationLabel", "estimatedDurationMinutes")
+Add-QaCase "ONC-16" "Oncologia" "CONTRACT" "Estado de consentimiento" "Pendiente, firmado o no requerido son opciones explicitas." "angular-source" $dayHospitalAngular "" @("treatmentConsentOptions", "treatmentOptions()['consentStates']", "estadoConsentimiento:")
+Add-QaCase "ONC-17" "Oncologia" "CONTRACT" "Requisitos confirmados antes de guardar" "Los datos dinamicos del protocolo requieren confirmacion." "angular-source" $dayHospitalAngular "" @("treatmentRequirementsConfirmed", 'data-new-treatment-field="requirements"', "Confirme los requisitos")
 Add-QaCase "ONC-18" "Oncologia" "REAL" "Aplicacion conserva drogas del dia" "La cola informa applicationDrugs, ciclo y dia." "queue-shape" "/api/clinical/application-workflows?queue=pharmacy" "" @("applicationDrugs", "cycleNumber", "applicationDay")
 Add-QaCase "ONC-19" "Oncologia" "REAL" "Aplicaciones reales por ciclo y dia" "Cada fila incluye fecha prevista, duracion y fuente del calculo." "queue-shape" "/api/clinical/application-workflows?queue=pharmacy" "" @("plannedDate", "durationMinutes", "durationSource", "totalCycles")
 Add-QaCase "ONC-20" "Oncologia" "CONTRACT" "Alta y listado de tratamientos" "Swagger documenta GET y POST de tratamientos del paciente." "openapi" "/api/clinical/patients/{patientId}/treatments|post"
 Add-QaCase "ONC-21" "Oncologia" "CONTRACT" "Detalle ciclo-dia-aplicacion" "Swagger expone el detalle completo del tratamiento." "openapi" "/api/clinical/patients/{patientId}/treatments/{treatmentId}/detail|get"
 Add-QaCase "ONC-22" "Oncologia" "CONTRACT" "Suspension documentada" "Swagger expone la suspension del tratamiento." "openapi" "/api/clinical/treatments/{patientId}/{treatmentId}/suspend|post"
 Add-QaCase "ONC-23" "Oncologia" "CONTRACT" "Reanudacion documentada" "Swagger expone la reanudacion desde un ciclo coherente." "openapi" "/api/clinical/treatments/{patientId}/{treatmentId}/resume|post"
-Add-QaCase "ONC-24" "Oncologia" "CONTRACT" "Evolucion clinica al prescribir" "El frontend construye y agrega una evolucion del tratamiento." "static" "/app.js" "" @("treatmentEvolution", "append", "fechaPrimerCiclo", "cantidadCiclos")
-Add-QaCase "ONC-25" "Oncologia" "CONTRACT" "Documentos del tratamiento" "La interfaz enlaza hoja de tratamiento, QR y consentimiento." "static" "/app.js" "" @('"treatment-sheet"', "documents/qr?cycle=", "/consent")
+Add-QaCase "ONC-24" "Oncologia" "CONTRACT" "Evolucion clinica al prescribir" "El frontend envia el tratamiento completo y recarga la historia con la evolucion creada por el servidor." "angular-source" $dayHospitalAngular "" @("createTreatment()", "fechaPrimerCiclo", "cantidadCiclos", "workspace.load(patientId)")
+Add-QaCase "ONC-25" "Oncologia" "CONTRACT" "Documentos del tratamiento" "La interfaz enlaza hoja de tratamiento, QR y consentimiento." "angular-source" $documentsAngular "" @("'treatment-sheet'", "documents/qr?cycle=", "/consent")
 
 # TURNOS: 25 casos
 Add-QaCase "TUR-01" "Turnos" "REAL" "Abrir candidatos del turnero" "Respuesta ok/candidates/total sin alterar turnos." "candidates" "/api/clinical/infusion-candidates?includeScheduled=false&onlySchedulingEligible=false"
@@ -564,24 +619,24 @@ Add-QaCase "TUR-02" "Turnos" "REAL" "Buscar candidato por paciente" "El buscador
 Add-QaCase "TUR-03" "Turnos" "REAL" "Excluir ya programados de espera" "includeScheduled=false responde como contrato valido." "candidates" "/api/clinical/infusion-candidates?includeScheduled=false&onlySchedulingEligible=false"
 Add-QaCase "TUR-04" "Turnos" "REAL" "Mostrar tambien bloqueados para gestion" "onlySchedulingEligible=false permite explicar por que no entran." "candidates" "/api/clinical/infusion-candidates?includeScheduled=false&onlySchedulingEligible=false"
 Add-QaCase "TUR-05" "Turnos" "REAL" "Agenda del dia" "Lista de infusiones por fecha responde sin cambios." "json-shape" "/api/clinical/infusions?date=$((Get-Date).ToString('yyyy-MM-dd'))" "" @("ok", "infusions", "total")
-Add-QaCase "TUR-06" "Turnos" "CONTRACT" "Filtros operativos de espera" "Todos, prescriptos, falta receta, falta medicacion, recibida y paciente." "static" "/index.html" "" @("careScheduleCandidateFilter", "prescription-confirmed", "missing-prescription", "missing-medication", "medication-received", "medication-with-patient")
-Add-QaCase "TUR-07" "Turnos" "CONTRACT" "Prioridad cronologica de espera" "El listado usa un comparador por ciclo/fecha y no orden de carga." "static" "/app.js" "" @("careScheduleCandidateCompare", ".sort(", "suggestedDate")
-Add-QaCase "TUR-08" "Turnos" "CONTRACT" "Fecha en formato local y dia de semana" "La cabecera tiene dd/mm/aaaa y nombre del dia." "static" "/index.html" "" @("careScheduleDate", "dd/mm/aaaa", "careScheduleWeekday")
-Add-QaCase "TUR-09" "Turnos" "CONTRACT" "Calendario y navegacion diaria" "Existen calendario, anterior, hoy y siguiente." "static" "/index.html" "" @("careScheduleCalendarDate", "careSchedulePreviousDayBtn", "careScheduleTodayBtn", "careScheduleNextDayBtn")
+Add-QaCase "TUR-06" "Turnos" "CONTRACT" "Filtros operativos de espera" "Todos, prescriptos, falta receta, falta medicacion, recibida y paciente." "angular-source" $schedulerAngular "" @("prescribed", "prescription-confirmed", "missing-prescription", "missing-medication", "medication-received", "medication-with-patient")
+Add-QaCase "TUR-07" "Turnos" "CONTRACT" "Prioridad cronologica de espera" "El listado usa un comparador por ciclo/fecha y no orden de carga." "angular-source" $schedulerAngular "" @("filteredCandidates", ".sort(", "suggestedDate")
+Add-QaCase "TUR-08" "Turnos" "CONTRACT" "Fecha en formato local y dia de semana" "La cabecera tiene dd/mm/aaaa y nombre del dia." "angular-source" $schedulerAngular "" @("weekday = computed", "dateLabel(value", '${match[3]}/${match[2]}/${match[1]}')
+Add-QaCase "TUR-09" "Turnos" "CONTRACT" "Calendario y navegacion diaria" "Existen calendario, anterior, hoy y siguiente." "angular-source" $schedulerAngular "" @('type="date"', "shiftDate(-1)", "today()", "shiftDate(1)")
 Add-QaCase "TUR-10" "Turnos" "REAL" "Configuracion de Hospital de dia disponible" "La definicion activa se recupera desde PostgreSQL." "json-shape" "/api/clinical/configuration/day-hospital-settings" "" @("ok", "items", "total")
-Add-QaCase "TUR-11" "Turnos" "CONTRACT" "Fracciones permitidas" "La grilla admite 5, 10, 15, 20 y 30 minutos." "static" "/app.js" "" @("[5, 10, 15, 20, 30]", "careScheduleSupportedSlotMinutes")
-Add-QaCase "TUR-12" "Turnos" "CONTRACT" "Cantidad de sillones y jornada configurables" "La agenda consume chairCount, startTime y endTime." "static" "/app.js" "" @("chairCount", "startTime", "endTime", "careScheduleSettings")
-Add-QaCase "TUR-13" "Turnos" "CONTRACT" "Zoom de sillones" "Acercar y alejar cambian la cantidad visible." "static" "/app.js" "" @("careScheduleZoomInBtn", "careScheduleZoomOutBtn", "zoomCareScheduleChairViewport")
-Add-QaCase "TUR-14" "Turnos" "CONTRACT" "Paginado horizontal de sillones" "Anterior/siguiente desplazan el rango sin perder turnos." "static" "/index.html" "" @("careSchedulePreviousChairsBtn", "careScheduleNextChairsBtn", "careScheduleChairRange")
-Add-QaCase "TUR-15" "Turnos" "CONTRACT" "Arrastrar y soltar" "La grilla escucha dragover y drop sobre el mismo objetivo." "static" "/app.js" "" @('$("#careScheduleGrid")?.addEventListener("dragover"', '$("#careScheduleGrid")?.addEventListener("drop"', "dropCareScheduleItem")
-Add-QaCase "TUR-16" "Turnos" "CONTRACT" "Vista previa solo en posiciones validas" "El dropEffect es move solo cuando target.valid." "static" "/app.js" "" @('target.valid ? "move" : "none"', "handleCareScheduleDragOver")
-Add-QaCase "TUR-17" "Turnos" "CONTRACT" "Prevencion de superposicion" "El calculo compara inicio/fin contra cada turno existente." "static" "/app.js" "" @("itemStart", "itemEnd", "placementItem", "target.valid")
-Add-QaCase "TUR-18" "Turnos" "CONTRACT" "Duracion ocupa casilleros completos" "El span usa ceil(duracion/slotMinutes)." "static" "/app.js" "" @("Math.ceil(careScheduleItemDuration", "layout.slotMinutes", "span")
-Add-QaCase "TUR-19" "Turnos" "CONTRACT" "Franja horaria visible" "El bloque muestra desde inicio hasta el ultimo minuto ocupado." "static" "/app.js" "" @("occupiedRange", "careScheduleClock(minutes)", "slotMinutes - 1")
-Add-QaCase "TUR-20" "Turnos" "CONTRACT" "Turno confirmado y no confirmado distinguibles" "La tarjeta usa estados y colores separados." "static" "/app.js" "" @("is-appointment-confirmed", "is-appointment-pending", "appointmentConfirmed")
-Add-QaCase "TUR-21" "Turnos" "CONTRACT" "Mover turno asignado" "La logica de drop conserva la aplicacion y actualiza su ubicacion." "static" "/app.js" "" @("dropCareScheduleItem", "previousCandidates", "scheduledAt", "chair")
-Add-QaCase "TUR-22" "Turnos" "CONTRACT" "Quitar turno y devolver a espera" "Quitar la ubicacion no falsifica los estados historicos de Farmacia o Administracion." "static" "/app.js" "" @('scheduledAt: null', 'chair: null', 'clinicalStatus: "cancelled"', "loadCareSchedule")
-Add-QaCase "TUR-23" "Turnos" "CONTRACT" "Modal de datos del turno" "Paciente, DNI, esquema, diagnostico, medicacion y confirmacion estan visibles." "static" "/app.js" "" @("careScheduleDetail", "patientDni", "scheme", "diagnosis", "medicationWithPatient", "appointmentConfirmed")
+Add-QaCase "TUR-11" "Turnos" "CONTRACT" "Fracciones permitidas" "La grilla admite 5, 10, 15, 20 y 30 minutos." "angular-source" $schedulerAngular "" @("[5, 10, 15, 20, 30]", "configuredSlot", "slotMinutes")
+Add-QaCase "TUR-12" "Turnos" "CONTRACT" "Cantidad de sillones y jornada configurables" "La agenda consume chairCount, startTime y endTime." "angular-source" $schedulerAngular "" @("chairCount", "startTime", "endTime", "applySettings")
+Add-QaCase "TUR-13" "Turnos" "CONTRACT" "Zoom de sillones" "Acercar y alejar cambian la cantidad visible." "angular-source" $schedulerAngular "" @('title="Acercar"', 'title="Alejar"', "zoom(direction", "visibleChairCount")
+Add-QaCase "TUR-14" "Turnos" "CONTRACT" "Paginado horizontal de sillones" "Anterior/siguiente desplazan el rango sin perder turnos." "angular-source" $schedulerAngular "" @("shiftChairs(-1)", "shiftChairs(1)", "chairRange()")
+Add-QaCase "TUR-15" "Turnos" "CONTRACT" "Arrastrar y soltar" "La grilla escucha dragover y drop sobre el mismo objetivo." "angular-source" $schedulerAngular "" @('(dragover)="dragOver($event, slot, chair)"', '(drop)="drop($event)"', "drop(event: DragEvent)")
+Add-QaCase "TUR-16" "Turnos" "CONTRACT" "Vista previa solo en posiciones validas" "El dropEffect es move solo cuando target.valid." "angular-source" $schedulerAngular "" @("target.valid ? 'move' : 'none'", "dragOver(event: DragEvent", "dropTarget.set(target)")
+Add-QaCase "TUR-17" "Turnos" "CONTRACT" "Prevencion de superposicion" "El calculo compara inicio/fin contra cada turno existente." "angular-source" $schedulerAngular "" @("infusionStart < end", "infusionEnd > start", "!conflict")
+Add-QaCase "TUR-18" "Turnos" "CONTRACT" "Duracion ocupa casilleros completos" "El span usa ceil(duracion/slotMinutes)." "angular-source" $schedulerAngular "" @("Math.ceil(this.duration(item) / this.settings().slotMinutes)", "slotIndex + span", "grid-row")
+Add-QaCase "TUR-19" "Turnos" "CONTRACT" "Franja horaria visible" "El bloque muestra desde inicio hasta el ultimo minuto ocupado." "angular-source" $schedulerAngular "" @("schedulerInclusiveInfusionRange", "duration * 60_000 - 60_000")
+Add-QaCase "TUR-20" "Turnos" "CONTRACT" "Turno confirmado y no confirmado distinguibles" "La tarjeta usa estados y colores separados." "angular-source" $schedulerAngular "" @("is-confirmed", "is-pending", "appointmentConfirmed")
+Add-QaCase "TUR-21" "Turnos" "CONTRACT" "Mover turno asignado" "La logica de drop conserva la aplicacion y actualiza su ubicacion." "angular-source" $schedulerAngular "" @("beginInfusionDrag", "previousCandidates", "scheduledAt, chair", "Turno reprogramado")
+Add-QaCase "TUR-22" "Turnos" "CONTRACT" "Quitar turno y devolver a espera" "Quitar la ubicacion no falsifica los estados historicos de Farmacia o Administracion." "angular-source" $schedulerAngular "" @("removeAppointment()", "scheduledAt: null", "chair: null", "clinicalStatus: 'cancelled'")
+Add-QaCase "TUR-23" "Turnos" "CONTRACT" "Modal de datos del turno" "Paciente, DNI, esquema, diagnostico, medicacion y confirmacion estan visibles." "angular-source" $schedulerAngular "" @("currentDetail()['patientName']", "patientDni", "scheme", "diagnosis", "medicationWithPatient", "appointmentConfirmed")
 Add-QaCase "TUR-24" "Turnos" "CONTRACT" "API de alta de turno documentada" "Swagger expone POST /api/clinical/infusions y su conflicto de agenda." "openapi" "/api/clinical/infusions|post"
 Add-QaCase "TUR-25" "Turnos" "CONTRACT" "Drop rapido, borde de jornada y conflicto concurrente" "Un solo turno se consolida, el otro recibe 409 claro y los limites 08:00-16:00 se validan al minuto." "test-source" "/src/test/java/ar/com/hexium/hcop/infusion/HospitalDayConcurrencySafetyTest.java" "" @("tur25SimultaneousDropsYieldOneAppointmentAndOneClearConflict", "tur25DatabaseSerializesAChairAndRejectsDuplicateActiveApplications", "tur25AcceptsExactWorkdayEdgesAndRejectsTheFirstOverflowingSlot", "CHAIR_SCHEDULE_CONFLICT", "OUTSIDE_DAY_HOSPITAL_HOURS")
 

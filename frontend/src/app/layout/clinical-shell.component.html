@@ -1,0 +1,244 @@
+<div class="app-shell">
+  <header class="app-header">
+    <div class="brand-block">
+      <div class="brand-mark">HC</div>
+      <div>
+        <h1>HCOP Centro Oncologico</h1>
+        <p>Historia, tratamientos y Centro de Infusion en una misma ficha</p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      @if (auth.hasPermission('section.history.edit')) { <button class="tool-button new-patient-button" type="button" title="Crear una historia clínica nueva y vacía" [disabled]="hasPendingConflict()" (click)="openNewPatient()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8m10-3v6m3-3h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span>Nuevo paciente</span>
+      </button> }
+      @if (auth.hasPermission('section.history.view')) { <button class="tool-button lira-import-button" type="button" title="Buscar y abrir un paciente de la base clínica" [disabled]="hasPendingConflict()" (click)="openPatient()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        <span>Abrir paciente</span>
+      </button> }
+      @if (auth.hasPermission('section.day-hospital.view')) { <button class="tool-button lira-day-hospital-button" type="button" title="Abrir Hospital de día y Tratamiento" [disabled]="hasPendingConflict()" (click)="careSchedulerOpen.set(true)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m18 2 4 4m-5 1 3-3M19 9 8.7 19.3a2.4 2.4 0 0 1-3.4 0l-.6-.6a2.4 2.4 0 0 1 0-3.4L15 5m-6 6 4 4m1-11 6 6M5 19l-3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Hospital de dia</span>
+      </button> }
+      @if (auth.hasPermission('section.history.view')) {
+        <button class="tool-button" type="button" title="Imprimir hoja" [disabled]="!canPrint()" (click)="print()">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+          <span>Imprimir</span>
+        </button>
+      }
+      @if (auth.hasPermission('section.configuration.view') && hasPendingConflict()) {
+        <button class="tool-button configuration-button" type="button" disabled title="Resuelva el borrador pendiente antes de salir de la ficha"><span>Configuracion</span></button>
+      } @else if (auth.hasPermission('section.configuration.view')) {
+        <button class="tool-button configuration-button" type="button" title="Abrir el Centro de configuración" (click)="openConfiguration()">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm0-13v2m0 15v2M4.6 4.6 6 6m12 12 1.4 1.4M2.5 12h2m15 0h2M4.6 19.4 6 18m12-12 1.4-1.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span>Configuracion</span>
+        </button>
+      }
+      <a class="tool-button" routerLink="/help" target="_blank" rel="noopener" title="Abrir ayuda">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9.5 9a2.7 2.7 0 1 1 4.2 2.2c-1.2.8-1.7 1.3-1.7 2.8m0 3h.01" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span>Ayuda</span>
+      </a>
+      @if (auth.session()?.authenticated) {
+        <div class="clinical-session-controls">
+          <app-clinical-inbox
+            [modalBlocked]="inboxBlocked()"
+            [autoOpen]="true"
+            (patientRefreshRequested)="refreshPatientAfterWorkflow($event)"
+            (sessionExpired)="openLogin()"
+            (notification)="showClinicalNotification($event)" />
+          @if (auth.hasPermission('section.research.view')) {
+            <label class="clinical-research-toggle"
+              [class.is-active]="researchScreening.state()?.researchActive"
+              [class.is-prepared]="researchScreening.state()?.researchActive && researchScreening.state()?.proactiveActive && !researchScreening.state()?.engineReady"
+              [class.is-limited]="researchScreening.state()?.researchActive && !researchScreening.state()?.proactiveActive"
+              [class.is-disabled]="researchScreening.loading() || researchScreening.saving() || !researchScreening.state()"
+              [title]="researchToggleTitle()">
+              <input type="checkbox" role="switch"
+                [checked]="researchScreening.state()?.researchActive || false"
+                [disabled]="researchScreening.loading() || researchScreening.saving() || !researchScreening.state()"
+                [attr.aria-label]="'Investigación activa. ' + researchToggleStatus()"
+                (change)="toggleResearchActive($event)">
+              <span class="clinical-research-toggle-track" aria-hidden="true"></span>
+              <span class="clinical-research-toggle-copy"><strong>Investigación activa</strong><small aria-live="polite">{{ researchToggleStatus() }}</small></span>
+            </label>
+          }
+          <div class="clinical-user-chip" title="Usuario activo"><span class="clinical-user-avatar" aria-hidden="true">{{ initial() }}</span><span><strong>{{ auth.session()?.user?.displayName || auth.session()?.user?.username }}</strong><small>{{ auth.session()?.user?.specialty || 'Sesión clínica' }}</small></span></div>
+          <button class="clinical-logout-button" type="button" title="Cerrar sesión" aria-label="Cerrar sesión" [disabled]="hasPendingConflict()" (click)="logout()">↪</button>
+        </div>
+      } @else {
+        <button class="clinical-login-button" type="button" (click)="openLogin()"><span>Ingresar</span></button>
+      }
+    </div>
+  </header>
+
+  @if (patientWorkspace.activeSaveConflict(); as conflict) {
+    <section #clinicalSaveConflictBanner class="clinical-save-conflict-banner" role="alert" aria-live="assertive" tabindex="-1">
+      <div>
+        <strong>Hay cambios sin guardar.</strong>
+        <span>{{ conflict.message }} No se mezclará automáticamente y se conserva sólo mientras esta pestaña permanezca abierta.</span>
+        <small>Versión base {{ conflict.baseRevision }}.</small>
+      </div>
+      <div class="clinical-save-conflict-actions">
+        @if (conflict.code === 'VERSION_CONFLICT' && auth.hasPermission('section.history.view')) {
+          <button class="tool-button" type="button" [disabled]="patientWorkspace.loading() || patientWorkspace.conflictLatestLoading() || patientWorkspace.saving()" (click)="openConflictReview()"><span>Comparar cambios</span></button>
+        }
+        <button class="tool-button" type="button" [disabled]="patientWorkspace.loading() || patientWorkspace.saving()" (click)="resolvePendingConflict()"><span>Descartar borrador y recuperar historia</span></button>
+      </div>
+    </section>
+  }
+
+  @if (conflictReviewOpen() && patientWorkspace.activeSaveConflict(); as conflict) {
+    <div class="modal-backdrop open" aria-hidden="false">
+      <section class="modal-card clinical-conflict-review-modal" role="dialog" aria-modal="true" aria-labelledby="clinicalConflictReviewTitle" aria-describedby="clinicalConflictReviewDescription">
+        <header class="modal-header">
+          <div><span class="sheet-kicker">Guardado concurrente</span><h2 id="clinicalConflictReviewTitle">Comparar cambios de la historia</h2><p id="clinicalConflictReviewDescription">Muestra los valores confirmados y los del borrador por campo o registro. No mezcla ni sobrescribe información.</p></div>
+          <button #conflictReviewClose class="icon-button" type="button" title="Cerrar" aria-label="Cerrar comparación" (click)="closeConflictReview()">×</button>
+        </header>
+        <div class="modal-body clinical-conflict-review-body">
+          @if (patientWorkspace.conflictLatestError()) { <p class="clinical-conflict-review-message is-error" role="alert">{{ patientWorkspace.conflictLatestError() }}</p> }
+          @if (conflictComparison(); as comparison) {
+            <div class="clinical-conflict-review-summary">
+              <span><strong>Versión base</strong>{{ comparison.baseRevision }}</span>
+              <span><strong>Su borrador</strong>{{ comparison.draftChanges }} cambios</span>
+              <span><strong>Última versión</strong>{{ comparison.latestLoaded ? ('v' + comparison.latestRevision + ' · ' + comparison.serverChanges + ' cambios') : patientWorkspace.conflictLatestError() ? 'No disponible' : 'Consultando…' }}</span>
+            </div>
+            @if (patientWorkspace.conflictLatestLoading()) { <p class="clinical-conflict-review-message" role="status">Recuperando la última versión confirmada…</p> }
+            <div class="clinical-conflict-review-sections" aria-label="Comparación por campo y registro">
+              @for (section of comparison.sections; track section.key) {
+                @if (section.details.length) {
+                  <section class="clinical-conflict-review-section" [class.has-overlap]="section.overlaps">
+                    <header><strong>{{ section.label }}</strong>@if (section.overlaps) { <span>Revisión humana</span> }</header>
+                    <div class="clinical-conflict-review-table" role="table" [attr.aria-label]="'Cambios en ' + section.label">
+                      <div class="clinical-conflict-review-row is-heading" role="row"><span role="columnheader">Campo o registro</span><span role="columnheader">Base</span><span role="columnheader">Su borrador</span><span role="columnheader">Servidor</span></div>
+                      @for (detail of section.details; track detail.key) {
+                        <div class="clinical-conflict-review-row" [class.has-overlap]="detail.overlaps" role="row">
+                          <strong role="cell">{{ detail.label }}</strong>
+                          <span role="cell">{{ detail.baseValue }}</span>
+                          <span role="cell" [class.has-change]="detail.draftChanged">{{ detail.draftValue }}</span>
+                          <span role="cell" [class.has-change]="detail.serverChanged">{{ detail.serverValue }}</span>
+                        </div>
+                      }
+                    </div>
+                  </section>
+                }
+              }
+            </div>
+            @if (comparison.latestLoaded && comparison.overlaps) { <p class="clinical-conflict-review-warning"><strong>{{ comparison.overlaps }} campo(s) o registro(s) modificados por ambos.</strong> Requieren revisión humana; este sistema no los fusionará automáticamente.</p> }
+            @else if (comparison.latestLoaded) { <p class="clinical-conflict-review-message is-ready">No hay secciones modificadas por ambos lados. El borrador sigue sin guardarse.</p> }
+          }
+        </div>
+        <footer class="modal-actions">
+          <button class="tool-button" type="button" [disabled]="patientWorkspace.loading() || patientWorkspace.conflictLatestLoading() || !auth.hasPermission('section.history.view')" (click)="patientWorkspace.refreshConflictLatest()"><span>Actualizar comparación</span></button>
+          <button class="tool-button primary" type="button" (click)="closeConflictReview()"><span>Cerrar</span></button>
+        </footer>
+      </section>
+    </div>
+  }
+
+  <main #splitWorkspace class="split-workspace"
+    [style.--left-width]="splitLeftPixels() + 'px'"
+    [attr.data-split-position]="splitPosition()"
+    [class.is-history-restricted]="!auth.hasPermission('section.history.view') && canViewAnySupport()"
+    [class.is-support-restricted]="auth.hasPermission('section.history.view') && !canViewAnySupport()"
+    aria-label="Espacio clínico Angular">
+    @if (auth.hasPermission('section.history.view')) { <section #clinicalPanel id="clinicalPanel" class="panel clinical-panel" aria-label="Historia clínica" [attr.inert]="clinicalCollapsed() ? '' : null" [attr.aria-hidden]="clinicalCollapsed() ? 'true' : null">
+      <div class="paper-toolbar">
+        <div class="paper-identity">
+          <div class="paper-identity-title-row"><span>Historia clinica oncologica</span><button class="lira-patient-refresh-button" type="button" title="Actualizar información" aria-label="Actualizar información del paciente" [disabled]="!patientWorkspace.workspace() || patientWorkspace.loading() || hasPendingConflict()" (click)="refreshActivePatient()">↻</button></div>
+          <strong>{{ patientWorkspace.workspace()?.patient?.fullName || 'Hoja clínica' }}</strong>
+        </div>
+        <div class="paper-highlight-actions" aria-label="Acciones de la historia clínica">
+          <div class="paper-clinical-search" [class.open]="searchExpanded()" [class.has-query]="!!historySearchQuery().trim()"><button class="icon-button clinical-search-toggle" type="button" title="Buscar en la historia" aria-label="Buscar palabras en la historia clínica" [attr.aria-expanded]="searchExpanded()" [attr.data-match-count]="historySearchMatches()" (click)="toggleHistorySearch()">⌕</button>@if (searchExpanded()) { <input #clinicalSearchInput type="search" [value]="historySearchQuery()" placeholder="Buscar en la historia..." autocomplete="off" aria-label="Buscar en la historia clínica" (input)="updateHistorySearch($any($event.target).value)"> }</div>
+          <button class="icon-button clinical-highlighter-button" type="button" title="Resaltar texto" [disabled]="hasPendingConflict()" hcopClinicalHighlightAction="highlight">▰</button>
+          <button class="icon-button clinical-unhighlight-button" type="button" title="Quitar resaltado" [disabled]="hasPendingConflict()" hcopClinicalHighlightAction="remove">⌫</button>
+          <button class="icon-button clinical-close-patient-button" type="button" title="Cerrar paciente" [disabled]="!patientWorkspace.workspace() || hasPendingConflict()" (click)="closePatient()">×</button>
+        </div>
+      </div>
+      <div class="panel-scroll paper-area"><app-clinical-workspace [printTimestamp]="printTimestamp()" (studiesRequested)="openStudies($event)" /></div>
+    </section> }
+
+    @if (auth.hasPermission('section.history.view') && canViewAnySupport()) {
+      <div class="splitter-shell">
+        <div #splitterControl class="splitter" role="separator" tabindex="0"
+          aria-orientation="vertical"
+          aria-label="Ajustar ancho de Historia y Estudios"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          [attr.aria-valuenow]="splitPercent()"
+          [attr.aria-valuetext]="splitValueText()"
+          (pointerdown)="startSplitDrag($event)"
+          (pointermove)="moveSplitDrag($event)"
+          (pointerup)="endSplitDrag($event)"
+          (pointercancel)="endSplitDrag($event)"
+          (dblclick)="setSplitPreset('balanced')"
+          (keydown)="onSplitKeydown($event)">
+          <span class="splitter-line"></span>
+        </div>
+        <div class="splitter-presets" role="group" aria-label="Posiciones rápidas del divisor">
+          <button class="splitter-preset" type="button" data-split-preset="studies"
+            aria-label="Mostrar solo Estudios y colapsar Historia"
+            aria-controls="clinicalPanel studiesPanel"
+            [attr.aria-pressed]="splitPosition() === 'studies'"
+            title="Solo Estudios"
+            (click)="setSplitPreset('studies')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m11 17-5-5 5-5"></path><path d="m18 17-5-5 5-5"></path></svg>
+          </button>
+          <button class="splitter-preset" type="button" data-split-preset="balanced"
+            aria-label="Dejar Historia y Estudios a la mitad"
+            aria-controls="clinicalPanel studiesPanel"
+            [attr.aria-pressed]="splitPosition() === 'balanced'"
+            title="Mitad y mitad"
+            (click)="setSplitPreset('balanced')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M12 3v18"></path></svg>
+          </button>
+          <button class="splitter-preset" type="button" data-split-preset="history"
+            aria-label="Mostrar solo Historia y colapsar Estudios"
+            aria-controls="clinicalPanel studiesPanel"
+            [attr.aria-pressed]="splitPosition() === 'history'"
+            title="Solo Historia"
+            (click)="setSplitPreset('history')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 17 5-5-5-5"></path><path d="m13 17 5-5-5-5"></path></svg>
+          </button>
+        </div>
+      </div>
+    }
+
+    @if (canViewAnySupport()) { <aside #studiesPanel id="studiesPanel" class="panel studies-panel" aria-label="Panel derecho de apoyo clínico" [attr.inert]="supportCollapsed() ? '' : null" [attr.aria-hidden]="supportCollapsed() ? 'true' : null">
+      <div class="panel-header right-panel-header">
+        <nav #rightPanelTabs class="right-panel-tabs" [class.icon-only]="rightTabsIconOnly()" role="tablist" aria-label="Panel derecho">
+          @if (auth.hasPermission('section.studies.view')) { <button class="right-tab" [class.active]="selectedPane() === 'studies'" type="button" role="tab" aria-label="Estudios" title="Estudios" [attr.aria-selected]="selectedPane() === 'studies'" (click)="selectPane('studies')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h8"></path><path d="M14 2v6h6"></path><path d="M9 13h2"></path><circle cx="16" cy="16" r="3"></circle><path d="m18.5 18.5 2 2"></path></svg><span class="right-tab-label">Estudios</span></button> }
+          @if (auth.hasPermission('section.day-hospital.view')) { <button class="right-tab right-tab--care" [class.active]="selectedPane() === 'care'" type="button" role="tab" aria-label="H. de día" title="H. de día" [attr.aria-selected]="selectedPane() === 'care'" (click)="selectPane('care')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6v4"></path><path d="M14 14h-4"></path><path d="M14 18h-4"></path><path d="M14 8h-4"></path><path d="M18 12h2a2 2 0 0 1 2 2v8H2v-8a2 2 0 0 1 2-2h2"></path><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18"></path></svg><span class="right-tab-label">H. de día</span></button> }
+          @if (auth.hasPermission('section.prescriptions.view')) { <button class="right-tab" [class.active]="selectedPane() === 'prescription'" type="button" role="tab" aria-label="Prescripción" title="Prescripción" [attr.aria-selected]="selectedPane() === 'prescription'" (click)="selectPane('prescription')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M9 12h6"></path><path d="M9 16h6"></path></svg><span class="right-tab-label">Prescripción</span></button> }
+          @if (auth.hasPermission('section.agent.view')) { <button class="right-tab" [class.active]="selectedPane() === 'agent'" type="button" role="tab" aria-label="Agente" title="Agente" [attr.aria-selected]="selectedPane() === 'agent'" (click)="selectPane('agent')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg><span class="right-tab-label">Agente</span></button> }
+          @if (auth.hasPermission('section.research.view')) { <button class="right-tab" [class.active]="selectedPane() === 'research'" type="button" role="tab" aria-label="Investigación" title="Investigación" [attr.aria-selected]="selectedPane() === 'research'" (click)="selectPane('research')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18h8"></path><path d="M3 22h18"></path><path d="M14 22a7 7 0 1 0 0-14h-1"></path><path d="M9 14h2"></path><path d="M9 2v6"></path><path d="M17 2v6"></path><path d="M9 5h8"></path></svg><span class="right-tab-label">Investigación</span></button> }
+          @if (auth.hasPermission('section.timeline.view')) { <button class="right-tab" [class.active]="selectedPane() === 'timeline'" type="button" role="tab" aria-label="Línea del tiempo" title="Línea del tiempo" [attr.aria-selected]="selectedPane() === 'timeline'" (click)="selectPane('timeline')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path><path d="M3 3v5h5"></path><path d="M12 7v5l4 2"></path></svg><span class="right-tab-label">Línea del tiempo</span></button> }
+          @if (auth.hasPermission('section.protocols.view')) { <button class="right-tab" id="rightTabProtocols" [class.active]="selectedPane() === 'protocols'" type="button" role="tab" aria-label="Protocolos" title="Protocolos" aria-controls="rightPanelProtocols" [attr.aria-selected]="selectedPane() === 'protocols'" (click)="selectPane('protocols')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7v14"></path><path d="M3 18a1 1 0 0 1-1-1V5a2 2 0 0 1 2-2h5a3 3 0 0 1 3 3v15a3 3 0 0 0-3-3Z"></path><path d="M21 12V5a2 2 0 0 0-2-2h-5a3 3 0 0 0-3 3v15a3 3 0 0 1 3-3h3"></path><path d="m16 12 2 2 4-4"></path></svg><span class="right-tab-label">Protocolos</span></button> }
+          @if (auth.hasPermission('section.tools.view')) { <button class="right-tab" id="rightTabTools" [class.active]="selectedPane() === 'tools'" type="button" role="tab" aria-label="Herramientas" title="Herramientas" aria-controls="rightPanelTools" [attr.aria-selected]="selectedPane() === 'tools'" (click)="selectPane('tools')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9Z"></path></svg><span class="right-tab-label">Herramientas</span></button> }
+        </nav>
+      </div>
+      <div class="right-panel-body">
+        @if (selectedPane() === 'studies') { <app-study-panel [request]="studyPanelRequest()" /> }
+        @else if (selectedPane() === 'care') { <app-day-hospital /> }
+        @else if (selectedPane() === 'prescription') { <app-prescription /> }
+        @else if (selectedPane() === 'agent') {
+          @defer (when selectedPane() === 'agent') {
+            <app-agent />
+          } @placeholder {
+            <div class="angular-empty-sheet" role="status"><p>Preparando agente…</p></div>
+          }
+        }
+        @else if (selectedPane() === 'research') { <app-research /> }
+        @else if (selectedPane() === 'timeline') { <app-timeline-panel /> }
+        @else if (selectedPane() === 'protocols') { <app-protocol-explorer /> }
+        @else if (selectedPane() === 'tools') { <app-tools /> }
+      </div>
+    </aside> }
+  </main>
+  <app-new-patient-modal [open]="newPatientOpen()" (closed)="newPatientOpen.set(false)" />
+  <app-care-scheduler [open]="careSchedulerOpen()" (closed)="careSchedulerOpen.set(false)" />
+  <app-clinical-highlight-feedback />
+  @if (clinicalNotification()) {
+    <div class="clinical-shell-notification" role="status" aria-live="polite">{{ clinicalNotification() }}</div>
+  }
+</div>

@@ -1,0 +1,156 @@
+<section class="protocol-explorer" aria-label="Explorador de protocolos">
+    <header class="protocol-head">
+      <div>
+        <strong>{{ source() === 'clinical' ? 'Protocolos locales y COIR' : 'Esquemas SEER*Rx' }}</strong>
+        <small>{{ source() === 'clinical' ? 'Protocolos sistémicos, drogas y preparación' : 'Referencia oncológica; no habilita prescripción' }}</small>
+      </div>
+      <div class="protocol-head-actions"><span id="protocolCount" aria-live="polite">{{ countText() }}</span></div>
+    </header>
+
+    <div class="protocol-source">
+      <label>
+        <span>Fuente de esquemas</span>
+        <select id="protocolSource" #sourceSelect [value]="source()" (change)="changeSource(sourceSelect.value)">
+          <option value="clinical">Protocolos locales y catálogo COIR</option>
+          <option value="seer">SEER*Rx · referencia no prescriptiva</option>
+        </select>
+      </label>
+    </div>
+
+    @if (source() === 'seer') {
+      <aside class="protocol-reference-notice" role="note">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg>
+        <span><strong>Referencia SEER*Rx</strong> Sirve para consulta y codificación. No reemplaza un protocolo clínico local ni puede prescribirse desde esta vista.</span>
+      </aside>
+    }
+
+    @if (catalogError()) {
+      <div class="protocol-empty protocol-error" role="alert">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.7 2.4 18a2 2 0 0 0 1.8 3h15.6a2 2 0 0 0 1.8-3L13.7 3.7a2 2 0 0 0-3.4 0Z"/></svg>
+        <strong>No se pudo cargar</strong><span>{{ catalogError() }}</span>
+        <button class="tool-button" type="button" (click)="retryCatalog()">Reintentar</button>
+      </div>
+    } @else {
+      <div class="protocol-selectors" id="coirProtocolSelectors" [attr.aria-busy]="catalogLoading()">
+        <label>
+          <span>Patología / grupo</span>
+          <select id="protocolCategory" #categorySelect [value]="category()" [disabled]="catalogLoading() || !catalog()" (change)="changeCategory(categorySelect.value)">
+            <option value="">Todos los grupos</option>
+            @for (item of catalog()?.categories ?? []; track item) { <option [value]="item">{{ item }}</option> }
+          </select>
+        </label>
+        <label>
+          <span>Esquema</span>
+          <select id="protocolScheme" #schemeSelect [value]="schemeId()" [disabled]="catalogLoading() || !catalog()" (change)="changeScheme(schemeSelect.value)">
+            <option value="">Seleccione un esquema</option>
+            @for (item of filteredSchemes(); track item.id) {
+              <option [value]="item.id">{{ item.name }}{{ item.durationText ? ' · ' + item.durationText : '' }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          <span>Droga del esquema</span>
+          <select id="protocolDrug" #drugSelect [value]="drugIndex() ?? ''" [disabled]="detailLoading() || !(detail()?.drugs?.length)" (change)="changeDrug(drugSelect.value)">
+            <option value="">Seleccione una droga</option>
+            @for (drug of detail()?.drugs ?? []; track drug.id; let index = $index) {
+              <option [value]="index">Día {{ drug.day }} · {{ drug.name }}</option>
+            }
+          </select>
+        </label>
+      </div>
+
+      <div class="protocol-overview" id="protocolOverview" aria-live="polite">
+        @if (catalogLoading()) {
+          <div class="protocol-loading" role="status">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.3"/><path d="M21 3v6h-6"/></svg>
+            <span>Cargando protocolos…</span>
+          </div>
+        } @else if (detailLoading()) {
+          <div class="protocol-loading" role="status">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.3"/><path d="M21 3v6h-6"/></svg>
+            <span>Abriendo esquema…</span>
+          </div>
+        } @else if (detailError()) {
+          <div class="protocol-empty protocol-error" role="alert">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.7 2.4 18a2 2 0 0 0 1.8 3h15.6a2 2 0 0 0 1.8-3L13.7 3.7a2 2 0 0 0-3.4 0Z"/></svg>
+            <strong>No se pudo abrir</strong><span>{{ detailError() }}</span>
+            <button class="tool-button" type="button" (click)="retryDetail()">Reintentar</button>
+          </div>
+        } @else if (detail(); as current) {
+          <article class="protocol-summary" [class.protocol-summary--catalog-only]="current.scheme.catalogOnly" [class.protocol-summary--reference]="current.referenceOnly">
+            <span>{{ current.scheme.category }}</span>
+            <h3>{{ current.scheme.name }}</h3>
+            <div class="protocol-summary-metrics">
+              <span><b>{{ current.scheme.cycleDays ?? '—' }}</b><small>días por ciclo</small></span>
+              <span><b>{{ current.drugs.length }}</b><small>drogas</small></span>
+              <span><b>{{ current.scheme.durationText || '—' }}</b><small>duración operativa</small></span>
+            </div>
+            @if (current.referenceOnly) {
+              <p>Referencia SEER*Rx para consulta. Verifique la indicación en una guía clínica y use un protocolo local para prescribir.</p>
+            } @else if (current.scheme.catalogOnly) {
+              <p>Entrada del catálogo COIR, no es un protocolo local. Debe vincularse y validarse clínicamente antes de prescribir. Su duración puede utilizarse para planificar turnos.</p>
+            } @else {
+              <p>{{ current.scheme.description || 'Referencia operativa local. Verifique indicación, dosis y preparación antes de prescribir.' }}</p>
+            }
+            @if (current.scheme.histology) { <p><strong>Histología:</strong> {{ current.scheme.histology }}</p> }
+            @if (current.scheme.alternateNames) { <p><strong>Nombres alternativos:</strong> {{ current.scheme.alternateNames }}</p> }
+            @if (current.scheme.remarks) { <p><strong>Observaciones:</strong> {{ current.scheme.remarks }}</p> }
+          </article>
+
+          @if (current.drugs.length) {
+            <section class="protocol-scheme-drugs">
+              <h4>Drogas del esquema <small>Seleccione una para ver su preparación</small></h4>
+              <div class="protocol-drug-strip">
+                @for (drug of current.drugs; track drug.id; let index = $index) {
+                  <button type="button" [class.active]="drugIndex() === index" [attr.aria-pressed]="drugIndex() === index" (click)="selectDrug(index)">
+                    <span>Día {{ drug.day }}</span><strong>{{ drug.name }}</strong><small>{{ drugSummary(drug) }}</small>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                  </button>
+                }
+              </div>
+            </section>
+          } @else {
+            <p class="protocol-muted">Este esquema no tiene drogas o componentes clínicos informados.</p>
+          }
+        } @else if (catalog()) {
+          <div class="protocol-empty">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h7"/><path d="m17 16 3 3m0-3-3 3"/></svg>
+            <strong>{{ filteredSchemes().length }} esquemas disponibles</strong>
+            <span>Seleccione uno para ver ciclo, drogas, dosis, vías, preparación y presentaciones.</span>
+          </div>
+        }
+      </div>
+
+      <div class="protocol-drug-detail" id="protocolDrugDetail">
+        @if (selectedDrug(); as drug) {
+          <article class="protocol-drug-card">
+            <header><div><span>Día {{ drug.day }}</span><h3>{{ drug.name }}</h3></div><b>{{ doseText(drug) }}</b></header>
+            <dl>
+              <div><dt>Vía</dt><dd>{{ drug.route || '—' }}</dd></div>
+              <div><dt>Administración</dt><dd>{{ drug.administrationTime || '—' }}</dd></div>
+              <div><dt>Hospital de día</dt><dd>{{ drug.dayHospital === null ? 'No informado' : drug.dayHospital ? 'Sí' : 'No' }}</dd></div>
+            </dl>
+          </article>
+
+          <section class="protocol-subsection">
+            <h4>Preparación y aplicación <span>{{ drug.preparations.length }}</span></h4>
+            @for (item of drug.preparations; track item.id || $index) {
+              <article>
+                <strong>{{ item.title }}</strong>
+                <p>{{ preparationLine(item) || 'Sin datos de dilución registrados.' }}</p>
+                @if (preparationNotes(item)) { <small>{{ preparationNotes(item) }}</small> }
+              </article>
+            } @empty { <p class="protocol-muted">Sin instrucciones registradas.</p> }
+          </section>
+
+          <section class="protocol-subsection">
+            <h4>Presentaciones <span>{{ drug.presentations.length }}</span></h4>
+            <div class="protocol-presentations">
+              @for (item of drug.presentations; track item.id || $index) { <span>{{ presentationText(item) }}</span> }
+              @empty { <span>Sin presentaciones registradas</span> }
+            </div>
+          </section>
+        }
+      </div>
+    }
+</section>

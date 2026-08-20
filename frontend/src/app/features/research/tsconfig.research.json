@@ -1,0 +1,18 @@
+{
+  "extends": "../../../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../../../../runtime/research-ngc",
+    "rootDir": "../../../..",
+    "types": []
+  },
+  "files": [
+    "research.models.ts",
+    "research.service.ts",
+    "research.component.ts"
+  ],
+  "angularCompilerOptions": {
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
+  }
+}

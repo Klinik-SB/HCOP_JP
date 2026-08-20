@@ -1,0 +1,15 @@
+{
+  "extends": "../../../../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "../../../..",
+    "types": []
+  },
+  "files": [
+    "calculator.models.ts",
+    "calculator-catalog.models.ts",
+    "calculator-catalog.adapter.ts",
+    "calculator-catalog.service.ts",
+    "calculator-catalog.service.tests.ts"
+  ]
+}

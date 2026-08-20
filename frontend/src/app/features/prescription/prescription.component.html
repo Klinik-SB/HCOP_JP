@@ -1,0 +1,106 @@
+<section class="right-tab-panel active prescription-workspace angular-prescription" aria-label="Prescripción e indicaciones">
+  <header class="prescription-head">
+    <div><strong>Prescripción e indicaciones</strong><small>Documentos registrados en la historia clínica</small></div>
+    <a class="prescription-official-link" href="https://servicios.pami.org.ar/vademecum/views/consultaPublica/listado.zul" target="_blank" rel="noopener noreferrer">Vademécum AR <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></a>
+  </header>
+
+  <nav class="prescription-tabs" role="tablist" aria-label="Tipo de indicación">
+    <button type="button" role="tab" [class.active]="type() === 'medication'" [attr.aria-selected]="type() === 'medication'" (click)="selectType('medication')"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7ZM8.5 8.5l7 7"/></svg><span>Medicamento</span></button>
+    <button type="button" role="tab" [class.active]="type() === 'certificate'" [attr.aria-selected]="type() === 'certificate'" (click)="selectType('certificate')"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 22V4a2 2 0 0 1 2-2h9l5 5v15Z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg><span>Certificado</span></button>
+    <button type="button" role="tab" [class.active]="type() === 'study'" [attr.aria-selected]="type() === 'study'" (click)="selectType('study')"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 12h10"/></svg><span>Estudio</span></button>
+    <button type="button" role="tab" [class.active]="type() === 'free'" [attr.aria-selected]="type() === 'free'" (click)="selectType('free')"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg><span>Texto libre</span></button>
+    <button type="button" role="tab" [class.active]="type() === 'systemic'" [attr.aria-selected]="type() === 'systemic'" (click)="selectType('systemic')"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m18 2 4 4M17 7l3-3M19 9 8.7 19.3a2.4 2.4 0 0 1-3.4 0l-.6-.6a2.4 2.4 0 0 1 0-3.4L15 5M9 11l4 4M5 19l-3 3M14 4l6 6"/></svg><span>Sistémico</span></button>
+  </nav>
+
+  <div class="prescription-body">
+    <form class="prescription-editor" (ngSubmit)="submit()" novalidate>
+      @if (type() !== 'systemic') {
+        <div class="prescription-patient"><span>Paciente</span><strong>{{ workspace.workspace()?.patient?.fullName || '—' }}</strong><small>DNI {{ workspace.workspace()?.patient?.dni || '—' }} · HC {{ workspace.workspace()?.patient?.medicalRecord || '—' }}</small></div>
+      }
+
+      @if (type() === 'medication') {
+        <section class="prescription-pane active">
+          <label class="prescription-drug-search"><span>Medicamento / principio activo</span><input name="drugSearch" autocomplete="off" placeholder="Buscar por genérico, marca o laboratorio..." [ngModel]="medicationQuery()" (ngModelChange)="searchMedication($event)">
+            @if (medicationQuery().trim().length >= 2) {
+              <div class="prescription-drug-results">
+                @if (medicationSearching()) { <div class="prescription-drug-result"><span>Buscando en el catálogo local…</span></div> }
+                @else if (!medicationResults().length) { <div class="prescription-drug-result"><span>Sin coincidencias locales. Consulte el Vademécum AR.</span></div> }
+                @for (item of medicationResults(); track $index) { <button class="prescription-drug-result" type="button" (click)="chooseMedication(item)"><strong>{{ item.generic }}@if (item.brand) { · {{ item.brand }} }</strong><span>{{ item.presentation }}@if (item.form) { · {{ item.form }} }@if (item.laboratory) { · {{ item.laboratory }} }</span></button> }
+              </div>
+            }
+          </label>
+          <div class="prescription-presets"><button type="button" (click)="useMedicationPreset('ondansetron')">Antiemesis</button><button type="button" (click)="useMedicationPreset('paracetamol')">Analgesia</button><button type="button" (click)="useMedicationPreset('omeprazol')">Protección gástrica</button><button type="button" (click)="useMedicationPreset('dexametasona')">Corticoide</button></div>
+          <div class="prescription-grid two"><label><span>Nombre genérico *</span><input name="generic" [(ngModel)]="medication.generic" required></label><label><span>Nombre comercial</span><input name="brand" [(ngModel)]="medication.brand"></label></div>
+          <div class="prescription-grid two"><label><span>Presentación *</span><input name="presentation" [(ngModel)]="medication.presentation" placeholder="8 mg, caja x 20" required></label><label><span>Forma farmacéutica *</span><input name="form" [(ngModel)]="medication.form" placeholder="Comprimidos" required></label></div>
+          <div class="prescription-grid three"><label><span>Dosis</span><input name="dose" [(ngModel)]="medication.dose" placeholder="8 mg"></label><label><span>Vía</span><select name="route" [(ngModel)]="medication.route"><option>Oral</option><option>Endovenosa</option><option>Subcutánea</option><option>Intramuscular</option><option>Tópica</option><option>Otra</option></select></label><label><span>Frecuencia</span><input name="frequency" [(ngModel)]="medication.frequency" placeholder="Cada 8 horas"></label></div>
+          <div class="prescription-grid two"><label><span>Duración</span><input name="duration" [(ngModel)]="medication.duration" placeholder="5 días"></label><label><span>Cantidad *</span><input name="quantity" [(ngModel)]="medication.quantity" placeholder="1 envase" required></label></div>
+          <label><span>Indicación / diagnóstico</span><input name="indication" [(ngModel)]="medication.indication"></label><label><span>Instrucciones</span><textarea name="instructions" [(ngModel)]="medication.instructions" rows="3" placeholder="Modo de uso, rescate, advertencias..."></textarea></label>
+        </section>
+      }
+
+      @if (type() === 'certificate') {
+        <section class="prescription-pane active">
+          <label><span>Tipo de certificado</span><select name="certificateType" [(ngModel)]="certificate.certificateType" (ngModelChange)="fillCertificateTemplate()"><option value="attendance">Constancia de atención</option><option value="rest">Reposo laboral</option><option value="treatment">En tratamiento</option><option value="transport">Traslado / transporte</option><option value="custom">Personalizado</option></select></label>
+          <div class="prescription-grid two"><label><span>Desde</span><input name="certificateFrom" [(ngModel)]="certificate.from" type="date"></label><label><span>Hasta</span><input name="certificateTo" [(ngModel)]="certificate.to" type="date"></label></div>
+          <label><span>Texto</span><textarea name="certificateText" [(ngModel)]="certificate.text" rows="7"></textarea></label>
+          <label class="prescription-check"><input name="certificateDiagnosis" [(ngModel)]="certificate.includeDiagnosis" type="checkbox"><span>Incluir diagnóstico en el certificado</span></label>
+        </section>
+      }
+
+      @if (type() === 'study') {
+        <section class="prescription-pane active">
+          <div class="prescription-presets"><button type="button" (click)="useStudyPreset('laboratory')">Laboratorio oncológico</button><button type="button" (click)="useStudyPreset('ct')">TC</button><button type="button" (click)="useStudyPreset('mri')">RM</button><button type="button" (click)="useStudyPreset('pathology')">Revisión patológica</button></div>
+          <div class="prescription-grid two"><label><span>Categoría</span><select name="studyCategory" [(ngModel)]="study.category"><option>Laboratorio</option><option>Imagen</option><option>Anatomía patológica</option><option>Procedimiento</option><option>Interconsulta</option></select></label><label><span>Prioridad</span><select name="studyPriority" [(ngModel)]="study.priority"><option>Programada</option><option>Preferente</option><option>Urgente</option></select></label></div>
+          <label><span>Estudio / práctica *</span><input name="studyName" [(ngModel)]="study.name"></label><label><span>Indicación clínica *</span><textarea name="studyIndication" [(ngModel)]="study.indication" rows="4"></textarea></label><label><span>Preparación / observaciones</span><textarea name="studyNotes" [(ngModel)]="study.notes" rows="3"></textarea></label>
+        </section>
+      }
+
+      @if (type() === 'free') {
+        <section class="prescription-pane active"><label><span>Título</span><input name="freeTitle" [(ngModel)]="free.title" placeholder="Indicaciones médicas"></label><label><span>Texto libre *</span><textarea name="freeText" [(ngModel)]="free.text" rows="12" placeholder="Escriba la indicación completa..."></textarea></label></section>
+      }
+
+      @if (type() === 'systemic') {
+        <section class="prescription-pane active systemic-prescription-pane">
+          <label class="systemic-template-selector"><span>Formulario</span><select name="systemicTemplate" [ngModel]="systemicTemplateId()" (ngModelChange)="selectSystemicTemplate($event)"><option value="">Seleccione un formulario...</option>@for (template of systemicTemplates(); track template.id) { <option [value]="template.id">{{ template.title }}</option> }</select></label>
+          @if (selectedSystemicTemplate(); as template) {
+            <article class="systemic-template-description"><span class="systemic-template-description-icon" aria-hidden="true">▤</span><div class="systemic-template-description-copy"><small>{{ template.pages.length }} {{ template.pages.length === 1 ? 'página' : 'páginas' }} · formulario local</small><strong>{{ template.shortTitle || template.title }}</strong><p>{{ template.description }}</p></div></article>
+            <div class="systemic-template-thumbnails">@for (page of template.pages; track $index) { <figure class="systemic-template-thumbnail"><span class="systemic-template-thumbnail-page" [style.aspect-ratio]="(page.width || 1) + ' / ' + (page.height || 1)"><img [src]="page.image" [alt]="(template.shortTitle || template.title) + ', página ' + ($index + 1)" loading="lazy"></span><figcaption>Página {{ $index + 1 }}</figcaption></figure> }</div>
+          } @else {
+            <article class="systemic-template-description is-empty"><span class="systemic-template-description-icon" aria-hidden="true">▤</span><div class="systemic-template-description-copy"><small>Modelos disponibles</small><strong>Elija el formulario que necesita completar</strong><p>Aquí verá para qué institución y situación clínica corresponde cada modelo.</p></div></article>
+          }
+          <label class="systemic-form-notes"><span>Indicación para completar <em>Opcional</em></span><textarea name="systemicNotes" rows="3" maxlength="2000" [ngModel]="systemicNotes()" (ngModelChange)="systemicNotes.set($event)" placeholder="Ej.: priorizar el esquema actual, aclarar continuidad o resumir la línea previa..."></textarea><small>Se utilizará junto con la historia clínica sin enviar los datos identificatorios directos.</small></label>
+          @if (systemicStatus()) { <p class="systemic-form-status" [attr.data-status]="systemicStatusKind()" role="status">{{ systemicStatus() }}</p> }
+        </section>
+      }
+
+      @if (message()) { <p class="angular-prescription-message" [class.is-error]="message().startsWith('No ') || message().startsWith('Complete')" role="status">{{ message() }}</p> }
+      <div class="prescription-editor-actions"><button class="tool-button" type="button" [disabled]="busy()" (click)="clear()"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m7 21-4-4L16 4l4 4ZM7 21h12M5 15l4 4"/></svg><span>Limpiar</span></button><button class="tool-button primary" type="submit" [disabled]="busy() || !workspace.workspace() || !canEdit() || workspace.activeSaveConflict()"><svg aria-hidden="true" viewBox="0 0 24 24"><path [attr.d]="type() === 'systemic' ? 'm12 3-1.9 5.1L5 10l5.1 1.9L12 17l1.9-5.1L19 10l-5.1-1.9Z M5 3v4 M3 5h4 M19 17v4 M17 19h4' : 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z M14 2v6h6 M9 15l2 2 4-4'"/></svg><span>{{ !canEdit() ? 'Solo lectura' : busy() ? 'Guardando…' : type() === 'systemic' ? 'Completar con IA' : 'Prescribir' }}</span></button></div>
+    </form>
+
+    <aside class="prescription-drafts"><header><div><strong>Documentos registrados</strong><span>{{ records().length }}</span></div></header><div class="angular-rx-draft-list">
+      @for (record of records(); track record.id || $index) {
+        <article class="prescription-draft" [class]="'prescription-draft prescription-draft--' + record.type"><header><div><strong>{{ record.title }}</strong><small>{{ formatDate(record.createdAt || record.date) }}</small></div></header><p>{{ record.summary }}</p><div class="prescription-draft-actions"><button type="button" title="Ver documento" (click)="openPreview(record)"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button><button type="button" title="Imprimir" (click)="printRecord(record)"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></button>@if (canEdit()) { <button type="button" title="Duplicar como nuevo documento" [disabled]="busy()" (click)="duplicate(record)"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><button type="button" title="Eliminar" [disabled]="busy()" (click)="remove(record)"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 15H6L5 6M10 11v6M14 11v6"/></svg></button> }</div></article>
+      } @empty { <div class="right-empty-state"><span aria-hidden="true">▤</span><strong>Sin documentos</strong><span>{{ canEdit() ? 'Registre una receta, certificado, estudio, indicación o formulario sistémico.' : 'No hay documentos registrados para este paciente.' }}</span></div> }
+    </div></aside>
+  </div>
+</section>
+
+@if (preview(); as record) {
+  <div class="modal-backdrop open" aria-hidden="false"><section class="modal-card prescription-preview-modal" role="dialog" aria-modal="true" aria-labelledby="angularPrescriptionPreviewTitle">
+    <header class="modal-header"><div><span class="sheet-kicker">Documento generado</span><h2 id="angularPrescriptionPreviewTitle">{{ typeLabel(record.type) }} lista para imprimir</h2></div><button class="icon-button" type="button" title="Cerrar" (click)="closePreview()">×</button></header>
+    <section class="modal-body prescription-preview-body"><div class="prescription-pdf-preview"><article class="prescription-pdf-page"><span>{{ typeLabel(record.type) }}</span><h2>{{ record.title }}</h2><p><strong>Fecha:</strong> {{ formatDate(record.date || record.createdAt) }}</p><p><strong>Paciente:</strong> {{ workspace.workspace()?.patient?.fullName }} · DNI {{ workspace.workspace()?.patient?.dni || '—' }}</p>@if (record.type === 'medication') { <p class="prescription-coverage"><strong>Obra social:</strong> {{ workspace.workspace()?.patient?.insurance || '—' }} · <strong>N.° de afiliado:</strong> {{ workspace.workspace()?.patient?.affiliateNumber || '—' }}</p> }<div>@for (entry of detailEntries(record); track entry[0]) { <p><strong>{{ entry[0] }}:</strong> {{ entry[1] }}</p> }</div><footer>Profesional: {{ prescriptionProfessionalName(record) }} · Mat. {{ prescriptionProfessionalLicense(record) }}</footer></article></div></section>
+    <footer class="modal-actions"><button class="tool-button" type="button" (click)="closePreview()"><span>Cerrar</span></button><button class="tool-button primary" type="button" (click)="printRecord(record)"><span>Imprimir</span></button></footer>
+  </section></div>
+}
+
+@if (systemicPreview(); as form) {
+  <div class="modal-backdrop open" aria-hidden="false"><section class="modal-card prescription-preview-modal systemic-mode angular-systemic-modal" role="dialog" aria-modal="true" aria-labelledby="angularSystemicPreviewTitle">
+    <header class="modal-header"><div><span class="sheet-kicker">Formulario sistémico</span><h2 id="angularSystemicPreviewTitle">{{ form.template.shortTitle || form.template.title }}</h2></div><button class="icon-button" type="button" [disabled]="busy()" title="Cerrar" (click)="closePreview()">×</button></header>
+    <section class="modal-body prescription-preview-body"><div class="angular-systemic-toolbar"><strong>Revise y complete los campos antes de registrar</strong><span>{{ form.template.pages.length }} página(s) · todos los campos son editables</span>@for (warning of form.warnings; track warning) { <em>{{ warning }}</em> }</div><div class="angular-systemic-pages">
+      @for (page of form.template.pages; track $index; let pageIndex = $index) {
+        <figure class="angular-systemic-page"><div class="angular-systemic-paper" [style.aspect-ratio]="(page.width || 210) + ' / ' + (page.height || 297)"><img [src]="page.image" [alt]="'Página ' + (pageIndex + 1)">@for (field of form.fields; track field.id) { @if (field.page === pageIndex + 1) { @if (field.kind === 'checkbox') { <input class="angular-systemic-field is-checkbox" type="checkbox" [checked]="field.value === true" [disabled]="busy()" [attr.data-systemic-field-id]="field.id" [attr.aria-label]="field.label" [style.left.%]="field.x" [style.top.%]="field.y" [style.width.%]="field.width" [style.height.%]="field.height" (change)="updateSystemicField(field.id, $any($event.target).checked)"> } @else if (field.kind === 'textarea' || (field.maxLines || 1) > 1) { <textarea class="angular-systemic-field" [value]="field.value" [disabled]="busy()" [attr.data-systemic-field-id]="field.id" [attr.aria-label]="field.label" [attr.maxlength]="field.maxChars || null" [style.left.%]="field.x" [style.top.%]="field.y" [style.width.%]="field.width" [style.height.%]="field.height" (input)="updateSystemicField(field.id, $any($event.target).value)"></textarea> } @else { <input class="angular-systemic-field" type="text" [value]="field.value" [disabled]="busy()" [attr.data-systemic-field-id]="field.id" [attr.aria-label]="field.label" [attr.maxlength]="field.maxChars || null" [style.left.%]="field.x" [style.top.%]="field.y" [style.width.%]="field.width" [style.height.%]="field.height" (input)="updateSystemicField(field.id, $any($event.target).value)"> } } }</div><figcaption>Página {{ pageIndex + 1 }}</figcaption></figure>
+      }
+    </div></section>
+    <footer class="modal-actions"><button class="tool-button" type="button" [disabled]="busy()" (click)="closePreview()"><span>Cerrar</span></button>@if (systemicPreviewPersisted()) { <button class="tool-button primary" type="button" [disabled]="busy()" (click)="printSystemic()"><span>Imprimir copia</span></button> } @else { <button class="tool-button primary" type="button" [disabled]="busy()" (click)="confirmSystemic()"><span>{{ busy() ? 'Guardando…' : 'Registrar e imprimir' }}</span></button> }</footer>
+  </section></div>
+}

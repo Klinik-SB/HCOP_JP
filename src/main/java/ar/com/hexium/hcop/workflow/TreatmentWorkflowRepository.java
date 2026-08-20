@@ -100,12 +100,12 @@ public class TreatmentWorkflowRepository {
   }
 
   public Optional<Request> markSeen(long id, long userId, Instant now) {
-    jdbc.update("""
+    int changed = jdbc.update("""
         UPDATE treatment_workflow_requests
            SET seen_at = COALESCE(seen_at, ?), updated_at = clock_timestamp()
          WHERE id = ? AND assigned_to_user_id = ? AND status = 'pending'
         """, Timestamp.from(now), id, userId);
-    return request(id);
+    return changed == 0 ? Optional.empty() : request(id);
   }
 
   public Optional<Request> resolve(

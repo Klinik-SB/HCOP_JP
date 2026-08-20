@@ -1,0 +1,120 @@
+{
+  "meta": {
+    "version": 1,
+    "demo": true,
+    "demoSeedKey": "hcop-default-test-savatierra-v1",
+    "demoContentVersion": 3,
+    "createdAt": "2026-02-18T13:00:00Z",
+    "updatedAt": "2026-07-30T16:20:00Z",
+    "currentUser": "Sistema de demostración",
+    "currentProfessional": { "lastName": "Profesional de ejemplo", "license": "" },
+    "sectionAudit": {},
+    "sectionVersions": {},
+    "sectionFormModes": {
+      "chiefComplaint": "structured",
+      "currentIllness": "structured",
+      "personalHistory": "structured",
+      "physicalExam": "structured",
+      "summaryPlan": "structured"
+    }
+  },
+  "patient": {},
+  "oncology": {
+    "diagnosis": "Adenocarcinoma de colon sigmoides",
+    "topography": "Colon sigmoides",
+    "histology": "Adenocarcinoma convencional moderadamente diferenciado",
+    "diagnosisDate": "2026-01-09",
+    "diagnosisDatePrecision": "day",
+    "stage": "Estadio IIIB (pT3 pN1a cM0)",
+    "intent": "Adyuvante",
+    "status": "Seguimiento",
+    "performanceStatus": "ECOG 0",
+    "biomarkers": "Proteínas MLH1, PMS2, MSH2 y MSH6 conservadas; CEA posoperatorio 2,1 ng/ml",
+    "diagnosticClassifications": {
+      "ajcc": { "code": "colon", "display": "Colon", "version": "8", "source": "Catálogo AJCC 8 local" },
+      "snomed": { "code": "363406005", "display": "Neoplasia maligna de colon", "version": "MAIN", "source": "Catálogo terminológico local" },
+      "cie10": { "code": "C18.9", "display": "Tumor maligno del colon, parte no especificada", "version": "Mapeo local", "source": "Equivalencias iniciales HCOP JP" }
+    },
+    "tnm": { "t": "T3", "n": "N1a", "m": "M0", "prefix": "p", "date": "2026-02-04", "edition": "AJCC 8", "source": "Informe anatomopatológico ficticio" },
+    "diagnosisRecords": [
+      {
+        "id": "demo-colon-sigmoid-2026",
+        "date": "2026-01-09",
+        "datePrecision": "day",
+        "diagnosis": "Adenocarcinoma de colon sigmoides",
+        "topography": "Colon sigmoides",
+        "histology": "Adenocarcinoma convencional moderadamente diferenciado",
+        "stage": "Estadio IIIB (pT3 pN1a cM0)",
+        "summary": "Resección segmentaria con invasión hasta el tejido adiposo pericolónico, un ganglio comprometido de veintidós evaluados, bordes quirúrgicos libres y sistema reparador de ADN conservado.",
+        "diagnosticClassifications": {
+          "ajcc": { "code": "colon", "display": "Colon", "version": "8", "source": "Catálogo AJCC 8 local" },
+          "snomed": { "code": "363406005", "display": "Neoplasia maligna de colon", "version": "MAIN", "source": "Catálogo terminológico local" },
+          "cie10": { "code": "C18.9", "display": "Tumor maligno del colon, parte no especificada", "version": "Mapeo local", "source": "Equivalencias iniciales HCOP JP" }
+        },
+        "tnm": { "t": "T3", "n": "N1a", "m": "M0", "prefix": "p", "date": "2026-02-04", "edition": "AJCC 8" },
+        "source": "Caso clínico compuesto de demostración"
+      },
+      {
+        "id": "demo-melanoma-cutaneous-2019",
+        "date": "2019-04-12",
+        "datePrecision": "day",
+        "diagnosis": "Melanoma cutáneo de extensión superficial",
+        "topography": "Piel de región escapular izquierda",
+        "histology": "Melanoma de extensión superficial, Breslow 0,6 mm, sin ulceración",
+        "stage": "Estadio IA (pT1a cN0 cM0)",
+        "summary": "Lesión cutánea delgada resecada y ampliada con bordes definitivos libres; continúa bajo control dermatológico anual.",
+        "diagnosticClassifications": {
+          "ajcc": { "code": "melanoma_cutaneous", "display": "Melanoma cutáneo", "version": "8", "source": "Catálogo AJCC 8 local" },
+          "snomed": { "code": "93655004", "display": "Melanoma maligno de piel", "version": "MAIN", "source": "Catálogo terminológico local" },
+          "cie10": { "code": "C43.9", "display": "Melanoma maligno de piel, sitio no especificado", "version": "Mapeo local", "source": "Equivalencias iniciales HCOP JP" }
+        },
+        "tnm": { "t": "T1a", "n": "N0", "m": "M0", "prefix": "p", "date": "2019-05-03", "edition": "AJCC 8" },
+        "source": "Caso clínico compuesto de demostración"
+      }
+    ]
+  },
+  "exam": { "weightKg": "82", "heightM": "1.80" },
+  "narrative": {
+    "chiefComplaint": "Consulta para planificar tratamiento adyuvante después de una colectomía por tumor de colon sigmoides.",
+    "currentIllness": "Durante diciembre de 2025 presentó cansancio progresivo y cambios intermitentes del ritmo intestinal. Un hemograma mostró anemia microcítica y la videocolonoscopía identificó una lesión estenosante del sigmoides. La biopsia informó adenocarcinoma moderadamente diferenciado. La tomografía de estadificación no mostró enfermedad en órganos distantes. El 04/02/2026 se realizó colectomía sigmoidea laparoscópica; el informe definitivo estableció pT3 pN1a cM0, estadio IIIB. Se indicó quimioterapia adyuvante con FOLFOX cada 14 días por doce ciclos, completados el 30/07/2026.",
+    "backgroundClinical": "Asma alérgica leve sin internaciones. Apendicectomía en la adolescencia. Melanoma cutáneo delgado de región escapular izquierda resecado y ampliado en 2019, sin recaída documentada.",
+    "currentMedication": "Salbutamol inhalado sólo ante síntomas; no utiliza medicación antineoplásica desde que completó la adyuvancia.",
+    "familyOncology": "Tía materna con cáncer colorrectal diagnosticado después de los 75 años.",
+    "gynecology": "",
+    "physicalExam": "Paciente vigil, orientado y autónomo para las actividades habituales. Frecuencia cardíaca 74 por minuto, presión arterial 126/78 mmHg y saturación 98 % al aire ambiente. Mucosas rosadas e hidratadas. Abdomen sin distensión, con cicatrices laparoscópicas consolidadas y ruidos hidroaéreos presentes; no se palpan masas. Extremidades sin edema. Sensibilidad distal conservada al examen.",
+    "summary": "Caso ficticio compuesto de adenocarcinoma moderadamente diferenciado de colon sigmoides, resecado con clasificación pT3 pN1a cM0 y estadio IIIB. Los estudios de extensión no identificaron implantes distantes. Completó FOLFOX adyuvante, con tolerancia general adecuada y parestesias frías transitorias. Como antecedente independiente presenta melanoma cutáneo estadio IA tratado quirúrgicamente en 2019.",
+    "plan": "Iniciar vigilancia con CEA y tomografía de tórax, abdomen y pelvis. Programar colonoscopía al año de la cirugía y sostener el control dermatológico anual."
+  },
+  "diagnoses": [
+    { "id": "demo-colon-sigmoid-2026", "date": "2026-01-09", "datePrecision": "day", "diagnosis": "Adenocarcinoma de colon sigmoides", "topography": "Colon sigmoides", "histology": "Adenocarcinoma convencional moderadamente diferenciado", "stage": "Estadio IIIB (pT3 pN1a cM0)", "summary": "Colectomía sigmoidea con un ganglio regional comprometido de veintidós examinados y bordes libres.", "source": "Caso clínico compuesto de demostración" },
+    { "id": "demo-melanoma-cutaneous-2019", "date": "2019-04-12", "datePrecision": "day", "diagnosis": "Melanoma cutáneo de extensión superficial", "topography": "Piel de región escapular izquierda", "histology": "Melanoma de extensión superficial, Breslow 0,6 mm, sin ulceración", "stage": "Estadio IA (pT1a cN0 cM0)", "summary": "Resección completa y ampliación posterior sin tumor residual.", "source": "Caso clínico compuesto de demostración" }
+  ],
+  "studies": [
+    { "id": "demo-study-melanoma-pathology-2019-04-12", "date": "2019-04-12", "type": "Anatomía patológica", "title": "Biopsia excisional de lesión cutánea", "summary": "Melanoma de extensión superficial, espesor de Breslow 0,6 mm, nivel de Clark III, sin ulceración, sin mitosis dérmicas y sin invasión linfovascular. Clasificación pT1a.", "source": "Caso clínico compuesto de demostración" },
+    { "id": "demo-study-melanoma-reexcision-2019-05-03", "date": "2019-05-03", "type": "Anatomía patológica", "title": "Ampliación de márgenes cutáneos", "summary": "Pieza de ampliación con cambios cicatrizales y ausencia de melanoma residual. Bordes periféricos y profundo libres.", "source": "Caso clínico compuesto de demostración" },
+    { "id": "demo-study-blood-2025-12-18", "date": "2025-12-18", "type": "Laboratorio", "title": "Hemograma y perfil de hierro", "summary": "Hemoglobina 9,8 g/dl, volumen corpuscular medio 72 fl, ferritina 8 ng/ml, leucocitos 6100/mm³ y plaquetas 318000/mm³; patrón compatible con ferropenia.", "source": "Caso clínico compuesto de demostración" },
+    { "id": "demo-study-colonoscopy-2026-01-09", "date": "2026-01-09", "type": "Endoscopía", "title": "Videocolonoscopía con biopsia", "summary": "Lesión circunferencial friable en colon sigmoides que permite el paso cuidadoso del equipo. La muestra informa adenocarcinoma convencional moderadamente diferenciado.", "source": "Caso clínico compuesto de demostración" },
+    { "id": "demo-study-staging-ct-2026-01-17", "date": "2026-01-17", "type": "Tomografía computada", "title": "Estadificación de tórax, abdomen y pelvis", "summary": "Engrosamiento focal del sigmoides y dos ganglios mesocólicos pequeños. Hígado, pulmones y peritoneo sin imágenes secundarias. CEA preoperatorio 6,8 ng/ml.", "source": "Caso clínico compuesto de demostración" },
+    { "id": "demo-study-colectomy-pathology-2026-02-04", "date": "2026-02-04", "type": "Anatomía patológica", "title": "Colectomía sigmoidea y linfadenectomía", "summary": "Adenocarcinoma moderadamente diferenciado que atraviesa la muscular propia y alcanza grasa pericolónica. Un ganglio con metástasis entre veintidós examinados. Bordes proximal, distal y radial libres. MLH1, PMS2, MSH2 y MSH6 con expresión conservada. pT3 pN1a.", "source": "Caso clínico compuesto de demostración" },
+    { "id": "demo-study-cycle12-lab-2026-07-29", "date": "2026-07-29", "type": "Laboratorio", "title": "Control previo al ciclo 12", "summary": "Hemoglobina 12,6 g/dl, neutrófilos 2380/mm³, plaquetas 146000/mm³, creatinina 0,84 mg/dl, bilirrubina 0,7 mg/dl y CEA 2,1 ng/ml. Parámetros aptos para completar el esquema.", "source": "Caso clínico compuesto de demostración" }
+  ],
+  "externalStudies": [],
+  "treatments": [
+    { "id": "demo-melanoma-excision-2019", "date": "2019-04-12", "datePrecision": "day", "category": "surgery", "type": "Cirugía oncológica", "title": "Biopsia excisional de melanoma cutáneo", "diagnosis": "Melanoma cutáneo de extensión superficial", "status": "Completado", "summary": "Resección diagnóstica completa de la lesión pigmentada escapular.", "source": "Caso clínico compuesto de demostración" },
+    { "id": "demo-melanoma-margin-extension-2019", "date": "2019-05-03", "datePrecision": "day", "category": "surgery", "type": "Cirugía oncológica", "title": "Ampliación de márgenes cutáneos", "diagnosis": "Melanoma cutáneo de extensión superficial", "status": "Completado", "summary": "Ampliación local con márgenes definitivos libres y sin tumor residual.", "source": "Caso clínico compuesto de demostración" },
+    { "id": "demo-colon-colectomy-2026", "date": "2026-02-04", "datePrecision": "day", "category": "surgery", "type": "Cirugía oncológica", "title": "Colectomía sigmoidea laparoscópica", "diagnosis": "Adenocarcinoma de colon sigmoides", "status": "Completado", "summary": "Resección segmentaria del sigmoides con anastomosis primaria y linfadenectomía regional.", "source": "Caso clínico compuesto de demostración" },
+    { "id": "demo-venous-port-2026", "date": "2026-02-24", "datePrecision": "day", "category": "procedure", "type": "Procedimiento", "title": "Colocación de acceso venoso implantable", "diagnosis": "Adenocarcinoma de colon sigmoides", "status": "Completado", "summary": "Dispositivo implantable colocado antes del inicio del tratamiento sistémico, sin complicaciones inmediatas.", "source": "Caso clínico compuesto de demostración" },
+    { "id": "demo-folfox-adjuvant-2026", "date": "2026-02-26", "endDate": "2026-07-30", "datePrecision": "day", "category": "systemic", "type": "Quimioterapia", "title": "FOLFOX adyuvante", "diagnosis": "Adenocarcinoma de colon sigmoides", "scheme": "Oxaliplatino, leucovorina y fluorouracilo cada 14 días", "intent": "Adyuvante", "status": "Completado", "summary": "Doce ciclos administrados cada 14 días entre el 26/02/2026 y el 30/07/2026.", "source": "Caso clínico compuesto de demostración" }
+  ],
+  "evolutions": [
+    { "id": "demo-evolution-2026-01-20", "date": "2026-01-20T10:10:00-03:00", "author": "Cirujana colorrectal de demostración", "specialty": "Cirugía colorrectal", "reason": "Evaluación preoperatoria", "text": "Se revisan colonoscopía, biopsia y tomografía. El tumor está localizado en sigmoides y no se observan lesiones distantes. Se propone resección laparoscópica con evaluación ganglionar; la persona comprende el procedimiento y acepta continuar.", "source": "Caso clínico compuesto de demostración" },
+    { "id": "demo-evolution-2026-02-18", "date": "2026-02-18T14:30:00-03:00", "author": "Oncóloga clínica de demostración", "specialty": "Oncología", "reason": "Consulta posoperatoria", "text": "Recuperación quirúrgica satisfactoria. El informe pT3 pN1a cM0 corresponde a estadio IIIB. Se explica el beneficio esperado de FOLFOX adyuvante por doce ciclos y se solicita laboratorio basal y acceso venoso implantable.", "source": "Caso clínico compuesto de demostración" },
+    { "id": "demo-evolution-2026-02-26", "date": "2026-02-26T08:40:00-03:00", "author": "Enfermero de infusión de demostración", "specialty": "Enfermería oncológica", "reason": "Primer ciclo de quimioterapia", "text": "Identidad, protocolo y laboratorio verificados antes de la administración. Se completa el primer ciclo sin reacción aguda y se entregan pautas para hidratación, registro de temperatura y consulta ante signos de alarma.", "source": "Caso clínico compuesto de demostración" },
+    { "id": "demo-evolution-2026-03-26", "date": "2026-03-26T09:05:00-03:00", "author": "Médica de Hospital de Día de demostración", "specialty": "Oncología", "reason": "Control previo al ciclo 3", "text": "Refiere náuseas leves durante las primeras cuarenta y ocho horas, sin vómitos ni diarrea. Ingesta y actividad habituales recuperadas. Laboratorio dentro de parámetros; se mantiene la dosis planificada.", "source": "Caso clínico compuesto de demostración" },
+    { "id": "demo-evolution-2026-05-07", "date": "2026-05-07T08:55:00-03:00", "author": "Farmacéutica oncológica de demostración", "specialty": "Farmacia oncológica", "reason": "Validación del ciclo 6", "text": "Se confirma concordancia entre superficie corporal, dosis prescritas y componentes reservados. La persona refiere hormigueo breve al contacto con frío, resuelto antes del siguiente ciclo. Preparación liberada con trazabilidad completa.", "source": "Caso clínico compuesto de demostración" },
+    { "id": "demo-evolution-2026-06-18", "date": "2026-06-18T09:20:00-03:00", "author": "Oncólogo clínico de demostración", "specialty": "Oncología", "reason": "Control previo al ciclo 9", "text": "ECOG 0, peso estable y examen neurológico distal sin déficit persistente. Continúan parestesias desencadenadas por frío durante pocos días. No hay criterios clínicos ni analíticos para demorar el ciclo.", "source": "Caso clínico compuesto de demostración" },
+    { "id": "demo-evolution-2026-07-30", "date": "2026-07-30T09:15:00-03:00", "author": "Médica de Hospital de Día de demostración", "specialty": "Oncología", "reason": "Administración del ciclo 12", "text": "Se valida el laboratorio del día previo y se administra el ciclo doce sin incidentes. Finaliza la adyuvancia y se organiza el primer control de vigilancia con marcador tumoral e imágenes.", "source": "Caso clínico compuesto de demostración" }
+  ],
+  "prescriptions": [],
+  "researchRecords": []
+}

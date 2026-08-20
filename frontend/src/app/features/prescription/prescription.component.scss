@@ -1,0 +1,39 @@
+:host { display: block; width: 100%; height: 100%; min-height: 0; }
+.angular-prescription { min-height: 0; }
+.angular-prescription svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.angular-prescription .prescription-official-link svg { width: 12px; height: 12px; }
+.angular-prescription .tool-button svg { width: 14px; height: 14px; }
+.angular-prescription .prescription-tabs { overflow-x: hidden; padding-inline: 4px; }
+.angular-prescription .prescription-tabs > button { min-width: 0; flex: 1 1 0; padding-inline: 5px; }
+.angular-prescription .prescription-body { overscroll-behavior: contain; }
+.angular-rx-draft-list { height: auto; overflow: visible; padding: 8px 11px 16px; }
+.angular-prescription-message { margin: 7px 0; border-left: 3px solid #45aee2; background: #eef8fe; padding: 7px 9px; color: #356779; font-size: 10px; line-height: 1.4; }
+.angular-prescription-message.is-error { border-left-color: #c86659; background: #fff4f2; color: #8b433a; }
+.prescription-draft-actions button:disabled { opacity: .42; cursor: not-allowed; }
+.prescription-draft p { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+
+.angular-systemic-modal { width: min(1680px, calc(100vw - 12px)); height: min(1080px, calc(100vh - 12px)); }
+.angular-systemic-toolbar { position: sticky; z-index: 10; top: -14px; display: grid; gap: 2px; border-bottom: 1px solid #cbd6d2; background: rgba(255,255,255,.96); padding: 9px 11px; color: #35514c; }
+.angular-systemic-toolbar strong { font-size: 11px; }
+.angular-systemic-toolbar span { color: #687873; font-size: 9px; }
+.angular-systemic-toolbar em { color: #886923; font-size: 9px; font-style: normal; }
+.angular-systemic-pages { display: grid; justify-content: center; gap: 18px; padding: 12px; }
+.angular-systemic-page { display: grid; gap: 5px; width: 210mm; max-width: 100%; margin: 0; }
+.angular-systemic-page figcaption { color: #63736f; font-size: 9px; font-weight: 700; text-align: center; }
+.angular-systemic-paper { position: relative; overflow: hidden; width: 100%; background: #fff; box-shadow: 0 7px 24px rgba(24,43,39,.2); }
+.angular-systemic-paper > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
+.angular-systemic-field { position: absolute; z-index: 2; min-width: 0 !important; min-height: 0 !important; border: 1px solid rgba(8,127,196,.22) !important; border-radius: 1px !important; background: rgba(255,255,255,.78) !important; padding: 0 2px !important; color: #182421 !important; font: 500 clamp(5px, .72vw, 10px)/1.05 Arial,sans-serif !important; resize: none !important; }
+.angular-systemic-field:focus { z-index: 3; border-color: #087fc4 !important; outline: 2px solid rgba(8,127,196,.17); background: #fff !important; }
+.angular-systemic-field.is-overflowing { z-index: 3; border-color: #c94f45 !important; outline: 2px solid rgba(201,79,69,.18); background: #fff6f4 !important; }
+.angular-systemic-field.is-checkbox { display: block; margin: 0; padding: 0 !important; accent-color: #087fc4; }
+
+@media (max-width: 700px) {
+  .prescription-grid.two, .prescription-grid.three { grid-template-columns: 1fr; }
+  .angular-systemic-pages { padding: 4px; }
+  .angular-systemic-field { font-size: 5px !important; }
+}
+
+@container (max-width: 360px) {
+  .angular-prescription .prescription-tabs > button span { display: none; }
+  .angular-prescription .prescription-tabs > button svg { width: 16px; height: 16px; }
+}

@@ -1,0 +1,226 @@
+<div class="clinical-workspace-content">
+  @if (workspaceService.loading()) { <div class="clinical-loading" role="status">Actualizando historia clínica…</div> }
+  @if (workspaceService.error()) { <p class="clinical-workspace-error" role="alert">{{ workspaceService.error() }}</p> }
+
+  @if (workspaceService.workingWorkspace(); as workspace) {
+    <article id="clinicalDocument" class="paper-sheet clinical-document" [hcopClinicalHighlightHost]="workspace.state" [hcopClinicalHighlightDisabled]="workspaceService.hasPendingClinicalWork()" (hcopClinicalHighlightMutation)="saveClinicalHighlight($event)">
+      <header class="sheet-header">
+        <div class="sheet-header-main" data-highlight-scope data-highlight-kind="section" data-highlight-section-key="patientHeader">
+          <span class="sheet-kicker">Historia clinica oncologica</span>
+          <div class="sheet-title-row"><h2>{{ workspace.patient.fullName }}</h2></div>
+          <div class="patient-line">{{ patientLine(workspace.patient) }}</div>
+          <div class="clinical-print-only">
+            <dl class="clinical-print-patient-facts">
+              @for (fact of printFacts(workspace.patient); track fact.label) {
+                <div><dt>{{ fact.label }}</dt><dd>{{ printFactValue(fact) }}</dd></div>
+              }
+            </dl>
+            <div class="print-info">Fecha de impresión: {{ printDateTime() }}</div>
+          </div>
+        </div>
+      </header>
+
+      <section class="doc-section" data-highlight-scope data-highlight-kind="section" data-highlight-section-key="diagnosticClassifications" [class.clinical-print-empty]="!printHas('diagnosis')">
+        <div class="section-heading"><h3>Diagnóstico oncológico</h3></div>
+        @if (records('diagnoses').length) {
+          <div class="diagnosis-record-summary-list">
+            @for (record of records('diagnoses'); track record.id ?? $index) {
+              <section class="diagnosis-record-summary" data-highlight-scope data-highlight-kind="record" data-highlight-record-type="diagnosis" [attr.data-highlight-record-id]="record.id || ''" [attr.data-clinical-date]="record.date"><header><strong>{{ recordTitle(record) }}</strong>@if (record.date) { <time>{{ date(record.date) }}</time> }</header>@if (recordBody(record)) { <p>{{ recordBody(record) }}</p> }</section>
+            }
+          </div>
+        } @else if (oncology('diagnosis') || oncology('topography') || oncology('histology') || oncology('stage')) {
+          <div class="inline-facts diagnosis-facts">
+            @if (oncology('diagnosis')) { <span><strong>Diagnóstico:</strong> {{ oncology('diagnosis') }}</span> }
+            @if (oncology('topography')) { <span><strong>Topografía:</strong> {{ oncology('topography') }}</span> }
+            @if (oncology('histology')) { <span><strong>Histología:</strong> {{ oncology('histology') }}</span> }
+            @if (oncology('stage')) { <span><strong>Estadio:</strong> {{ oncology('stage') }}</span> }
+          </div>
+        } @else { <p class="section-free-text">Sin diagnóstico oncológico cargado.</p> }
+      </section>
+
+      <section class="doc-section" data-highlight-scope data-highlight-kind="section" data-highlight-section-key="chiefComplaint" [class.clinical-print-empty]="!printHas('chiefComplaint')">
+        <div class="section-heading"><h3>Motivo de consulta</h3>@if (canEditNarrativeSection('chiefComplaint') && narrative('chiefComplaint')) { <div class="section-actions"><button class="section-action-button" type="button" title="Modificar sección" aria-label="Modificar sección Motivo de consulta" [disabled]="workspaceService.hasPendingClinicalWork()" (click)="openNarrativeSectionEditor('chiefComplaint', $event)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div> }</div>
+        @if (narrative('chiefComplaint')) { <p class="section-free-text">{{ narrative('chiefComplaint') }}</p> }
+        @else if (canEditNarrativeSection('chiefComplaint')) { <div class="clinical-section-empty"><span>Sin motivo de consulta cargado.</span><button class="ghost-button" type="button" [attr.aria-label]="narrativeSectionIsInitial('chiefComplaint') ? 'Cargar motivo de consulta' : 'Modificar motivo de consulta'" [disabled]="workspaceService.hasPendingClinicalWork()" (click)="openNarrativeSectionEditor('chiefComplaint', $event)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>{{ narrativeSectionIsInitial('chiefComplaint') ? 'Cargar' : 'Modificar' }}</span></button></div> }
+        @else { <p class="section-free-text">Sin motivo de consulta cargado.</p> }
+      </section>
+      <section class="doc-section" data-highlight-scope data-highlight-kind="section" data-highlight-section-key="currentIllness" [class.clinical-print-empty]="!printHas('currentIllness')">
+        <div class="section-heading"><h3>Antecedentes de enfermedad actual</h3>@if (canEditNarrativeSection('currentIllness') && narrative('currentIllness')) { <div class="section-actions"><button class="section-action-button" type="button" title="Modificar sección" aria-label="Modificar sección Antecedentes de enfermedad actual" [disabled]="workspaceService.hasPendingClinicalWork()" (click)="openNarrativeSectionEditor('currentIllness', $event)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div> }</div>
+        @if (narrative('currentIllness')) { <p class="section-free-text">{{ narrative('currentIllness') }}</p> }
+        @else if (canEditNarrativeSection('currentIllness')) { <div class="clinical-section-empty"><span>Sin antecedentes de enfermedad actual cargados.</span><button class="ghost-button" type="button" [attr.aria-label]="narrativeSectionIsInitial('currentIllness') ? 'Cargar antecedentes de enfermedad actual' : 'Modificar antecedentes de enfermedad actual'" [disabled]="workspaceService.hasPendingClinicalWork()" (click)="openNarrativeSectionEditor('currentIllness', $event)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>{{ narrativeSectionIsInitial('currentIllness') ? 'Cargar' : 'Modificar' }}</span></button></div> }
+        @else { <p class="section-free-text">Sin antecedentes de enfermedad actual cargados.</p> }
+      </section>
+      <section class="doc-section" data-highlight-scope data-highlight-kind="section" data-highlight-section-key="personalHistory" [class.clinical-print-empty]="!printHas('personalHistory')">
+        <div class="section-heading"><h3>Antecedentes personales</h3>@if (canEditPersonalHistory() && personalHistoryHasContent()) { <div class="section-actions"><button class="section-action-button" type="button" title="Modificar sección" aria-label="Modificar sección Antecedentes personales" [disabled]="workspaceService.hasPendingClinicalWork()" (click)="openPersonalHistoryEditor($event)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div> }</div>
+        @if (personalHistoryLegacyText()) { <p class="section-free-text">{{ personalHistoryLegacyText() }}</p> }
+        @else if (personalHistoryHasContent()) { <div class="clinical-facts-stack">@if (narrative('backgroundClinical')) { <p><strong>Clínicos / quirúrgicos:</strong> {{ narrative('backgroundClinical') }}</p> }@if (narrative('currentMedication')) { <p><strong>Medicación habitual:</strong> {{ narrative('currentMedication') }}</p> }@if (narrative('familyOncology')) { <p><strong>Oncofamiliares:</strong> {{ narrative('familyOncology') }}</p> }@if (narrative('gynecology')) { <p><strong>Gineco-obstétricos:</strong> {{ narrative('gynecology') }}</p> }</div> }
+        @else if (canEditPersonalHistory()) { <div class="clinical-section-empty"><span>Sin antecedentes personales cargados.</span><button class="ghost-button" type="button" [attr.aria-label]="personalHistoryIsInitial() ? 'Cargar antecedentes personales' : 'Modificar antecedentes personales'" [disabled]="workspaceService.hasPendingClinicalWork()" (click)="openPersonalHistoryEditor($event)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>{{ personalHistoryIsInitial() ? 'Cargar' : 'Modificar' }}</span></button></div> }
+        @else { <p class="section-free-text">Sin antecedentes personales cargados.</p> }
+      </section>
+      @if (canViewStudies()) { <section class="doc-section" data-highlight-scope data-highlight-kind="section" data-highlight-section-key="studies" [class.clinical-print-empty]="!printHas('studies')"><div class="section-heading"><h3>Estudios complementarios</h3></div>
+        @if (studyEntries().length) {
+          @for (entry of studyEntries(); track entry.key) {
+            <article class="doc-entry flush-entry study-entry is-navigable" data-highlight-scope data-highlight-kind="record" data-highlight-record-type="study" [attr.data-highlight-record-id]="entry.record.id || entry.key" [attr.data-clinical-date]="entry.record.date" role="button" tabindex="0" [attr.aria-label]="'Abrir estudio ' + studyHeading(entry.record)" (click)="openStudies(entry)" (keydown.enter)="openStudies(entry)" (keydown.space)="$event.preventDefault(); openStudies(entry)"><p><strong>{{ studyHeading(entry.record) }}</strong></p>@if (recordBody(entry.record)) { <p>{{ recordBody(entry.record) }}</p> }</article>
+          }
+        } @else if (canViewStudies()) {
+          <div class="clinical-section-empty"><span>Sin estudios complementarios cargados.</span><button class="ghost-button" type="button" aria-label="Subir estudios complementarios" [disabled]="workspaceService.hasPendingClinicalWork()" (click)="openStudies(undefined, true)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>{{ canEditStudies() ? 'Subir estudios' : 'Abrir Estudios' }}</span></button></div>
+        }
+      </section> }
+      <section class="doc-section" data-highlight-scope data-highlight-kind="section" data-highlight-section-key="physicalExam" [class.clinical-print-empty]="!printHas('physicalExam')">
+        <div class="section-heading"><h3>Examen físico</h3>@if (canEditPhysicalExam() && physicalExamHasContent()) { <div class="section-actions"><button class="section-action-button" type="button" title="Modificar sección" aria-label="Modificar sección Examen físico" [disabled]="workspaceService.hasPendingClinicalWork()" (click)="openPhysicalExamEditor($event)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div> }</div>
+        @if (physicalExamLegacyText()) { <p class="section-free-text">{{ physicalExamLegacyText() }}</p> }
+        @else if (physicalExamHasContent()) {
+          @if (exam('weightKg') || physicalExamHeightCm()) { <div class="inline-facts">@if (exam('weightKg')) { <span><strong>Peso:</strong> {{ exam('weightKg') }} kg</span> }@if (physicalExamHeightCm()) { <span><strong>Talla:</strong> {{ physicalExamHeightCm() }} cm</span> }@if (physicalExamStoredBmi()) { <span><strong>IMC:</strong> {{ physicalExamStoredBmi() }}</span> }@if (physicalExamStoredBodySurface()) { <span><strong>Superficie corporal:</strong> {{ physicalExamStoredBodySurface() }}</span> }</div> }
+          @for (row of physicalExamPresentationRows(); track $index) { <p class="physical-exam-line"><strong>{{ row.label }}:</strong> {{ row.text }}</p> }
+        }
+        @else if (canEditPhysicalExam()) { <div class="clinical-section-empty"><span>Sin examen físico cargado.</span><button class="ghost-button" type="button" [attr.aria-label]="physicalExamIsInitial() ? 'Cargar examen físico' : 'Modificar examen físico'" [disabled]="workspaceService.hasPendingClinicalWork()" (click)="openPhysicalExamEditor($event)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>{{ physicalExamIsInitial() ? 'Cargar' : 'Modificar' }}</span></button></div> }
+        @else { <p class="section-free-text">Sin examen físico cargado.</p> }
+      </section>
+      <app-oncology-history-entry-section kind="systemic" [printMode]="!!printTimestamp()" />
+      <app-oncology-history-entry-section kind="radiotherapy" [printMode]="!!printTimestamp()" />
+      <app-oncology-history-entry-section kind="surgery" [printMode]="!!printTimestamp()" />
+      <section class="doc-section" data-highlight-scope data-highlight-kind="section" data-highlight-section-key="summaryPlan" [class.clinical-print-empty]="!printHas('summary')"><div class="section-heading"><h3>Conclusión / resumen</h3>@if (canEditSummaryPlan()) { <div class="section-actions"><button class="section-action-button" type="button" title="Editar conclusión / resumen" aria-label="Editar conclusión / resumen" [disabled]="workspaceService.hasPendingClinicalWork()" (click)="openSummaryPlanEditor($event)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div> }</div>
+        @if (narrative('summary') || narrative('plan')) { <div class="clinical-facts-stack">@if (narrative('summary')) { <p><strong>Conclusión / resumen:</strong> {{ narrative('summary') }}</p> }@if (narrative('plan')) { <p><strong>Conducta / plan:</strong> {{ narrative('plan') }}</p> }</div> } @else { <p class="section-free-text">Sin conclusión o resumen cargado.</p> }
+      </section>
+      <section class="doc-section" data-highlight-scope data-highlight-kind="section" data-highlight-section-key="evolutions" [class.clinical-print-empty]="!printHas('activity')"><div class="section-heading"><h3>Actividad clínica cronológica</h3></div>
+        @if (activityRecords().length) { @for (record of activityRecords(); track record.id ?? $index) { <article class="doc-entry evolution-entry" data-highlight-scope data-highlight-kind="record" [attr.data-highlight-record-type]="activityHighlightRecordType(record)" [attr.data-highlight-record-id]="record.id || ''" [class.prescription-entry]="record.type === 'medication' || record.type === 'certificate' || record.type === 'study' || record.type === 'free' || record.type === 'systemic'" [class.evolution-entry--deleted]="record.deleted" [attr.data-clinical-date]="record.date"><p><strong>{{ activityHeading(record) }}</strong></p>@if (record.type === 'medication' || record.type === 'certificate' || record.type === 'study' || record.type === 'free' || record.type === 'systemic') { <ul class="prescription-clinical-details">@for (line of prescriptionDetails(record); track $index) { <li>{{ line }}</li> }</ul>@if (activityAudit(record)) { <p class="entry-audit">{{ activityAudit(record) }}</p> } } @else if (recordBody(record)) { <p>{{ recordBody(record) }}</p> }</article> } } @else { <p class="section-free-text">Sin actividad clínica cargada.</p> }
+      </section>
+      @if (canAddClinicalEntry()) {
+        <div class="clinical-add-action-stack">
+          <button class="ghost-button evolution-add-button" type="button" [disabled]="workspaceService.hasPendingClinicalWork()" (click)="openEvolutionEntry()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Agregar evolución</span></button>
+          <button class="ghost-button diagnosis-add-button" type="button" [disabled]="workspaceService.hasPendingClinicalWork()" (click)="openDiagnosisEntry()"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v10M7 12h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Agregar diagnóstico</span></button>
+        </div>
+      }
+      @if (clinicalEntryMessage()) { <p class="clinical-entry-status" role="status">{{ clinicalEntryMessage() }}</p> }
+    </article>
+  } @else {
+    <article class="paper-sheet clinical-document clinical-document--blank"><div class="doc-empty"><strong>No hay un paciente abierto.</strong><span>Use “Abrir paciente” para recuperar una historia clínica local.</span><button class="tool-button primary" type="button" (click)="openPicker()"><span>Abrir paciente</span></button></div></article>
+  }
+
+  <app-evolution-entry-modal [open]="evolutionEntryOpen()" (saved)="clinicalEntrySaved($event)" (closed)="evolutionEntryOpen.set(false)" />
+  <app-diagnosis-entry-modal [open]="diagnosisEntryOpen()" (saved)="clinicalEntrySaved($event)" (closed)="diagnosisEntryOpen.set(false)" />
+
+  @if (workspaceService.pickerOpen()) {
+    <div class="modal-backdrop lira-import-backdrop open" aria-hidden="false">
+      <section class="modal-card lira-import-modal" role="dialog" aria-modal="true" aria-labelledby="angularPatientPickerTitle">
+        <header class="modal-header"><div><span class="sheet-kicker">Base clínica local</span><h2 id="angularPatientPickerTitle">Abrir historia de paciente</h2><p>Busque por nombre, apellido, DNI, HC o ID. El paciente permanece activo hasta que se cierre explícitamente.</p></div><button class="icon-button" type="button" title="Cerrar" aria-label="Cerrar buscador de pacientes" (click)="closePicker()">×</button></header>
+        <div class="modal-body lira-import-body">
+          <form class="lira-patient-search" (submit)="$event.preventDefault(); search()"><label for="angularPatientSearch">Buscar paciente</label><div class="lira-patient-search-control"><input id="angularPatientSearch" type="search" [formControl]="query" autocomplete="off" placeholder="Nombre, apellido, DNI, HC o ID"><button class="tool-button primary" type="submit"><span>Buscar</span></button></div></form>
+          @if (searchError()) { <p class="lira-search-message" role="alert">{{ searchError() }}</p> } @else if (searching()) { <p class="lira-search-message" role="status">Buscando pacientes…</p> } @else { <p class="lira-search-message">{{ results().length ? results().length + ' paciente(s) encontrado(s)' : 'No hay pacientes que coincidan.' }}</p> }
+          <div class="lira-patient-results" role="listbox" aria-label="Pacientes encontrados">@for (patient of results(); track patient.id) { <button class="lira-patient-result" type="button" role="option" (click)="open(patient)"><span><strong>{{ patient.fullName }}</strong><small>{{ patientLine(patient) }}</small></span><span aria-hidden="true">›</span></button> }</div>
+        </div>
+        <footer class="modal-actions"><button class="tool-button" type="button" (click)="closePicker()"><span>Cerrar</span></button></footer>
+      </section>
+    </div>
+  }
+
+  @if (summaryPlanOpen()) {
+    <div class="modal-backdrop summary-plan-editor-backdrop open" aria-hidden="false">
+      <section class="modal-card section-modal-card summary-plan-editor-modal" role="dialog" aria-modal="true" aria-labelledby="summaryPlanEditorTitle" aria-describedby="summaryPlanEditorDescription" tabindex="-1" (keydown)="trapSummaryPlanFocus($event)">
+        <header class="modal-header">
+          <div><span class="sheet-kicker">Historia clínica</span><h2 id="summaryPlanEditorTitle">Conclusión / resumen</h2><p id="summaryPlanEditorDescription">Registre la síntesis clínica y la conducta acordada. Cada modificación queda versionada y auditada.</p></div>
+          <button class="icon-button" type="button" title="Cerrar" aria-label="Cerrar editor de conclusión / resumen" [disabled]="summaryPlanBusy()" (click)="closeSummaryPlanEditor()">×</button>
+        </header>
+        <div class="modal-body summary-plan-editor-body">
+          <div class="section-structured-editor">
+            <p class="section-structured-intro">Puede completar uno o ambos campos. Los espacios al inicio y al final se normalizan al guardar.</p>
+            <div class="section-structured-fields">
+              <label class="section-structured-field is-wide" for="summaryPlanSummary"><span>Conclusión / resumen</span><textarea id="summaryPlanSummary" aria-label="Conclusión / resumen" rows="8" [formControl]="summaryControl" [maxlength]="maxClinicalNarrativeChars" [disabled]="summaryPlanBusy()"></textarea><small>{{ summaryPlanCount(summaryControl) }} / {{ maxClinicalNarrativeChars }}</small></label>
+              <label class="section-structured-field is-wide" for="summaryPlanPlan"><span>Conducta / plan</span><textarea id="summaryPlanPlan" aria-label="Conducta / plan" rows="6" [formControl]="planControl" [maxlength]="maxClinicalNarrativeChars" [disabled]="summaryPlanBusy()"></textarea><small>{{ summaryPlanCount(planControl) }} / {{ maxClinicalNarrativeChars }}</small></label>
+            </div>
+            @if (!summaryPlanInitial()) {
+              <label class="section-structured-field section-edit-reason" for="summaryPlanReason"><span>Motivo de la modificación</span><input id="summaryPlanReason" aria-label="Motivo de la modificación" autocomplete="off" [maxlength]="maxClinicalNarrativeChars" [formControl]="summaryPlanReasonControl" [disabled]="summaryPlanBusy()" placeholder="Explique brevemente por qué se modifica esta sección"><small>Obligatorio para conservar una trazabilidad clínica comprensible.</small></label>
+            }
+            @if (summaryPlanInitial()) { <p class="summary-plan-editor-note">Esta es la carga inicial de la sección. Debe completar al menos uno de los dos campos.</p> }
+            @if (summaryPlanError()) { <p class="summary-plan-editor-error" role="alert">{{ summaryPlanError() }}</p> }
+          </div>
+        </div>
+        <footer class="modal-actions"><button class="tool-button" type="button" [disabled]="summaryPlanBusy()" (click)="closeSummaryPlanEditor()"><span>Cancelar</span></button><button class="tool-button primary" type="button" [disabled]="summaryPlanBusy()" (click)="saveSummaryPlan()"><span>{{ summaryPlanBusy() ? 'Guardando…' : summaryPlanInitial() ? 'Cargar en historia' : 'Guardar modificación' }}</span></button></footer>
+      </section>
+    </div>
+  }
+
+  @if (personalHistoryOpen()) {
+    <div class="modal-backdrop summary-plan-editor-backdrop personal-history-editor-backdrop open" aria-hidden="false">
+      <section class="modal-card section-modal-card summary-plan-editor-modal" role="dialog" aria-modal="true" aria-labelledby="personalHistoryEditorTitle" aria-describedby="personalHistoryEditorDescription" tabindex="-1" (keydown)="trapSummaryPlanFocus($event)">
+        <header class="modal-header">
+          <div><span class="sheet-kicker">{{ personalHistoryInitial() ? 'Cargar sección' : 'Modificar sección' }}</span><h2 id="personalHistoryEditorTitle">Antecedentes personales</h2><p id="personalHistoryEditorDescription">Complete cada grupo por separado para conservar los datos estructurados. Cada modificación queda versionada y auditada.</p></div>
+          <button class="icon-button" type="button" title="Cerrar" aria-label="Cerrar editor de antecedentes personales" [disabled]="personalHistoryBusy()" (click)="closePersonalHistoryEditor()">×</button>
+        </header>
+        <div class="modal-body summary-plan-editor-body">
+          <div class="section-structured-editor">
+            <p class="section-structured-intro">Complete cada grupo por separado para conservar los datos estructurados.</p>
+            <div class="section-structured-fields">
+              <label class="section-structured-field" for="personalHistoryBackgroundClinical"><span>Antecedentes clínicos / quirúrgicos</span><textarea id="personalHistoryBackgroundClinical" aria-label="Antecedentes clínicos / quirúrgicos" rows="5" [formControl]="backgroundClinicalControl" [maxlength]="maxPersonalHistoryChars" [disabled]="personalHistoryBusy()" [attr.aria-invalid]="personalHistoryErrorTarget() === 'backgroundClinical' ? 'true' : null" [attr.aria-describedby]="personalHistoryErrorTarget() === 'backgroundClinical' ? 'personalHistoryEditorError' : null"></textarea><small>{{ personalHistoryCount(backgroundClinicalControl) }} / {{ maxPersonalHistoryChars }}</small></label>
+              <label class="section-structured-field" for="personalHistoryCurrentMedication"><span>Medicación habitual</span><textarea id="personalHistoryCurrentMedication" aria-label="Medicación habitual" rows="5" [formControl]="currentMedicationControl" [maxlength]="maxPersonalHistoryChars" [disabled]="personalHistoryBusy()" [attr.aria-invalid]="personalHistoryErrorTarget() === 'currentMedication' ? 'true' : null" [attr.aria-describedby]="personalHistoryErrorTarget() === 'currentMedication' ? 'personalHistoryEditorError' : null"></textarea><small>{{ personalHistoryCount(currentMedicationControl) }} / {{ maxPersonalHistoryChars }}</small></label>
+              <label class="section-structured-field" for="personalHistoryFamilyOncology"><span>Antecedentes oncofamiliares</span><textarea id="personalHistoryFamilyOncology" aria-label="Antecedentes oncofamiliares" rows="4" [formControl]="familyOncologyControl" [maxlength]="maxPersonalHistoryChars" [disabled]="personalHistoryBusy()" [attr.aria-invalid]="personalHistoryErrorTarget() === 'familyOncology' ? 'true' : null" [attr.aria-describedby]="personalHistoryErrorTarget() === 'familyOncology' ? 'personalHistoryEditorError' : null"></textarea><small>{{ personalHistoryCount(familyOncologyControl) }} / {{ maxPersonalHistoryChars }}</small></label>
+              <label class="section-structured-field" for="personalHistoryGynecology"><span>Antecedentes gineco-obstétricos</span><textarea id="personalHistoryGynecology" aria-label="Antecedentes gineco-obstétricos" rows="4" [formControl]="gynecologyControl" [maxlength]="maxPersonalHistoryChars" [disabled]="personalHistoryBusy()" [attr.aria-invalid]="personalHistoryErrorTarget() === 'gynecology' ? 'true' : null" [attr.aria-describedby]="personalHistoryErrorTarget() === 'gynecology' ? 'personalHistoryEditorError' : null"></textarea><small>{{ personalHistoryCount(gynecologyControl) }} / {{ maxPersonalHistoryChars }}</small></label>
+            </div>
+            @if (!personalHistoryInitial()) {
+              <label class="section-structured-field section-edit-reason" for="personalHistoryReason"><span>Motivo de la modificación</span><input id="personalHistoryReason" aria-label="Motivo de la modificación" autocomplete="off" [maxlength]="maxPersonalHistoryChars" [formControl]="personalHistoryReasonControl" [disabled]="personalHistoryBusy()" [attr.aria-invalid]="personalHistoryErrorTarget() === 'reason' ? 'true' : null" [attr.aria-describedby]="personalHistoryErrorTarget() === 'reason' ? 'personalHistoryEditorError' : null" placeholder="Explique brevemente por qué se modifica esta sección"><small>Obligatorio para conservar una trazabilidad clínica comprensible.</small></label>
+            }
+            @if (personalHistoryInitial()) { <p class="summary-plan-editor-note">Esta es la carga inicial de la sección. Debe completar al menos uno de los cuatro campos.</p> }
+            @if (personalHistoryError()) { <p class="summary-plan-editor-error" id="personalHistoryEditorError" role="alert">{{ personalHistoryError() }}</p> }
+          </div>
+        </div>
+        <footer class="modal-actions"><button class="tool-button" type="button" [disabled]="personalHistoryBusy()" (click)="closePersonalHistoryEditor()"><span>Cancelar</span></button><button class="tool-button primary" type="button" [disabled]="personalHistoryBusy()" (click)="savePersonalHistory()"><span>{{ personalHistoryBusy() ? 'Guardando…' : personalHistoryInitial() ? 'Cargar en historia' : 'Guardar modificación' }}</span></button></footer>
+      </section>
+    </div>
+  }
+
+  @if (physicalExamOpen()) {
+    <div class="modal-backdrop summary-plan-editor-backdrop physical-exam-editor-backdrop open" aria-hidden="false">
+      <section class="modal-card section-modal-card summary-plan-editor-modal" role="dialog" aria-modal="true" aria-labelledby="physicalExamEditorTitle" aria-describedby="physicalExamEditorDescription" tabindex="-1" (keydown)="trapSummaryPlanFocus($event)">
+        <header class="modal-header">
+          <div><span class="sheet-kicker">{{ physicalExamInitial() ? 'Cargar sección' : 'Modificar sección' }}</span><h2 id="physicalExamEditorTitle">Examen físico</h2><p id="physicalExamEditorDescription">Registre las medidas en kilogramos y centímetros. El sistema calcula IMC y superficie corporal sin modificar los datos clínicos.</p></div>
+          <button class="icon-button" type="button" title="Cerrar" aria-label="Cerrar editor de examen físico" [disabled]="physicalExamBusy()" (click)="closePhysicalExamEditor()">×</button>
+        </header>
+        <div class="modal-body summary-plan-editor-body">
+          <div class="section-structured-editor">
+            <p class="section-structured-intro">Registre medidas antropométricas y el examen físico de ingreso.</p>
+            <div class="section-structured-fields">
+              <label class="section-structured-field" for="physicalExamWeight"><span>Peso (kg)</span><input id="physicalExamWeight" type="number" inputmode="decimal" [min]="physicalExamWeightMin" [max]="physicalExamWeightMax" step="0.01" [formControl]="physicalExamWeightControl" [disabled]="physicalExamBusy()" [attr.aria-invalid]="physicalExamErrorTarget() === 'weightKg' ? 'true' : null" [attr.aria-describedby]="physicalExamErrorTarget() === 'weightKg' ? 'physicalExamEditorError' : null"></label>
+              <label class="section-structured-field" for="physicalExamHeight"><span>Talla (cm)</span><input id="physicalExamHeight" type="number" inputmode="decimal" [min]="physicalExamHeightMin" [max]="physicalExamHeightMax" step="0.1" [formControl]="physicalExamHeightControl" [disabled]="physicalExamBusy()" [attr.aria-invalid]="physicalExamErrorTarget() === 'heightCm' ? 'true' : null" [attr.aria-describedby]="physicalExamErrorTarget() === 'heightCm' ? 'physicalExamEditorError' : null"></label>
+              <label class="section-structured-field is-wide" for="physicalExamText"><span>Examen físico</span><textarea id="physicalExamText" aria-label="Examen físico" rows="8" [formControl]="physicalExamTextControl" [maxlength]="maxPhysicalExamChars" [disabled]="physicalExamBusy()" [attr.aria-invalid]="physicalExamErrorTarget() === 'physicalExam' ? 'true' : null" [attr.aria-describedby]="physicalExamErrorTarget() === 'physicalExam' ? 'physicalExamEditorError' : null"></textarea><small>{{ physicalExamCount() }} / {{ maxPhysicalExamChars }}</small></label>
+              <div class="section-exam-tools is-wide">
+                <div class="section-exam-metrics" aria-live="polite"><span><small>IMC</small><strong>{{ physicalExamBmi() }}</strong></span><span><small>Superficie corporal</small><strong>{{ physicalExamBodySurface() }}</strong></span></div>
+                <button class="ghost-button" type="button" [disabled]="physicalExamBusy()" (click)="prefillPhysicalExam()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11l3 3L22 4M16 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Usar examen físico habitual</span></button>
+              </div>
+            </div>
+            @if (!physicalExamInitial()) {
+              <label class="section-structured-field section-edit-reason" for="physicalExamReason"><span>Motivo de la modificación</span><input id="physicalExamReason" aria-label="Motivo de la modificación" autocomplete="off" [maxlength]="maxPhysicalExamChars" [formControl]="physicalExamReasonControl" [disabled]="physicalExamBusy()" [attr.aria-invalid]="physicalExamErrorTarget() === 'reason' ? 'true' : null" [attr.aria-describedby]="physicalExamErrorTarget() === 'reason' ? 'physicalExamEditorError' : null" placeholder="Explique brevemente por qué se modifica esta sección"><small>Obligatorio para conservar una trazabilidad clínica comprensible.</small></label>
+            }
+            @if (physicalExamInitial()) { <p class="summary-plan-editor-note">Esta es la carga inicial de la sección. Debe completar al menos uno de los tres campos.</p> }
+            @if (physicalExamError()) { <p class="summary-plan-editor-error" id="physicalExamEditorError" role="alert">{{ physicalExamError() }}</p> }
+          </div>
+        </div>
+        <footer class="modal-actions"><button class="tool-button" type="button" [disabled]="physicalExamBusy()" (click)="closePhysicalExamEditor()"><span>Cancelar</span></button><button class="tool-button primary" type="button" [disabled]="physicalExamBusy()" (click)="savePhysicalExam()"><span>{{ physicalExamBusy() ? 'Guardando…' : physicalExamInitial() ? 'Cargar en historia' : 'Guardar modificación' }}</span></button></footer>
+      </section>
+    </div>
+  }
+
+  @if (narrativeEditorOpen()) {
+    <div class="modal-backdrop summary-plan-editor-backdrop open" [class.chief-complaint-editor-backdrop]="narrativeEditorKey() === 'chiefComplaint'" [class.current-illness-editor-backdrop]="narrativeEditorKey() === 'currentIllness'" aria-hidden="false">
+      <section class="modal-card section-modal-card summary-plan-editor-modal" role="dialog" aria-modal="true" aria-labelledby="singleNarrativeEditorTitle" aria-describedby="singleNarrativeEditorDescription" tabindex="-1" (keydown)="trapSummaryPlanFocus($event)">
+        <header class="modal-header">
+          <div><span class="sheet-kicker">{{ narrativeEditorInitial() ? 'Cargar sección' : 'Modificar sección' }}</span><h2 id="singleNarrativeEditorTitle">{{ narrativeEditorTitle() }}</h2><p id="singleNarrativeEditorDescription">{{ narrativeEditorIntro() }} Cada modificación queda versionada y auditada.</p></div>
+          <button class="icon-button" type="button" title="Cerrar" [attr.aria-label]="'Cerrar editor de ' + narrativeEditorTitle().toLocaleLowerCase('es-AR')" [disabled]="narrativeEditorBusy()" (click)="closeNarrativeSectionEditor()">×</button>
+        </header>
+        <div class="modal-body summary-plan-editor-body">
+          <div class="section-structured-editor">
+            <p class="section-structured-intro">{{ narrativeEditorIntro() }}</p>
+            <div class="section-structured-fields">
+              <label class="section-structured-field is-wide" for="singleNarrativeEditorContent"><span>{{ narrativeEditorTitle() }}</span><textarea id="singleNarrativeEditorContent" [attr.aria-label]="narrativeEditorTitle()" [rows]="narrativeEditorRows()" [formControl]="narrativeEditorControl" [maxlength]="narrativeEditorMaxChars()" [disabled]="narrativeEditorBusy()" [attr.aria-invalid]="narrativeEditorErrorTarget() === 'content' ? 'true' : null" [attr.aria-describedby]="narrativeEditorErrorTarget() === 'content' ? 'singleNarrativeEditorError' : null"></textarea><small>{{ narrativeEditorCount() }} / {{ narrativeEditorMaxChars() }}</small></label>
+            </div>
+            @if (!narrativeEditorInitial()) {
+              <label class="section-structured-field section-edit-reason" for="singleNarrativeEditorReason"><span>Motivo de la modificación</span><input id="singleNarrativeEditorReason" aria-label="Motivo de la modificación" autocomplete="off" [maxlength]="narrativeEditorMaxChars()" [formControl]="narrativeEditorReasonControl" [disabled]="narrativeEditorBusy()" [attr.aria-invalid]="narrativeEditorErrorTarget() === 'reason' ? 'true' : null" [attr.aria-describedby]="narrativeEditorErrorTarget() === 'reason' ? 'singleNarrativeEditorError' : null" placeholder="Explique brevemente por qué se modifica esta sección"><small>Obligatorio para conservar una trazabilidad clínica comprensible.</small></label>
+            }
+            @if (narrativeEditorInitial()) { <p class="summary-plan-editor-note">Esta es la carga inicial de la sección. Debe completar {{ narrativeEditorTitle().toLocaleLowerCase('es-AR') }}.</p> }
+            @if (narrativeEditorError()) { <p class="summary-plan-editor-error" id="singleNarrativeEditorError" role="alert">{{ narrativeEditorError() }}</p> }
+          </div>
+        </div>
+        <footer class="modal-actions"><button class="tool-button" type="button" [disabled]="narrativeEditorBusy()" (click)="closeNarrativeSectionEditor()"><span>Cancelar</span></button><button class="tool-button primary" type="button" [disabled]="narrativeEditorBusy()" (click)="saveNarrativeSection()"><span>{{ narrativeEditorBusy() ? 'Guardando…' : narrativeEditorInitial() ? 'Cargar en historia' : 'Guardar modificación' }}</span></button></footer>
+      </section>
+    </div>
+  }
+</div>

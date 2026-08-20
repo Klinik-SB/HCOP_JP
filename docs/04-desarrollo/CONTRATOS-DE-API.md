@@ -64,6 +64,12 @@ El turnero suma una garantía de base de datos: dos bloques activos no pueden
 superponerse en el mismo sillón. La UI calcula espacios disponibles, el servicio
 valida y PostgreSQL actúa como última barrera transaccional.
 
+La hoja clínica diferencia sus precondiciones con
+`ACTIVE_PATIENT_REQUIRED`, `CLINICAL_REVISION_REQUIRED` y
+`CLINICAL_PATIENT_MISMATCH`. Sólo `VERSION_CONFLICT` significa que otro actor
+avanzó la revisión. Angular conserva el borrador en memoria y no reintenta ni
+mezcla cambios automáticamente.
+
 ## Idempotencia clínica
 
 Las operaciones que no deben duplicarse usan una identidad estable o verifican

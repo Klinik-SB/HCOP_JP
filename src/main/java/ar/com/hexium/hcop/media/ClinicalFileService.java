@@ -225,6 +225,14 @@ public class ClinicalFileService {
         "kind", file.metadata().path("kind").asText("original"));
   }
 
+  void discardImage(StoredFile file) {
+    try {
+      files.delete(file.id());
+    } finally {
+      deleteQuietly(pathFor(file));
+    }
+  }
+
   private CopyResult stream(InputStream source, Path destination, long limit) throws IOException {
     MessageDigest digest = digest();
     long total = 0;

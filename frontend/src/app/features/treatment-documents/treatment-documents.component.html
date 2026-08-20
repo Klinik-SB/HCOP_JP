@@ -1,0 +1,46 @@
+<section class="treatment-documents" aria-label="Documentos del tratamiento" [attr.data-source-cycle-id]="context().sourceCycleId || null">
+  <header class="treatment-documents__header">
+    <div>
+      <strong>Documentos</strong>
+      @if (context().cycle) { <small>Ciclo {{ context().cycle }}@if (context().applicationDay) { · Día {{ context().applicationDay }} }</small> }
+    </div>
+    <button class="treatment-documents__refresh" type="button" title="Actualizar estados" aria-label="Actualizar estados de documentos" [disabled]="loading() || !!openingKind() || !context().patientId || !context().treatmentId" (click)="reload()">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0 2 5.3M20 4v7h-7"/></svg>
+    </button>
+  </header>
+
+  @if (!context().patientId || !context().treatmentId) {
+    <p class="treatment-documents__empty">Seleccione un tratamiento para ver sus documentos.</p>
+  } @else {
+    <div class="treatment-documents__actions">
+      @for (action of visibleActions(); track trackAction($index, action)) {
+        <button
+          class="treatment-document-action"
+          [class.is-available]="action.availability === 'available'"
+          [class.is-pending]="action.availability === 'pending'"
+          [class.is-unknown]="action.availability === 'unknown'"
+          type="button"
+          [disabled]="loading() || !action.enabled || !!openingKind()"
+          [attr.title]="action.label + ' · ' + action.status"
+          [attr.aria-label]="action.label + '. ' + action.status"
+          (click)="openDocument(action)">
+          <span class="treatment-document-action__icon" aria-hidden="true">
+            @switch (action.kind) {
+              @case ('consent') { <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z M14 2v6h6 M8 16c2-3 3 2 5-1 1-1 2 0 3 0"/></svg> }
+              @case ('treatment-sheet') { <svg viewBox="0 0 24 24"><path d="M9 5h6M9 9h6M8 3H6a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2M9 13h6M9 17h4"/><rect x="8" y="2" width="8" height="4"/></svg> }
+              @case ('prescription') { <svg viewBox="0 0 24 24"><path d="M6 2h9l4 4v16H6Z M14 2v5h5 M9 12h6M9 16h6"/></svg> }
+              @case ('qr') { <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM18 18h3v3h-3zM18 14h3M14 19v2"/></svg> }
+              @case ('preparation-label') { <svg viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> }
+            }
+          </span>
+          <span class="treatment-document-action__text"><strong>{{ action.shortLabel }}</strong><small>{{ openingKind() === action.kind ? 'Abriendo…' : action.status }}</small></span>
+          <span class="treatment-document-action__state" aria-hidden="true"></span>
+        </button>
+      }
+    </div>
+  }
+
+  @if (loading()) { <p class="treatment-documents__message" role="status">Verificando documentos…</p> }
+  @else if (error()) { <p class="treatment-documents__message is-error" role="alert">{{ error() }}</p> }
+  @else if (warning()) { <p class="treatment-documents__message is-warning" role="status">{{ warning() }}</p> }
+</section>

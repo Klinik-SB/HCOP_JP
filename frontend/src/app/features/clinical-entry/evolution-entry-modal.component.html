@@ -1,0 +1,31 @@
+@if (open()) {
+  <div class="modal-backdrop open clinical-entry-backdrop" aria-hidden="false">
+    <section class="modal-card evolution-modal-card" role="dialog" aria-modal="true" aria-labelledby="angularEvolutionEntryTitle" [attr.aria-busy]="busy()">
+      <header class="modal-header">
+        <div><span class="sheet-kicker">Nueva evolución</span><h2 id="angularEvolutionEntryTitle">Agregar evolución</h2></div>
+        <button class="icon-button" type="button" title="Cerrar" aria-label="Cerrar evolución" [disabled]="busy()" (click)="requestClose()">×</button>
+      </header>
+      <section class="modal-body">
+        <div class="inline-fields clinical-entry-inline-fields">
+          <label><span>Fecha</span><input type="date" [ngModel]="date()" [ngModelOptions]="standalone" [disabled]="busy()" (ngModelChange)="update('date', $event)"></label>
+          <label><span>Profesional</span><input autocomplete="off" maxlength="255" [ngModel]="author()" [ngModelOptions]="standalone" [disabled]="busy()" (ngModelChange)="update('author', $event)"></label>
+          <label><span>Especialidad</span><input autocomplete="off" maxlength="255" [ngModel]="specialty()" [ngModelOptions]="standalone" [disabled]="busy()" (ngModelChange)="update('specialty', $event)"></label>
+        </div>
+        <label class="paper-field clinical-entry-paper-field"><span>Evolución</span><textarea rows="12" maxlength="50000" placeholder="Escribir evolución clínica..." [ngModel]="text()" [ngModelOptions]="standalone" [disabled]="busy()" (ngModelChange)="update('text', $event)"></textarea></label>
+        <div class="actions-row"><button class="tool-button" type="button" [disabled]="busy()" (click)="clear()"><span aria-hidden="true">⌫</span><span>Limpiar</span></button></div>
+        @if (!entries.canEdit()) { <p class="clinical-entry-message is-error">Su rol permite consultar la hoja, pero no agregar evoluciones.</p> }
+        @if (error()) { <p class="clinical-entry-message is-error" role="alert">{{ error() }}</p> }
+        @if (discardPrompt()) {
+          <section class="clinical-entry-discard" role="alertdialog" aria-label="Cambios sin guardar">
+            <div><strong>Hay cambios sin guardar</strong><span>Puede seguir escribiendo o descartar este borrador.</span></div>
+            <div><button class="tool-button" type="button" (click)="continueEditing()">Seguir editando</button><button class="tool-button danger" type="button" (click)="discardAndClose()">Descartar</button></div>
+          </section>
+        }
+      </section>
+      <footer class="modal-actions">
+        <button class="tool-button" type="button" [disabled]="busy()" (click)="requestClose()"><span>Cancelar</span></button>
+        <button class="tool-button primary" type="button" [disabled]="!canSave()" (click)="save()"><span>{{ busy() ? 'Guardando…' : 'Cargar en hoja' }}</span></button>
+      </footer>
+    </section>
+  </div>
+}

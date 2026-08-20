@@ -1,0 +1,211 @@
+<section class="research-workspace" aria-label="Investigación oncológica">
+  <header class="research-head">
+    <div>
+      <strong>Investigación oncológica</strong>
+      <small>Registros clínicos y base auditable para futuras coincidencias</small>
+    </div>
+    <span>{{ records().length }} {{ records().length === 1 ? 'registro' : 'registros' }}</span>
+  </header>
+
+  <nav class="research-view-tabs" role="tablist" aria-label="Secciones de Investigación">
+    <button id="researchClinicalRecordsTab" type="button" role="tab"
+      [class.active]="activeView() === 'clinical-records'"
+      [attr.aria-selected]="activeView() === 'clinical-records'"
+      [attr.tabindex]="activeView() === 'clinical-records' ? 0 : -1"
+      aria-controls="researchClinicalRecordsPanel"
+      (click)="selectView('clinical-records')"
+      (keydown)="onViewTabKeydown($event)">Registro clínico</button>
+    <button id="researchMatchMapTab" type="button" role="tab"
+      [class.active]="activeView() === 'match-map'"
+      [attr.aria-selected]="activeView() === 'match-map'"
+      [attr.tabindex]="activeView() === 'match-map' ? 0 : -1"
+      aria-controls="researchMatchMapPanel"
+      (click)="selectView('match-map')"
+      (keydown)="onViewTabKeydown($event)">Mapa de coincidencias</button>
+  </nav>
+
+  @if (activeView() === 'match-map') {
+    <div id="researchMatchMapPanel" class="research-view-panel" role="tabpanel" aria-labelledby="researchMatchMapTab">
+      <app-research-match-map />
+    </div>
+  } @else {
+    <div id="researchClinicalRecordsPanel" class="research-view-panel" role="tabpanel" aria-labelledby="researchClinicalRecordsTab">
+      @if (!workspace.workspace()) {
+        <div class="research-empty-state">
+          <strong>Abra un paciente</strong>
+          <span>Los formularios y los registros de investigación pertenecen a la historia clínica activa.</span>
+        </div>
+      } @else {
+        <form class="research-form" (submit)="$event.preventDefault(); save()" novalidate>
+      <section class="research-template-picker">
+        <label>
+          <span>Tipo de formulario</span>
+          <select [ngModel]="templateId()" [ngModelOptions]="standaloneModel" [disabled]="busy() || templateLoading()" (ngModelChange)="selectTemplate($event)">
+            <option value="">Registro general de investigación</option>
+            @for (template of templates(); track template.id) { <option [value]="template.id">{{ template.name }}</option> }
+          </select>
+        </label>
+        <div>
+          <strong>{{ selectedTemplate()?.name || 'Registro general de investigación' }}</strong>
+          <small>{{ selectedTemplate()?.definition?.instructions || 'Formulario estructurado habitual.' }}</small>
+        </div>
+      </section>
+      @if (templateLoading()) { <p class="research-template-status">Cargando formularios configurables…</p> }
+      @if (templateMessage()) { <p class="research-template-status is-warning">{{ templateMessage() }}</p> }
+
+      <fieldset class="research-form-fields" [disabled]="!canEdit() || busy()">
+        @if (selectedTemplate(); as template) {
+          <div class="research-custom-form">
+            @for (field of template.definition.fields; track $index) {
+              @if (field.type === 'section') {
+                <h3 class="research-custom-section">{{ field.label }}</h3>
+              } @else if (field.type === 'textarea') {
+                <label class="research-custom-field wide">
+                  <span>{{ field.label }}{{ field.required ? ' *' : '' }}</span>
+                  <textarea rows="4" [placeholder]="field.placeholder" [ngModel]="customValue(field)" [ngModelOptions]="standaloneModel" [attr.data-research-target]="'custom:' + field.key" (ngModelChange)="updateCustomValue(field, $event)"></textarea>
+                  @if (field.help) { <small>{{ field.help }}</small> }
+                </label>
+              } @else if (field.type === 'select') {
+                <label class="research-custom-field">
+                  <span>{{ field.label }}{{ field.required ? ' *' : '' }}</span>
+                  <select [ngModel]="customValue(field)" [ngModelOptions]="standaloneModel" [attr.data-research-target]="'custom:' + field.key" (ngModelChange)="updateCustomValue(field, $event)">
+                    <option value="">Seleccione</option>
+                    @for (option of field.options; track $index) { <option [value]="option.value">{{ option.label }}</option> }
+                  </select>
+                  @if (field.help) { <small>{{ field.help }}</small> }
+                </label>
+              } @else if (field.type === 'checkbox') {
+                <label class="research-custom-field checkbox">
+                  <input type="checkbox" [ngModel]="customValue(field)" [ngModelOptions]="standaloneModel" [attr.data-research-target]="'custom:' + field.key" (ngModelChange)="updateCustomValue(field, $event)">
+                  <span>{{ field.label }}{{ field.required ? ' *' : '' }}</span>
+                </label>
+              } @else {
+                <label class="research-custom-field">
+                  <span>{{ field.label }}{{ field.required ? ' *' : '' }}</span>
+                  <input [type]="field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'" [placeholder]="field.placeholder" [attr.min]="field.min ?? null" [attr.max]="field.max ?? null" [ngModel]="customValue(field)" [ngModelOptions]="standaloneModel" [attr.data-research-target]="'custom:' + field.key" (ngModelChange)="updateCustomValue(field, $event)">
+                  @if (field.help) { <small>{{ field.help }}</small> }
+                </label>
+              }
+            } @empty { <div class="research-template-empty">Este formulario no tiene campos activos.</div> }
+          </div>
+        } @else {
+          <details class="research-section" open>
+            <summary><span>Protocolo y evento</span><small>Datos obligatorios</small></summary>
+            <div class="research-section-body">
+              <label><span>Nombre del protocolo *</span><input data-research-target="protocolName" [(ngModel)]="form.protocolName" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()" autocomplete="off" placeholder="Nombre corto o título del estudio"></label>
+              <div class="research-grid two">
+                <label><span>Código del protocolo *</span><input data-research-target="protocolCode" [(ngModel)]="form.protocolCode" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()" autocomplete="off" placeholder="Ej. ABC-01"></label>
+                <label><span>Fase / diseño</span><select [(ngModel)]="form.phase" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()"><option value="">No consignado</option><option>Fase I</option><option>Fase I/II</option><option>Fase II</option><option>Fase II/III</option><option>Fase III</option><option>Fase IV</option><option>Observacional</option><option>Registro</option><option>Acceso expandido</option></select></label>
+              </div>
+              <div class="research-grid two">
+                <label><span>Tipo de registro *</span><select data-research-target="recordType" [(ngModel)]="form.recordType" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()"><option>Preseleccion</option><option>Screening</option><option>Consentimiento</option><option>Visita basal</option><option>Tratamiento</option><option>Evaluacion de respuesta</option><option>Seguridad</option><option>Seguimiento</option><option>Cierre</option></select></label>
+                <label><span>Fecha del evento *</span><input data-research-target="eventDate" type="date" [(ngModel)]="form.eventDate" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()"></label>
+              </div>
+              <div class="research-grid two">
+                <label><span>Patrocinador / institución</span><input [(ngModel)]="form.sponsor" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()" autocomplete="off"></label>
+                <label><span>Centro</span><input [(ngModel)]="form.center" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()" autocomplete="off"></label>
+              </div>
+            </div>
+          </details>
+
+          <details class="research-section" open>
+            <summary><span>Participación</span><small>Identificación, consentimiento y elegibilidad</small></summary>
+            <div class="research-section-body">
+              <div class="research-grid two">
+                <label><span>Código del participante *</span><input data-research-target="participantCode" [(ngModel)]="form.participantCode" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()" autocomplete="off" placeholder="Código seudonimizado"></label>
+                <label><span>Estado *</span><select data-research-target="participantStatus" [(ngModel)]="form.participantStatus" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()"><option>Preseleccion</option><option>Screening</option><option>Elegible</option><option>No elegible</option><option>Consentido</option><option>Incluido</option><option>Aleatorizado</option><option>En tratamiento</option><option>Seguimiento</option><option>Retirado</option><option>Completado</option></select></label>
+              </div>
+              <div class="research-grid two">
+                <label><span>Cohorte / brazo</span><input [(ngModel)]="form.arm" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()" autocomplete="off"></label>
+                <label><span>Código de aleatorización</span><input data-research-target="randomizationCode" [(ngModel)]="form.randomizationCode" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()" autocomplete="off"></label>
+              </div>
+              <div class="research-grid three">
+                <label><span>Consentimiento</span><select [(ngModel)]="form.consentStatus" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()"><option>No evaluado</option><option>Pendiente</option><option>Firmado</option><option>Rechazado</option><option>Retirado</option><option>No corresponde</option></select></label>
+                <label><span>Fecha de consentimiento</span><input data-research-target="consentDate" type="date" [(ngModel)]="form.consentDate" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()"></label>
+                <label><span>Versión</span><input data-research-target="consentVersion" [(ngModel)]="form.consentVersion" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()" autocomplete="off"></label>
+              </div>
+              <div class="research-grid two">
+                <label><span>Elegibilidad</span><select data-research-target="eligibility" [(ngModel)]="form.eligibility" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()"><option>No evaluada</option><option>Pendiente</option><option>Cumple criterios</option><option>No cumple criterios</option></select></label>
+                <label><span>Motivo si no es elegible</span><input data-research-target="ineligibilityReason" [(ngModel)]="form.ineligibilityReason" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()" autocomplete="off"></label>
+              </div>
+            </div>
+          </details>
+
+          <details class="research-section">
+            <summary><span>Situación oncológica y tratamiento</span><small>Instantánea clínica del evento</small></summary>
+            <div class="research-section-body">
+              <label><span>Diagnóstico / sitio primario</span><input [(ngModel)]="form.diagnosis" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()" autocomplete="off"></label>
+              <div class="research-grid two">
+                <label><span>Histología</span><input [(ngModel)]="form.histology" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()" autocomplete="off"></label>
+                <label><span>Estadio</span><input [(ngModel)]="form.stage" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()" autocomplete="off"></label>
+              </div>
+              <div class="research-grid two">
+                <label><span>Biomarcadores relevantes</span><textarea rows="3" [(ngModel)]="form.biomarkers" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()"></textarea></label>
+                <label><span>ECOG</span><select [(ngModel)]="form.ecog" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()"><option value="">No evaluado</option><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+              </div>
+              <label><span>Intervención / esquema del protocolo</span><textarea rows="3" [(ngModel)]="form.intervention" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()"></textarea></label>
+              <div class="research-grid three">
+                <label><span>Línea</span><input [(ngModel)]="form.treatmentLine" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()" autocomplete="off"></label>
+                <label><span>Ciclo</span><input [(ngModel)]="form.cycle" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()" inputmode="numeric" autocomplete="off"></label>
+                <label><span>Día</span><input [(ngModel)]="form.day" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()" inputmode="numeric" autocomplete="off"></label>
+              </div>
+            </div>
+          </details>
+
+          <details class="research-section">
+            <summary><span>Evaluación y seguridad</span><small>Respuesta, eventos y seguimiento</small></summary>
+            <div class="research-section-body">
+              <div class="research-grid three">
+                <label><span>Criterio de respuesta</span><select [(ngModel)]="form.responseCriteria" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()"><option value="">No evaluado</option><option>RECIST 1.1</option><option>iRECIST</option><option>RANO</option><option>GCIG</option><option>Otro</option></select></label>
+                <label><span>Respuesta</span><select [(ngModel)]="form.response" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()"><option value="">No evaluada</option><option>Respuesta completa</option><option>Respuesta parcial</option><option>Enfermedad estable</option><option>Progresion</option><option>No evaluable</option></select></label>
+                <label><span>Fecha de evaluación</span><input data-research-target="assessmentDate" type="date" [(ngModel)]="form.assessmentDate" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()"></label>
+              </div>
+              <label><span>Resultados relevantes / enfermedad medible</span><textarea rows="3" [(ngModel)]="form.results" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()"></textarea></label>
+              <div class="research-grid three">
+                <label><span>Evento adverso</span><input data-research-target="adverseEvent" [(ngModel)]="form.adverseEvent" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()" autocomplete="off" placeholder="Término CTCAE"></label>
+                <label><span>Grado CTCAE</span><select data-research-target="adverseGrade" [(ngModel)]="form.adverseGrade" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()"><option value="">Sin evento</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+                <label><span>Relación</span><select [(ngModel)]="form.adverseRelation" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()"><option value="">No evaluada</option><option>No relacionada</option><option>Improbable</option><option>Posible</option><option>Probable</option><option>Definida</option></select></label>
+              </div>
+              <label><span>Gravedad, conducta y evolución del evento</span><textarea rows="3" [(ngModel)]="form.adverseAction" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()"></textarea></label>
+              <label><span>Muestras / estudios enviados</span><textarea rows="2" [(ngModel)]="form.samples" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()"></textarea></label>
+              <label><span>Desvíos del protocolo</span><textarea rows="2" [(ngModel)]="form.deviations" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()"></textarea></label>
+              <div class="research-grid two">
+                <label><span>Próxima visita</span><input type="date" [(ngModel)]="form.nextVisit" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()"></label>
+                <label><span>Pendientes</span><input [(ngModel)]="form.pending" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()" autocomplete="off"></label>
+              </div>
+              <label><span>Observaciones</span><textarea rows="4" [(ngModel)]="form.notes" [ngModelOptions]="standaloneModel" (ngModelChange)="markDirty()"></textarea></label>
+            </div>
+          </details>
+        }
+      </fieldset>
+
+      @if (!canEdit()) { <p class="research-access-note">Puede consultar los registros. Para agregar uno se requieren permisos de Investigación y edición de historia clínica.</p> }
+      @if (message()) { <p class="research-message" [class.is-error]="messageKind() === 'error'" [class.is-ready]="messageKind() === 'ready'" role="status" aria-live="polite">{{ message() }}</p> }
+      <div class="research-form-actions">
+        <button class="tool-button" type="button" [disabled]="busy()" (click)="reset()"><span>Limpiar</span></button>
+        <button class="tool-button primary" type="submit" [disabled]="!canEdit() || busy()"><span>{{ busy() ? 'Guardando…' : 'Registrar en historia clínica' }}</span></button>
+      </div>
+        </form>
+
+        <section class="research-records">
+      <header><strong>Registros incorporados</strong><small>Ordenados por fecha del evento</small></header>
+      <div id="researchRecordList" class="research-record-list">
+        @for (record of records(); track record.id || $index) {
+          <article class="research-record-card">
+            <div class="research-record-date"><span aria-hidden="true">⌬</span><span>{{ date(record.date) }}</span></div>
+            <div class="research-record-copy">
+              <small>{{ recordCode(record) }} · {{ recordType(record) }}</small>
+              <strong>{{ recordTitle(record) }}</strong>
+              <p>@for (line of recordLines(record); track $index) {<span><b>{{ line.label }}:</b> {{ line.value }}</span>}</p>
+            </div>
+            <button class="icon-button" type="button" title="Ver en historia clínica" aria-label="Ver registro en la historia clínica" (click)="focusRecord(record)">⌖</button>
+          </article>
+        } @empty {
+          <div class="research-records-empty"><span aria-hidden="true">⌬</span><span>Todavía no hay registros incorporados.</span></div>
+        }
+      </div>
+        </section>
+      }
+    </div>
+  }
+</section>

@@ -28,6 +28,11 @@ class PatientServiceSearchTest {
     assertThat(result).singleElement().satisfies(item -> {
       assertThat(item.get("id")).isEqualTo("12");
       assertThat(item.get("fullName")).isEqualTo("PACIENTE, PRUEBA");
+      assertThat(item)
+          .containsEntry("dni", "00000000")
+          .containsEntry("medicalRecord", "HC-12")
+          .containsEntry("numeroDocumento", "00000000")
+          .containsEntry("numeroHC", "HC-12");
     });
     verify(repository).recent();
     verify(repository, never()).search("");

@@ -7,7 +7,9 @@ import java.sql.SQLException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -35,6 +37,62 @@ public class TreatmentRepository {
   public List<Treatment> list(long patientId) {
     return jdbc.query(selectSql() + " WHERE patient_id = ? ORDER BY created_on DESC, created_at DESC",
         this::map, patientId);
+  }
+
+  public Map<String, WorkflowState> workflowStates(long patientId) {
+    Map<String, WorkflowState> states = new LinkedHashMap<>();
+    jdbc.query("""
+        SELECT t.id,
+               COALESCE(m.continuity_status, 'active') AS continuity_status,
+               m.effective_from_cycle, m.suspension_reason, m.resume_date,
+               COALESCE(m.prescription_required, false) AS prescription_required,
+               COALESCE(m.revision, 0) AS management_revision,
+               COALESCE((
+                 SELECT jsonb_object_agg(l.cycle_number::text, l.prescription_state)
+                   FROM treatment_cycle_logistics l
+                  WHERE l.patient_id = t.patient_id AND l.treatment_id = t.id
+               ), '{}'::jsonb)::text AS prescription_states,
+               COALESCE((
+                 SELECT jsonb_object_agg(
+                   r.cycle_number::text || ':' || r.request_type, r.id)
+                   FROM treatment_workflow_requests r
+                  WHERE r.patient_id = t.patient_id AND r.treatment_id = t.id
+                    AND r.status = 'pending'
+               ), '{}'::jsonb)::text AS pending_requests
+          FROM clinical_treatments t
+          LEFT JOIN treatment_management_states m
+            ON m.patient_id = t.patient_id AND m.treatment_id = t.id
+         WHERE t.patient_id = ?
+        """, result -> {
+      Map<Integer, String> prescriptions = new LinkedHashMap<>();
+      mapper.readTree(result.getString("prescription_states")).properties().forEach(entry -> {
+        try {
+          prescriptions.put(Integer.parseInt(entry.getKey()), entry.getValue().asText(""));
+        } catch (NumberFormatException ignored) {
+          // Ignore malformed legacy keys; valid cycles remain available.
+        }
+      });
+      Map<Integer, Map<String, Long>> requests = new LinkedHashMap<>();
+      mapper.readTree(result.getString("pending_requests")).properties().forEach(entry -> {
+        String[] key = entry.getKey().split(":", 2);
+        if (key.length != 2) return;
+        try {
+          requests.computeIfAbsent(Integer.parseInt(key[0]), ignored -> new LinkedHashMap<>())
+              .put(key[1], entry.getValue().asLong());
+        } catch (NumberFormatException ignored) {
+          // Ignore malformed legacy keys; valid requests remain available.
+        }
+      });
+      Date resume = result.getDate("resume_date");
+      Object effectiveCycle = result.getObject("effective_from_cycle");
+      states.put(result.getString("id"), new WorkflowState(
+          result.getString("continuity_status"),
+          effectiveCycle == null ? null : result.getInt("effective_from_cycle"),
+          text(result, "suspension_reason"), resume == null ? null : resume.toLocalDate(),
+          result.getBoolean("prescription_required"), result.getLong("management_revision"),
+          Map.copyOf(prescriptions), immutableNestedMap(requests)));
+    }, patientId);
+    return Map.copyOf(states);
   }
 
   public Optional<Treatment> find(long patientId, String treatmentId) {
@@ -152,6 +210,13 @@ public class TreatmentRepository {
     return value == null ? "" : value;
   }
 
+  private Map<Integer, Map<String, Long>> immutableNestedMap(
+      Map<Integer, Map<String, Long>> source) {
+    Map<Integer, Map<String, Long>> copy = new LinkedHashMap<>();
+    source.forEach((cycle, requests) -> copy.put(cycle, Map.copyOf(requests)));
+    return Map.copyOf(copy);
+  }
+
   public record NewTreatment(
       String id, long patientId, String diagnosisId, LocalDate createdOn, LocalDate firstCycleDate,
       int initialCycle, int cycleCount, int cycleDays, String treatmentType, String intent,
@@ -161,6 +226,13 @@ public class TreatmentRepository {
   }
 
   public record InsertResult(Treatment treatment, boolean created) {
+  }
+
+  public record WorkflowState(
+      String continuityStatus, Integer effectiveFromCycle, String suspensionReason,
+      LocalDate resumeDate, boolean prescriptionRequired, long managementRevision,
+      Map<Integer, String> prescriptionStates,
+      Map<Integer, Map<String, Long>> pendingRequestIdsByCycle) {
   }
 
   public record Treatment(

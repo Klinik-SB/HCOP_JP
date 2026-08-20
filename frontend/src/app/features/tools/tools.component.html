@@ -1,0 +1,337 @@
+@if (!canView()) {
+  <section class="right-empty-state tools-access-denied" role="status">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect width="18" height="11" x="3" y="11" rx="2"></rect>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+    </svg>
+    <strong>Herramientas clínicas restringidas</strong>
+    <span>Su perfil no tiene permiso para consultar esta sección.</span>
+  </section>
+} @else {
+  <section class="tools-workspace">
+    <nav class="tools-tabs" role="tablist" aria-label="Herramientas clínicas">
+      <button
+        id="toolsGuidesTab"
+        type="button"
+        role="tab"
+        data-tool-tab="guides"
+        aria-controls="toolsGuidesPane"
+        [class.active]="activePane() === 'guides'"
+        [attr.aria-selected]="activePane() === 'guides'"
+        (click)="selectPane('guides')">
+        Guías
+      </button>
+      <button
+        id="toolsTnmTab"
+        type="button"
+        role="tab"
+        data-tool-tab="tnm"
+        aria-controls="toolsTnmPane"
+        [class.active]="activePane() === 'tnm'"
+        [attr.aria-selected]="activePane() === 'tnm'"
+        (click)="selectPane('tnm')">
+        Estadificación - TNM
+      </button>
+      @if (canUse()) {
+        <button
+          id="toolsCalculatorsTab"
+          type="button"
+          role="tab"
+          data-tool-tab="calculators"
+          aria-controls="toolsCalculatorsPane"
+          [class.active]="activePane() === 'calculators'"
+          [attr.aria-selected]="activePane() === 'calculators'"
+          (click)="selectPane('calculators')">
+          Calculadoras
+        </button>
+      }
+    </nav>
+
+    <div
+      id="toolsGuidesPane"
+      class="tool-pane"
+      data-tool-pane="guides"
+      role="tabpanel"
+      aria-labelledby="toolsGuidesTab"
+      [class.active]="activePane() === 'guides'"
+      [hidden]="activePane() !== 'guides'">
+      <section class="guide-library">
+        <header>
+          <div>
+            <strong>Biblioteca de guías</strong>
+            <small>Documentos disponibles localmente</small>
+          </div>
+          <button
+            class="icon-button"
+            type="button"
+            title="Actualizar listado"
+            aria-label="Actualizar listado de guías"
+            [disabled]="guideLoading()"
+            (click)="loadGuides(true)">
+            <svg viewBox="0 0 24 24" aria-hidden="true" [class.is-spinning]="guideLoading()">
+              <path d="M21 12a9 9 0 0 1-15.2 6.5L3 16"></path>
+              <path d="M3 21v-5h5"></path>
+              <path d="M3 12A9 9 0 0 1 18.2 5.5L21 8"></path>
+              <path d="M21 3v5h-5"></path>
+            </svg>
+          </button>
+        </header>
+
+        <label class="guide-search">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+          <input
+            type="search"
+            autocomplete="off"
+            placeholder="Buscar por tumor o título..."
+            aria-label="Buscar guías"
+            [value]="guideSearch()"
+            (input)="updateGuideSearch($event)">
+        </label>
+
+        <div class="guide-list" aria-live="polite" [attr.aria-busy]="guideLoading()">
+          @if (guideLoading()) {
+            <div class="protocol-loading">
+              <svg class="is-spinning" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M21 12a9 9 0 1 1-2.64-6.36"></path>
+              </svg>
+              <span>Cargando guías...</span>
+            </div>
+          } @else if (guideError()) {
+            <div class="protocol-empty tools-error-state" role="alert">
+              <strong>No se pudieron cargar las guías</strong>
+              <span>{{ guideError() }}</span>
+              <button class="tool-button" type="button" (click)="loadGuides(true)">Reintentar</button>
+            </div>
+          } @else {
+            @for (guide of filteredGuides(); track guide.name) {
+              <button class="guide-card" type="button" (click)="openGuide(guide)">
+                <span class="guide-card-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <path d="M14 2v6h6"></path>
+                    <path d="M9 15h6M9 11h2"></path>
+                  </svg>
+                </span>
+                <span class="guide-card-copy">
+                  <small>{{ guide.site }} · {{ guide.audience }}</small>
+                  <strong>{{ guide.title }}</strong>
+                  <em>
+                    {{ guide.source }}
+                    @if (guide.version) { · {{ guide.version }} }
+                    @if (guide.size > 0) { · {{ formatFileSize(guide.size) }} }
+                  </em>
+                </span>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m9 18 6-6-6-6"></path>
+                </svg>
+              </button>
+            } @empty {
+              <div class="protocol-empty">
+                <strong>No hay guías que coincidan</strong>
+                <span>Pruebe con otro tumor, título o palabra clave.</span>
+              </div>
+            }
+          }
+        </div>
+      </section>
+    </div>
+
+    <div
+      id="toolsTnmPane"
+      class="tool-pane"
+      data-tool-pane="tnm"
+      role="tabpanel"
+      aria-labelledby="toolsTnmTab"
+      [class.active]="activePane() === 'tnm'"
+      [hidden]="activePane() !== 'tnm'">
+      <header class="tnm-head">
+        <div>
+          <strong>Estadificación AJCC 8</strong>
+          <small>Registro estructurado clínico o patológico</small>
+        </div>
+        <span>8.ª edición</span>
+      </header>
+
+      <div class="tnm-notice">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+          <path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"></path>
+          <path d="M3 12c0 1.7 4 3 9 3s9-1.3 9-3"></path>
+        </svg>
+        <div>
+          <strong>Reglas AJCC 8 locales</strong>
+          <span>Las definiciones y la agrupación se resuelven mediante tablas determinísticas, sin inteligencia artificial y sin enviar datos fuera del equipo.</span>
+        </div>
+      </div>
+
+      @if (ajccCatalogLoading()) {
+        <div class="protocol-loading" aria-live="polite">
+          <svg class="is-spinning" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M21 12a9 9 0 1 1-2.64-6.36"></path>
+          </svg>
+          <span>Cargando catálogo AJCC 8...</span>
+        </div>
+      } @else if (ajccCatalogError()) {
+        <div class="protocol-empty tools-error-state" role="alert">
+          <strong>No se pudo cargar AJCC 8</strong>
+          <span>{{ ajccCatalogError() }}</span>
+          <button class="tool-button" type="button" (click)="loadAjccCatalog(true)">Reintentar</button>
+        </div>
+      } @else {
+        <form class="tnm-form" novalidate (submit)="$event.preventDefault()">
+          <label>
+            <span>Sitio primario</span>
+            <select
+              [value]="selectedSiteId()"
+              [disabled]="siteLoading() || !(ajccCatalog()?.sites?.length)"
+              (change)="changeSite($event)">
+              <option value="">Seleccione el sitio tumoral</option>
+              @for (group of siteGroups(); track group.name) {
+                <optgroup [label]="group.name">
+                  @for (site of group.sites; track site.id) {
+                    <option [value]="site.id">{{ site.name }}</option>
+                  }
+                </optgroup>
+              }
+            </select>
+          </label>
+
+          <div class="tnm-grid">
+            <label>
+              <span>Tipo</span>
+              <select [value]="prefix()" (change)="changePrefix($event)">
+                <option value="c">Clínico (cTNM)</option>
+                <option value="p">Patológico (pTNM)</option>
+                <option value="yc">Posneoadyuvancia clínico (ycTNM)</option>
+                <option value="yp">Posneoadyuvancia patológico (ypTNM)</option>
+                <option value="r">Recurrencia (rTNM)</option>
+              </select>
+            </label>
+            <label>
+              <span>Fecha</span>
+              <input type="date" [value]="stagingDate()" (change)="changeDate($event)">
+            </label>
+          </div>
+
+          @if (siteLoading()) {
+            <div class="protocol-loading" aria-live="polite">
+              <svg class="is-spinning" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M21 12a9 9 0 1 1-2.64-6.36"></path>
+              </svg>
+              <span>Cargando definiciones del sitio...</span>
+            </div>
+          } @else if (siteError()) {
+            <div class="protocol-empty tools-error-state" role="alert">
+              <strong>No se pudo abrir este sitio</strong>
+              <span>{{ siteError() }}</span>
+              <button class="tool-button" type="button" (click)="retrySite()">Reintentar</button>
+            </div>
+          }
+
+          <div class="tnm-grid tnm-grid--three">
+            @for (axis of ['T', 'N', 'M']; track axis) {
+              <label>
+                <span>
+                  @switch (axis) {
+                    @case ('T') { Tumor primario (T) }
+                    @case ('N') { Ganglios regionales (N) }
+                    @default { Metástasis a distancia (M) }
+                  }
+                </span>
+                <select
+                  [value]="axisValues()[axis] || ''"
+                  [disabled]="!selectedSite() || siteLoading()"
+                  (change)="changeAxis(axis, $event)">
+                  <option value="">{{ selectedSite() ? 'Seleccione' : 'Seleccione el sitio' }}</option>
+                  @for (category of axisCategories(axis); track category.code) {
+                    <option [value]="category.code">{{ category.code }}</option>
+                  }
+                </select>
+                <small class="tnm-definition">{{ axisDefinition(axis) }}</small>
+              </label>
+            }
+          </div>
+
+          @if (extraAxes().length) {
+            <section class="tnm-specific-factors">
+              <h4>Factores necesarios para agrupar el estadio</h4>
+              @for (entry of extraAxes(); track entry.key) {
+                <label>
+                  <span>{{ entry.axis.label || entry.key }}</span>
+                  <select
+                    [value]="axisValues()[entry.key] || ''"
+                    (change)="changeAxis(entry.key, $event)">
+                    <option value="">Seleccione</option>
+                    @for (category of entry.axis.categories; track category.code) {
+                      <option [value]="category.code">{{ category.code }} — {{ category.description }}</option>
+                    }
+                  </select>
+                </label>
+              }
+            </section>
+          }
+
+          <div class="tnm-result" role="status" aria-live="polite" [attr.aria-busy]="stageLoading()">
+            <span>{{ stageContext() }}</span>
+            <strong>
+              {{ selectedTnm() || (selectedSite() ? 'Seleccione T, N y M' : 'Seleccione un sitio tumoral') }}
+              @if (stageResult()?.stage) { · Estadio {{ stageResult()?.stage }} }
+            </strong>
+            <small>{{ stageDetail() }}</small>
+          </div>
+        </form>
+      }
+    </div>
+
+    @if (canUse()) {
+      <div
+        id="toolsCalculatorsPane"
+        class="tool-pane"
+        data-tool-pane="calculators"
+        role="tabpanel"
+        aria-labelledby="toolsCalculatorsTab"
+        [class.active]="activePane() === 'calculators'"
+        [hidden]="activePane() !== 'calculators'">
+        @defer (when activePane() === 'calculators') {
+          <app-calculator-workspace [canCalculate]="canUse()" />
+        } @placeholder {
+          <div class="protocol-loading" role="status">Preparando calculadoras…</div>
+        }
+      </div>
+    }
+
+  </section>
+}
+
+@if (selectedGuide(); as guide) {
+  <div class="modal-backdrop guide-modal-backdrop open" aria-hidden="false">
+    <section
+      class="modal-card guide-pdf-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="guidePdfTitle"
+      aria-describedby="guidePdfDescription">
+      <header class="modal-header">
+        <div>
+          <span class="sheet-kicker">Guía clínica</span>
+          <h2 id="guidePdfTitle">{{ guide.title }}</h2>
+          <p id="guidePdfDescription">{{ guide.site }} · {{ guide.source }}</p>
+        </div>
+        <button class="icon-button" type="button" title="Cerrar" aria-label="Cerrar guía" (click)="closeGuide()">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+        </button>
+      </header>
+      <div class="modal-body guide-pdf-body">
+        <object class="guide-pdf-object" [data]="guideResourceUrl()" type="application/pdf">
+          <div class="guide-pdf-fallback">
+            <strong>El visor PDF no está disponible en este navegador.</strong>
+            <a class="tool-button primary" [href]="guideUrl()" target="_blank" rel="noopener">Abrir documento</a>
+          </div>
+        </object>
+      </div>
+    </section>
+  </div>
+}

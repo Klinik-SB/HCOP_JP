@@ -46,7 +46,7 @@ import tools.jackson.databind.node.ObjectNode;
 @Service
 public class ApplicationWorkflowService {
   private static final Set<String> QUEUES =
-      Set.of("pharmacy", "triage", "preparation", "administration");
+      Set.of("applications", "pharmacy", "triage", "preparation", "administration");
 
   private final ApplicationWorkflowRepository workflows;
   private final TreatmentApplicationLogisticsService logistics;

@@ -1,6 +1,12 @@
 (function () {
   "use strict";
 
+  function notifyCalculatorConfigurationUpdated() {
+    const updatedAt = String(Date.now());
+    localStorage.setItem("hcop-configuration-updated", updatedAt);
+    localStorage.setItem("hcop-calculator-configuration-updated", updatedAt);
+  }
+
   function renderCalculatorListVisual() {
     const query = $("#calculatorConfigSearch").value.trim().toLowerCase();
     const showInactive = $("#showInactiveCalculators").checked;
@@ -145,7 +151,7 @@
       if (payloadDraft.definition.mode !== "builtin") window.CalculatorEngine.evaluate(payloadDraft.definition, Object.fromEntries(payloadDraft.definition.fields.filter((field) => ["number", "select", "checkbox"].includes(field.type)).map((field) => [field.key, field.type === "checkbox" ? false : field.type === "select" ? field.options[0]?.value : 1])));
       const id = $("#calculatorConfigId").value;
       const response = id ? await api(`/api/clinical/configuration/calculator/${id}`, { method: "PUT", body: JSON.stringify(payloadDraft) }) : await api("/api/clinical/configuration/calculator", { method: "POST", body: JSON.stringify(payloadDraft) });
-      toast(id ? "Herramienta actualizada" : "Herramienta creada"); localStorage.setItem("hcop-configuration-updated", String(Date.now())); await loadCalculatorCenter(response.item.id);
+      toast(id ? "Herramienta actualizada" : "Herramienta creada"); notifyCalculatorConfigurationUpdated(); await loadCalculatorCenter(response.item.id);
     } catch (error) { toast(error.message, "error"); }
   }
 

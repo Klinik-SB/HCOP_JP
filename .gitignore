@@ -7,6 +7,9 @@ runtime/postgres-data/
 runtime/logs/
 runtime/*.log
 /runtime/qa-*/
+/runtime/e2e-artifacts/
+/frontend/test-results/
+/frontend/playwright-report/
 /migration/
 *.pid
 .idea/

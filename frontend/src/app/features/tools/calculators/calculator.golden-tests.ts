@@ -1,0 +1,5157 @@
+import { evaluateCalculator, externalLink, tableNote } from './calculator.engine';
+import { CALCULATOR_INVENTORY, EXPECTED_CALCULATOR_ORIGIN_COUNTS } from './calculator.inventory';
+import { BSA_CALCULATOR, BMI_CALCULATOR, CALVERT_CALCULATOR } from './core-calculator.definitions';
+import {
+  CHARLSON_CALCULATOR,
+  ECOG_CALCULATOR,
+  G8_CARG_CALCULATOR,
+  IPSS_SHIM_CALCULATOR
+} from './legacy-calculators-04-07.definitions';
+import {
+  CAPRA_CALCULATOR,
+  DAMICO_CALCULATOR,
+  NODAL_RISK_CALCULATOR,
+  PARTIN_CALCULATOR
+} from './legacy-calculators-08-11.definitions';
+import {
+  BIOPSY_RISK_CALCULATOR,
+  CHAARTED_LATITUDE_CALCULATOR,
+  MSKCC_PROSTATE_CALCULATOR,
+  PSA_KINETICS_CALCULATOR
+} from './legacy-calculators-12-15.definitions';
+import {
+  CISPLATIN_CALCULATOR,
+  CYSTECTOMY_CALCULATOR,
+  NMIBC_CALCULATOR,
+  UTUC_CALCULATOR
+} from './legacy-calculators-16-19.definitions';
+import {
+  IGCCCG_CALCULATOR,
+  IMDC_CALCULATOR,
+  LEIBOVICH_CALCULATOR,
+  RENAL_COMPLEXITY_CALCULATOR
+} from './legacy-calculators-20-23.definitions';
+import {
+  ANC_CTCAE_V6_CALCULATOR,
+  KHORANA_VTE_CALCULATOR,
+  MASCC_FEBRILE_NEUTROPENIA_CALCULATOR,
+  RENAL_FUNCTION_ONCOLOGY_CALCULATOR
+} from './legacy-calculators-24-27.definitions';
+import {
+  BED_EQD2_CALCULATOR,
+  CISNE_FEBRILE_NEUTROPENIA_CALCULATOR,
+  PALLIATIVE_PROGNOSTIC_INDEX_CALCULATOR,
+  QTC_FRIDERICIA_CALCULATOR
+} from './legacy-calculators-28-31.definitions';
+import {
+  CTS5_BREAST_CALCULATOR,
+  NOTTINGHAM_PROGNOSTIC_INDEX_CALCULATOR,
+  PEPI_BREAST_CALCULATOR,
+  RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR
+} from './legacy-calculators-32-35.definitions';
+import {
+  INTERNATIONAL_PROGNOSTIC_INDEX_CALCULATOR,
+  MONARCHE_COHORT_1_CALCULATOR,
+  OLYMPIA_CPSEG_CALCULATOR,
+  R2_ISS_MYELOMA_CALCULATOR
+} from './legacy-calculators-36-39.definitions';
+import {
+  GYNE_PETERS_CALCULATOR,
+  GYNE_PROMISE_CALCULATOR,
+  GYNE_RMI_I_CALCULATOR,
+  GYNE_SEDLIS_CALCULATOR
+} from './legacy-calculators-40-43.definitions';
+import {
+  GYNE_AGO_DESKTOP_CALCULATOR,
+  GYNE_FAGOTTI_CALCULATOR,
+  THORAX_BROCK_CALCULATOR,
+  THORAX_MAYO_HERDER_CALCULATOR
+} from './legacy-calculators-44-47.definitions';
+import {
+  DIGESTIVE_ALBI_CALCULATOR,
+  DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR,
+  THORAX_LIPI_CALCULATOR,
+  THORAX_LUNG_GPA_2022_CALCULATOR
+} from './legacy-calculators-48-51.definitions';
+import {
+  DIGESTIVE_GAME_CALCULATOR,
+  DIGESTIVE_PCI_CALCULATOR,
+  RT_DOSE_PER_FRACTION_TARGET_CALCULATOR,
+  RT_FRACTIONS_TARGET_CALCULATOR,
+  RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR,
+  RT_SIMULTANEOUS_3_VOLUMES_CALCULATOR
+} from './legacy-calculators-52-57.definitions';
+import { PORTED_CALCULATORS } from './ported-calculator.registry';
+import {
+  CalculatorDefinition,
+  CalculatorOrigin,
+  CalculatorResult,
+  CalculatorTableNote
+} from './calculator.models';
+
+interface GoldenTest {
+  readonly name: string;
+  readonly run: () => void;
+}
+
+const tests: GoldenTest[] = [];
+
+function test(name: string, run: () => void): void {
+  tests.push({ name, run });
+}
+
+test('inventory contains the exact 57 unique legacy tools in stable order', () => {
+  equal(CALCULATOR_INVENTORY.length, 57);
+  equal(new Set(CALCULATOR_INVENTORY.map((entry) => entry.id)).size, 57);
+  equal(new Set(CALCULATOR_INVENTORY.map((entry) => entry.title)).size, 57);
+  deepEqual(CALCULATOR_INVENTORY.map((entry) => entry.ordinal), Array.from({ length: 57 }, (_, index) => index + 1));
+  for (const [origin, expected] of Object.entries(EXPECTED_CALCULATOR_ORIGIN_COUNTS)) {
+    equal(CALCULATOR_INVENTORY.filter((entry) => entry.origin === origin as CalculatorOrigin).length, expected);
+  }
+});
+
+test('all fifty-seven calculators are marked as ported in stable order', () => {
+  deepEqual(CALCULATOR_INVENTORY.filter((entry) => entry.migrationStatus === 'ported').map((entry) => entry.id),
+    ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk',
+      'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude', 'nmibc', 'cystectomy', 'cisplatin', 'utuc',
+      'renal-complexity', 'leibovich', 'imdc', 'igcccg', 'renal-function-oncology', 'anc-ctcae-v6',
+      'khorana-vte', 'mascc-febrile-neutropenia', 'cisne-febrile-neutropenia',
+      'palliative-prognostic-index', 'bed-eqd2', 'qtc-fridericia',
+      'nottingham-prognostic-index', 'residual-cancer-burden-experimental', 'pepi-breast', 'cts5-breast',
+      'monarche-cohort-1', 'olympia-cpseg', 'international-prognostic-index', 'r2-iss-myeloma',
+      'gyne-sedlis', 'gyne-peters', 'gyne-promise', 'gyne-rmi-i',
+      'gyne-fagotti', 'gyne-ago-desktop', 'thorax_brock', 'thorax_mayo_herder',
+      'thorax_lung_gpa_2022', 'thorax_lipi', 'digestive_albi', 'digestive_french_afp_hcc',
+      'digestive_game', 'digestive_pci', 'rt-dose-per-fraction-target', 'rt-fractions-target',
+      'rt-simultaneous-2-volumes', 'rt-simultaneous-3-volumes']);
+  deepEqual(PORTED_CALCULATORS.map((entry) => entry.id),
+    ['bsa', 'bmi', 'calvert', 'ecog', 'charlson', 'g8-carg', 'ipss-shim', 'damico', 'capra', 'partin', 'nodal-risk',
+      'mskcc-prostate', 'biopsy-risk', 'psa-kinetics', 'chaarted-latitude', 'nmibc', 'cystectomy', 'cisplatin', 'utuc',
+      'renal-complexity', 'leibovich', 'imdc', 'igcccg', 'renal-function-oncology', 'anc-ctcae-v6',
+      'khorana-vte', 'mascc-febrile-neutropenia', 'cisne-febrile-neutropenia',
+      'palliative-prognostic-index', 'bed-eqd2', 'qtc-fridericia',
+      'nottingham-prognostic-index', 'residual-cancer-burden-experimental', 'pepi-breast', 'cts5-breast',
+      'monarche-cohort-1', 'olympia-cpseg', 'international-prognostic-index', 'r2-iss-myeloma',
+      'gyne-sedlis', 'gyne-peters', 'gyne-promise', 'gyne-rmi-i',
+      'gyne-fagotti', 'gyne-ago-desktop', 'thorax_brock', 'thorax_mayo_herder',
+      'thorax_lung_gpa_2022', 'thorax_lipi', 'digestive_albi', 'digestive_french_afp_hcc',
+      'digestive_game', 'digestive_pci', 'rt-dose-per-fraction-target', 'rt-fractions-target',
+      'rt-simultaneous-2-volumes', 'rt-simultaneous-3-volumes']);
+});
+
+test('BSA opens blank and keeps legacy values only as examples', () => {
+  const blank = evaluateCalculator(BSA_CALCULATOR);
+  equal(blank.status, 'invalid');
+  deepEqual(blank.values, { bsa_weight: '', bsa_height: '' });
+  deepEqual(blank.issues.map((issue) => issue.code), ['required', 'required']);
+  equal(BSA_CALCULATOR.fields[0]?.kind === 'number' ? BSA_CALCULATOR.fields[0].exampleValue : null, 70);
+  equal(BSA_CALCULATOR.fields[1]?.kind === 'number' ? BSA_CALCULATOR.fields[1].exampleValue : null, 170);
+  deepEqual(blank.result, {
+    title: 'Faltan datos para calcular',
+    detail: 'Completá: Peso (kg), Altura (cm).',
+    badge: 'datos incompletos',
+    score: 0,
+    showScore: false,
+    severity: 'warn',
+    metrics: [],
+    notes: []
+  });
+});
+
+test('Mosteller golden normal case', () => {
+  const evaluation = evaluateCalculator(BSA_CALCULATOR, { bsa_weight: 70, bsa_height: 170 });
+  equal(evaluation.status, 'calculated');
+  deepEqual(evaluation.result, {
+    title: '1.82 m²',
+    detail: 'Superficie corporal estimada mediante la formula de Mosteller.',
+    badge: 'Mosteller',
+    score: 0,
+    showScore: false,
+    metrics: [{ label: 'SC', value: '1.82 m²' }],
+    severity: 'info',
+    notes: ['Verificar peso y altura actuales. La superficie corporal no define por sí sola una dosis ni un tope de dosificación.']
+  });
+});
+
+test('Mosteller accepts exact field minima and rejects values below them', () => {
+  equal(evaluateCalculator(BSA_CALCULATOR, { bsa_weight: 1, bsa_height: 30 }).result.title, '0.09 m²');
+  const below = evaluateCalculator(BSA_CALCULATOR, { bsa_weight: 0.9, bsa_height: 30 });
+  equal(below.status, 'invalid');
+  deepEqual(below.issues.map((issue) => issue.code), ['below-minimum']);
+  equal(below.result.detail, 'Peso (kg)');
+});
+
+test('Mosteller preserves browser step validation', () => {
+  const mismatch = evaluateCalculator(BSA_CALCULATOR, { bsa_weight: 70.05, bsa_height: 170 });
+  equal(mismatch.status, 'invalid');
+  deepEqual(mismatch.issues.map((issue) => issue.code), ['step-mismatch']);
+});
+
+test('BMI golden normal case', () => {
+  const evaluation = evaluateCalculator(BMI_CALCULATOR, { bmi_weight: 70, bmi_height: 170 });
+  equal(evaluation.status, 'calculated');
+  deepEqual(evaluation.values, { bmi_weight: 70, bmi_height: 170 });
+  deepEqual(evaluation.result, {
+    title: '24.2 kg/m²',
+    detail: 'Rango saludable',
+    badge: 'IMC adulto',
+    score: 0,
+    showScore: false,
+    severity: 'info',
+    metrics: [{ label: 'IMC', value: '24.2' }, { label: 'Categoria', value: 'Rango saludable' }],
+    notes: ['Interpretar junto con composicion corporal, estado nutricional y contexto clinico.']
+  });
+});
+
+test('BMI explicit empty values do not fall back to defaults', () => {
+  const evaluation = evaluateCalculator(BMI_CALCULATOR, { bmi_weight: '', bmi_height: '' });
+  equal(evaluation.status, 'invalid');
+  deepEqual(evaluation.values, { bmi_weight: '', bmi_height: '' });
+  deepEqual(evaluation.issues.map((issue) => issue.code), ['required', 'required']);
+});
+
+test('BMI category boundaries match the legacy rules', () => {
+  const cases: readonly [number, string][] = [
+    [18.4, 'Bajo peso'],
+    [18.5, 'Rango saludable'],
+    [25, 'Sobrepeso'],
+    [30, 'Obesidad clase I'],
+    [35, 'Obesidad clase II'],
+    [40, 'Obesidad clase III']
+  ];
+  for (const [weight, expected] of cases) {
+    equal(evaluateCalculator(BMI_CALCULATOR, { bmi_weight: weight, bmi_height: 100 }).result.detail, expected);
+  }
+});
+
+test('Calvert golden measured-GFR case', () => {
+  const evaluation = evaluateCalculator(CALVERT_CALCULATOR, {
+    calvert_method: 'measured', calvert_auc: 5, calvert_gfr: 80, calvert_bsa: 1.8, calvert_cap: false
+  });
+  equal(evaluation.status, 'calculated');
+  deepEqual(evaluation.values, {
+    calvert_method: 'measured', calvert_auc: 5, calvert_gfr: 80, calvert_bsa: 1.8, calvert_cap: false
+  });
+  deepEqual(evaluation.result, {
+    title: '525 mg',
+    detail: 'Dosis calculada sin redondear: 525.00 mg.',
+    badge: 'formula de Calvert',
+    score: 0,
+    showScore: false,
+    severity: 'info',
+    metrics: [
+      { label: 'Dosis redondeada', value: '525 mg' },
+      { label: 'GFR absoluta usada', value: '80.00 ml/min' },
+      { label: 'AUC', value: 5 },
+      { label: 'Método', value: 'GFR medida' }
+    ],
+    notes: [
+      'La función renal ingresada se utilizó como valor absoluto.',
+      'No se aplicó un tope adicional.',
+      'La diálisis y situaciones de función renal inestable requieren un planteo específico.'
+    ]
+  });
+});
+
+test('Calvert desindexes eGFR only when BSA is present', () => {
+  const missing = evaluateCalculator(CALVERT_CALCULATOR, {
+    calvert_method: 'indexed', calvert_auc: 5, calvert_gfr: 80, calvert_bsa: '', calvert_cap: false
+  });
+  equal(missing.status, 'calculated');
+  deepEqual(missing.result, {
+    title: 'Falta la superficie corporal',
+    detail: 'Para eGFR indexado se necesita desindexar: eGFR × SC / 1,73.',
+    badge: 'no calculable',
+    score: 0,
+    showScore: false,
+    severity: 'warn',
+    metrics: [],
+    notes: []
+  });
+
+  const calculated = evaluateCalculator(CALVERT_CALCULATOR, {
+    calvert_method: 'indexed', calvert_auc: 5, calvert_gfr: 80, calvert_bsa: 1.8, calvert_cap: false
+  });
+  equal(calculated.result.title, '541 mg');
+  equal(calculated.result.detail, 'Dosis calculada sin redondear: 541.18 mg.');
+  equal(calculated.result.metrics[1]?.value, '83.24 ml/min');
+  equal(calculated.result.notes[0], 'eGFR 80 × SC 1.80 / 1,73 = 83.24 ml/min.');
+});
+
+test('Calvert cap is explicit and never silently applied', () => {
+  const input = { calvert_method: 'measured', calvert_auc: 5, calvert_gfr: 150, calvert_bsa: '' };
+  const uncapped = evaluateCalculator(CALVERT_CALCULATOR, { ...input, calvert_cap: false });
+  equal(uncapped.result.title, '875 mg');
+  equal(uncapped.result.metrics[1]?.value, '150.00 ml/min');
+  equal(uncapped.result.notes[1], 'El valor supera 125 ml/min. Revisar el protocolo antes de decidir si corresponde un tope.');
+
+  const capped = evaluateCalculator(CALVERT_CALCULATOR, { ...input, calvert_cap: true });
+  equal(capped.result.title, '750 mg');
+  equal(capped.result.metrics[1]?.value, '125.00 ml/min');
+  equal(capped.result.notes[1], 'Se aplicó el tope de 125 ml/min solicitado.');
+});
+
+test('Calvert accepts exact minima and rejects unknown renal methods', () => {
+  const minimum = evaluateCalculator(CALVERT_CALCULATOR, {
+    calvert_method: 'measured', calvert_auc: 0.1, calvert_gfr: 0.1, calvert_bsa: '', calvert_cap: false
+  });
+  equal(minimum.result.title, '3 mg');
+  equal(minimum.result.detail, 'Dosis calculada sin redondear: 2.51 mg.');
+
+  const unknown = evaluateCalculator(CALVERT_CALCULATOR, {
+    calvert_method: 'invented', calvert_auc: 5, calvert_gfr: 80, calvert_bsa: '', calvert_cap: false
+  });
+  equal(unknown.status, 'invalid');
+  deepEqual(unknown.issues.map((issue) => issue.code), ['unknown-option']);
+});
+
+test('ported clinical scores preserve the blank legacy form instead of calculating examples', () => {
+  const ecog = evaluateCalculator(ECOG_CALCULATOR);
+  equal(ecog.status, 'invalid');
+  deepEqual(ecog.issues.map((issue) => issue.label), ['ECOG', 'Karnofsky']);
+
+  const charlson = evaluateCalculator(CHARLSON_CALCULATOR);
+  equal(charlson.status, 'invalid');
+  deepEqual(charlson.issues.map((issue) => issue.label), ['Edad']);
+
+  const g8Carg = evaluateCalculator(G8_CARG_CALCULATOR);
+  equal(g8Carg.status, 'invalid');
+  equal(g8Carg.issues.length, 8);
+  deepEqual(g8Carg.issues.map((issue) => issue.fieldId), [
+    'g8_food', 'g8_weight', 'g8_mobility', 'g8_neuro',
+    'g8_bmi', 'g8_meds', 'g8_health', 'g8_age'
+  ]);
+
+  const ipssShim = evaluateCalculator(IPSS_SHIM_CALCULATOR);
+  equal(ipssShim.status, 'invalid');
+  equal(ipssShim.issues.length, 13);
+  const nocturia = IPSS_SHIM_CALCULATOR.fields.find((field) => field.id === 'ipss_nocturia');
+  equal(nocturia?.kind === 'select' ? nocturia.exampleValue : null, '2');
+});
+
+test('ECOG and Karnofsky golden result matches legacy wording', () => {
+  const evaluation = evaluateCalculator(ECOG_CALCULATOR, { ecog: '1', kps: '80' });
+  equal(evaluation.status, 'calculated');
+  deepEqual(evaluation.result, {
+    title: 'ECOG y Karnofsky',
+    detail: 'Son dos escalas distintas de estado funcional. Usá la que corresponda al protocolo, historia clínica o reporte que estés completando.',
+    badge: 'escalas separadas',
+    score: 0,
+    scoreName: 'Señal integrada',
+    showScore: false,
+    severity: 'info',
+    metrics: [
+      { label: 'ECOG 1', value: 'Restricción para actividad física intensa; ambulatorio y capaz de trabajo liviano o sedentario.' },
+      { label: 'Karnofsky 80%', value: 'Actividad normal con esfuerzo; algunos síntomas o signos.' }
+    ],
+    notes: [
+      'ECOG se usa mucho en oncología clínica y ensayos para definir performance status y elegibilidad terapéutica.',
+      'Karnofsky ofrece una escala porcentual más granular para funcionalidad, dependencia y necesidad de asistencia.',
+      'No se cruzan ni se convierten entre sí: registrar la escala usada y su valor exacto.'
+    ]
+  });
+});
+
+test('ECOG and Karnofsky accept exact extremes and reject values outside their options', () => {
+  const best = evaluateCalculator(ECOG_CALCULATOR, { ecog: '0', kps: '100' });
+  equal(best.result.metrics[0]?.value, 'Actividad plena, sin restricción.');
+  equal(best.result.metrics[1]?.value, 'Normal, sin síntomas ni signos de enfermedad.');
+
+  const worst = evaluateCalculator(ECOG_CALCULATOR, { ecog: '5', kps: '0' });
+  equal(worst.result.metrics[0]?.value, 'Fallecido.');
+  equal(worst.result.metrics[1]?.value, 'Fallecido.');
+
+  const invalid = evaluateCalculator(ECOG_CALCULATOR, { ecog: '6', kps: '80' });
+  equal(invalid.status, 'invalid');
+  deepEqual(invalid.issues.map((issue) => issue.code), ['unknown-option']);
+});
+
+test('Charlson golden case and age brackets match the legacy rule', () => {
+  const plain = evaluateCalculator(CHARLSON_CALCULATOR, { age: 68 });
+  equal(plain.status, 'calculated');
+  equal(plain.result.title, 'CCI ajustado: 2');
+  equal(plain.result.detail, 'Comorbilidad 0 + edad 2.');
+
+  const brackets: readonly [number, number][] = [[49.9, 0], [50, 1], [60, 2], [70, 3], [80, 4]];
+  for (const [age, expectedPoints] of brackets) {
+    equal(evaluateCalculator(CHARLSON_CALCULATOR, { age }).result.metrics[2]?.value, expectedPoints);
+  }
+});
+
+test('Charlson mutually exclusive conditions are never counted twice', () => {
+  const evaluation = evaluateCalculator(CHARLSON_CALCULATOR, {
+    age: 80,
+    liverMild: true, liverSevere: true,
+    diabetes: true, diabetesComplicated: true,
+    solidTumor: true, metastaticTumor: true
+  });
+  equal(evaluation.status, 'calculated');
+  equal(evaluation.result.title, 'CCI ajustado: 15');
+  equal(evaluation.result.detail, 'Comorbilidad 11 + edad 4.');
+});
+
+test('Charlson reaches its legacy maximum and enforces the UI age limits', () => {
+  const allConditions = Object.fromEntries(
+    CHARLSON_CALCULATOR.fields
+      .filter((field) => field.kind === 'checkbox')
+      .map((field) => [field.id, true])
+  );
+  const maximum = evaluateCalculator(CHARLSON_CALCULATOR, { age: 100, ...allConditions });
+  equal(maximum.result.title, 'CCI ajustado: 37');
+  equal(maximum.result.detail, 'Comorbilidad 33 + edad 4.');
+
+  equal(evaluateCalculator(CHARLSON_CALCULATOR, { age: 17 }).issues[0]?.code, 'below-minimum');
+  equal(evaluateCalculator(CHARLSON_CALCULATOR, { age: 101 }).issues[0]?.code, 'above-maximum');
+});
+
+test('G8 and CARG golden result keeps both scores separate', () => {
+  const evaluation = evaluateCalculator(G8_CARG_CALCULATOR, g8Input());
+  equal(evaluation.status, 'calculated');
+  equal(evaluation.result.title, 'G8 conservado · CARG bajo');
+  equal(evaluation.result.badge, 'bajo');
+  equal(evaluation.result.severity, 'good');
+  deepEqual(evaluation.result.metrics, [
+    { label: 'G8 total', value: '16.0 / 17' },
+    { label: 'Lectura G8', value: 'screening conservado' },
+    { label: 'CARG total', value: 0 },
+    { label: 'Toxicidad G3-5', value: '30% (cohorte original)' }
+  ]);
+});
+
+test('G8 uses the inclusive altered threshold and preserves half points', () => {
+  const threshold = evaluateCalculator(G8_CARG_CALCULATOR, g8Input({ g8_food: '0' }));
+  equal(threshold.result.title, 'G8 alterado · CARG bajo');
+  equal(threshold.result.metrics[0]?.value, '14.0 / 17');
+  equal(threshold.result.severity, 'bad');
+
+  const halfPoint = evaluateCalculator(G8_CARG_CALCULATOR, g8Input({ g8_health: '0.5' }));
+  equal(halfPoint.result.metrics[0]?.value, '15.5 / 17');
+});
+
+test('CARG low, intermediate and high thresholds retain their original toxicity rates', () => {
+  const low = evaluateCalculator(G8_CARG_CALCULATOR, g8Input({ carg_hb: true, carg_age72: true }));
+  equal(low.result.title, 'G8 conservado · CARG bajo');
+  equal(low.result.metrics[2]?.value, 5);
+  equal(low.result.metrics[3]?.value, '30% (cohorte original)');
+
+  const intermediate = evaluateCalculator(G8_CARG_CALCULATOR, g8Input({ carg_hb: true, carg_falls: true }));
+  equal(intermediate.result.title, 'G8 conservado · CARG intermedio');
+  equal(intermediate.result.metrics[2]?.value, 6);
+  equal(intermediate.result.metrics[3]?.value, '52% (cohorte original)');
+  equal(intermediate.result.severity, 'warn');
+
+  const high = evaluateCalculator(G8_CARG_CALCULATOR, g8Input({
+    carg_hb: true, carg_crcl: true, carg_age72: true, carg_gigu: true
+  }));
+  equal(high.result.title, 'G8 conservado · CARG alto');
+  equal(high.result.metrics[2]?.value, 10);
+  equal(high.result.metrics[3]?.value, '83% (cohorte original)');
+  equal(high.result.severity, 'bad');
+});
+
+test('G8 rejects options outside the published response set', () => {
+  const invalid = evaluateCalculator(G8_CARG_CALCULATOR, g8Input({ g8_health: '1.5' }));
+  equal(invalid.status, 'invalid');
+  deepEqual(invalid.issues.map((issue) => issue.code), ['unknown-option']);
+});
+
+test('IPSS and SHIM golden result matches the legacy examples when explicitly entered', () => {
+  const evaluation = evaluateCalculator(IPSS_SHIM_CALCULATOR, ipssShimInput());
+  equal(evaluation.status, 'calculated');
+  equal(evaluation.result.title, 'IPSS 8 (moderado)');
+  equal(evaluation.result.detail, 'QoL urinaria 2/6. SHIM 18: disfuncion leve.');
+  equal(evaluation.result.score, 8 / 35 * 100);
+  equal(evaluation.result.scoreName, 'Carga de síntomas urinarios');
+  deepEqual(evaluation.result.metrics, [
+    { label: 'IPSS total', value: '8 / 35' },
+    { label: 'Severidad IPSS', value: 'moderado' },
+    { label: 'QoL urinaria', value: '2 / 6' },
+    { label: 'SHIM total', value: '18 / 25' },
+    { label: 'Lectura SHIM', value: 'disfuncion leve' }
+  ]);
+});
+
+test('IPSS category and severity boundaries are inclusive in the same places as legacy', () => {
+  const cases: readonly [readonly string[], string, string][] = [
+    [['0', '0', '0', '0', '0', '0', '0'], 'IPSS 0 (asintomático)', 'good'],
+    [['1', '1', '1', '1', '1', '1', '1'], 'IPSS 7 (leve)', 'good'],
+    [['1', '1', '1', '1', '1', '1', '2'], 'IPSS 8 (moderado)', 'warn'],
+    [['3', '3', '3', '3', '3', '2', '2'], 'IPSS 19 (moderado)', 'warn'],
+    [['3', '3', '3', '3', '3', '3', '2'], 'IPSS 20 (severo)', 'bad'],
+    [['5', '5', '5', '5', '5', '5', '5'], 'IPSS 35 (severo)', 'bad']
+  ];
+  for (const [answers, expectedTitle, expectedSeverity] of cases) {
+    const evaluation = evaluateCalculator(IPSS_SHIM_CALCULATOR, ipssShimInput(ipssAnswers(answers)));
+    equal(evaluation.result.title, expectedTitle);
+    equal(evaluation.result.severity, expectedSeverity);
+  }
+});
+
+test('SHIM category boundaries match the legacy rule', () => {
+  const cases: readonly [readonly string[], string][] = [
+    [['5', '5', '4', '4', '4'], 'sin disfuncion erectil significativa'],
+    [['5', '4', '4', '4', '4'], 'disfuncion leve'],
+    [['4', '4', '3', '3', '3'], 'disfuncion leve'],
+    [['4', '3', '3', '3', '3'], 'disfuncion leve-moderada'],
+    [['3', '3', '2', '2', '2'], 'disfuncion leve-moderada'],
+    [['3', '2', '2', '2', '2'], 'disfuncion moderada'],
+    [['2', '2', '2', '1', '1'], 'disfuncion moderada'],
+    [['2', '1', '1', '1', '1'], 'disfuncion severa']
+  ];
+  for (const [answers, expected] of cases) {
+    const evaluation = evaluateCalculator(IPSS_SHIM_CALCULATOR, ipssShimInput(shimAnswers(answers)));
+    equal(evaluation.result.metrics[4]?.value, expected);
+  }
+});
+
+test('SHIM not evaluable skips its five answers but keeps IPSS and QoL required', () => {
+  const withoutShim = ipssShimInput({ shim_not_evaluable: true });
+  for (const fieldId of ['shim_confidence', 'shim_hardness', 'shim_maintenance', 'shim_completion', 'shim_satisfaction']) {
+    delete withoutShim[fieldId];
+  }
+  const evaluation = evaluateCalculator(IPSS_SHIM_CALCULATOR, withoutShim);
+  equal(evaluation.status, 'calculated');
+  equal(evaluation.result.detail, 'QoL urinaria 2/6. SHIM no evaluable por ausencia de actividad sexual suficiente.');
+  equal(evaluation.result.metrics[3]?.value, 'no evaluable');
+  equal(evaluation.result.metrics[4]?.value, 'no evaluable');
+
+  const missingQol = { ...withoutShim, ipss_qol: '' };
+  const invalid = evaluateCalculator(IPSS_SHIM_CALCULATOR, missingQol);
+  equal(invalid.status, 'invalid');
+  deepEqual(invalid.issues.map((issue) => issue.fieldId), ['ipss_qol']);
+});
+
+test('EAU prostate risk opens blank and requires its five clinical inputs', () => {
+  const evaluation = evaluateCalculator(DAMICO_CALCULATOR);
+  equal(evaluation.status, 'invalid');
+  deepEqual(evaluation.issues.map((issue) => issue.fieldId), ['psa', 'gg', 'ct', 'n', 'm']);
+});
+
+test('EAU prostate risk golden groups and boundaries match the legacy rule', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{}, 'Bajo riesgo'],
+    [{ psa: 10 }, 'Intermedio favorable'],
+    [{ psa: 20 }, 'Intermedio favorable'],
+    [{ psa: 20.1 }, 'Alto riesgo localizado'],
+    [{ psa: 9, gg: '2' }, 'Intermedio favorable'],
+    [{ psa: 10, gg: '2' }, 'Intermedio desfavorable'],
+    [{ gg: '3' }, 'Intermedio desfavorable'],
+    [{ gg: '4' }, 'Alto riesgo localizado']
+  ];
+  for (const [overrides, expected] of cases) {
+    equal(evaluateCalculator(DAMICO_CALCULATOR, damicoInput(overrides)).result.title, expected);
+  }
+});
+
+test('EAU prostate risk preserves metastatic and staging precedence', () => {
+  equal(evaluateCalculator(DAMICO_CALCULATOR, damicoInput({ m: 'm1', n: 'n1', ct: 't4' })).result.title,
+    'Fuera de alcance: enfermedad M1');
+  equal(evaluateCalculator(DAMICO_CALCULATOR, damicoInput({ m: 'mx', n: 'n1', ct: 't4' })).result.title,
+    'No clasificable: falta confirmar M0');
+  equal(evaluateCalculator(DAMICO_CALCULATOR, damicoInput({ ct: 't3', n: 'nx' })).result.title,
+    'Localmente avanzado');
+  equal(evaluateCalculator(DAMICO_CALCULATOR, damicoInput({ n: 'n1' })).result.title,
+    'Localmente avanzado');
+  equal(evaluateCalculator(DAMICO_CALCULATOR, damicoInput({ n: 'nx' })).result.title,
+    'No clasificable: falta confirmar cN0');
+});
+
+test('CAPRA starts in pre-treatment mode and validates only that scenario', () => {
+  const initial = evaluateCalculator(CAPRA_CALCULATOR);
+  equal(initial.status, 'invalid');
+  equal(initial.values['scenario'], 'pre');
+  deepEqual(initial.issues.map((issue) => issue.fieldId), [
+    'age', 'psa', 'capraPrimary', 'capraSecondary', 'ct', 'positiveCores', 'totalCores'
+  ]);
+
+  const post = evaluateCalculator(CAPRA_CALCULATOR, { scenario: 'post' });
+  deepEqual(post.issues.map((issue) => issue.fieldId), ['capraSpsa', 'capraSPrimary', 'capraSSecondary']);
+});
+
+test('CAPRA golden pre-treatment result and score thresholds match legacy', () => {
+  const golden = evaluateCalculator(CAPRA_CALCULATOR, capraPreInput());
+  equal(golden.status, 'calculated');
+  equal(golden.result.title, 'CAPRA 3');
+  equal(golden.result.badge, 'intermedio');
+  deepEqual(golden.result.metrics, [
+    { label: 'Puntaje', value: 3 },
+    { label: 'Escala', value: 'CAPRA' },
+    { label: 'Cilindros positivos', value: '25.0%' }
+  ]);
+
+  const cases: readonly [Readonly<Record<string, unknown>>, number][] = [
+    [{ age: 49, psa: 6, capraSecondary: '3', positiveCores: 0, totalCores: 100 }, 0],
+    [{ age: 50, psa: 6, capraSecondary: '3', positiveCores: 0, totalCores: 100 }, 1],
+    [{ age: 49, psa: 6.1, capraSecondary: '3', positiveCores: 0, totalCores: 100 }, 1],
+    [{ age: 49, psa: 10, capraSecondary: '3', positiveCores: 0, totalCores: 100 }, 1],
+    [{ age: 49, psa: 10.1, capraSecondary: '3', positiveCores: 0, totalCores: 100 }, 2],
+    [{ age: 49, psa: 20, capraSecondary: '3', positiveCores: 0, totalCores: 100 }, 2],
+    [{ age: 49, psa: 20.1, capraSecondary: '3', positiveCores: 0, totalCores: 100 }, 3],
+    [{ age: 49, psa: 30, capraSecondary: '3', positiveCores: 0, totalCores: 100 }, 3],
+    [{ age: 49, psa: 30.1, capraSecondary: '3', positiveCores: 0, totalCores: 100 }, 4],
+    [{ age: 49, psa: 6, capraSecondary: '3', positiveCores: 33, totalCores: 100 }, 0],
+    [{ age: 49, psa: 6, capraSecondary: '3', positiveCores: 34, totalCores: 100 }, 1],
+    [{ age: 49, psa: 6, capraSecondary: '3', ct: 't3a', positiveCores: 0, totalCores: 100 }, 1]
+  ];
+  for (const [overrides, expected] of cases) {
+    equal(evaluateCalculator(CAPRA_CALCULATOR, capraPreInput(overrides)).result.metrics[0]?.value, expected);
+  }
+});
+
+test('CAPRA keeps out-of-model stages and incoherent cores explicit', () => {
+  const stage = evaluateCalculator(CAPRA_CALCULATOR, capraPreInput({ ct: 't3b' }));
+  equal(stage.result.title, 'CAPRA no calculable');
+  equal(stage.result.detail, 'CAPRA original no incluye cT3b ni cT4');
+
+  const cores = evaluateCalculator(CAPRA_CALCULATOR, capraPreInput({ positiveCores: 13, totalCores: 12 }));
+  equal(cores.result.title, 'CAPRA no calculable');
+  equal(cores.result.detail, 'Revisar la cantidad de cilindros positivos y totales');
+});
+
+test('CAPRA-S golden case, categories and pathological factors match legacy', () => {
+  const golden = evaluateCalculator(CAPRA_CALCULATOR, capraPostInput());
+  equal(golden.status, 'calculated');
+  equal(golden.result.title, 'CAPRA-S 2');
+  equal(golden.result.badge, 'bajo');
+
+  const maximum = evaluateCalculator(CAPRA_CALCULATOR, capraPostInput({
+    capraSpsa: 20.1, capraSPrimary: '5', capraSSecondary: '5',
+    margin: true, ece: true, svi: true, lni: true
+  }));
+  equal(maximum.result.title, 'CAPRA-S 12');
+  equal(maximum.result.badge, 'alto');
+
+  equal(evaluateCalculator(CAPRA_CALCULATOR,
+    capraPostInput({ capraSpsa: 6, capraSPrimary: '3', capraSSecondary: '3' })).result.title, 'CAPRA-S 0');
+  equal(evaluateCalculator(CAPRA_CALCULATOR,
+    capraPostInput({ capraSpsa: 6.1, capraSPrimary: '3', capraSSecondary: '3' })).result.title, 'CAPRA-S 1');
+  equal(evaluateCalculator(CAPRA_CALCULATOR,
+    capraPostInput({ capraSpsa: 10.1, capraSPrimary: '3', capraSSecondary: '3' })).result.title, 'CAPRA-S 2');
+});
+
+test('Partin prepares the official lookup profile without inventing local percentages', () => {
+  const blank = evaluateCalculator(PARTIN_CALCULATOR);
+  deepEqual(blank.issues.map((issue) => issue.fieldId), ['psaCat', 'gg', 'ct']);
+
+  const evaluation = evaluateCalculator(PARTIN_CALCULATOR, { psaCat: '4to10', gg: '2', ct: 't2a' });
+  equal(evaluation.status, 'calculated');
+  equal(evaluation.result.title, 'Consulta de tablas Partin oficiales');
+  equal(evaluation.result.detail, 'Perfil preparado: PSA 4to10, T2A, GG2.');
+  equal(evaluation.result.metrics.some((metric) => String(metric.value).includes('%')), false);
+  const link = evaluation.result.notes[1];
+  equal(typeof link === 'object' ? link.kind : '', 'external-link');
+  equal(typeof link === 'object' && link.kind === 'external-link' ? link.label : '', 'Abrir tablas Partin de Johns Hopkins');
+  equal(typeof link === 'object' && link.kind === 'external-link' ? new URL(link.href).protocol : '', 'https:');
+});
+
+test('Partin rejects unknown lookup categories', () => {
+  const evaluation = evaluateCalculator(PARTIN_CALCULATOR, { psaCat: 'invented', gg: '2', ct: 't2a' });
+  equal(evaluation.status, 'invalid');
+  deepEqual(evaluation.issues.map((issue) => issue.code), ['unknown-option']);
+});
+
+test('Roach nodal risk keeps the historical formula exact and does not clamp it', () => {
+  const blank = evaluateCalculator(NODAL_RISK_CALCULATOR);
+  deepEqual(blank.issues.map((issue) => issue.fieldId), ['psa', 'gleason']);
+
+  const golden = evaluateCalculator(NODAL_RISK_CALCULATOR, { psa: 12, gleason: '7' });
+  equal(golden.result.title, 'Roach: 18.0%');
+  equal(golden.result.severity, 'info');
+  equal(evaluateCalculator(NODAL_RISK_CALCULATOR, { psa: 0, gleason: '6' }).result.title, 'Roach: 0.0%');
+  equal(evaluateCalculator(NODAL_RISK_CALCULATOR, { psa: 90, gleason: '10' }).result.title, 'Roach: 100.0%');
+
+  const above = evaluateCalculator(NODAL_RISK_CALCULATOR, { psa: 90.1, gleason: '10' });
+  equal(above.result.title, 'Roach fuera del rango interpretable');
+  equal(above.result.metrics[0]?.value, '100.1%');
+  equal(above.result.severity, 'warn');
+});
+
+test('Roach exposes Briganti only as a typed HTTPS reference and validates its inputs', () => {
+  const evaluation = evaluateCalculator(NODAL_RISK_CALCULATOR, { psa: 12, gleason: '7' });
+  const link = evaluation.result.notes[1];
+  equal(typeof link === 'object' ? link.kind : '', 'external-link');
+  equal(typeof link === 'object' && link.kind === 'external-link' ? link.label : '', 'Abrir nomograma validado');
+  equal(typeof link === 'object' && link.kind === 'external-link' ? new URL(link.href).protocol : '', 'https:');
+
+  equal(evaluateCalculator(NODAL_RISK_CALCULATOR, { psa: -0.1, gleason: '7' }).issues[0]?.code, 'below-minimum');
+  equal(evaluateCalculator(NODAL_RISK_CALCULATOR, { psa: 12.05, gleason: '7' }).issues[0]?.code, 'step-mismatch');
+  equal(evaluateCalculator(NODAL_RISK_CALCULATOR, { psa: 12, gleason: '11' }).issues[0]?.code, 'unknown-option');
+});
+
+test('calculators 12 to 15 preserve blank forms and legacy examples', () => {
+  const mskcc = evaluateCalculator(MSKCC_PROSTATE_CALCULATOR);
+  equal(mskcc.status, 'invalid');
+  equal(mskcc.values['scenario'], 'pre');
+  deepEqual(mskcc.issues.map((issue) => issue.fieldId), [
+    'msk_pre_no_hormone', 'msk_pre_no_radiation', 'msk_pre_age', 'msk_pre_psa',
+    'msk_pre_gleason_primary', 'msk_pre_gleason_secondary', 'msk_pre_stage'
+  ]);
+
+  const psaDates = MSKCC_PROSTATE_CALCULATOR.fields.find((field) => field.id === 'msk_psadt_dates');
+  equal(psaDates?.kind === 'text' ? psaDates.initialValue : null, '');
+  equal(psaDates?.kind === 'text' ? psaDates.exampleValue : null, '01/01/2025, 01/01/2026');
+  equal(psaDates?.kind === 'text' ? psaDates.placeholder : null, 'Ej.: 01/01/2025, 01/01/2026');
+
+  const pbcg = evaluateCalculator(BIOPSY_RISK_CALCULATOR);
+  deepEqual(pbcg.issues.map((issue) => issue.fieldId), ['psa', 'age']);
+  equal(pbcg.values['dre'], false);
+
+  const kinetics = evaluateCalculator(PSA_KINETICS_CALCULATOR);
+  deepEqual(kinetics.issues.map((issue) => issue.fieldId), ['psa', 'volume', 'context']);
+  equal(kinetics.values['psaSeries'], '');
+  equal(kinetics.values['nadir'], '');
+  const seriesField = PSA_KINETICS_CALCULATOR.fields.find((field) => field.id === 'psaSeries');
+  equal(seriesField?.kind === 'textarea' ? seriesField.exampleValue : null,
+    '01/01/2025; 1,0\n01/07/2025; 2,0\n01/01/2026; 4,0');
+
+  const metastatic = evaluateCalculator(CHAARTED_LATITUDE_CALCULATOR);
+  deepEqual(metastatic.issues.map((issue) => issue.fieldId), ['bone']);
+  equal(metastatic.values['visceral'], false);
+  equal(metastatic.values['outsideAxial'], false);
+  equal(metastatic.values['gleasonHigh'], false);
+});
+
+test('MSKCC validates only the selected scenario and keeps optional inputs optional', () => {
+  const scenarios: readonly [string, readonly string[]][] = [
+    ['volume', ['msk_volume_length', 'msk_volume_width', 'msk_volume_height', 'msk_volume_psa']],
+    ['psadt', ['msk_psadt_dates', 'msk_psadt_values', 'msk_psadt_minimum_series']],
+    ['post', [
+      'msk_post_no_hormone', 'msk_post_no_radiation', 'msk_post_preop_psa',
+      'msk_post_age_surgery', 'msk_post_months_undetectable', 'msk_post_gleason_primary',
+      'msk_post_gleason_secondary', 'msk_post_margins', 'msk_post_ece',
+      'msk_post_svi', 'msk_post_nodes'
+    ]]
+  ];
+  for (const [scenario, expected] of scenarios) {
+    const evaluation = evaluateCalculator(MSKCC_PROSTATE_CALCULATOR, { scenario });
+    deepEqual(evaluation.issues.map((issue) => issue.fieldId), expected);
+  }
+  const whitespace = evaluateCalculator(MSKCC_PROSTATE_CALCULATOR, {
+    scenario: 'psadt',
+    msk_psadt_dates: '   ',
+    msk_psadt_values: '2.5, 5.0',
+    msk_psadt_minimum_series: '2'
+  });
+  deepEqual(whitespace.issues.map((issue) => issue.fieldId), ['msk_psadt_dates']);
+});
+
+test('MSKCC preoperative golden result uses typed checklists and overview data', () => {
+  const evaluation = evaluateCalculator(MSKCC_PROSTATE_CALCULATOR, mskccPreInput());
+  equal(evaluation.status, 'calculated');
+  deepEqual(evaluation.result, {
+    title: 'Datos listos para MSKCC',
+    detail: 'Escenario: Pre-prostatectomia radical. El resultado numérico se obtiene únicamente en el nomograma oficial.',
+    badge: 'listo',
+    score: 0,
+    showScore: false,
+    severity: 'good',
+    metrics: [
+      { label: 'Obligatorios', value: '7/7' },
+      { label: 'Opcionales', value: '0/2' },
+      { label: 'Faltantes', value: 0 },
+      { label: 'Opcional', value: '0%' }
+    ],
+    notes: evaluation.result.notes
+  });
+
+  const link = evaluation.result.notes[0];
+  equal(typeof link === 'object' && link.kind === 'external-link' ? link.label : '',
+    'Abrir nomograma interactivo MSKCC: Pre-prostatectomia radical');
+  equal(typeof link === 'object' && link.kind === 'external-link' ? new URL(link.href).protocol : '', 'https:');
+
+  const required = evaluation.result.notes[1];
+  equal(typeof required === 'object' && required.kind === 'checklist' ? required.items.length : 0, 7);
+  equal(typeof required === 'object' && required.kind === 'checklist'
+    ? required.items.every((item) => item.status === 'complete') : false, true);
+
+  const optional = evaluation.result.notes[2];
+  equal(typeof optional === 'object' && optional.kind === 'checklist' ? optional.items.length : 0, 2);
+  equal(typeof optional === 'object' && optional.kind === 'checklist'
+    ? optional.items.every((item) => item.status === 'missing') : false, true);
+
+  const overview = evaluation.result.notes[3];
+  equal(typeof overview === 'object' && overview.kind === 'table' ? overview.rows.length : 0, 7);
+  if (typeof overview === 'object' && overview.kind === 'table') {
+    deepEqual(overview.columns, ['Nomograma', 'Completitud', 'Faltante principal', 'MSKCC']);
+    deepEqual(overview.rows[0]?.slice(0, 3), ['Pre-prostatectomia radical', '100%', 'Listo']);
+    equal(overview.rows[1]?.[1], '0%');
+    const overviewLink = overview.rows[0]?.[3];
+    equal(typeof overviewLink === 'object' && overviewLink.kind === 'external-link'
+      ? new URL(overviewLink.href).protocol : '', 'https:');
+  }
+  assertNoRawMarkup(evaluation.result.notes);
+});
+
+test('MSKCC volume scenario completes four required values without a local estimate', () => {
+  const evaluation = evaluateCalculator(MSKCC_PROSTATE_CALCULATOR, {
+    scenario: 'volume',
+    msk_volume_length: 4.5,
+    msk_volume_width: 4,
+    msk_volume_height: 3.5,
+    msk_volume_psa: 7.01
+  });
+  equal(evaluation.status, 'calculated');
+  equal(evaluation.result.title, 'Datos listos para MSKCC');
+  deepEqual(evaluation.result.metrics, [
+    { label: 'Obligatorios', value: '4/4' },
+    { label: 'Opcionales', value: 'no aplica' },
+    { label: 'Faltantes', value: 0 },
+    { label: 'Opcional', value: 'no aplica' }
+  ]);
+  equal(evaluation.result.metrics.some((metric) => String(metric.value).includes('riesgo')), false);
+});
+
+test('MSKCC rejects unknown scenarios and invalid values before opening an external model', () => {
+  const scenario = evaluateCalculator(MSKCC_PROSTATE_CALCULATOR, { scenario: 'invented' });
+  equal(scenario.status, 'invalid');
+  deepEqual(scenario.issues.map((issue) => issue.code), ['unknown-option']);
+
+  const age = evaluateCalculator(MSKCC_PROSTATE_CALCULATOR, mskccPreInput({ msk_pre_age: 34 }));
+  equal(age.status, 'invalid');
+  deepEqual(age.issues.map((issue) => issue.code), ['below-minimum']);
+});
+
+test('PBCG golden probabilities match the public legacy coefficients', () => {
+  const evaluation = evaluateCalculator(BIOPSY_RISK_CALCULATOR, pbcgInput());
+  equal(evaluation.status, 'calculated');
+  deepEqual(evaluation.result, {
+    title: 'PBCG: 30.0% de alto grado',
+    detail: 'Probabilidades mutuamente excluyentes calculadas con los coeficientes públicos PBCG.',
+    badge: 'PBCG',
+    score: 0,
+    showScore: false,
+    severity: 'info',
+    metrics: [
+      { label: 'Sin cáncer', value: '49.8%' },
+      { label: 'Bajo grado', value: '20.2%' },
+      { label: 'Alto grado', value: '30.0%' }
+    ],
+    notes: evaluation.result.notes
+  });
+  const link = evaluation.result.notes[2];
+  equal(typeof link === 'object' && link.kind === 'external-link' ? link.label : '',
+    'Comparar con PBCG oficial');
+  equal(typeof link === 'object' && link.kind === 'external-link' ? new URL(link.href).protocol : '', 'https:');
+  assertNoRawMarkup(evaluation.result.notes);
+});
+
+test('PBCG accepts inclusive validated limits and rejects values outside them', () => {
+  equal(evaluateCalculator(BIOPSY_RISK_CALCULATOR, pbcgInput({ psa: 2, age: 40 })).status, 'calculated');
+  equal(evaluateCalculator(BIOPSY_RISK_CALCULATOR, pbcgInput({ psa: 50, age: 90 })).status, 'calculated');
+
+  const belowPsa = evaluateCalculator(BIOPSY_RISK_CALCULATOR, pbcgInput({ psa: 1.9 }));
+  deepEqual(belowPsa.issues.map((issue) => issue.code), ['below-minimum']);
+  const abovePsa = evaluateCalculator(BIOPSY_RISK_CALCULATOR, pbcgInput({ psa: 50.1 }));
+  deepEqual(abovePsa.issues.map((issue) => issue.code), ['above-maximum']);
+  const belowAge = evaluateCalculator(BIOPSY_RISK_CALCULATOR, pbcgInput({ age: 39 }));
+  deepEqual(belowAge.issues.map((issue) => issue.code), ['below-minimum']);
+  const aboveAge = evaluateCalculator(BIOPSY_RISK_CALCULATOR, pbcgInput({ age: 91 }));
+  deepEqual(aboveAge.issues.map((issue) => issue.code), ['above-maximum']);
+});
+
+test('PBCG preserves all four binary predictors and mutually exclusive output', () => {
+  const evaluation = evaluateCalculator(BIOPSY_RISK_CALCULATOR, pbcgInput({
+    african: true,
+    priorNegative: true,
+    dre: true,
+    family: true
+  }));
+  deepEqual(evaluation.result.metrics, [
+    { label: 'Sin cáncer', value: '34.2%' },
+    { label: 'Bajo grado', value: '19.3%' },
+    { label: 'Alto grado', value: '46.4%' }
+  ]);
+});
+
+test('PSA kinetics golden series preserves density, dates, decimal commas and regression', () => {
+  const evaluation = evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput());
+  equal(evaluation.status, 'calculated');
+  deepEqual(evaluation.result, {
+    title: 'PSA-D 0.150 · PSA-DT 6.0 meses',
+    detail: 'Sin criterio de recaida aplicable a este contexto',
+    badge: 'sin criterio',
+    score: 0,
+    showScore: false,
+    severity: 'info',
+    metrics: [
+      { label: 'PSA-D', value: '0.150' },
+      { label: 'PSA-DT', value: '6.0 meses' },
+      { label: 'Velocidad', value: '3.00/año' },
+      { label: 'Mediciones', value: 3 }
+    ],
+    notes: [
+      'PSA-DT calculado por regresión logarítmica de toda la serie.',
+      'La separación temporal de la serie es adecuada para el cálculo.',
+      'Se eliminó el score compuesto local: PSA-D, PSA-DT y BCR son resultados diferentes.'
+    ]
+  });
+
+  const reordered = evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput({
+    psaSeries: '01/01/2026\t4,0\ntexto invalido\n01/01/2025; 1,0\n01/07/2025; 2,0'
+  }));
+  equal(reordered.result.title, evaluation.result.title);
+  equal(reordered.result.metrics[3]?.value, 3);
+});
+
+test('PSA kinetics filters malformed and non-positive rows and reports insufficient series', () => {
+  const empty = evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput({ psaSeries: '' }));
+  equal(empty.result.title, 'PSA-D 0.150 · PSA-DT sin duplicación calculable');
+  deepEqual(empty.result.metrics.slice(1), [
+    { label: 'PSA-DT', value: 'ND' },
+    { label: 'Velocidad', value: 'ND' },
+    { label: 'Mediciones', value: 0 }
+  ]);
+  equal(empty.result.notes[0], 'Con menos de tres mediciones el PSA-DT es frágil; agregar una tercera determinación.');
+  equal(empty.result.notes[1], 'No hay una serie suficiente para evaluar intervalos temporales.');
+
+  const one = evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput({
+    psaSeries: 'sin-fecha; 2\n01/01/2025; 0\n01/01/2025; 1'
+  }));
+  equal(one.result.metrics[3]?.value, 1);
+  equal(one.result.metrics[1]?.value, 'ND');
+});
+
+test('PSA kinetics reports short gaps and long windows independently', () => {
+  const shortGap = evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput({
+    psaSeries: '01/01/2025; 1\n15/01/2025; 2'
+  }));
+  equal(shortGap.result.notes[1],
+    'Hay determinaciones separadas por menos de cuatro semanas; interpretar la cinética con cautela.');
+
+  const longWindow = evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput({
+    psaSeries: '01/01/2024; 1\n01/02/2025; 2'
+  }));
+  equal(longWindow.result.notes[1],
+    'La serie abarca más de 12 meses; revisar si conviene usar una ventana clínica más reciente.');
+});
+
+test('PSA biochemical recurrence keeps post-RT nadir and Phoenix boundary exact', () => {
+  const missing = evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput({
+    context: 'post_rt',
+    nadir: ''
+  }));
+  deepEqual(missing.result, {
+    title: 'Falta el nadir post-radioterapia',
+    detail: 'Phoenix requiere comparar el PSA actual con nadir + 2 ng/ml.',
+    badge: 'no calculable',
+    score: 0,
+    showScore: false,
+    severity: 'warn',
+    metrics: [],
+    notes: []
+  });
+
+  const met = evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput({
+    psa: 2.4,
+    context: 'post_rt',
+    nadir: 0.4,
+    psaSeries: ''
+  }));
+  equal(met.result.detail, 'Cumple Phoenix: PSA actual ≥ nadir + 2 ng/ml.');
+  equal(met.result.badge, 'criterio cumplido');
+  equal(met.result.severity, 'bad');
+
+  const below = evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput({
+    psa: 2.39,
+    context: 'post_rt',
+    nadir: 0.4,
+    psaSeries: ''
+  }));
+  equal(below.result.detail, 'Phoenix: PSA actual ≥ nadir + 2 ng/ml');
+  equal(below.result.badge, 'sin criterio');
+});
+
+test('PSA biochemical recurrence keeps post-RP confirmation gate exact', () => {
+  const pending = evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput({
+    psa: 0.2,
+    context: 'post_rp',
+    confirmed: false,
+    psaSeries: ''
+  }));
+  equal(pending.result.detail, 'Umbral post-RP alcanzado; falta un PSA confirmatorio posterior.');
+  equal(pending.result.badge, 'pendiente');
+  equal(pending.result.severity, 'warn');
+
+  const confirmed = evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput({
+    psa: 0.2,
+    context: 'post_rp',
+    confirmed: true,
+    psaSeries: ''
+  }));
+  equal(confirmed.result.detail, 'Cumple Post-RP: PSA ≥0,2 ng/ml confirmado.');
+  equal(confirmed.result.badge, 'criterio cumplido');
+
+  const below = evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput({
+    psa: 0.19,
+    context: 'post_rp',
+    confirmed: true,
+    psaSeries: ''
+  }));
+  equal(below.result.detail, 'Post-RP: PSA ≥0,2 ng/ml confirmado');
+  equal(below.result.badge, 'sin criterio');
+});
+
+test('CHAARTED and LATITUDE preserve independent threshold logic', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string][] = [
+    [{ bone: 0 }, 'CHAARTED bajo volumen · LATITUDE no alto riesgo', '0/3'],
+    [{ bone: 3 }, 'CHAARTED bajo volumen · LATITUDE no alto riesgo', '1/3'],
+    [{ bone: 4 }, 'CHAARTED bajo volumen · LATITUDE no alto riesgo', '1/3'],
+    [{ bone: 4, outsideAxial: true }, 'CHAARTED alto volumen · LATITUDE no alto riesgo', '1/3'],
+    [{ bone: 0, visceral: true }, 'CHAARTED alto volumen · LATITUDE no alto riesgo', '1/3'],
+    [{ bone: 3, gleasonHigh: true }, 'CHAARTED bajo volumen · LATITUDE alto riesgo', '2/3'],
+    [{ bone: 0, visceral: true, gleasonHigh: true }, 'CHAARTED alto volumen · LATITUDE alto riesgo', '2/3'],
+    [{ bone: 3, visceral: true, gleasonHigh: true }, 'CHAARTED alto volumen · LATITUDE alto riesgo', '3/3']
+  ];
+  for (const [input, title, factors] of cases) {
+    const evaluation = evaluateCalculator(CHAARTED_LATITUDE_CALCULATOR, input);
+    equal(evaluation.result.title, title);
+    equal(evaluation.result.metrics[1]?.value, factors);
+  }
+});
+
+test('CHAARTED accepts zero and rejects negative bone lesion counts', () => {
+  equal(evaluateCalculator(CHAARTED_LATITUDE_CALCULATOR, { bone: 0 }).status, 'calculated');
+  const negative = evaluateCalculator(CHAARTED_LATITUDE_CALCULATOR, { bone: -0.1 });
+  equal(negative.status, 'invalid');
+  deepEqual(negative.issues.map((issue) => issue.code), ['below-minimum']);
+});
+
+test('ported 12 to 15 results never contain raw HTML notes', () => {
+  const results = [
+    evaluateCalculator(MSKCC_PROSTATE_CALCULATOR, mskccPreInput()).result,
+    evaluateCalculator(BIOPSY_RISK_CALCULATOR, pbcgInput()).result,
+    evaluateCalculator(PSA_KINETICS_CALCULATOR, psaKineticsInput()).result,
+    evaluateCalculator(CHAARTED_LATITUDE_CALCULATOR, { bone: 3 }).result
+  ];
+  for (const current of results) assertNoRawMarkup(current.notes);
+});
+
+test('calculators 16 to 19 preserve blank legacy forms and scenario-only validation', () => {
+  const nmibc = evaluateCalculator(NMIBC_CALCULATOR);
+  equal(nmibc.status, 'invalid');
+  equal(nmibc.values['scenario'], 'eau');
+  deepEqual(nmibc.issues.map((issue) => issue.fieldId), [
+    'eauPrimary', 'eauAge', 'eauCount', 'eauSize', 'eauStage', 'eauSystem', 'eauGrade'
+  ]);
+  equal(NMIBC_CALCULATOR.fields.filter((field) =>
+    (field.kind === 'number' || field.kind === 'select') && field.id !== 'scenario'
+  ).every((field) => field.initialValue === ''), true);
+
+  const eortc = evaluateCalculator(NMIBC_CALCULATOR, { scenario: 'eortc' });
+  deepEqual(eortc.issues.map((issue) => issue.fieldId), ['number', 'size', 'prior', 'grade']);
+  const cueto = evaluateCalculator(NMIBC_CALCULATOR, { scenario: 'cueto' });
+  deepEqual(cueto.issues.map((issue) => issue.fieldId), ['cuetoSex', 'cuetoAge', 'cuetoGrade']);
+
+  deepEqual(evaluateCalculator(CYSTECTOMY_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['m', 'pt', 'pn', 'perioperative', 'cisStatus']);
+  deepEqual(evaluateCalculator(CISPLATIN_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['ecog', 'renalMethod', 'gfr', 'hearing', 'neuro', 'nyha']);
+  deepEqual(evaluateCalculator(UTUC_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['utucM', 'size', 'focality', 'cytology', 'biopsy', 'ctAssessment']);
+});
+
+test('EAU NMIBC golden low-risk case preserves population probabilities', () => {
+  const evaluation = evaluateCalculator(NMIBC_CALCULATOR, nmibcEauInput());
+  equal(evaluation.status, 'calculated');
+  deepEqual(evaluation.result, {
+    title: 'EAU: riesgo bajo',
+    detail: 'Probabilidades poblacionales para tumores primarios incluidos en el modelo.',
+    badge: 'EAU 2021/2026',
+    score: 0,
+    showScore: false,
+    severity: 'good',
+    metrics: [
+      { label: 'Grupo EAU', value: 'bajo' },
+      { label: 'Factores clínicos', value: '0/3' },
+      { label: 'Progresión 1 año', value: '0.06%' },
+      { label: 'Progresión 5 años', value: '0.9%' },
+      { label: 'Progresión 10 años', value: '3.7%' }
+    ],
+    notes: ['No combinar este grupo con EORTC o CUETO.']
+  });
+});
+
+test('EAU NMIBC factor thresholds are strict for age and count and inclusive for size', () => {
+  const boundaries: readonly [Readonly<Record<string, unknown>>, string, string][] = [
+    [{ eauAge: 70, eauCount: 1, eauSize: 2.9 }, 'EAU: riesgo bajo', '0/3'],
+    [{ eauAge: 71, eauCount: 1, eauSize: 2.9 }, 'EAU: riesgo bajo', '1/3'],
+    [{ eauAge: 70, eauCount: 2, eauSize: 2.9 }, 'EAU: riesgo bajo', '1/3'],
+    [{ eauAge: 70, eauCount: 1, eauSize: 3 }, 'EAU: riesgo bajo', '1/3'],
+    [{ eauAge: 71, eauCount: 2, eauSize: 2.9 }, 'EAU: riesgo intermedio', '2/3'],
+    [{ eauAge: 71, eauCount: 2, eauSize: 3 }, 'EAU: riesgo alto', '3/3']
+  ];
+  for (const [override, expectedTitle, expectedFactors] of boundaries) {
+    const evaluation = evaluateCalculator(NMIBC_CALCULATOR, nmibcEauInput(override));
+    equal(evaluation.result.title, expectedTitle);
+    equal(evaluation.result.metrics[1]?.value, expectedFactors);
+  }
+});
+
+test('EAU NMIBC rejects incompatible grade systems and separates special/recurrent outputs', () => {
+  const incompatible = evaluateCalculator(NMIBC_CALCULATOR, nmibcEauInput({
+    eauSystem: 'who2004', eauGrade: 'g1'
+  }));
+  equal(incompatible.result.title, 'EAU NMIBC no calculable');
+  equal(incompatible.result.detail,
+    'Completar sistema de grado, grado compatible, presentación, edad, tamaño, focalidad y estadio');
+
+  const recurrent = evaluateCalculator(NMIBC_CALCULATOR, nmibcEauInput({ eauPrimary: 'no' }));
+  equal(recurrent.result.title, 'EAU: riesgo intermedio');
+  equal(recurrent.result.metrics.length, 2);
+  equal(recurrent.result.detail,
+    'Grupo asignado; la tabla no ofrece probabilidades válidas para este contexto.');
+
+  const pureCis = evaluateCalculator(NMIBC_CALCULATOR, nmibcEauInput({ eauPureCis: true }));
+  equal(pureCis.result.title, 'EAU: riesgo alto');
+  equal(pureCis.result.metrics.length, 2);
+  const lvi = evaluateCalculator(NMIBC_CALCULATOR, nmibcEauInput({ eauLvi: true }));
+  equal(lvi.result.title, 'EAU: riesgo muy alto');
+  equal(lvi.result.metrics.length, 2);
+});
+
+test('EAU NMIBC preserves the independent WHO 1973 probability table', () => {
+  const low = evaluateCalculator(NMIBC_CALCULATOR, nmibcEauInput({
+    eauSystem: 'who1973', eauGrade: 'g1'
+  }));
+  equal(low.result.title, 'EAU: riesgo bajo');
+  deepEqual(low.result.metrics.slice(2), [
+    { label: 'Progresión 1 año', value: '0.12%' },
+    { label: 'Progresión 5 años', value: '0.6%' },
+    { label: 'Progresión 10 años', value: '3.0%' }
+  ]);
+
+  const veryHigh = evaluateCalculator(NMIBC_CALCULATOR, nmibcEauInput({
+    eauAge: 71, eauStage: 't1', eauCis: true, eauSystem: 'who1973', eauGrade: 'g3'
+  }));
+  equal(veryHigh.result.title, 'EAU: riesgo muy alto');
+  deepEqual(veryHigh.result.metrics.slice(2), [
+    { label: 'Progresión 1 año', value: '20.00%' },
+    { label: 'Progresión 5 años', value: '44.0%' },
+    { label: 'Progresión 10 años', value: '59.0%' }
+  ]);
+});
+
+test('EORTC NMIBC golden endpoints preserve historical score tables', () => {
+  const minimum = evaluateCalculator(NMIBC_CALCULATOR, nmibcEortcInput());
+  deepEqual(minimum.result.metrics, [
+    { label: 'Recurrencia 1/5 años', value: '15% / 31%' },
+    { label: 'Progresión 1/5 años', value: '0.2% / 0.8%' }
+  ]);
+  equal(minimum.result.detail, 'Recurrencia 0; progresión 0.');
+
+  const maximum = evaluateCalculator(NMIBC_CALCULATOR, nmibcEortcInput({
+    number: '6', size: '3', prior: '4', t1: true, cis: true, grade: '2'
+  }));
+  equal(maximum.result.detail, 'Recurrencia 17; progresión 23.');
+  deepEqual(maximum.result.metrics, [
+    { label: 'Recurrencia 1/5 años', value: '61% / 78%' },
+    { label: 'Progresión 1/5 años', value: '17% / 45%' }
+  ]);
+});
+
+test('EORTC NMIBC keeps every recurrence and progression probability band', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string][] = [
+    [{ t1: true }, '24% / 46%', '1% / 6%'],
+    [{ number: '3', prior: '2' }, '38% / 62%', '1% / 6%'],
+    [{ size: '3', t1: true }, '24% / 46%', '5% / 17%'],
+    [{ number: '6', size: '3', t1: true }, '61% / 78%', '5% / 17%'],
+    [{ number: '6', size: '3', prior: '4', t1: true, cis: true, grade: '2' },
+      '61% / 78%', '17% / 45%']
+  ];
+  for (const [overrides, recurrence, progression] of cases) {
+    const evaluation = evaluateCalculator(NMIBC_CALCULATOR, nmibcEortcInput(overrides));
+    equal(evaluation.result.metrics[0]?.value, recurrence);
+    equal(evaluation.result.metrics[1]?.value, progression);
+  }
+});
+
+test('CUETO requires cohort confirmation and preserves age/tier boundaries', () => {
+  const unconfirmed = evaluateCalculator(NMIBC_CALCULATOR, nmibcCuetoInput());
+  equal(unconfirmed.result.title, 'Confirmar aplicabilidad CUETO');
+  equal(unconfirmed.result.metrics.length, 0);
+
+  const age70 = evaluateCalculator(NMIBC_CALCULATOR, nmibcCuetoInput({
+    cuetoAge: 70, cuetoConfirmed: true
+  }));
+  equal(age70.result.detail, 'Recurrencia 1; progresión 0.');
+  const age71 = evaluateCalculator(NMIBC_CALCULATOR, nmibcCuetoInput({
+    cuetoAge: 71, cuetoConfirmed: true
+  }));
+  equal(age71.result.detail, 'Recurrencia 2; progresión 2.');
+
+  const maximum = evaluateCalculator(NMIBC_CALCULATOR, nmibcCuetoInput({
+    cuetoSex: 'female', cuetoAge: 71, cuetoMoreThree: true, cuetoRecurrent: true,
+    cuetoT1: true, cuetoCis: true, cuetoGrade: 'g3', cuetoConfirmed: true
+  }));
+  equal(maximum.result.detail, 'Recurrencia 16; progresión 14.');
+  deepEqual(maximum.result.metrics, [
+    { label: 'Recurrencia 1/5 años', value: '42% / 68%' },
+    { label: 'Progresión 1/5 años', value: '14% / 34%' }
+  ]);
+});
+
+test('CUETO preserves all historical risk-table bands', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string][] = [
+    [{ cuetoGrade: 'g3' }, '8% / 21%', '3% / 12%'],
+    [{ cuetoSex: 'female', cuetoAge: 71 }, '12% / 36%', '1% / 4%'],
+    [{ cuetoAge: 71, cuetoMoreThree: true, cuetoRecurrent: true }, '25% / 48%', '3% / 12%'],
+    [{ cuetoAge: 71, cuetoMoreThree: true, cuetoRecurrent: true, cuetoT1: true, cuetoCis: true },
+      '42% / 68%', '6% / 21%'],
+    [{ cuetoSex: 'female', cuetoAge: 71, cuetoMoreThree: true, cuetoRecurrent: true,
+      cuetoT1: true, cuetoCis: true, cuetoGrade: 'g3' }, '42% / 68%', '14% / 34%']
+  ];
+  for (const [overrides, recurrence, progression] of cases) {
+    const evaluation = evaluateCalculator(NMIBC_CALCULATOR, nmibcCuetoInput({
+      cuetoConfirmed: true,
+      ...overrides
+    }));
+    equal(evaluation.result.metrics[0]?.value, recurrence);
+    equal(evaluation.result.metrics[1]?.value, progression);
+  }
+});
+
+test('post-cystectomy separates out-of-scope, incomplete and no-trigger cases', () => {
+  const metastatic = evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput({ m: 'm1' }));
+  equal(metastatic.result.title, 'Fuera de alcance adyuvante');
+  equal(metastatic.result.detail, 'Enfermedad M1: fuera del módulo adyuvante post-cistectomía');
+
+  const unknownM = evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput({ m: 'mx' }));
+  equal(unknownM.result.title, 'Datos incompletos');
+  const unknownNodes = evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput({ pn: 'nx' }));
+  equal(unknownNodes.result.title, 'Datos incompletos');
+
+  const noTrigger = evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput());
+  equal(noTrigger.result.title, 'Revisión adyuvante post-cistectomía');
+  equal(noTrigger.result.detail,
+    'No cumple un disparador adyuvante EAU por estadio con los datos ingresados');
+});
+
+test('post-cystectomy preserves chemotherapy, nivolumab and radiotherapy gates', () => {
+  const chemotherapy = evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput({ pt: '3' }));
+  equal(chemotherapy.result.detail, 'Ofrecer quimioterapia adyuvante combinada basada en cisplatino');
+
+  const afterNac = evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput({
+    pt: '2', perioperative: 'nac'
+  }));
+  equal(afterNac.result.detail, 'Evaluar nivolumab adyuvante en comité multidisciplinario');
+
+  const declined = evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput({
+    pt: '3', cisStatus: 'declined'
+  }));
+  equal(declined.result.detail, 'Evaluar nivolumab adyuvante en comité multidisciplinario');
+
+  const thresholdBelow = evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput({ pt: '3' }));
+  equal(thresholdBelow.result.detail.includes('radioterapia'), false);
+  const threshold = evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput({ pt: '3.5' }));
+  equal(threshold.result.detail.includes('Considerar radioterapia adyuvante'), true);
+  const margin = evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput({ margin: true }));
+  equal(margin.result.detail.includes('Considerar radioterapia adyuvante'), true);
+  const nodes = evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput({ pn: 'nplus' }));
+  equal(nodes.result.detail.includes('Considerar radioterapia adyuvante'), true);
+
+  const modern = evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput({
+    pt: '4', perioperative: 'modern'
+  }));
+  equal(modern.result.detail.startsWith(
+    'Aplicar el protocolo perioperatorio moderno y evitar apilar adyuvancias automáticamente'), true);
+  equal(modern.result.detail.includes('Ofrecer quimioterapia'), false);
+});
+
+test('cisplatin golden eligible case and renal boundaries match legacy', () => {
+  const eligible = evaluateCalculator(CISPLATIN_CALCULATOR, cisplatinInput());
+  deepEqual(eligible.result, {
+    title: 'Apto probable para cisplatino convencional',
+    detail: 'No se detectan criterios conservadores de no aptitud.',
+    badge: 'cisplatino probable',
+    score: 0,
+    showScore: false,
+    severity: 'good',
+    metrics: [
+      { label: 'Función renal', value: '65 ml/min' },
+      { label: 'Método', value: 'measured_gfr' },
+      { label: 'Criterios', value: 0 }
+    ],
+    notes: [
+      'Edad sola no contraindica cisplatino.',
+      'Aplicar la ficha y el protocolo específicos del régimen elegido.',
+      'Regímenes perioperatorios modernos pueden tener umbrales propios; esos criterios prevalecen.'
+    ]
+  });
+
+  const sixty = evaluateCalculator(CISPLATIN_CALCULATOR, cisplatinInput({ gfr: 60 }));
+  equal(sixty.result.title, 'No apto para cisplatino convencional; posible carboplatino');
+  equal(sixty.result.detail, 'Criterios presentes: GFR ≤60 ml/min.');
+  equal(sixty.result.notes[1],
+    'GFR 40–60: zona renal limítrofe; considerar medición isotópica/formal. Split-dose no se recomienda automáticamente.');
+  const thirty = evaluateCalculator(CISPLATIN_CALCULATOR, cisplatinInput({ gfr: 30 }));
+  equal(thirty.result.title, 'No apto para cisplatino convencional; posible carboplatino');
+  const belowThirty = evaluateCalculator(CISPLATIN_CALCULATOR, cisplatinInput({ gfr: 29.9 }));
+  equal(belowThirty.result.title, 'No apto para platinum');
+});
+
+test('cisplatin preserves performance/comorbidity gates and renal method as display-only', () => {
+  const ecogAtSixty = evaluateCalculator(CISPLATIN_CALCULATOR, cisplatinInput({ ecog: '2', gfr: 60 }));
+  equal(ecogAtSixty.result.title, 'No apto para cisplatino convencional; posible carboplatino');
+  const ecogBelowSixty = evaluateCalculator(CISPLATIN_CALCULATOR, cisplatinInput({ ecog: '2', gfr: 59.9 }));
+  equal(ecogBelowSixty.result.title, 'No apto para platinum');
+  equal(evaluateCalculator(CISPLATIN_CALCULATOR, cisplatinInput({ ecog: '3' })).result.title,
+    'No apto para platinum');
+  equal(evaluateCalculator(CISPLATIN_CALCULATOR, cisplatinInput({ severeComorbidity: true })).result.title,
+    'No apto para platinum');
+
+  const complications = evaluateCalculator(CISPLATIN_CALCULATOR, cisplatinInput({
+    hearing: '2', neuro: '2', nyha: '3'
+  }));
+  equal(complications.result.title, 'No apto para cisplatino convencional; posible carboplatino');
+  equal(complications.result.detail,
+    'Criterios presentes: hipoacusia audiometrica ≥G2, neuropatia ≥G2, insuficiencia cardiaca NYHA III/IV.');
+
+  const measured = evaluateCalculator(CISPLATIN_CALCULATOR, cisplatinInput({ renalMethod: 'measured_gfr' }));
+  const estimated = evaluateCalculator(CISPLATIN_CALCULATOR, cisplatinInput({ renalMethod: 'egfr' }));
+  equal(measured.result.title, estimated.result.title);
+  equal(estimated.result.metrics[1]?.value, 'egfr');
+});
+
+test('UTUC golden low-risk and weak-factor boundaries remain distinct', () => {
+  const low = evaluateCalculator(UTUC_CALCULATOR, utucInput());
+  equal(low.result.title, 'Bajo riesgo probable');
+  equal(low.result.detail,
+    'Unifocal, <2 cm, citología negativa para high-grade, biopsia low-grade y TC no invasiva.');
+  equal(low.result.badge, 'bajo riesgo');
+  equal(low.result.severity, 'good');
+
+  equal(evaluateCalculator(UTUC_CALCULATOR, utucInput({ size: 1.9 })).result.title,
+    'Bajo riesgo probable');
+  const weak = evaluateCalculator(UTUC_CALCULATOR, utucInput({
+    size: 2, focality: 'multifocal', hydro: true
+  }));
+  equal(weak.result.title, 'Sin criterio fuerte; sólo factores débiles');
+  equal(weak.result.detail,
+    'Factores débiles: tamaño ≥2 cm, multifocalidad, hidroureteronefrosis. Decisión compartida.');
+  equal(weak.result.metrics[3]?.value, 3);
+});
+
+test('UTUC strong criteria precede missing data and metastatic disease remains out of scope', () => {
+  const uncertain = evaluateCalculator(UTUC_CALCULATOR, utucInput({
+    size: 0, focality: 'missing', cytology: 'missing', biopsy: 'nondiagnostic', ctAssessment: 'missing'
+  }));
+  equal(uncertain.result.title, 'Información insuficiente para clasificar');
+  equal(uncertain.result.detail,
+    'Faltan: tamaño tumoral, focalidad, citología, biopsia low-grade confiable, evaluación de invasión en TC.');
+
+  const strong = evaluateCalculator(UTUC_CALCULATOR, utucInput({
+    size: 0, focality: 'missing', cytology: 'high', biopsy: 'missing', ctAssessment: 'missing'
+  }));
+  equal(strong.result.title, 'Alto riesgo: criterio fuerte');
+  equal(strong.result.detail, 'Criterios fuertes: citología de alto grado.');
+
+  const allStrong = evaluateCalculator(UTUC_CALCULATOR, utucInput({
+    cytology: 'high', biopsy: 'high', ctAssessment: 'invasive', variant: true
+  }));
+  equal(allStrong.result.detail,
+    'Criterios fuertes: citología de alto grado, biopsia de alto grado, invasión local en TC, variante histologica agresiva.');
+  equal(allStrong.result.metrics[2]?.value, 4);
+
+  const metastatic = evaluateCalculator(UTUC_CALCULATOR, utucInput({ utucM: 'm1' }));
+  equal(metastatic.result.title, 'Fuera de alcance: enfermedad metastásica');
+  equal(metastatic.result.badge, 'fuera de alcance');
+});
+
+test('ported 16 to 19 results contain typed text only and reject unknown selectors', () => {
+  const results = [
+    evaluateCalculator(NMIBC_CALCULATOR, nmibcEauInput()).result,
+    evaluateCalculator(CYSTECTOMY_CALCULATOR, cystectomyInput()).result,
+    evaluateCalculator(CISPLATIN_CALCULATOR, cisplatinInput()).result,
+    evaluateCalculator(UTUC_CALCULATOR, utucInput()).result
+  ];
+  for (const current of results) assertNoRawMarkup(current.notes);
+  const unknown = evaluateCalculator(NMIBC_CALCULATOR, nmibcEauInput({ scenario: 'combined' }));
+  equal(unknown.status, 'invalid');
+  deepEqual(unknown.issues.map((issue) => issue.code), ['unknown-option']);
+});
+
+test('ported 20 to 23 preserve canonical metadata and complete field order', () => {
+  deepEqual([
+    RENAL_COMPLEXITY_CALCULATOR,
+    LEIBOVICH_CALCULATOR,
+    IMDC_CALCULATOR,
+    IGCCCG_CALCULATOR
+  ].map((definition) => ({
+    id: definition.id,
+    title: definition.title,
+    category: definition.category,
+    subtitle: definition.subtitle,
+    source: definition.source,
+    fieldIds: definition.fields.map((field) => field.id)
+  })), [
+    {
+      id: 'renal-complexity', title: 'RENAL / PADUA', category: 'renal',
+      subtitle: 'Complejidad anatómica, con escalas separadas.',
+      source: 'RENAL nephrometry 2009 · PADUA 2009',
+      fieldIds: ['scenario', 'renal_anatomy', 'renalSize', 'renalExo', 'renalNear', 'renalAp',
+        'renalLocation', 'renalHilar', 'padua_anatomy', 'paduaSize', 'paduaLong', 'paduaExo',
+        'paduaRim', 'paduaSinus', 'paduaCollecting', 'paduaAp']
+    },
+    {
+      id: 'leibovich', title: 'Leibovich 2003 / UISS localizado', category: 'renal',
+      subtitle: 'Modelos posnefrectomía separados y sin porcentajes locales.',
+      source: 'EAU RCC 2026 · Leibovich 2003 · UISS',
+      fieldIds: ['scenario', 'leibovich_path', 'leibPt', 'leibPn', 'leibSize', 'leibGrade',
+        'leibNecrosis', 'uiss_path', 'uissPt', 'uissN', 'uissM', 'uissGrade', 'uissEcog']
+    },
+    {
+      id: 'imdc', title: 'IMDC — carcinoma renal metastásico', category: 'renal',
+      subtitle: 'Pronóstico en carcinoma renal metastásico.', source: 'EAU RCC 2026 · IMDC',
+      fieldIds: ['imdc_factors', 'kps', 'time', 'hb', 'calcium', 'neut', 'platelets']
+    },
+    {
+      id: 'igcccg', title: 'IGCCCG testículo', category: 'testiculo',
+      subtitle: 'Riesgo en tumores germinales metastásicos.',
+      source: 'EAU Testicular Cancer 2026 · IGCCCG Update',
+      fieldIds: ['igcccg_context', 'histology', 'primary', 'nonPulmonary', 'afp',
+        'afpUpperLimit', 'hcg', 'ldhRatio']
+    }
+  ]);
+});
+
+test('renal, Leibovich and IGCCCG open without clinical defaults while preserving examples', () => {
+  const renal = evaluateCalculator(RENAL_COMPLEXITY_CALCULATOR);
+  equal(renal.status, 'invalid');
+  equal(renal.values['scenario'], 'renal');
+  deepEqual(renal.issues.map((issue) => issue.fieldId),
+    ['renalSize', 'renalExo', 'renalNear', 'renalAp', 'renalLocation']);
+  const renalSize = RENAL_COMPLEXITY_CALCULATOR.fields.find((field) => field.id === 'renalSize');
+  equal(renalSize?.kind === 'number' ? renalSize.exampleValue : null, 3.2);
+
+  const leibovich = evaluateCalculator(LEIBOVICH_CALCULATOR);
+  equal(leibovich.status, 'invalid');
+  equal(leibovich.values['scenario'], 'leibovich');
+  deepEqual(leibovich.issues.map((issue) => issue.fieldId), ['leibPt', 'leibSize', 'leibGrade']);
+
+  const igcccg = evaluateCalculator(IGCCCG_CALCULATOR);
+  equal(igcccg.status, 'invalid');
+  deepEqual(igcccg.issues.map((issue) => issue.fieldId),
+    ['histology', 'primary', 'afp', 'afpUpperLimit', 'hcg', 'ldhRatio']);
+  const histology = IGCCCG_CALCULATOR.fields.find((field) => field.id === 'histology');
+  equal(histology?.kind === 'select' ? histology.exampleValue : null, 'nonseminoma');
+});
+
+test('RENAL golden minimum preserves descriptor, suffix and explanatory output', () => {
+  const evaluation = evaluateCalculator(RENAL_COMPLEXITY_CALCULATOR, renalInput());
+  deepEqual(evaluation.result, {
+    title: 'RENAL 4x: complejidad baja',
+    detail: 'Resultado anatómico de la escala seleccionada; no es una probabilidad de malignidad ni de complicaciones.',
+    badge: 'RENAL', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'RENAL', value: '4x' },
+      { label: 'Complejidad', value: 'baja' },
+      { label: 'Tamaño', value: '3.2 cm' }
+    ],
+    notes: [
+      'RENAL total 4–12: 4–6 baja, 7–9 moderada, 10–12 alta.',
+      'Corroborar cada descriptor en imágenes multiplanares con contraste cuando sea posible.'
+    ]
+  });
+});
+
+test('RENAL preserves totals 6, 7, 9 and 10 and the exact 4/7 cm size borders', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{ renalSize: 4, renalLocation: '3' }, 'RENAL 6x: complejidad baja'],
+    [{ renalSize: 4.1, renalLocation: '3' }, 'RENAL 7x: complejidad moderada'],
+    [{ renalSize: 6.9, renalExo: '2', renalNear: '2', renalLocation: '3' },
+      'RENAL 9x: complejidad moderada'],
+    [{ renalSize: 7, renalExo: '2', renalNear: '2', renalLocation: '3' },
+      'RENAL 10x: complejidad alta']
+  ];
+  for (const [overrides, expectedTitle] of cases) {
+    equal(evaluateCalculator(RENAL_COMPLEXITY_CALCULATOR, renalInput(overrides)).result.title,
+      expectedTitle);
+  }
+  const hilar = evaluateCalculator(RENAL_COMPLEXITY_CALCULATOR,
+    renalInput({ renalAp: 'p', renalHilar: true }));
+  equal(hilar.result.title, 'RENAL 4ph: complejidad baja');
+  equal(hilar.result.metrics[0]?.value, '4ph');
+});
+
+test('PADUA golden minimum and 4/7 cm size borders preserve totals 6 through 10', () => {
+  const minimum = evaluateCalculator(RENAL_COMPLEXITY_CALCULATOR, paduaInput());
+  equal(minimum.result.title, 'PADUA 6x: complejidad baja');
+  deepEqual(minimum.result.notes, [
+    'PADUA total 6–14: 6–7 baja, 8–9 moderada, ≥10 alta.',
+    'Corroborar cada descriptor en imágenes multiplanares con contraste cuando sea posible.'
+  ]);
+  const cases: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{ paduaSize: 4.1 }, 'PADUA 7x: complejidad baja'],
+    [{ paduaSize: 7 }, 'PADUA 7x: complejidad baja'],
+    [{ paduaSize: 7.1 }, 'PADUA 8x: complejidad moderada'],
+    [{ paduaSize: 7.1, paduaLong: '2' }, 'PADUA 9x: complejidad moderada'],
+    [{ paduaSize: 7.1, paduaLong: '2', paduaRim: '2' }, 'PADUA 10x: complejidad alta']
+  ];
+  for (const [overrides, expectedTitle] of cases) {
+    equal(evaluateCalculator(RENAL_COMPLEXITY_CALCULATOR, paduaInput(overrides)).result.title,
+      expectedTitle);
+  }
+  equal(evaluateCalculator(RENAL_COMPLEXITY_CALCULATOR,
+    paduaInput({ paduaAp: 'a' })).result.metrics[0]?.value, '6a');
+});
+
+test('RENAL and PADUA keep scenarios isolated and enforce browser constraints', () => {
+  const paduaBlank = evaluateCalculator(RENAL_COMPLEXITY_CALCULATOR, { scenario: 'padua' });
+  deepEqual(paduaBlank.issues.map((issue) => issue.fieldId),
+    ['paduaSize', 'paduaLong', 'paduaExo', 'paduaRim', 'paduaSinus', 'paduaCollecting', 'paduaAp']);
+  const below = evaluateCalculator(RENAL_COMPLEXITY_CALCULATOR, renalInput({ renalSize: 0 }));
+  deepEqual(below.issues.map((issue) => issue.code), ['below-minimum']);
+  const step = evaluateCalculator(RENAL_COMPLEXITY_CALCULATOR, renalInput({ renalSize: 3.25 }));
+  deepEqual(step.issues.map((issue) => issue.code), ['step-mismatch']);
+  const unknown = evaluateCalculator(RENAL_COMPLEXITY_CALCULATOR, renalInput({ renalAp: 'posterior' }));
+  deepEqual(unknown.issues.map((issue) => issue.code), ['unknown-option']);
+});
+
+test('Leibovich golden output preserves totals 2, 3, 5 and 6 category borders', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string][] = [
+    [{ leibPt: 'pt1b' }, 'Leibovich 2: riesgo bajo', 'good'],
+    [{ leibPt: 'pt2' }, 'Leibovich 3: riesgo intermedio', 'warn'],
+    [{ leibPt: 'pt3', leibNecrosis: true }, 'Leibovich 5: riesgo intermedio', 'warn'],
+    [{ leibPt: 'pt3', leibPn: true }, 'Leibovich 6: riesgo alto', 'bad']
+  ];
+  for (const [overrides, expectedTitle, expectedSeverity] of cases) {
+    const evaluation = evaluateCalculator(LEIBOVICH_CALCULATOR, leibovichInput(overrides));
+    equal(evaluation.result.title, expectedTitle);
+    equal(evaluation.result.severity, expectedSeverity);
+  }
+  const golden = evaluateCalculator(LEIBOVICH_CALCULATOR, leibovichInput({ leibPt: 'pt1b' }));
+  equal(golden.result.detail, 'Puntaje determinístico publicado para ccRCC M0 operado.');
+  deepEqual(golden.result.notes, [
+    'Aplicar sólo a carcinoma renal de células claras, M0, después de cirugía.',
+    'El grupo estratifica recurrencia; no indica por sí solo adyuvancia.'
+  ]);
+});
+
+test('Leibovich uses the inclusive 10 cm threshold and independent point components', () => {
+  const below = evaluateCalculator(LEIBOVICH_CALCULATOR,
+    leibovichInput({ leibPt: 'pt1a', leibGrade: '1', leibSize: 9.9 }));
+  equal(below.result.metrics[0]?.value, 0);
+  const at = evaluateCalculator(LEIBOVICH_CALCULATOR,
+    leibovichInput({ leibPt: 'pt1a', leibGrade: '1', leibSize: 10 }));
+  equal(at.result.metrics[0]?.value, 1);
+  const maximum = evaluateCalculator(LEIBOVICH_CALCULATOR, leibovichInput({
+    leibPt: 'pt4', leibPn: true, leibSize: 10, leibGrade: '4', leibNecrosis: true
+  }));
+  equal(maximum.result.title, 'Leibovich 11: riesgo alto');
+});
+
+test('UISS preserves low, intermediate and high localized borders', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{ uissPt: 'pt1a', uissGrade: '2', uissEcog: '0' }, 'UISS: Bajo riesgo'],
+    [{ uissPt: 'pt1a', uissGrade: '2', uissEcog: '1' }, 'UISS: Riesgo intermedio'],
+    [{ uissPt: 'pt3', uissGrade: '2', uissEcog: '0' }, 'UISS: Riesgo intermedio'],
+    [{ uissPt: 'pt3', uissGrade: '2', uissEcog: '1' }, 'UISS: Alto riesgo'],
+    [{ uissPt: 'pt4', uissGrade: '1', uissEcog: '0' }, 'UISS: Alto riesgo']
+  ];
+  for (const [overrides, expectedTitle] of cases) {
+    const evaluation = evaluateCalculator(LEIBOVICH_CALCULATOR, uissInput(overrides));
+    equal(evaluation.result.title, expectedTitle);
+    equal(evaluation.result.severity, 'info');
+  }
+});
+
+test('UISS keeps N-positive and M1 outside its localized summary', () => {
+  for (const overrides of [{ uissN: 'nplus' }, { uissM: 'm1' }]) {
+    const evaluation = evaluateCalculator(LEIBOVICH_CALCULATOR, uissInput(overrides));
+    equal(evaluation.result.title, 'UISS: No corresponde al UISS localizado');
+    equal(evaluation.result.detail,
+      'Esta versión resumida no clasifica N+ o M1 como enfermedad localizada.');
+  }
+  const switchedBlank = evaluateCalculator(LEIBOVICH_CALCULATOR, { scenario: 'uiss' });
+  deepEqual(switchedBlank.issues.map((issue) => issue.fieldId),
+    ['uissPt', 'uissN', 'uissM', 'uissGrade', 'uissEcog']);
+});
+
+test('IMDC accepts an empty checkbox form and preserves 0, 1, 2, 3 and 6 factor groups', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string, string][] = [
+    [{}, 'IMDC favorable', '0 / 6', 'good'],
+    [{ kps: true }, 'IMDC intermedio', '1 / 6', 'warn'],
+    [{ kps: true, time: true }, 'IMDC intermedio', '2 / 6', 'warn'],
+    [{ kps: true, time: true, hb: true }, 'IMDC pobre', '3 / 6', 'bad'],
+    [{ kps: true, time: true, hb: true, calcium: true, neut: true, platelets: true },
+      'IMDC pobre', '6 / 6', 'bad']
+  ];
+  for (const [input, expectedTitle, expectedFactors, expectedSeverity] of cases) {
+    const evaluation = evaluateCalculator(IMDC_CALCULATOR, input);
+    equal(evaluation.status, 'calculated');
+    equal(evaluation.result.title, expectedTitle);
+    equal(evaluation.result.metrics[0]?.value, expectedFactors);
+    equal(evaluation.result.severity, expectedSeverity);
+  }
+  equal(evaluateCalculator(IMDC_CALCULATOR, { neut: true }).result.detail,
+    '1 de 6 factores adversos.');
+});
+
+test('IGCCCG golden nonseminoma S1 output preserves contemporary population outcomes', () => {
+  const evaluation = evaluateCalculator(IGCCCG_CALCULATOR, igcccgInput());
+  deepEqual(evaluation.result, {
+    title: 'IGCCCG: buen pronóstico',
+    detail: 'No seminoma, grupo clásico S1.',
+    badge: 'IGCCCG', score: 0, showScore: false, severity: 'good',
+    metrics: [
+      { label: 'S', value: 'S1' },
+      { label: 'PFS 5 años', value: '90% poblacional' },
+      { label: 'Supervivencia 5 años', value: '96% poblacional' },
+      { label: 'Sitio primario', value: 'testis' }
+    ],
+    notes: [
+      'Clasificar antes de iniciar quimioterapia.',
+      'Los porcentajes son resultados de grupos poblacionales contemporáneos, no una predicción individual.',
+      'Confirmar LDH, AFP, hCG, sitio primario y metástasis viscerales inmediatamente antes de primera línea.'
+    ]
+  });
+});
+
+test('IGCCCG preserves every inclusive S2 and strict S3 marker border', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{ afp: 999 }, 'S1'], [{ afp: 1000 }, 'S2'], [{ afp: 10000 }, 'S2'], [{ afp: 10001 }, 'S3'],
+    [{ hcg: 4999 }, 'S1'], [{ hcg: 5000 }, 'S2'], [{ hcg: 50000 }, 'S2'], [{ hcg: 50001 }, 'S3'],
+    [{ ldhRatio: 1.4 }, 'S1'], [{ ldhRatio: 1.5 }, 'S2'], [{ ldhRatio: 10 }, 'S2'],
+    [{ ldhRatio: 10.1 }, 'S3']
+  ];
+  for (const [override, expectedMarker] of cases) {
+    const evaluation = evaluateCalculator(IGCCCG_CALCULATOR,
+      igcccgInput({ afp: 0, hcg: 0, ldhRatio: 0, ...override }));
+    equal(evaluation.result.metrics[0]?.value, expectedMarker);
+  }
+});
+
+test('IGCCCG nonseminoma maps S2 to intermediate and every poor criterion to unfavorable', () => {
+  const intermediate = evaluateCalculator(IGCCCG_CALCULATOR,
+    igcccgInput({ afp: 1000, hcg: 0, ldhRatio: 0 }));
+  equal(intermediate.result.title, 'IGCCCG: pronóstico intermedio');
+  deepEqual(intermediate.result.metrics.slice(1, 3), [
+    { label: 'PFS 5 años', value: '78% poblacional' },
+    { label: 'Supervivencia 5 años', value: '89% poblacional' }
+  ]);
+  for (const overrides of [
+    { primary: 'mediastinal' },
+    { nonPulmonary: true },
+    { afp: 10001 }
+  ]) {
+    const poor = evaluateCalculator(IGCCCG_CALCULATOR,
+      igcccgInput({ afp: 0, hcg: 0, ldhRatio: 0, ...overrides }));
+    equal(poor.result.title, 'IGCCCG: pronóstico desfavorable');
+    equal(poor.result.metrics[1]?.value, '54% poblacional');
+    equal(poor.result.metrics[2]?.value, '67% poblacional');
+  }
+});
+
+test('IGCCCG rejects nonseminoma other primary only until a poor criterion is present', () => {
+  const unclassified = evaluateCalculator(IGCCCG_CALCULATOR, igcccgInput({
+    primary: 'other', afp: 0, hcg: 0, ldhRatio: 0
+  }));
+  equal(unclassified.result.title, 'Sitio primario fuera de la clasificación clásica IGCCCG');
+  equal(unclassified.result.badge, 'no clasificable');
+  equal(unclassified.result.detail,
+    'El perfil no entra en una categoría clásica sin aclarar el sitio primario.');
+  const poor = evaluateCalculator(IGCCCG_CALCULATOR, igcccgInput({
+    primary: 'other', nonPulmonary: true, afp: 0, hcg: 0, ldhRatio: 0
+  }));
+  equal(poor.result.title, 'IGCCCG: pronóstico desfavorable');
+});
+
+test('IGCCCG seminoma accepts AFP equal to ULN and rejects only AFP above it', () => {
+  const equalLimit = evaluateCalculator(IGCCCG_CALCULATOR,
+    igcccgInput({ histology: 'seminoma', afp: 10, afpUpperLimit: 10 }));
+  equal(equalLimit.result.title, 'IGCCCG: buen pronóstico');
+  const above = evaluateCalculator(IGCCCG_CALCULATOR,
+    igcccgInput({ histology: 'seminoma', afp: 11, afpUpperLimit: 10 }));
+  equal(above.result.title, 'No clasificable como seminoma puro: AFP elevada');
+  equal(above.result.detail,
+    'Revisar histología, componente no seminomatoso y otras causas de AFP elevada.');
+  deepEqual(above.result.metrics, [
+    { label: 'AFP', value: 11 }, { label: 'LSN AFP', value: 10 }
+  ]);
+});
+
+test('IGCCCG seminoma preserves visceral group and strict LDH warning border', () => {
+  const at = evaluateCalculator(IGCCCG_CALCULATOR, igcccgInput({
+    histology: 'seminoma', afp: 0, hcg: 0, ldhRatio: 2.5
+  }));
+  equal(at.result.title, 'IGCCCG: buen pronóstico');
+  equal(String(at.result.notes[1]).startsWith('Los porcentajes'), true);
+  const above = evaluateCalculator(IGCCCG_CALCULATOR, igcccgInput({
+    histology: 'seminoma', afp: 0, hcg: 0, ldhRatio: 2.6
+  }));
+  equal(above.result.title, 'IGCCCG: buen pronóstico');
+  equal(above.result.metrics[0]?.value, 'S2');
+  equal(String(above.result.notes[1]).startsWith(
+    'Seminoma de buen grupo clásico con LDH >2,5× LSN'), true);
+  const visceral = evaluateCalculator(IGCCCG_CALCULATOR, igcccgInput({
+    histology: 'seminoma', nonPulmonary: true, afp: 0, hcg: 0, ldhRatio: 0
+  }));
+  equal(visceral.result.title, 'IGCCCG: pronóstico intermedio');
+  equal(visceral.result.metrics[1]?.value, '79% poblacional');
+  equal(visceral.result.metrics[2]?.value, '88% poblacional');
+});
+
+test('ported 20 to 23 preserve input validity and contain typed text only', () => {
+  const invalid = evaluateCalculator(IGCCCG_CALCULATOR, igcccgInput({ ldhRatio: 1.55 }));
+  deepEqual(invalid.issues.map((issue) => issue.code), ['step-mismatch']);
+  const below = evaluateCalculator(IGCCCG_CALCULATOR, igcccgInput({ afpUpperLimit: 0 }));
+  deepEqual(below.issues.map((issue) => issue.code), ['below-minimum']);
+  const unknown = evaluateCalculator(LEIBOVICH_CALCULATOR, leibovichInput({ leibGrade: '5' }));
+  deepEqual(unknown.issues.map((issue) => issue.code), ['unknown-option']);
+  const results = [
+    evaluateCalculator(RENAL_COMPLEXITY_CALCULATOR, renalInput()).result,
+    evaluateCalculator(LEIBOVICH_CALCULATOR, leibovichInput()).result,
+    evaluateCalculator(IMDC_CALCULATOR).result,
+    evaluateCalculator(IGCCCG_CALCULATOR, igcccgInput()).result
+  ];
+  for (const current of results) assertNoRawMarkup(current.notes);
+});
+
+test('ported 24 to 27 preserve canonical metadata and complete field order', () => {
+  deepEqual([
+    RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    ANC_CTCAE_V6_CALCULATOR,
+    KHORANA_VTE_CALCULATOR,
+    MASCC_FEBRILE_NEUTROPENIA_CALCULATOR
+  ].map((definition) => ({
+    id: definition.id,
+    title: definition.title,
+    category: definition.category,
+    subtitle: definition.subtitle,
+    source: definition.source,
+    fieldIds: definition.fields.map((field) => field.id)
+  })), [
+    {
+      id: 'renal-function-oncology',
+      title: 'Función renal: Cockcroft–Gault y CKD-EPI 2021',
+      category: 'general',
+      subtitle: 'Dos estimaciones en paralelo, con método y unidades visibles.',
+      source: 'Cockcroft–Gault; CKD-EPI 2021',
+      fieldIds: ['renal_scope', 'renal_age', 'renal_sex', 'renal_weight', 'renal_creatinine',
+        'renal_cystatin', 'renal_bsa']
+    },
+    {
+      id: 'anc-ctcae-v6',
+      title: 'Recuento absoluto de neutrófilos — CTCAE v6',
+      category: 'general',
+      subtitle: 'ANC calculado y grado de neutrófilos disminuidos.',
+      source: 'NCI CTCAE v6.0 (2025)',
+      fieldIds: ['anc_wbc', 'anc_segmented', 'anc_bands']
+    },
+    {
+      id: 'khorana-vte',
+      title: 'Khorana — riesgo de VTE',
+      category: 'general',
+      subtitle: 'Estratificación basal antes de tratamiento sistémico ambulatorio.',
+      source: 'Khorana et al.',
+      fieldIds: ['khorana_site', 'khorana_platelets', 'khorana_hgb', 'khorana_wbc',
+        'khorana_bmi', 'khorana_esa']
+    },
+    {
+      id: 'mascc-febrile-neutropenia',
+      title: 'MASCC — neutropenia febril',
+      category: 'general',
+      subtitle: 'Riesgo de complicaciones una vez presente la neutropenia febril.',
+      source: 'MASCC Risk Index',
+      fieldIds: ['mascc_scope', 'mascc_burden', 'mascc_no_hypotension', 'mascc_no_copd',
+        'mascc_tumor_fungal', 'mascc_no_dehydration', 'mascc_outpatient', 'mascc_age_under_60']
+    }
+  ]);
+});
+
+test('ported 24 to 27 open blank and keep factory values only as examples', () => {
+  const renal = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR);
+  deepEqual(renal.issues.map((issue) => issue.fieldId),
+    ['renal_age', 'renal_sex', 'renal_weight', 'renal_creatinine']);
+  equal(renal.values['renal_cystatin'], '');
+  equal(renal.values['renal_bsa'], '');
+  const renalAge = RENAL_FUNCTION_ONCOLOGY_CALCULATOR.fields.find((field) =>
+    field.id === 'renal_age');
+  equal(renalAge?.kind === 'number' ? renalAge.exampleValue : null, 65);
+  const optionalCystatin = RENAL_FUNCTION_ONCOLOGY_CALCULATOR.fields.find((field) =>
+    field.id === 'renal_cystatin');
+  equal(optionalCystatin?.kind === 'number' ? optionalCystatin.exampleValue : null, undefined);
+
+  deepEqual(evaluateCalculator(ANC_CTCAE_V6_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['anc_wbc', 'anc_segmented', 'anc_bands']);
+  deepEqual(evaluateCalculator(KHORANA_VTE_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['khorana_site', 'khorana_platelets', 'khorana_hgb', 'khorana_wbc', 'khorana_bmi']);
+  deepEqual(evaluateCalculator(MASCC_FEBRILE_NEUTROPENIA_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['mascc_burden']);
+  const burden = MASCC_FEBRILE_NEUTROPENIA_CALCULATOR.fields.find((field) =>
+    field.id === 'mascc_burden');
+  equal(burden?.kind === 'select' ? burden.exampleValue : null, '5');
+  equal(burden?.initialValue, '');
+});
+
+test('renal function golden creatinine-only result keeps methods and units separate', () => {
+  const evaluation = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput());
+  deepEqual(evaluation.result, {
+    title: 'CrCl 57.6 mL/min · eGFR 62.5 mL/min/1,73 m²',
+    detail: 'Los resultados no son intercambiables: identificar qué estimación exige el protocolo o el prospecto del fármaco.',
+    badge: 'función renal', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'Cockcroft–Gault', value: '57.6 mL/min' },
+      { label: 'CKD-EPI 2021 creatinina', value: '62.5 mL/min/1,73 m²' },
+      { label: 'Peso usado en CG', value: '65.0 kg' }
+    ],
+    notes: [
+      'CKD-EPI está indexado a 1,73 m²; para una dosis que requiera GFR absoluta debe informarse la superficie corporal y desindexarse.',
+      'Creatinina no estable, sarcopenia, caquexia, amputaciones o tamaño corporal extremo pueden volver imprecisas ambas estimaciones.',
+      'Cerca de un punto de corte clínico, considerar cistatina C o GFR medida según disponibilidad y protocolo.'
+    ]
+  });
+});
+
+test('renal function switches to combined CKD-EPI and desindexes only with supplied BSA', () => {
+  const evaluation = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_cystatin: 1, renal_bsa: 1.8 }));
+  equal(evaluation.result.title, 'CrCl 57.6 mL/min · eGFR 69.8 mL/min/1,73 m²');
+  deepEqual(evaluation.result.metrics, [
+    { label: 'Cockcroft–Gault', value: '57.6 mL/min' },
+    { label: 'CKD-EPI 2021 creatinina-cistatina C', value: '69.8 mL/min/1,73 m²' },
+    { label: 'GFR absoluta desindexada', value: '72.6 mL/min' },
+    { label: 'Peso usado en CG', value: '65.0 kg' }
+  ]);
+  equal(evaluation.result.notes[0],
+    'La GFR absoluta se obtuvo como eGFR × superficie corporal / 1,73.');
+});
+
+test('renal function preserves CKD-EPI piecewise knots for creatinine and cystatin C', () => {
+  const femaleCreatinine = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_creatinine: 0.7 }));
+  equal(femaleCreatinine.result.metrics[1]?.value, '95.9 mL/min/1,73 m²');
+  const maleCreatinine = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_sex: 'male', renal_creatinine: 0.9 }));
+  equal(maleCreatinine.result.metrics[1]?.value, '94.8 mL/min/1,73 m²');
+  const femaleCombined = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_creatinine: 0.7, renal_cystatin: 0.8 }));
+  equal(femaleCombined.result.metrics[1]?.value, '100.8 mL/min/1,73 m²');
+  const maleCombined = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_sex: 'male', renal_creatinine: 0.9, renal_cystatin: 0.8 }));
+  equal(maleCombined.result.metrics[1]?.value, '104.7 mL/min/1,73 m²');
+});
+
+test('renal function preserves sex factor and adult-age boundaries', () => {
+  const male = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_sex: 'male' }));
+  equal(male.result.title, 'CrCl 67.7 mL/min · eGFR 83.5 mL/min/1,73 m²');
+  equal(evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_age: 18, renal_sex: 'male', renal_weight: 70 })).status, 'calculated');
+  equal(evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_age: 139, renal_sex: 'male', renal_weight: 70 })).status, 'calculated');
+  for (const age of [17, 140]) {
+    const invalidAge = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+      renalOncologyInput({ renal_age: age }));
+    equal(invalidAge.status, 'invalid');
+    equal(invalidAge.issues[0]?.fieldId, 'renal_age');
+  }
+});
+
+test('renal optional inputs stay optional but enforce declared limits and increments when supplied', () => {
+  equal(evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_cystatin: '', renal_bsa: '' })).status, 'calculated');
+  const cystatinBelow = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_cystatin: 0 }));
+  deepEqual(cystatinBelow.issues.map((issue) => issue.code), ['below-minimum']);
+  const bsaAbove = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_bsa: 4.01 }));
+  deepEqual(bsaAbove.issues.map((issue) => issue.code), ['above-maximum']);
+  const weightStep = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_weight: 65.05 }));
+  deepEqual(weightStep.issues.map((issue) => issue.code), ['step-mismatch']);
+});
+
+test('ANC golden result calculates cells per microliter and CTCAE grade', () => {
+  const evaluation = evaluateCalculator(ANC_CTCAE_V6_CALCULATOR, ancInput());
+  deepEqual(evaluation.result, {
+    title: 'ANC 1200 células/µL', detail: 'CTCAE grado 1', badge: 'CTCAE v6',
+    score: 0, showScore: false, severity: 'warn',
+    metrics: [
+      { label: 'ANC', value: '1200 células/µL' },
+      { label: 'Grado', value: 'CTCAE grado 1' }
+    ],
+    notes: [
+      'Usar el ANC directo del laboratorio cuando esté informado; esta fórmula es una estimación a partir del diferencial.',
+      'La neutropenia febril es un evento clínico separado y no puede inferirse únicamente con este valor.',
+      'Los límites de administración o modificación de un tratamiento dependen del esquema y del protocolo vigente.'
+    ]
+  });
+});
+
+test('ANC preserves strict CTCAE borders at 100, 500, 1000 and 1500 cells per microliter', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string, string][] = [
+    [{ anc_wbc: 1, anc_segmented: 9.9 }, 'ANC 99 células/µL', 'CTCAE grado 4', 'bad'],
+    [{ anc_wbc: 1, anc_segmented: 10 }, 'ANC 100 células/µL', 'CTCAE grado 3', 'bad'],
+    [{ anc_wbc: 1, anc_segmented: 49.9 }, 'ANC 499 células/µL', 'CTCAE grado 3', 'bad'],
+    [{ anc_wbc: 1, anc_segmented: 50 }, 'ANC 500 células/µL', 'CTCAE grado 2', 'warn'],
+    [{ anc_wbc: 1, anc_segmented: 99.9 }, 'ANC 999 células/µL', 'CTCAE grado 2', 'warn'],
+    [{ anc_wbc: 1, anc_segmented: 100 }, 'ANC 1000 células/µL', 'CTCAE grado 1', 'warn'],
+    [{ anc_wbc: 1.5, anc_segmented: 99.9 }, 'ANC 1499 células/µL', 'CTCAE grado 1', 'warn'],
+    [{ anc_wbc: 1.5, anc_segmented: 100 }, 'ANC 1500 células/µL', 'Sin grado CTCAE', 'good']
+  ];
+  for (const [overrides, expectedTitle, expectedDetail, expectedSeverity] of cases) {
+    const evaluation = evaluateCalculator(ANC_CTCAE_V6_CALCULATOR,
+      ancInput({ anc_bands: 0, ...overrides }));
+    equal(evaluation.result.title, expectedTitle);
+    equal(evaluation.result.detail, expectedDetail);
+    equal(evaluation.result.severity, expectedSeverity);
+  }
+});
+
+test('ANC rejects a differential over 100 percent and preserves custom rule message', () => {
+  const evaluation = evaluateCalculator(ANC_CTCAE_V6_CALCULATOR,
+    ancInput({ anc_segmented: 60, anc_bands: 40.1 }));
+  equal(evaluation.status, 'calculated');
+  deepEqual(evaluation.result, {
+    title: 'Datos incompletos',
+    detail: 'Revisar: suma de segmentados y bandas ≤100%.',
+    badge: 'ANC / CTCAE v6', score: 0, showScore: false, severity: 'warn',
+    metrics: [], notes: ['Corregir los datos antes de interpretar el resultado.']
+  });
+});
+
+test('ANC preserves the legacy raw-grade versus rounded-display inconsistency', () => {
+  const evaluation = evaluateCalculator(ANC_CTCAE_V6_CALCULATOR,
+    ancInput({ anc_wbc: 1.02, anc_segmented: 49, anc_bands: 0 }));
+  equal(evaluation.result.title, 'ANC 500 células/µL');
+  equal(evaluation.result.detail, 'CTCAE grado 3');
+});
+
+test('Khorana golden zero case preserves original category and component count', () => {
+  const evaluation = evaluateCalculator(KHORANA_VTE_CALCULATOR, khoranaInput());
+  deepEqual(evaluation.result, {
+    title: 'Khorana 0 · riesgo bajo',
+    detail: 'Clasificación original: 0 bajo, 1–2 intermedio y ≥3 alto.',
+    badge: 'VTE ambulatorio', score: 0, showScore: false, severity: 'good',
+    metrics: [
+      { label: 'Puntaje', value: 0 },
+      { label: 'Categoría original', value: 'bajo' },
+      { label: 'Componentes con puntos', value: 0 }
+    ],
+    notes: [
+      'Población: pacientes ambulatorios con cáncer antes de comenzar quimioterapia sistémica.',
+      'El umbral moderno ≥2 abre una evaluación clínica individual; no indica anticoagulación automática.',
+      'Valorar por separado hemorragia, interacciones, función renal, tipo de cáncer y situación clínica.'
+    ]
+  });
+});
+
+test('Khorana preserves site weights and original 0, 1-2 and at least 3 categories', () => {
+  for (const site of ['stomach', 'pancreas']) {
+    const evaluation = evaluateCalculator(KHORANA_VTE_CALCULATOR, khoranaInput({ khorana_site: site }));
+    equal(evaluation.result.title, 'Khorana 2 · riesgo intermedio');
+    equal(evaluation.result.metrics[2]?.value, 1);
+  }
+  for (const site of ['lung', 'lymphoma', 'gynecologic', 'bladder', 'testicular']) {
+    equal(evaluateCalculator(KHORANA_VTE_CALCULATOR,
+      khoranaInput({ khorana_site: site })).result.title, 'Khorana 1 · riesgo intermedio');
+  }
+  equal(evaluateCalculator(KHORANA_VTE_CALCULATOR,
+    khoranaInput({ khorana_site: 'other' })).result.title, 'Khorana 0 · riesgo bajo');
+  equal(evaluateCalculator(KHORANA_VTE_CALCULATOR, khoranaInput({
+    khorana_site: 'stomach', khorana_platelets: 350
+  })).result.title, 'Khorana 3 · riesgo alto');
+});
+
+test('Khorana preserves every laboratory and BMI border', () => {
+  const cases: readonly [string, number, number, number][] = [
+    ['khorana_platelets', 349, 350, 1],
+    ['khorana_hgb', 10, 9.9, 1],
+    ['khorana_wbc', 11, 11.1, 1],
+    ['khorana_bmi', 34.9, 35, 1]
+  ];
+  for (const [fieldId, noPointValue, pointValue, expected] of cases) {
+    equal(evaluateCalculator(KHORANA_VTE_CALCULATOR,
+      khoranaInput({ [fieldId]: noPointValue })).result.metrics[0]?.value, 0);
+    equal(evaluateCalculator(KHORANA_VTE_CALCULATOR,
+      khoranaInput({ [fieldId]: pointValue })).result.metrics[0]?.value, expected);
+  }
+  equal(evaluateCalculator(KHORANA_VTE_CALCULATOR,
+    khoranaInput({ khorana_esa: true })).result.metrics[0]?.value, 1);
+  equal(evaluateCalculator(KHORANA_VTE_CALCULATOR,
+    khoranaInput({ khorana_hgb: 9.9, khorana_esa: true })).result.metrics[0]?.value, 1);
+});
+
+test('Khorana maximum counts five positive components despite a six-point total', () => {
+  const evaluation = evaluateCalculator(KHORANA_VTE_CALCULATOR, khoranaInput({
+    khorana_site: 'stomach', khorana_platelets: 350, khorana_hgb: 9.9,
+    khorana_wbc: 11.1, khorana_bmi: 35, khorana_esa: true
+  }));
+  equal(evaluation.result.title, 'Khorana 6 · riesgo alto');
+  deepEqual(evaluation.result.metrics, [
+    { label: 'Puntaje', value: 6 },
+    { label: 'Categoría original', value: 'alto' },
+    { label: 'Componentes con puntos', value: 5 }
+  ]);
+});
+
+test('MASCC preserves 20/21 threshold and maximum 26', () => {
+  const twenty = evaluateCalculator(MASCC_FEBRILE_NEUTROPENIA_CALCULATOR, masccInput({
+    mascc_burden: '5', mascc_no_hypotension: true, mascc_no_copd: true,
+    mascc_no_dehydration: true, mascc_outpatient: true
+  }));
+  equal(twenty.result.title, 'MASCC 20/26');
+  equal(twenty.result.detail, 'alto riesgo por MASCC');
+  equal(twenty.result.metrics[1]?.value, '<21');
+  equal(twenty.result.severity, 'bad');
+
+  const twentyOne = evaluateCalculator(MASCC_FEBRILE_NEUTROPENIA_CALCULATOR,
+    masccInput({ mascc_burden: '0', mascc_no_hypotension: true, mascc_no_copd: true,
+      mascc_tumor_fungal: true, mascc_no_dehydration: true, mascc_outpatient: true,
+      mascc_age_under_60: true }));
+  equal(twentyOne.result.title, 'MASCC 21/26');
+  equal(twentyOne.result.detail, 'bajo riesgo por MASCC');
+  equal(twentyOne.result.metrics[1]?.value, '≥21');
+
+  const maximum = evaluateCalculator(MASCC_FEBRILE_NEUTROPENIA_CALCULATOR,
+    masccInput({ mascc_burden: '5', mascc_no_hypotension: true, mascc_no_copd: true,
+      mascc_tumor_fungal: true, mascc_no_dehydration: true, mascc_outpatient: true,
+      mascc_age_under_60: true }));
+  deepEqual(maximum.result, {
+    title: 'MASCC 26/26', detail: 'bajo riesgo por MASCC', badge: 'neutropenia febril',
+    score: 0, showScore: false, severity: 'good',
+    metrics: [{ label: 'Puntaje', value: '26/26' }, { label: 'Umbral', value: '≥21' }],
+    notes: [
+      'Un resultado de bajo riesgo no reemplaza estabilidad, examen, foco infeccioso, comorbilidades ni condiciones para seguimiento.',
+      'No usar como predictor de neutropenia antes de la quimioterapia.',
+      'No define por sí solo internación, vía antibiótica ni alta.'
+    ]
+  });
+});
+
+test('MASCC preserves the severe-burden contradiction and requires clinical precedence', () => {
+  const contradictory = evaluateCalculator(MASCC_FEBRILE_NEUTROPENIA_CALCULATOR,
+    masccInput({ mascc_burden: '0', mascc_no_hypotension: true, mascc_no_copd: true,
+      mascc_tumor_fungal: true, mascc_no_dehydration: true, mascc_outpatient: true,
+      mascc_age_under_60: true }));
+  equal(contradictory.result.title, 'MASCC 21/26');
+  equal(contradictory.result.detail, 'bajo riesgo por MASCC');
+  equal(MASCC_FEBRILE_NEUTROPENIA_CALCULATOR.fields[0]?.label,
+    'Aplicar después de identificar neutropenia febril. La impresión de inestabilidad clínica prevalece sobre el puntaje.');
+});
+
+test('ported 24 to 27 reject unknown selectors and contain typed text only', () => {
+  const unknownSex = evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR,
+    renalOncologyInput({ renal_sex: 'other' }));
+  deepEqual(unknownSex.issues.map((issue) => issue.code), ['unknown-option']);
+  const unknownBurden = evaluateCalculator(MASCC_FEBRILE_NEUTROPENIA_CALCULATOR,
+    masccInput({ mascc_burden: '4' }));
+  deepEqual(unknownBurden.issues.map((issue) => issue.code), ['unknown-option']);
+  const results = [
+    evaluateCalculator(RENAL_FUNCTION_ONCOLOGY_CALCULATOR, renalOncologyInput()).result,
+    evaluateCalculator(ANC_CTCAE_V6_CALCULATOR, ancInput()).result,
+    evaluateCalculator(KHORANA_VTE_CALCULATOR, khoranaInput()).result,
+    evaluateCalculator(MASCC_FEBRILE_NEUTROPENIA_CALCULATOR,
+      masccInput({ mascc_burden: '5' })).result
+  ];
+  for (const current of results) assertNoRawMarkup(current.notes);
+});
+
+test('ported 28 to 31 preserve canonical metadata, short title and field order', () => {
+  deepEqual([
+    CISNE_FEBRILE_NEUTROPENIA_CALCULATOR,
+    PALLIATIVE_PROGNOSTIC_INDEX_CALCULATOR,
+    BED_EQD2_CALCULATOR,
+    QTC_FRIDERICIA_CALCULATOR
+  ].map((definition) => ({
+    id: definition.id,
+    title: definition.title,
+    shortTitle: definition.shortTitle ?? null,
+    category: definition.category,
+    subtitle: definition.subtitle,
+    source: definition.source,
+    fieldIds: definition.fields.map((field) => field.id)
+  })), [
+    {
+      id: 'cisne-febrile-neutropenia', title: 'CISNE — neutropenia febril estable',
+      shortTitle: null, category: 'general',
+      subtitle: 'Riesgo oculto de complicaciones en tumor sólido aparentemente estable.',
+      source: 'FINITE / CISNE',
+      fieldIds: ['cisne_scope', 'cisne_glucose', 'cisne_diabetes_steroids', 'cisne_ecog',
+        'cisne_copd', 'cisne_cardiovascular', 'cisne_mucositis', 'cisne_monocytes']
+    },
+    {
+      id: 'palliative-prognostic-index', title: 'Palliative Prognostic Index — PPI',
+      shortTitle: null, category: 'general',
+      subtitle: 'Señal pronóstica en cuidados paliativos avanzados.',
+      source: 'Palliative Prognostic Index',
+      fieldIds: ['ppi_pps', 'ppi_oral', 'ppi_edema', 'ppi_dyspnea', 'ppi_delirium']
+    },
+    {
+      id: 'bed-eqd2', title: 'BED y EQD2 del fraccionamiento', shortTitle: 'BED y EQD2',
+      category: 'radioterapia',
+      subtitle: 'Dosis física y equivalencia biológica con el modelo lineal-cuadrático.',
+      source: 'Modelo LQ · Pangea',
+      fieldIds: ['bed_scope', 'bed_fractions', 'bed_dose_fraction', 'bed_alpha_beta']
+    },
+    {
+      id: 'qtc-fridericia', title: 'QT corregido — Fridericia', shortTitle: null,
+      category: 'general', subtitle: 'QTcF para vigilancia cardio-oncológica.',
+      source: 'ESC Cardio-Oncology / Fridericia',
+      fieldIds: ['qtc_qt', 'qtc_hr', 'qtc_sex', 'qtc_baseline']
+    }
+  ]);
+});
+
+test('ported 28 to 31 open blank and retain factory values only as examples', () => {
+  deepEqual(evaluateCalculator(CISNE_FEBRILE_NEUTROPENIA_CALCULATOR).issues
+    .map((issue) => issue.fieldId), ['cisne_glucose']);
+  deepEqual(evaluateCalculator(PALLIATIVE_PROGNOSTIC_INDEX_CALCULATOR).issues
+    .map((issue) => issue.fieldId), ['ppi_pps', 'ppi_oral']);
+  deepEqual(evaluateCalculator(BED_EQD2_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['bed_fractions', 'bed_dose_fraction', 'bed_alpha_beta']);
+  const qtc = evaluateCalculator(QTC_FRIDERICIA_CALCULATOR);
+  deepEqual(qtc.issues.map((issue) => issue.fieldId), ['qtc_qt', 'qtc_hr', 'qtc_sex']);
+  equal(qtc.values['qtc_baseline'], '');
+  const cisneGlucose = CISNE_FEBRILE_NEUTROPENIA_CALCULATOR.fields.find((field) =>
+    field.id === 'cisne_glucose');
+  equal(cisneGlucose?.kind === 'number' ? cisneGlucose.exampleValue : null, 100);
+  const pps = PALLIATIVE_PROGNOSTIC_INDEX_CALCULATOR.fields.find((field) =>
+    field.id === 'ppi_pps');
+  equal(pps?.kind === 'select' ? pps.exampleValue : null, '50');
+  const baseline = QTC_FRIDERICIA_CALCULATOR.fields.find((field) =>
+    field.id === 'qtc_baseline');
+  equal(baseline?.kind === 'number' ? baseline.exampleValue : null, undefined);
+});
+
+test('CISNE golden zero case preserves scope, class and threshold', () => {
+  const evaluation = evaluateCalculator(CISNE_FEBRILE_NEUTROPENIA_CALCULATOR,
+    cisneInput());
+  deepEqual(evaluation.result, {
+    title: 'CISNE 0 · clase I · bajo',
+    detail: 'Umbral de hiperglucemia aplicado: 121 mg/dL.',
+    badge: 'FN estable', score: 0, showScore: false, severity: 'good',
+    metrics: [
+      { label: 'Puntaje', value: 0 },
+      { label: 'Clase', value: 'I · bajo' },
+      { label: 'Glucemia umbral', value: '121 mg/dL' }
+    ],
+    notes: [
+      'No aplicar a pacientes inestables, neoplasias hematológicas, trasplante o quimioterapia de alta intensidad.',
+      'CISNE busca evitar una falsa clasificación de bajo riesgo; no debe retrasar antibióticos.',
+      'El resultado no define automáticamente manejo ambulatorio o internación.'
+    ]
+  });
+});
+
+test('CISNE preserves glucose borders with and without diabetes or corticosteroids', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, number, string][] = [
+    [{ cisne_glucose: 120 }, 0, '121 mg/dL'],
+    [{ cisne_glucose: 121 }, 2, '121 mg/dL'],
+    [{ cisne_glucose: 249, cisne_diabetes_steroids: true }, 0, '250 mg/dL'],
+    [{ cisne_glucose: 250, cisne_diabetes_steroids: true }, 2, '250 mg/dL']
+  ];
+  for (const [overrides, expectedScore, expectedThreshold] of cases) {
+    const evaluation = evaluateCalculator(CISNE_FEBRILE_NEUTROPENIA_CALCULATOR,
+      cisneInput(overrides));
+    equal(evaluation.result.metrics[0]?.value, expectedScore);
+    equal(evaluation.result.metrics[2]?.value, expectedThreshold);
+  }
+  equal(evaluateCalculator(CISNE_FEBRILE_NEUTROPENIA_CALCULATOR,
+    cisneInput({ cisne_glucose: 121 })).result.title, 'CISNE 2 · clase II · intermedio');
+  equal(evaluateCalculator(CISNE_FEBRILE_NEUTROPENIA_CALCULATOR,
+    cisneInput({ cisne_glucose: 121, cisne_diabetes_steroids: true })).result.title,
+  'CISNE 0 · clase I · bajo');
+});
+
+test('CISNE preserves class borders 0, 1, 2 and 3 and maximum 8', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string][] = [
+    [{}, 'CISNE 0 · clase I · bajo', 'good'],
+    [{ cisne_copd: true }, 'CISNE 1 · clase II · intermedio', 'warn'],
+    [{ cisne_ecog: true }, 'CISNE 2 · clase II · intermedio', 'warn'],
+    [{ cisne_ecog: true, cisne_copd: true }, 'CISNE 3 · clase III · alto', 'bad'],
+    [{ cisne_glucose: 121, cisne_ecog: true, cisne_copd: true,
+      cisne_cardiovascular: true, cisne_mucositis: true, cisne_monocytes: true },
+    'CISNE 8 · clase III · alto', 'bad']
+  ];
+  for (const [overrides, expectedTitle, expectedSeverity] of cases) {
+    const evaluation = evaluateCalculator(CISNE_FEBRILE_NEUTROPENIA_CALCULATOR,
+      cisneInput(overrides));
+    equal(evaluation.result.title, expectedTitle);
+    equal(evaluation.result.severity, expectedSeverity);
+  }
+});
+
+test('PPI golden example preserves decimal format and population warning', () => {
+  const evaluation = evaluateCalculator(PALLIATIVE_PROGNOSTIC_INDEX_CALCULATOR,
+    ppiInput());
+  deepEqual(evaluation.result, {
+    title: 'PPI 2.5', detail: '≤4 · no cruza los puntos de corte originales',
+    badge: 'pronóstico paliativo', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'Puntaje', value: '2.5' },
+      { label: 'Lectura', value: '≤4 · no cruza los puntos de corte originales' }
+    ],
+    notes: [
+      'Los puntos de corte describen probabilidades observadas en cohortes; no predicen una fecha individual.',
+      'Delirium potencialmente reversible por medicación, infección o trastorno metabólico debe interpretarse con cautela.',
+      'No usar el PPI de forma aislada para limitar estudios, hidratación, derivación o tratamientos.'
+    ]
+  });
+});
+
+test('PPI preserves PPS and oral-intake point bands', () => {
+  const ppsCases: readonly [string, string][] = [
+    ['20', '4.0'], ['30', '2.5'], ['50', '2.5'], ['60', '0.0']
+  ];
+  for (const [pps, expected] of ppsCases) {
+    equal(evaluateCalculator(PALLIATIVE_PROGNOSTIC_INDEX_CALCULATOR,
+      ppiInput({ ppi_pps: pps })).result.metrics[0]?.value, expected);
+  }
+  const oralCases: readonly [string, string][] = [
+    ['normal', '0.0'], ['moderate', '1.0'], ['severe', '2.5']
+  ];
+  for (const [oral, expected] of oralCases) {
+    equal(evaluateCalculator(PALLIATIVE_PROGNOSTIC_INDEX_CALCULATOR,
+      ppiInput({ ppi_pps: '100', ppi_oral: oral })).result.metrics[0]?.value, expected);
+  }
+});
+
+test('PPI preserves strict thresholds at 4, 4.5, 6 and 6.5', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string][] = [
+    [{ ppi_pps: '100', ppi_delirium: true }, 'PPI 4.0',
+      '≤4 · no cruza los puntos de corte originales'],
+    [{ ppi_pps: '50', ppi_oral: 'moderate', ppi_edema: true }, 'PPI 4.5',
+      '>4 · cohorte original: alta probabilidad de supervivencia <6 semanas'],
+    [{ ppi_pps: '50', ppi_dyspnea: true }, 'PPI 6.0',
+      '>4 · cohorte original: alta probabilidad de supervivencia <6 semanas'],
+    [{ ppi_pps: '20', ppi_oral: 'severe' }, 'PPI 6.5',
+      '>6 · cohorte original: alta probabilidad de supervivencia <3 semanas']
+  ];
+  for (const [overrides, expectedTitle, expectedDetail] of cases) {
+    const evaluation = evaluateCalculator(PALLIATIVE_PROGNOSTIC_INDEX_CALCULATOR,
+      ppiInput(overrides));
+    equal(evaluation.result.title, expectedTitle);
+    equal(evaluation.result.detail, expectedDetail);
+  }
+});
+
+test('PPI reaches fifteen without converting a cohort threshold into an individual date', () => {
+  const maximum = evaluateCalculator(PALLIATIVE_PROGNOSTIC_INDEX_CALCULATOR,
+    ppiInput({ ppi_pps: '20', ppi_oral: 'severe', ppi_edema: true,
+      ppi_dyspnea: true, ppi_delirium: true }));
+  equal(maximum.result.title, 'PPI 15.0');
+  equal(maximum.result.severity, 'bad');
+  equal(String(maximum.result.notes[0]).includes('no predicen una fecha individual'), true);
+});
+
+test('BED and EQD2 golden conventional fractionation preserves all metrics', () => {
+  const evaluation = evaluateCalculator(BED_EQD2_CALCULATOR, bedInput());
+  deepEqual(evaluation.result, {
+    title: 'BED 60.00 · EQD2 50.00', detail: 'Dosis física total: 50.00 Gy.',
+    badge: 'lineal-cuadrático', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'Dosis total', value: '50.00 Gy' },
+      { label: 'BED', value: '60.00 Gy (α/β 10.0)' },
+      { label: 'EQD2', value: '50.00 Gy (α/β 10.0)' },
+      { label: 'α/β', value: '10.0 Gy' }
+    ],
+    notes: [
+      'El resultado depende por completo del α/β seleccionado y del tejido o objetivo analizado.',
+      'El modelo LQ es una aproximación; la incertidumbre aumenta al alejarse del fraccionamiento convencional.',
+      'No incorpora repoblación, reparación incompleta, tiempo total, heterogeneidad de dosis, recuperación tisular ni reirradiación.',
+      'No constituye una prescripción ni un límite automático de órgano a riesgo.'
+    ]
+  });
+});
+
+test('BED and EQD2 preserve the hypofractionated oracle and strict warning border', () => {
+  const hypofractionated = evaluateCalculator(BED_EQD2_CALCULATOR,
+    bedInput({ bed_fractions: 5, bed_dose_fraction: 6, bed_alpha_beta: 3 }));
+  equal(hypofractionated.result.title, 'BED 90.00 · EQD2 54.00');
+  equal(hypofractionated.result.detail, 'Dosis física total: 30.00 Gy.');
+  equal(hypofractionated.result.severity, 'warn');
+  equal(String(hypofractionated.result.notes[1]).startsWith('Dosis por fracción >5 Gy'), true);
+
+  equal(evaluateCalculator(BED_EQD2_CALCULATOR,
+    bedInput({ bed_dose_fraction: 5 })).result.severity, 'info');
+  equal(evaluateCalculator(BED_EQD2_CALCULATOR,
+    bedInput({ bed_dose_fraction: 5.01 })).result.severity, 'warn');
+});
+
+test('BED and EQD2 enforce integer fractions and declared physical minima', () => {
+  const fractional = evaluateCalculator(BED_EQD2_CALCULATOR,
+    bedInput({ bed_fractions: 1.5 }));
+  deepEqual(fractional.issues.map((issue) => issue.code), ['step-mismatch']);
+  const zeroDose = evaluateCalculator(BED_EQD2_CALCULATOR,
+    bedInput({ bed_dose_fraction: 0 }));
+  deepEqual(zeroDose.issues.map((issue) => issue.code), ['below-minimum']);
+  const zeroAlphaBeta = evaluateCalculator(BED_EQD2_CALCULATOR,
+    bedInput({ bed_alpha_beta: 0 }));
+  deepEqual(zeroAlphaBeta.issues.map((issue) => issue.code), ['below-minimum']);
+});
+
+test('QTcF golden example preserves Fridericia correction, RR and missing baseline', () => {
+  const evaluation = evaluateCalculator(QTC_FRIDERICIA_CALCULATOR, qtcInput());
+  deepEqual(evaluation.result, {
+    title: 'QTcF 421 ms', detail: 'dentro de referencia por sexo', badge: 'Fridericia',
+    score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'QTcF', value: '421 ms' },
+      { label: 'RR', value: '0.857 s' },
+      { label: 'Límite por sexo', value: '460 ms' },
+      { label: 'Cambio desde basal', value: 'No informado' }
+    ],
+    notes: [
+      'QTcF 480–499 ms requiere revisar causas reversibles y monitorización; ≥500 ms se asocia con mayor riesgo de torsade.',
+      'QRS ancho, marcapasos, fibrilación auricular o trazado dudoso requieren medición e interpretación especializada.',
+      'El prospecto del fármaco y la evaluación clínica determinan la conducta; el cálculo no indica suspensión automática.'
+    ]
+  });
+});
+
+test('QTcF preserves sex references and raw 480/500 clinical bands', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string, string][] = [
+    [{ qtc_qt: 460, qtc_hr: 60, qtc_sex: 'female' }, 'QTcF 460 ms',
+      'dentro de referencia por sexo', 'info'],
+    [{ qtc_qt: 461, qtc_hr: 60, qtc_sex: 'female' }, 'QTcF 461 ms',
+      'sobre referencia (460 ms)', 'info'],
+    [{ qtc_qt: 450, qtc_hr: 60, qtc_sex: 'male' }, 'QTcF 450 ms',
+      'dentro de referencia por sexo', 'info'],
+    [{ qtc_qt: 451, qtc_hr: 60, qtc_sex: 'male' }, 'QTcF 451 ms',
+      'sobre referencia (450 ms)', 'info'],
+    [{ qtc_qt: 479, qtc_hr: 60 }, 'QTcF 479 ms', 'sobre referencia (460 ms)', 'info'],
+    [{ qtc_qt: 480, qtc_hr: 60 }, 'QTcF 480 ms', '480–499 ms', 'warn'],
+    [{ qtc_qt: 499, qtc_hr: 60 }, 'QTcF 499 ms', '480–499 ms', 'warn'],
+    [{ qtc_qt: 500, qtc_hr: 60 }, 'QTcF 500 ms', '≥500 ms', 'bad']
+  ];
+  for (const [overrides, expectedTitle, expectedDetail, expectedSeverity] of cases) {
+    const evaluation = evaluateCalculator(QTC_FRIDERICIA_CALCULATOR, qtcInput(overrides));
+    equal(evaluation.result.title, expectedTitle);
+    equal(evaluation.result.detail, expectedDetail);
+    equal(evaluation.result.severity, expectedSeverity);
+  }
+});
+
+test('QTcF preserves signed and rounded baseline deltas', () => {
+  const positive = evaluateCalculator(QTC_FRIDERICIA_CALCULATOR,
+    qtcInput({ qtc_baseline: 390 }));
+  equal(positive.result.metrics[3]?.value, '+31 ms');
+  const zero = evaluateCalculator(QTC_FRIDERICIA_CALCULATOR,
+    qtcInput({ qtc_qt: 400, qtc_hr: 60, qtc_baseline: 400 }));
+  equal(zero.result.metrics[3]?.value, '+0 ms');
+  const negative = evaluateCalculator(QTC_FRIDERICIA_CALCULATOR,
+    qtcInput({ qtc_qt: 400, qtc_hr: 60, qtc_baseline: 420 }));
+  equal(negative.result.metrics[3]?.value, '-20 ms');
+});
+
+test('QTcF preserves raw classification even when the title rounds into the next band', () => {
+  const below480 = evaluateCalculator(QTC_FRIDERICIA_CALCULATOR,
+    qtcInput({ qtc_qt: 458, qtc_hr: 69, qtc_sex: 'male' }));
+  equal(below480.result.title, 'QTcF 480 ms');
+  equal(below480.result.detail, 'sobre referencia (450 ms)');
+  equal(below480.result.severity, 'info');
+  const below500 = evaluateCalculator(QTC_FRIDERICIA_CALCULATOR,
+    qtcInput({ qtc_qt: 477, qtc_hr: 69, qtc_sex: 'male' }));
+  equal(below500.result.title, 'QTcF 500 ms');
+  equal(below500.result.detail, '480–499 ms');
+  equal(below500.result.severity, 'warn');
+});
+
+test('ported 28 to 31 enforce safe selectors and typed text-only results', () => {
+  const invalidPps = evaluateCalculator(PALLIATIVE_PROGNOSTIC_INDEX_CALCULATOR,
+    ppiInput({ ppi_pps: '55' }));
+  deepEqual(invalidPps.issues.map((issue) => issue.code), ['unknown-option']);
+  const invalidSex = evaluateCalculator(QTC_FRIDERICIA_CALCULATOR,
+    qtcInput({ qtc_sex: 'other' }));
+  deepEqual(invalidSex.issues.map((issue) => issue.code), ['unknown-option']);
+  const invalidBaseline = evaluateCalculator(QTC_FRIDERICIA_CALCULATOR,
+    qtcInput({ qtc_baseline: 0 }));
+  deepEqual(invalidBaseline.issues.map((issue) => issue.code), ['below-minimum']);
+  const results = [
+    evaluateCalculator(CISNE_FEBRILE_NEUTROPENIA_CALCULATOR, cisneInput()).result,
+    evaluateCalculator(PALLIATIVE_PROGNOSTIC_INDEX_CALCULATOR, ppiInput()).result,
+    evaluateCalculator(BED_EQD2_CALCULATOR, bedInput()).result,
+    evaluateCalculator(QTC_FRIDERICIA_CALCULATOR, qtcInput()).result
+  ];
+  for (const current of results) assertNoRawMarkup(current.notes);
+});
+
+test('ported 32 to 35 preserve canonical metadata and field order', () => {
+  deepEqual([
+    NOTTINGHAM_PROGNOSTIC_INDEX_CALCULATOR,
+    RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR,
+    PEPI_BREAST_CALCULATOR,
+    CTS5_BREAST_CALCULATOR
+  ].map((definition) => ({
+    id: definition.id,
+    title: definition.title,
+    category: definition.category,
+    subtitle: definition.subtitle,
+    source: definition.source,
+    fieldIds: definition.fields.map((field) => field.id)
+  })), [
+    {
+      id: 'nottingham-prognostic-index', title: 'Nottingham Prognostic Index — NPI',
+      category: 'mama', subtitle: 'Índice anatomopatológico clásico en cáncer de mama invasivo.',
+      source: 'Nottingham Prognostic Index', fieldIds: ['npi_size', 'npi_grade', 'npi_nodes']
+    },
+    {
+      id: 'residual-cancer-burden-experimental',
+      title: 'Residual Cancer Burden — RCB experimental', category: 'mama',
+      subtitle: 'Cálculo local experimental de enfermedad residual posneoadyuvancia.',
+      source: 'RCB / MD Anderson',
+      fieldIds: ['rcb_warning', 'rcb_d1', 'rcb_d2', 'rcb_cellularity', 'rcb_in_situ',
+        'rcb_nodes', 'rcb_largest_met']
+    },
+    {
+      id: 'pepi-breast', title: 'PEPI — Preoperative Endocrine Prognostic Index',
+      category: 'mama',
+      subtitle: 'Respuesta anatomopatológica después de endocrinoterapia neoadyuvante.',
+      source: 'PEPI',
+      fieldIds: ['pepi_scope', 'pepi_pt', 'pepi_nodes', 'pepi_ki67', 'pepi_er_allred']
+    },
+    {
+      id: 'cts5-breast', title: 'CTS5 — recurrencia tardía', category: 'mama',
+      subtitle: 'Riesgo residual entre los años 5 y 10.', source: 'CTS5, ATAC / BIG 1-98',
+      fieldIds: ['cts5_scope', 'cts5_age', 'cts5_size', 'cts5_grade', 'cts5_nodes']
+    }
+  ]);
+});
+
+test('ported 32 to 35 open blank and retain every factory value only as an example', () => {
+  deepEqual(evaluateCalculator(NOTTINGHAM_PROGNOSTIC_INDEX_CALCULATOR).issues
+    .map((issue) => issue.fieldId), ['npi_size', 'npi_grade', 'npi_nodes']);
+  deepEqual(evaluateCalculator(RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR).issues
+    .map((issue) => issue.fieldId), ['rcb_d1', 'rcb_d2', 'rcb_cellularity', 'rcb_in_situ',
+      'rcb_nodes', 'rcb_largest_met']);
+  deepEqual(evaluateCalculator(PEPI_BREAST_CALCULATOR).issues
+    .map((issue) => issue.fieldId), ['pepi_pt', 'pepi_nodes', 'pepi_ki67', 'pepi_er_allred']);
+  deepEqual(evaluateCalculator(CTS5_BREAST_CALCULATOR).issues
+    .map((issue) => issue.fieldId), ['cts5_age', 'cts5_size', 'cts5_grade', 'cts5_nodes']);
+  deepEqual(NOTTINGHAM_PROGNOSTIC_INDEX_CALCULATOR.fields.map((field) =>
+    field.kind === 'number' || field.kind === 'select' ? field.exampleValue : null), [2, '2', 0]);
+  deepEqual(RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR.fields.map((field) =>
+    field.kind === 'number' || field.kind === 'select' ? field.exampleValue : null),
+  [null, 20, 15, 10, 0, 0, 0]);
+  deepEqual(PEPI_BREAST_CALCULATOR.fields.map((field) =>
+    field.kind === 'number' || field.kind === 'select' ? field.exampleValue : null),
+  [null, 'pt1', 'no', 2, 8]);
+  deepEqual(CTS5_BREAST_CALCULATOR.fields.map((field) =>
+    field.kind === 'number' || field.kind === 'select' ? field.exampleValue : null),
+  [null, 60, 20, '2', 0]);
+});
+
+test('NPI preserves formula, output and historical limitations', () => {
+  const evaluation = evaluateCalculator(NOTTINGHAM_PROGNOSTIC_INDEX_CALCULATOR,
+    npiInput({ npi_size: 2.01 }));
+  deepEqual(evaluation.result, {
+    title: 'NPI 3.40 · moderado I',
+    detail: 'Índice = 0,2 × tamaño en cm + grado + categoría ganglionar.',
+    badge: 'mama invasiva', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'NPI', value: '3.40' },
+      { label: 'Grupo', value: 'moderado I' },
+      { label: 'Categoría ganglionar', value: 1 }
+    ],
+    notes: [
+      'Es un modelo pronóstico histórico; no incorpora ER, HER2, Ki-67, genómica ni tratamientos contemporáneos.',
+      'Usar tamaño del componente invasivo y grado histológico definitivo.',
+      'No determina por sí solo indicación o intensidad de tratamiento.'
+    ]
+  });
+});
+
+test('NPI preserves all raw prognostic cutoffs and nodal categories', () => {
+  const groupCases: readonly [number, string, number, string, string][] = [
+    [2, '1', 0, 'NPI 2.40 · excelente', '2.40'],
+    [2.5, '1', 0, 'NPI 2.50 · bueno', '2.50'],
+    [2, '2', 0, 'NPI 3.40 · bueno', '3.40'],
+    [2.1, '2', 0, 'NPI 3.42 · moderado I', '3.42'],
+    [2, '3', 0, 'NPI 4.40 · moderado I', '4.40'],
+    [2.1, '3', 0, 'NPI 4.42 · moderado II', '4.42'],
+    [2, '3', 1, 'NPI 5.40 · moderado II', '5.40'],
+    [2.1, '3', 1, 'NPI 5.42 · pobre', '5.42'],
+    [2, '3', 4, 'NPI 6.40 · pobre', '6.40'],
+    [2.1, '3', 4, 'NPI 6.42 · muy pobre', '6.42']
+  ];
+  for (const [size, grade, nodes, expectedTitle, expectedScore] of groupCases) {
+    const calculated = NOTTINGHAM_PROGNOSTIC_INDEX_CALCULATOR.calculate({
+      npi_size: size, npi_grade: grade, npi_nodes: nodes
+    });
+    equal(calculated.title, expectedTitle);
+    equal(calculated.metrics[0]?.value, expectedScore);
+  }
+  for (const [nodes, category] of [[0, 1], [1, 2], [3, 2], [4, 3]] as const) {
+    equal(NOTTINGHAM_PROGNOSTIC_INDEX_CALCULATOR.calculate({
+      npi_size: 2, npi_grade: '2', npi_nodes: nodes
+    }).metrics[2]?.value, category);
+  }
+});
+
+test('NPI preserves the legacy minimum-step conflict and raw-versus-rounded classification', () => {
+  const example = evaluateCalculator(NOTTINGHAM_PROGNOSTIC_INDEX_CALCULATOR, npiInput());
+  equal(example.status, 'invalid');
+  deepEqual(example.issues.map((issue) => [issue.fieldId, issue.code]), [['npi_size', 'step-mismatch']]);
+  const accepted = evaluateCalculator(NOTTINGHAM_PROGNOSTIC_INDEX_CALCULATOR,
+    npiInput({ npi_size: 2.01 }));
+  equal(accepted.result.title, 'NPI 3.40 · moderado I');
+  equal(accepted.result.metrics[0]?.value, '3.40');
+});
+
+test('RCB golden example preserves experimental index, class and typed official link', () => {
+  const evaluation = evaluateCalculator(RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR,
+    rcbInput());
+  deepEqual(evaluation.result, {
+    title: 'RCB-II · índice experimental 1.537',
+    detail: 'Resultado local para control técnico; requiere confirmación externa.',
+    badge: 'experimental', score: 0, showScore: false, severity: 'warn',
+    metrics: [
+      { label: 'Clase calculada', value: 'RCB-II' },
+      { label: 'Índice', value: '1.537' },
+      { label: 'Diámetro geométrico', value: '17.32 mm' },
+      { label: 'Fracción invasiva', value: '0.1000' }
+    ],
+    notes: [
+      'Confirmar siempre el resultado antes de documentarlo o utilizarlo.',
+      {
+        kind: 'external-link', label: 'calculadora oficial de MD Anderson',
+        href: 'https://www3.mdanderson.org/app/medcalc/index.cfm?pagename=jsconvert3'
+      },
+      'La medición debe provenir de evaluación anatomopatológica estandarizada del lecho posneoadyuvancia.',
+      'No usar esta implementación experimental para indicar un tratamiento automático.'
+    ]
+  });
+  const link = evaluation.result.notes[1];
+  equal(typeof link === 'object' && link !== null && link.kind === 'external-link', true);
+  equal(typeof link === 'object' && link !== null && link.kind === 'external-link'
+    ? new URL(link.href).protocol : '', 'https:');
+  assertNoRawMarkup(evaluation.result.notes);
+});
+
+test('RCB preserves zero and both published local class borders', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string][] = [
+    [{ rcb_d1: 0, rcb_d2: 0, rcb_cellularity: 0 }, 'RCB-0 · índice experimental 0.000', 'RCB-0'],
+    [{ rcb_d1: 1, rcb_d2: 1, rcb_cellularity: 84.3 }, 'RCB-I · índice experimental 1.360', 'RCB-I'],
+    [{ rcb_d1: 1, rcb_d2: 1, rcb_cellularity: 84.4 }, 'RCB-II · índice experimental 1.360', 'RCB-II'],
+    [{ rcb_d1: 149.6, rcb_d2: 149.6, rcb_cellularity: 100 }, 'RCB-II · índice experimental 3.280', 'RCB-II'],
+    [{ rcb_d1: 149.7, rcb_d2: 149.7, rcb_cellularity: 100 }, 'RCB-III · índice experimental 3.280', 'RCB-III']
+  ];
+  for (const [overrides, expectedTitle, expectedClass] of cases) {
+    const evaluation = evaluateCalculator(RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR,
+      rcbInput(overrides));
+    equal(evaluation.result.title, expectedTitle);
+    equal(evaluation.result.metrics[0]?.value, expectedClass);
+  }
+});
+
+test('RCB enforces nodal coherence and preserves inherited cellularity defects', () => {
+  const nodeWithoutMetastasis = evaluateCalculator(RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR,
+    rcbInput({ rcb_nodes: 1, rcb_largest_met: 0 }));
+  equal(nodeWithoutMetastasis.result.title, 'Datos incompletos');
+  equal(nodeWithoutMetastasis.result.detail,
+    'Revisar: diámetro de mayor metástasis ganglionar coherente.');
+  const metastasisWithoutNode = evaluateCalculator(RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR,
+    rcbInput({ rcb_nodes: 0, rcb_largest_met: 1 }));
+  equal(metastasisWithoutNode.result.title, 'Datos incompletos');
+
+  const rejected = evaluateCalculator(RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR,
+    rcbInput({ rcb_cellularity: 10, rcb_in_situ: 80 }));
+  equal(rejected.result.detail,
+    'Revisar: porcentaje in situ no mayor que la celularidad global.');
+  const zeroCellularity = evaluateCalculator(RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR,
+    rcbInput({ rcb_cellularity: 0, rcb_in_situ: 50 }));
+  equal(zeroCellularity.result.title, 'RCB-0 · índice experimental 0.000');
+  const zeroDiameter = evaluateCalculator(RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR,
+    rcbInput({ rcb_d1: 0, rcb_d2: 20, rcb_cellularity: 100 }));
+  equal(zeroDiameter.result.title, 'RCB-0 · índice experimental 0.000');
+});
+
+test('PEPI golden zero preserves postoperative scope, factors and warnings', () => {
+  const evaluation = evaluateCalculator(PEPI_BREAST_CALCULATOR, pepiInput());
+  deepEqual(evaluation.result, {
+    title: 'PEPI 0 · 0 puntos',
+    detail: 'Puntaje posendocrinoterapia basado en la pieza quirúrgica y biomarcadores residuales.',
+    badge: 'endocrino neoadyuvante', score: 0, showScore: false, severity: 'good',
+    metrics: [
+      { label: 'PEPI', value: 0 }, { label: 'Grupo', value: 'PEPI 0' },
+      { label: 'Puntos pT', value: 0 }, { label: 'Puntos ganglios', value: 0 },
+      { label: 'Puntos Ki-67', value: 0 }, { label: 'Puntos ER', value: 0 }
+    ],
+    notes: [
+      'No aplicar al diagnóstico basal, después de quimioterapia neoadyuvante ni fuera de enfermedad hormonosensible.',
+      'Ki-67 requiere una medición anatomopatológica fiable y comparable.',
+      'PEPI es pronóstico y no determina por sí solo una conducta adyuvante.'
+    ]
+  });
+});
+
+test('PEPI preserves pT, node, Ki-67 and Allred factor boundaries', () => {
+  for (const [pt, points] of [['pt1', 0], ['pt2', 0], ['pt3', 3], ['pt4', 3]] as const) {
+    equal(evaluateCalculator(PEPI_BREAST_CALCULATOR,
+      pepiInput({ pepi_pt: pt })).result.metrics[2]?.value, points);
+  }
+  equal(evaluateCalculator(PEPI_BREAST_CALCULATOR,
+    pepiInput({ pepi_nodes: 'yes' })).result.metrics[3]?.value, 3);
+  const kiCases: readonly [number, number][] = [[2.7, 0], [2.8, 1], [19.7, 1], [19.8, 2], [53.1, 2], [53.2, 3]];
+  for (const [ki67, points] of kiCases) {
+    equal(evaluateCalculator(PEPI_BREAST_CALCULATOR,
+      pepiInput({ pepi_ki67: ki67 })).result.metrics[4]?.value, points);
+  }
+  equal(evaluateCalculator(PEPI_BREAST_CALCULATOR,
+    pepiInput({ pepi_er_allred: 2 })).result.metrics[5]?.value, 3);
+  equal(evaluateCalculator(PEPI_BREAST_CALCULATOR,
+    pepiInput({ pepi_er_allred: 3 })).result.metrics[5]?.value, 0);
+});
+
+test('PEPI preserves total groups at three and four and maximum twelve', () => {
+  const three = evaluateCalculator(PEPI_BREAST_CALCULATOR, pepiInput({ pepi_pt: 'pt3' }));
+  equal(three.result.title, 'PEPI 1–3 · 3 puntos');
+  equal(three.result.severity, 'warn');
+  const four = evaluateCalculator(PEPI_BREAST_CALCULATOR,
+    pepiInput({ pepi_pt: 'pt3', pepi_ki67: 2.8 }));
+  equal(four.result.title, 'PEPI ≥4 · 4 puntos');
+  equal(four.result.severity, 'bad');
+  const maximum = evaluateCalculator(PEPI_BREAST_CALCULATOR,
+    pepiInput({ pepi_pt: 'pt4', pepi_nodes: 'yes', pepi_ki67: 53.2, pepi_er_allred: 2 }));
+  equal(maximum.result.title, 'PEPI ≥4 · 12 puntos');
+});
+
+test('CTS5 golden example preserves formula, risk band and population warnings', () => {
+  const evaluation = evaluateCalculator(CTS5_BREAST_CALCULATOR, cts5Input());
+  deepEqual(evaluation.result, {
+    title: 'CTS5 3.19 · intermedio',
+    detail: 'Banda publicada de recurrencia distante en años 5–10: 5–10%.',
+    badge: 'recurrencia tardía', score: 0, showScore: false, severity: 'warn',
+    metrics: [
+      { label: 'Score', value: '3.19' }, { label: 'Grupo', value: 'intermedio' },
+      { label: 'Categoría ganglionar', value: 0 }, { label: 'Tamaño usado', value: '20.0 mm' }
+    ],
+    notes: [
+      'El tamaño ingresado no requirió el tope de 30 mm.',
+      'CTS5 es pronóstico; no predice directamente el beneficio de prolongar endocrinoterapia.',
+      'Puede requerir recalibración fuera de las poblaciones originales y debe usarse con cautela en premenopausia o HER2 positivo.'
+    ]
+  });
+});
+
+test('CTS5 preserves all nodal categories and the thirty-millimeter cap', () => {
+  for (const [nodes, category] of [[0, 0], [1, 1], [2, 2], [3, 2], [4, 3], [9, 3], [10, 4]] as const) {
+    equal(evaluateCalculator(CTS5_BREAST_CALCULATOR,
+      cts5Input({ cts5_nodes: nodes })).result.metrics[2]?.value, category);
+  }
+  const exact = evaluateCalculator(CTS5_BREAST_CALCULATOR, cts5Input({ cts5_size: 30 }));
+  const capped = evaluateCalculator(CTS5_BREAST_CALCULATOR, cts5Input({ cts5_size: 30.1 }));
+  equal(exact.result.title, capped.result.title);
+  equal(exact.result.metrics[3]?.value, '30.0 mm');
+  equal(capped.result.metrics[3]?.value, '30.0 mm');
+  equal(exact.result.notes[0], 'El tamaño ingresado no requirió el tope de 30 mm.');
+  equal(capped.result.notes[0], 'El tamaño se limitó a 30 mm, como especifica el modelo.');
+});
+
+test('CTS5 preserves raw 3.13 and 3.86 group boundaries despite identical rounded titles', () => {
+  const below313 = evaluateCalculator(CTS5_BREAST_CALCULATOR,
+    cts5Input({ cts5_age: 43, cts5_size: 24.7, cts5_grade: '2', cts5_nodes: 0 }));
+  const above313 = evaluateCalculator(CTS5_BREAST_CALCULATOR,
+    cts5Input({ cts5_age: 82, cts5_size: 7.6, cts5_grade: '3', cts5_nodes: 0 }));
+  equal(below313.result.title, 'CTS5 3.13 · bajo');
+  equal(above313.result.title, 'CTS5 3.13 · intermedio');
+  equal(below313.result.severity, 'good');
+  equal(above313.result.severity, 'warn');
+
+  const below386 = evaluateCalculator(CTS5_BREAST_CALCULATOR,
+    cts5Input({ cts5_age: 53, cts5_size: 27.8, cts5_grade: '2', cts5_nodes: 1 }));
+  const above386 = evaluateCalculator(CTS5_BREAST_CALCULATOR,
+    cts5Input({ cts5_age: 23, cts5_size: 12.3, cts5_grade: '2', cts5_nodes: 10 }));
+  equal(below386.result.title, 'CTS5 3.86 · intermedio');
+  equal(above386.result.title, 'CTS5 3.86 · alto');
+  equal(below386.result.severity, 'warn');
+  equal(above386.result.severity, 'bad');
+});
+
+test('ported 32 to 35 enforce declared validation and contain no raw markup', () => {
+  deepEqual(evaluateCalculator(NOTTINGHAM_PROGNOSTIC_INDEX_CALCULATOR,
+    npiInput({ npi_grade: '4', npi_size: 2.01 })).issues.map((issue) => issue.code), ['unknown-option']);
+  deepEqual(evaluateCalculator(RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR,
+    rcbInput({ rcb_cellularity: 100.1 })).issues.map((issue) => issue.code), ['above-maximum']);
+  deepEqual(evaluateCalculator(PEPI_BREAST_CALCULATOR,
+    pepiInput({ pepi_er_allred: 2.5 })).issues.map((issue) => issue.code), ['step-mismatch']);
+  deepEqual(evaluateCalculator(CTS5_BREAST_CALCULATOR,
+    cts5Input({ cts5_age: 17 })).issues.map((issue) => issue.code), ['below-minimum']);
+  const results = [
+    evaluateCalculator(NOTTINGHAM_PROGNOSTIC_INDEX_CALCULATOR, npiInput({ npi_size: 2.01 })).result,
+    evaluateCalculator(RESIDUAL_CANCER_BURDEN_EXPERIMENTAL_CALCULATOR, rcbInput()).result,
+    evaluateCalculator(PEPI_BREAST_CALCULATOR, pepiInput()).result,
+    evaluateCalculator(CTS5_BREAST_CALCULATOR, cts5Input()).result
+  ];
+  for (const current of results) assertNoRawMarkup(current.notes);
+});
+
+test('ported 36 to 39 preserve canonical metadata and field order', () => {
+  deepEqual([
+    MONARCHE_COHORT_1_CALCULATOR,
+    OLYMPIA_CPSEG_CALCULATOR,
+    INTERNATIONAL_PROGNOSTIC_INDEX_CALCULATOR,
+    R2_ISS_MYELOMA_CALCULATOR
+  ].map((definition) => ({
+    id: definition.id,
+    title: definition.title,
+    category: definition.category,
+    subtitle: definition.subtitle,
+    source: definition.source,
+    fieldIds: definition.fields.map((field) => field.id)
+  })), [
+    {
+      id: 'monarche-cohort-1', title: 'monarchE — criterios de cohorte 1',
+      category: 'mama', subtitle: 'Reconstrucción de criterios clínico-patológicos del ensayo.',
+      source: 'monarchE cohort 1',
+      fieldIds: ['monarche_hr_positive', 'monarche_her2_negative', 'monarche_early',
+        'monarche_nodes', 'monarche_size', 'monarche_grade']
+    },
+    {
+      id: 'olympia-cpseg', title: 'OlympiA y CPS+EG', category: 'mama',
+      subtitle: 'Criterios de alto riesgo según escenario neoadyuvante o adyuvante.',
+      source: 'OlympiA / CPS+EG',
+      fieldIds: ['olympia_scope', 'scenario', 'olympia_gbrca', 'olympia_her2_negative',
+        'olympia_residual', 'olympia_c_stage', 'olympia_p_stage', 'olympia_er',
+        'olympia_nuclear_grade', 'olympia_nodes_tnbc', 'olympia_size', 'olympia_nodes_hr']
+    },
+    {
+      id: 'international-prognostic-index', title: 'International Prognostic Index — IPI',
+      category: 'hematologia', subtitle: 'Índice clínico clásico para linfomas agresivos.',
+      source: 'International Prognostic Index',
+      fieldIds: ['ipi_age', 'ipi_stage', 'ipi_ldh', 'ipi_ecog', 'ipi_extranodal']
+    },
+    {
+      id: 'r2-iss-myeloma', title: 'R2-ISS — mieloma múltiple', category: 'hematologia',
+      subtitle: 'Revised 2nd International Staging System.',
+      source: 'European Myeloma Network R2-ISS',
+      fieldIds: ['r2iss_beta2', 'r2iss_albumin', 'r2iss_del17p', 'r2iss_high_ldh',
+        'r2iss_t414', 'r2iss_1q']
+    }
+  ]);
+});
+
+test('ported 36 to 39 preserve blank forms, examples and the real Olympia default scenario', () => {
+  deepEqual(evaluateCalculator(MONARCHE_COHORT_1_CALCULATOR).issues
+    .map((issue) => issue.fieldId), ['monarche_nodes', 'monarche_size', 'monarche_grade']);
+  const olympia = evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR);
+  equal(olympia.values['scenario'], 'neo_hr');
+  deepEqual(olympia.issues.map((issue) => issue.fieldId),
+    ['olympia_c_stage', 'olympia_p_stage', 'olympia_er', 'olympia_nuclear_grade']);
+  deepEqual(evaluateCalculator(INTERNATIONAL_PROGNOSTIC_INDEX_CALCULATOR).issues
+    .map((issue) => issue.fieldId), ['ipi_age', 'ipi_stage', 'ipi_ecog', 'ipi_extranodal']);
+  deepEqual(evaluateCalculator(R2_ISS_MYELOMA_CALCULATOR).issues
+    .map((issue) => issue.fieldId), ['r2iss_beta2', 'r2iss_albumin']);
+
+  deepEqual(MONARCHE_COHORT_1_CALCULATOR.fields.map((field) =>
+    field.kind === 'number' || field.kind === 'select' ? field.exampleValue
+      : field.kind === 'checkbox' ? field.initialValue : null), [false, false, false, 1, 30, '2']);
+  deepEqual(INTERNATIONAL_PROGNOSTIC_INDEX_CALCULATOR.fields.map((field) =>
+    field.kind === 'number' || field.kind === 'select' ? field.exampleValue
+      : field.kind === 'checkbox' ? field.initialValue : null), [60, '2', false, '1', 0]);
+  deepEqual(R2_ISS_MYELOMA_CALCULATOR.fields.map((field) =>
+    field.kind === 'number' || field.kind === 'select' ? field.exampleValue
+      : field.kind === 'checkbox' ? field.initialValue : null), [3, 4, false, false, false, false]);
+});
+
+test('monarchE golden negative case preserves cohort language and Ki-67 result', () => {
+  const evaluation = evaluateCalculator(MONARCHE_COHORT_1_CALCULATOR, monarcheInput());
+  deepEqual(evaluation.result, {
+    title: 'No coincide con cohorte 1',
+    detail: 'Falta alcance biológico, anatomía de alto riesgo o ambos.',
+    badge: 'criterios de ensayo', score: 0, showScore: false, severity: 'warn',
+    metrics: [
+      { label: 'Alcance biológico', value: 'No' },
+      { label: 'Anatomía de alto riesgo', value: 'No' },
+      { label: 'Ki-67 requerido por cohorte 1', value: 'No' }
+    ],
+    notes: [
+      'Criterio anatómico: ≥4 ganglios, o 1–3 ganglios con grado 3 o tumor ≥50 mm.',
+      'Esta pantalla reproduce criterios de cohorte, no toda la elegibilidad regulatoria, temporal o clínica.',
+      'Coincidir con el ensayo no constituye una indicación automática de tratamiento.'
+    ]
+  });
+});
+
+test('monarchE requires all three biologic checks independently of high-risk anatomy', () => {
+  const anatomyOnly = monarcheInput({ monarche_nodes: 4 });
+  equal(evaluateCalculator(MONARCHE_COHORT_1_CALCULATOR, anatomyOnly).result.metrics[1]?.value, 'Sí');
+  for (const omitted of ['monarche_hr_positive', 'monarche_her2_negative', 'monarche_early']) {
+    const evaluation = evaluateCalculator(MONARCHE_COHORT_1_CALCULATOR,
+      monarcheInput({ monarche_nodes: 4, monarche_hr_positive: true,
+        monarche_her2_negative: true, monarche_early: true, [omitted]: false }));
+    equal(evaluation.result.title, 'No coincide con cohorte 1');
+    equal(evaluation.result.metrics[0]?.value, 'No');
+    equal(evaluation.result.metrics[1]?.value, 'Sí');
+  }
+});
+
+test('monarchE preserves nodal, size and grade anatomy boundaries', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{ monarche_nodes: 0, monarche_size: 50, monarche_grade: '3' }, 'No'],
+    [{ monarche_nodes: 1, monarche_size: 49.9, monarche_grade: '2' }, 'No'],
+    [{ monarche_nodes: 1, monarche_size: 50, monarche_grade: '2' }, 'Sí'],
+    [{ monarche_nodes: 1, monarche_size: 49.9, monarche_grade: '3' }, 'Sí'],
+    [{ monarche_nodes: 3, monarche_size: 50, monarche_grade: '2' }, 'Sí'],
+    [{ monarche_nodes: 4, monarche_size: 0.1, monarche_grade: '1' }, 'Sí']
+  ];
+  for (const [overrides, expected] of cases) {
+    const evaluation = evaluateCalculator(MONARCHE_COHORT_1_CALCULATOR,
+      monarcheInput(overrides));
+    equal(evaluation.result.metrics[1]?.value, expected);
+  }
+  const complete = evaluateCalculator(MONARCHE_COHORT_1_CALCULATOR,
+    monarcheInput({ monarche_nodes: 4, monarche_hr_positive: true,
+      monarche_her2_negative: true, monarche_early: true }));
+  equal(complete.result.title, 'Coincide con cohorte 1');
+  equal(complete.result.severity, 'info');
+});
+
+test('OlympiA neo-HR golden CPS+EG three case preserves reconstructed-trial warnings', () => {
+  const evaluation = evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR, olympiaNeoHrInput());
+  deepEqual(evaluation.result, {
+    title: 'Coincide con criterios reconstruidos', detail: 'CPS+EG calculado: 3.',
+    badge: 'criterios de ensayo', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'gBRCA + HER2 negativo', value: 'Sí' },
+      { label: 'Criterio de alto riesgo', value: 'Sí' },
+      { label: 'CPS+EG', value: 3 }
+    ],
+    notes: [
+      'Neoadyuvancia HR positiva: requiere enfermedad invasiva residual y CPS+EG ≥3 en la reconstrucción del ensayo.',
+      'Los otros escenarios utilizan definiciones anatómicas específicas; verificar subtipo, estadio, tratamiento previo, temporalidad y genética.',
+      'Coincidir con criterios históricos del ensayo no constituye una indicación automática de tratamiento.'
+    ]
+  });
+});
+
+test('OlympiA neo-HR preserves CPS+EG two/three threshold and six without residual disease', () => {
+  const two = evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR,
+    olympiaNeoHrInput({ olympia_er: 'positive' }));
+  equal(two.result.detail, 'CPS+EG calculado: 2.');
+  equal(two.result.metrics[1]?.value, 'No');
+  const three = evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR, olympiaNeoHrInput());
+  equal(three.result.detail, 'CPS+EG calculado: 3.');
+  equal(three.result.metrics[1]?.value, 'Sí');
+  const sixWithoutResidual = evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR,
+    olympiaNeoHrInput({ olympia_c_stage: 'iiib_iiic', olympia_p_stage: 'iiic',
+      olympia_er: 'negative', olympia_nuclear_grade: '3', olympia_residual: false }));
+  equal(sixWithoutResidual.result.detail, 'CPS+EG calculado: 6.');
+  equal(sixWithoutResidual.result.metrics[1]?.value, 'No');
+  equal(sixWithoutResidual.result.title, 'No coincide con criterios reconstruidos');
+});
+
+test('OlympiA preserves every CPS+EG component weight and both base-scope gates', () => {
+  const base = {
+    olympia_c_stage: 'i_iia', olympia_p_stage: 'zero_i',
+    olympia_er: 'positive', olympia_nuclear_grade: '2'
+  };
+  const cases: readonly [Readonly<Record<string, unknown>>, number][] = [
+    [{}, 0], [{ olympia_c_stage: 'iib_iiia' }, 1],
+    [{ olympia_c_stage: 'iiib_iiic' }, 2], [{ olympia_p_stage: 'iia_iiib' }, 1],
+    [{ olympia_p_stage: 'iiic' }, 2], [{ olympia_er: 'negative' }, 1],
+    [{ olympia_nuclear_grade: '3' }, 1]
+  ];
+  for (const [overrides, expected] of cases) {
+    equal(evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR,
+      olympiaNeoHrInput({ ...base, ...overrides })).result.metrics[2]?.value, expected);
+  }
+  for (const omitted of ['olympia_gbrca', 'olympia_her2_negative']) {
+    const evaluation = evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR,
+      olympiaNeoHrInput({ [omitted]: false }));
+    equal(evaluation.result.metrics[0]?.value, 'No');
+    equal(evaluation.result.metrics[1]?.value, 'Sí');
+    equal(evaluation.result.title, 'No coincide con criterios reconstruidos');
+  }
+});
+
+test('OlympiA validates only the active scenario fields', () => {
+  const neoTnbc = evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR, {
+    scenario: 'neo_tnbc', olympia_gbrca: true, olympia_her2_negative: true,
+    olympia_residual: true, olympia_c_stage: 'invalid', olympia_p_stage: 'invalid',
+    olympia_er: 'invalid', olympia_nuclear_grade: 'invalid',
+    olympia_nodes_tnbc: -1, olympia_size: -1, olympia_nodes_hr: -1
+  });
+  equal(neoTnbc.status, 'calculated');
+  equal(neoTnbc.result.title, 'Coincide con criterios reconstruidos');
+  equal(neoTnbc.result.detail, 'El escenario seleccionado no utiliza CPS+EG.');
+  equal(neoTnbc.result.metrics[2]?.value, 'No aplica');
+
+  const incompleteAdj = evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR, {
+    scenario: 'adj_tnbc', olympia_gbrca: true, olympia_her2_negative: true
+  });
+  deepEqual(incompleteAdj.issues.map((issue) => issue.fieldId),
+    ['olympia_nodes_tnbc', 'olympia_size']);
+});
+
+test('OlympiA preserves neo-TNBC, adjuvant TNBC and adjuvant HR boundaries', () => {
+  for (const residual of [false, true]) {
+    const evaluation = evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR, {
+      scenario: 'neo_tnbc', olympia_gbrca: true, olympia_her2_negative: true,
+      olympia_residual: residual
+    });
+    equal(evaluation.result.metrics[1]?.value, residual ? 'Sí' : 'No');
+  }
+  const adjTnbcCases: readonly [number, number, string][] = [
+    [0, 1.91, 'No'], [0, 2.01, 'Sí'], [1, 0.01, 'Sí']
+  ];
+  for (const [nodes, size, expected] of adjTnbcCases) {
+    const evaluation = evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR,
+      olympiaAdjTnbcInput({ olympia_nodes_tnbc: nodes, olympia_size: size }));
+    equal(evaluation.result.metrics[1]?.value, expected);
+  }
+  for (const [nodes, expected] of [[3, 'No'], [4, 'Sí']] as const) {
+    const evaluation = evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR, {
+      scenario: 'adj_hr', olympia_gbrca: true, olympia_her2_negative: true,
+      olympia_residual: false, olympia_nodes_hr: nodes
+    });
+    equal(evaluation.result.metrics[1]?.value, expected);
+  }
+});
+
+test('OlympiA preserves the adjuvant TNBC minimum-step conflict at the exact two-centimeter threshold', () => {
+  const exact = evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR,
+    olympiaAdjTnbcInput({ olympia_nodes_tnbc: 0, olympia_size: 2 }));
+  equal(exact.status, 'invalid');
+  deepEqual(exact.issues.map((issue) => [issue.fieldId, issue.code]),
+    [['olympia_size', 'step-mismatch']]);
+  equal(evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR,
+    olympiaAdjTnbcInput({ olympia_size: 1.91 })).result.metrics[1]?.value, 'No');
+  equal(evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR,
+    olympiaAdjTnbcInput({ olympia_size: 2.01 })).result.metrics[1]?.value, 'Sí');
+});
+
+test('IPI golden zero case preserves all output and population limitations', () => {
+  const evaluation = evaluateCalculator(INTERNATIONAL_PROGNOSTIC_INDEX_CALCULATOR, ipiInput());
+  deepEqual(evaluation.result, {
+    title: 'IPI 0/5 · bajo', detail: 'Grupo del IPI internacional clásico.',
+    badge: 'linfoma agresivo', score: 0, showScore: false, severity: 'good',
+    metrics: [
+      { label: 'Puntaje', value: '0/5' }, { label: 'Grupo', value: 'bajo' },
+      { label: 'Factores presentes', value: 0 }
+    ],
+    notes: [
+      'Población original: linfomas no Hodgkin agresivos; la calibración absoluta cambia con subtipo y era terapéutica.',
+      'No reemplaza índices específicos como NCCN-IPI, CNS-IPI ni la clasificación biológica del linfoma.',
+      'El IPI es pronóstico y no selecciona automáticamente un régimen.'
+    ]
+  });
+});
+
+test('IPI preserves each strict factor boundary including accepted age zero', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, number][] = [
+    [{ ipi_age: 0 }, 0], [{ ipi_age: 60 }, 0], [{ ipi_age: 61 }, 1],
+    [{ ipi_stage: '2' }, 0], [{ ipi_stage: '3' }, 1],
+    [{ ipi_ecog: '1' }, 0], [{ ipi_ecog: '2' }, 1],
+    [{ ipi_extranodal: 1 }, 0], [{ ipi_extranodal: 2 }, 1],
+    [{ ipi_ldh: true }, 1]
+  ];
+  for (const [overrides, expected] of cases) {
+    equal(evaluateCalculator(INTERNATIONAL_PROGNOSTIC_INDEX_CALCULATOR,
+      ipiInput(overrides)).result.metrics[2]?.value, expected);
+  }
+});
+
+test('IPI preserves all score groups, severities and maximum five', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string][] = [
+    [{}, 'IPI 0/5 · bajo', 'good'],
+    [{ ipi_age: 61 }, 'IPI 1/5 · bajo', 'good'],
+    [{ ipi_age: 61, ipi_stage: '3' }, 'IPI 2/5 · bajo-intermedio', 'warn'],
+    [{ ipi_age: 61, ipi_stage: '3', ipi_ldh: true }, 'IPI 3/5 · alto-intermedio', 'warn'],
+    [{ ipi_age: 61, ipi_stage: '3', ipi_ldh: true, ipi_ecog: '2' }, 'IPI 4/5 · alto', 'bad'],
+    [{ ipi_age: 61, ipi_stage: '3', ipi_ldh: true, ipi_ecog: '2', ipi_extranodal: 2 },
+      'IPI 5/5 · alto', 'bad']
+  ];
+  for (const [overrides, title, severity] of cases) {
+    const evaluation = evaluateCalculator(INTERNATIONAL_PROGNOSTIC_INDEX_CALCULATOR,
+      ipiInput(overrides));
+    equal(evaluation.result.title, title);
+    equal(evaluation.result.severity, severity);
+  }
+});
+
+test('R2-ISS golden ISS-I case preserves output and FISH limitations', () => {
+  const evaluation = evaluateCalculator(R2_ISS_MYELOMA_CALCULATOR, r2IssInput());
+  deepEqual(evaluation.result, {
+    title: 'R2-ISS I · 0.0 puntos', detail: 'ISS basal derivado: estadio 1.',
+    badge: 'mieloma múltiple', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'R2-ISS', value: 'R2-ISS I' }, { label: 'Puntaje', value: '0.0' },
+      { label: 'ISS derivado', value: 1 }
+    ],
+    notes: [
+      'Población: mieloma múltiple recién diagnosticado con estudios citogenéticos adecuados.',
+      'La calidad y sensibilidad de FISH, el umbral de del(17p) y la disponibilidad de 1q deben documentarse.',
+      'R2-ISS es pronóstico poblacional; no define por sí solo tratamiento, trasplante ni mantenimiento.'
+    ]
+  });
+});
+
+test('R2-ISS preserves beta-2-microglobulin and albumin ISS boundaries', () => {
+  const cases: readonly [number, number, number][] = [
+    [3.49, 3.49, 2], [3.49, 3.5, 1], [3.5, 3.5, 2],
+    [5.49, 4, 2], [5.5, 4, 3]
+  ];
+  for (const [beta2, albumin, expectedIss] of cases) {
+    const evaluation = evaluateCalculator(R2_ISS_MYELOMA_CALCULATOR,
+      r2IssInput({ r2iss_beta2: beta2, r2iss_albumin: albumin }));
+    equal(evaluation.result.metrics[2]?.value, expectedIss);
+  }
+});
+
+test('R2-ISS preserves stage boundaries zero, half, one, one-and-half, 2.5 and 3', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string][] = [
+    [{}, 'R2-ISS I · 0.0 puntos', 'info'],
+    [{ r2iss_1q: true }, 'R2-ISS II · 0.5 puntos', 'info'],
+    [{ r2iss_del17p: true }, 'R2-ISS II · 1.0 puntos', 'info'],
+    [{ r2iss_beta2: 5.5 }, 'R2-ISS III · 1.5 puntos', 'warn'],
+    [{ r2iss_beta2: 5.5, r2iss_del17p: true }, 'R2-ISS III · 2.5 puntos', 'warn'],
+    [{ r2iss_beta2: 5.5, r2iss_del17p: true, r2iss_1q: true },
+      'R2-ISS IV · 3.0 puntos', 'bad']
+  ];
+  for (const [overrides, title, severity] of cases) {
+    const evaluation = evaluateCalculator(R2_ISS_MYELOMA_CALCULATOR,
+      r2IssInput(overrides));
+    equal(evaluation.result.title, title);
+    equal(evaluation.result.severity, severity);
+  }
+  const maximum = evaluateCalculator(R2_ISS_MYELOMA_CALCULATOR,
+    r2IssInput({ r2iss_beta2: 5.5, r2iss_del17p: true, r2iss_high_ldh: true,
+      r2iss_t414: true, r2iss_1q: true }));
+  equal(maximum.result.title, 'R2-ISS IV · 5.0 puntos');
+});
+
+test('R2-ISS preserves the ISS and individual laboratory or cytogenetic weights', () => {
+  equal(evaluateCalculator(R2_ISS_MYELOMA_CALCULATOR,
+    r2IssInput({ r2iss_beta2: 3.5 })).result.metrics[1]?.value, '1.0');
+  const cases: readonly [string, string][] = [
+    ['r2iss_del17p', '1.0'], ['r2iss_high_ldh', '1.0'],
+    ['r2iss_t414', '1.0'], ['r2iss_1q', '0.5']
+  ];
+  for (const [fieldId, expected] of cases) {
+    equal(evaluateCalculator(R2_ISS_MYELOMA_CALCULATOR,
+      r2IssInput({ [fieldId]: true })).result.metrics[1]?.value, expected);
+  }
+});
+
+test('ported 36 to 39 reject invalid inputs and contain typed text only', () => {
+  deepEqual(evaluateCalculator(MONARCHE_COHORT_1_CALCULATOR,
+    monarcheInput({ monarche_nodes: 1.5 })).issues.map((issue) => issue.code), ['step-mismatch']);
+  deepEqual(evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR,
+    { scenario: 'other' }).issues.map((issue) => issue.code), ['unknown-option']);
+  deepEqual(evaluateCalculator(INTERNATIONAL_PROGNOSTIC_INDEX_CALCULATOR,
+    ipiInput({ ipi_ecog: '5' })).issues.map((issue) => issue.code), ['unknown-option']);
+  deepEqual(evaluateCalculator(R2_ISS_MYELOMA_CALCULATOR,
+    r2IssInput({ r2iss_beta2: 0 })).issues.map((issue) => issue.code), ['below-minimum']);
+  const results = [
+    evaluateCalculator(MONARCHE_COHORT_1_CALCULATOR, monarcheInput()).result,
+    evaluateCalculator(OLYMPIA_CPSEG_CALCULATOR, olympiaNeoHrInput()).result,
+    evaluateCalculator(INTERNATIONAL_PROGNOSTIC_INDEX_CALCULATOR, ipiInput()).result,
+    evaluateCalculator(R2_ISS_MYELOMA_CALCULATOR, r2IssInput()).result
+  ];
+  for (const current of results) assertNoRawMarkup(current.notes);
+});
+
+test('ported 40 to 43 preserve canonical metadata and field order', () => {
+  deepEqual([
+    GYNE_SEDLIS_CALCULATOR,
+    GYNE_PETERS_CALCULATOR,
+    GYNE_PROMISE_CALCULATOR,
+    GYNE_RMI_I_CALCULATOR
+  ].map((definition) => ({
+    id: definition.id,
+    title: definition.title,
+    category: definition.category,
+    subtitle: definition.subtitle,
+    source: definition.source,
+    fieldIds: definition.fields.map((field) => field.id)
+  })), [
+    {
+      id: 'gyne-sedlis', title: 'Cuello uterino — criterios de Sedlis',
+      category: 'ginecologia',
+      subtitle: 'Combinaciones de riesgo intermedio luego de cirugía radical.',
+      source: 'GOG-92 / Sedlis - tabla vigente 2025',
+      fieldIds: ['sedlis_context_section', 'sedlis_node_status', 'sedlis_margin_status',
+        'sedlis_parametrium', 'sedlis_rule_section', 'sedlis_lvsi', 'sedlis_stromal',
+        'sedlis_size', 'sedlis_size_method']
+    },
+    {
+      id: 'gyne-peters', title: 'Cuello uterino — criterios de Peters',
+      category: 'ginecologia',
+      subtitle: 'Características de alto riesgo en la anatomía patológica posoperatoria.',
+      source: 'GOG-109 / Peters - ESGO 2023',
+      fieldIds: ['peters_section', 'peters_node_status', 'peters_margin_status',
+        'peters_parametrium']
+    },
+    {
+      id: 'gyne-promise', title: 'Endometrio — ProMisE / ESGO 2025',
+      category: 'ginecologia',
+      subtitle: 'Clasificación molecular TCGA subrogada y refinamiento NSMP.',
+      source: 'ProMisE - ESGO/ESTRO/ESP 2025',
+      fieldIds: ['promise_core_section', 'promise_pole', 'promise_mmr', 'promise_p53',
+        'promise_nsmp_section', 'promise_grade', 'promise_er']
+    },
+    {
+      id: 'gyne-rmi-i', title: 'Masa anexial — RMI I', category: 'ginecologia',
+      subtitle: 'CA 125, menopausia y cinco hallazgos ecográficos.',
+      source: 'Jacobs RMI I - NICE CG122 actualizado 2026',
+      fieldIds: ['rmi_ca125', 'rmi_menopause', 'rmi_ultrasound_section',
+        'rmi_multilocular', 'rmi_solid', 'rmi_metastases', 'rmi_ascites', 'rmi_bilateral']
+    }
+  ]);
+});
+
+test('ported 40 to 43 open blank without inventing legacy example values', () => {
+  deepEqual(evaluateCalculator(GYNE_SEDLIS_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['sedlis_node_status', 'sedlis_margin_status', 'sedlis_parametrium']);
+  deepEqual(evaluateCalculator(GYNE_PETERS_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['peters_node_status', 'peters_margin_status', 'peters_parametrium']);
+  deepEqual(evaluateCalculator(GYNE_PROMISE_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['promise_pole', 'promise_mmr', 'promise_p53']);
+  deepEqual(evaluateCalculator(GYNE_RMI_I_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['rmi_ca125', 'rmi_menopause']);
+  const definitions = [GYNE_SEDLIS_CALCULATOR, GYNE_PETERS_CALCULATOR,
+    GYNE_PROMISE_CALCULATOR, GYNE_RMI_I_CALCULATOR];
+  for (const definition of definitions) {
+    for (const field of definition.fields) {
+      if (field.kind === 'number' || field.kind === 'select') {
+        equal(field.initialValue, '');
+        equal(field.exampleValue, undefined);
+      } else if (field.kind === 'checkbox') {
+        equal(field.initialValue, false);
+      }
+    }
+  }
+});
+
+test('Sedlis makes LVSI, stromal depth and size dynamically required only in applicable context', () => {
+  const applicable = evaluateCalculator(GYNE_SEDLIS_CALCULATOR, {
+    sedlis_node_status: 'negative', sedlis_margin_status: 'negative',
+    sedlis_parametrium: 'no'
+  });
+  equal(applicable.status, 'calculated');
+  deepEqual(applicable.result, {
+    title: 'No calculable con los datos actuales',
+    detail: 'Falta completar: invasion linfovascular (LVSI), tercio de invasion estromal, tamano tumoral.',
+    badge: 'datos incompletos', score: 0, showScore: false, severity: 'warn',
+    metrics: [],
+    notes: ['Los campos ausentes no se interpretan automaticamente como hallazgos negativos.']
+  });
+  const excluded = evaluateCalculator(GYNE_SEDLIS_CALCULATOR, {
+    sedlis_node_status: 'micrometastasis', sedlis_margin_status: 'negative',
+    sedlis_parametrium: 'no'
+  });
+  equal(excluded.result.title, 'Sedlis no es aplicable en este contexto');
+  equal(excluded.result.detail, 'metastasis ganglionar pelvica');
+});
+
+test('Sedlis golden negative case preserves exact output and historical cautions', () => {
+  const evaluation = evaluateCalculator(GYNE_SEDLIS_CALCULATOR, sedlisInput());
+  deepEqual(evaluation.result, {
+    title: 'No cumple criterios de Sedlis',
+    detail: 'No coincide con ninguna de las cuatro combinaciones exactas publicadas.',
+    badge: 'Sedlis negativo', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'LVSI', value: 'negativo' },
+      { label: 'Invasion estromal', value: 'superficial' },
+      { label: 'Tamano', value: '1 cm' }
+    ],
+    notes: [
+      'La regla evalua combinaciones exactas; no cuenta simplemente dos de tres factores.',
+      'El tamano de la tabla original fue determinado por palpacion clinica.',
+      'Es una clasificacion de riesgo; no constituye por si sola una indicacion terapeutica.'
+    ]
+  });
+});
+
+test('Sedlis preserves all four exact combinations and size boundaries', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string][] = [
+    [{ sedlis_lvsi: 'yes', sedlis_stromal: 'deep', sedlis_size: 0.01 },
+      'Cumple criterios de Sedlis', 'LVSI positivo, tercio profundo, cualquier tamano'],
+    [{ sedlis_lvsi: 'yes', sedlis_stromal: 'middle', sedlis_size: 1.99 },
+      'No cumple criterios de Sedlis', 'No coincide con ninguna de las cuatro combinaciones exactas publicadas.'],
+    [{ sedlis_lvsi: 'yes', sedlis_stromal: 'middle', sedlis_size: 2 },
+      'Cumple criterios de Sedlis', 'LVSI positivo, tercio medio, tumor >=2 cm'],
+    [{ sedlis_lvsi: 'yes', sedlis_stromal: 'superficial', sedlis_size: 4.99 },
+      'No cumple criterios de Sedlis', 'No coincide con ninguna de las cuatro combinaciones exactas publicadas.'],
+    [{ sedlis_lvsi: 'yes', sedlis_stromal: 'superficial', sedlis_size: 5 },
+      'Cumple criterios de Sedlis', 'LVSI positivo, tercio superficial, tumor >=5 cm'],
+    [{ sedlis_lvsi: 'no', sedlis_stromal: 'middle', sedlis_size: 3.99 },
+      'No cumple criterios de Sedlis', 'No coincide con ninguna de las cuatro combinaciones exactas publicadas.'],
+    [{ sedlis_lvsi: 'no', sedlis_stromal: 'middle', sedlis_size: 4 },
+      'Cumple criterios de Sedlis', 'LVSI negativo, tercio medio o profundo, tumor >=4 cm'],
+    [{ sedlis_lvsi: 'no', sedlis_stromal: 'deep', sedlis_size: 4 },
+      'Cumple criterios de Sedlis', 'LVSI negativo, tercio medio o profundo, tumor >=4 cm']
+  ];
+  for (const [overrides, title, detail] of cases) {
+    const evaluation = evaluateCalculator(GYNE_SEDLIS_CALCULATOR, sedlisInput(overrides));
+    equal(evaluation.result.title, title);
+    equal(evaluation.result.detail, detail);
+  }
+});
+
+test('Sedlis preserves measurement-method warning and all high-risk exclusion reasons', () => {
+  const palpation = evaluateCalculator(GYNE_SEDLIS_CALCULATOR,
+    sedlisInput({ sedlis_size_method: 'clinical_palpation' }));
+  equal(palpation.result.notes.length, 3);
+  const pathology = evaluateCalculator(GYNE_SEDLIS_CALCULATOR,
+    sedlisInput({ sedlis_size_method: 'pathology' }));
+  deepEqual(pathology.result.notes, [
+    'La regla evalua combinaciones exactas; no cuenta simplemente dos de tres factores.',
+    'El tamano de la tabla original fue determinado por palpacion clinica.',
+    'El metodo de medicion informado no es la palpacion clinica del modelo original.',
+    'Es una clasificacion de riesgo; no constituye por si sola una indicacion terapeutica.'
+  ]);
+  const excluded = evaluateCalculator(GYNE_SEDLIS_CALCULATOR, {
+    sedlis_node_status: 'macrometastasis', sedlis_margin_status: 'positive',
+    sedlis_parametrium: 'yes'
+  });
+  equal(excluded.result.detail,
+    'metastasis ganglionar pelvica, margen quirurgico positivo y invasion parametrial');
+});
+
+test('Sedlis preserves the canonical ITC early-return defect that masks margin and parametrium', () => {
+  const evaluation = evaluateCalculator(GYNE_SEDLIS_CALCULATOR, {
+    sedlis_node_status: 'isolated_tumor_cells', sedlis_margin_status: 'positive',
+    sedlis_parametrium: 'yes'
+  });
+  equal(evaluation.result.title, 'Sedlis no es aplicable en este contexto');
+  equal(evaluation.result.detail, 'celulas tumorales aisladas: significado adyuvante incierto');
+  equal(evaluation.result.detail.includes('margen'), false);
+  equal(evaluation.result.detail.includes('parametrial'), false);
+});
+
+test('Peters golden negative case preserves exact pathology output', () => {
+  const evaluation = evaluateCalculator(GYNE_PETERS_CALCULATOR, petersInput());
+  deepEqual(evaluation.result, {
+    title: 'No cumple criterios de Peters',
+    detail: 'No se identificaron ganglios pelvicos metastasicos, margenes positivos ni invasion parametrial.',
+    badge: 'Peters negativo', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'Ganglios', value: 'negative' },
+      { label: 'Margenes', value: 'negative' },
+      { label: 'Parametrio', value: 'sin invasion' }
+    ],
+    notes: [
+      'La clasificacion se obtuvo con los tres datos requeridos.',
+      'El resultado describe riesgo patologico y no prescribe un esquema adyuvante.'
+    ]
+  });
+});
+
+test('Peters preserves nodal, margin and parametrial positive features and natural joining', () => {
+  for (const nodes of ['micrometastasis', 'macrometastasis']) {
+    const evaluation = evaluateCalculator(GYNE_PETERS_CALCULATOR,
+      petersInput({ peters_node_status: nodes }));
+    equal(evaluation.result.detail, 'Ganglio pelvico metastasico');
+  }
+  equal(evaluateCalculator(GYNE_PETERS_CALCULATOR,
+    petersInput({ peters_margin_status: 'positive' })).result.detail,
+  'Margen quirurgico positivo');
+  equal(evaluateCalculator(GYNE_PETERS_CALCULATOR,
+    petersInput({ peters_parametrium: 'yes' })).result.detail, 'Invasion parametrial');
+  const all = evaluateCalculator(GYNE_PETERS_CALCULATOR, petersInput({
+    peters_node_status: 'micrometastasis', peters_margin_status: 'positive',
+    peters_parametrium: 'yes'
+  }));
+  equal(all.result.detail,
+    'Ganglio pelvico metastasico, Margen quirurgico positivo y Invasion parametrial');
+  equal(all.result.title, 'Cumple criterios de Peters');
+  equal(all.result.severity, 'warn');
+});
+
+test('Peters preserves isolated-tumor-cell indeterminacy and uncertainty with another positive feature', () => {
+  const isolated = evaluateCalculator(GYNE_PETERS_CALCULATOR,
+    petersInput({ peters_node_status: 'isolated_tumor_cells' }));
+  deepEqual(isolated.result, {
+    title: 'Resultado indeterminado por celulas tumorales aisladas',
+    detail: 'No hay otra caracteristica Peters positiva, pero las celulas tumorales aisladas no deben tratarse como ganglios completamente negativos.',
+    badge: 'incertidumbre nodal', score: 0, showScore: false, severity: 'warn',
+    metrics: [{ label: 'Ganglios', value: 'ITC solamente' }],
+    notes: ['La salida no asigna una conducta terapeutica automatica.']
+  });
+  const withMargin = evaluateCalculator(GYNE_PETERS_CALCULATOR,
+    petersInput({ peters_node_status: 'isolated_tumor_cells', peters_margin_status: 'positive' }));
+  equal(withMargin.result.title, 'Cumple criterios de Peters');
+  equal(withMargin.result.detail, 'Margen quirurgico positivo');
+  equal(withMargin.result.notes[0], 'Hay incertidumbre adicional por celulas tumorales aisladas.');
+});
+
+test('ProMisE golden NSMP refinement preserves exact class, metrics and warning', () => {
+  const evaluation = evaluateCalculator(GYNE_PROMISE_CALCULATOR, promiseInput());
+  deepEqual(evaluation.result, {
+    title: 'Clase molecular: NSMP',
+    detail: 'Clasificacion obtenida mediante la jerarquia POLEmut, MMRd, p53abn y NSMP.',
+    badge: 'NSMP', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'Clase', value: 'NSMP' },
+      { label: 'Rasgos detectados', value: 'ninguno de los tres' },
+      { label: 'Clasificador multiple', value: 'no' },
+      { label: 'Refinamiento NSMP', value: 'NSMP bajo grado y ER positivo' }
+    ],
+    notes: ['La clase molecular no reemplaza el estadio FIGO ni define por si sola un tratamiento.']
+  });
+});
+
+test('ProMisE preserves POLEmut, MMRd, p53abn and NSMP hierarchy', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{ promise_pole: 'pathogenic', promise_mmr: 'deficient', promise_p53: 'abnormal' }, 'POLEmut'],
+    [{ promise_pole: 'non_pathogenic', promise_mmr: 'deficient', promise_p53: 'abnormal' }, 'MMRd'],
+    [{ promise_pole: 'non_pathogenic', promise_mmr: 'proficient', promise_p53: 'abnormal' }, 'p53abn'],
+    [{ promise_pole: 'non_pathogenic', promise_mmr: 'proficient', promise_p53: 'wild_type' }, 'NSMP']
+  ];
+  for (const [overrides, expected] of cases) {
+    equal(evaluateCalculator(GYNE_PROMISE_CALCULATOR,
+      promiseInput(overrides)).result.metrics[0]?.value, expected);
+  }
+  const multiple = evaluateCalculator(GYNE_PROMISE_CALCULATOR,
+    promiseInput({ promise_pole: 'pathogenic', promise_mmr: 'deficient',
+      promise_p53: 'abnormal' }));
+  equal(multiple.result.detail,
+    'Clasificador multiple resuelto por jerarquia: POLEmut + MMRd + p53abn.');
+  equal(multiple.result.metrics[2]?.value, 'si');
+});
+
+test('ProMisE preserves VUS warning and does not classify it as POLEmut', () => {
+  const evaluation = evaluateCalculator(GYNE_PROMISE_CALCULATOR,
+    promiseInput({ promise_pole: 'vus' }));
+  equal(evaluation.result.title, 'Clase molecular: NSMP');
+  equal(evaluation.result.notes[0],
+    'Una variante POLE de significado incierto no se clasifica como POLEmut.');
+  equal(evaluation.result.metrics[1]?.value, 'ninguno de los tres');
+});
+
+test('ProMisE keeps NSMP class calculable while optional refinement data are pending', () => {
+  const evaluation = evaluateCalculator(GYNE_PROMISE_CALCULATOR, {
+    promise_pole: 'non_pathogenic', promise_mmr: 'proficient', promise_p53: 'wild_type'
+  });
+  equal(evaluation.status, 'calculated');
+  equal(evaluation.result.title, 'Clase molecular: NSMP');
+  equal(evaluation.result.metrics[3]?.value, 'Pendiente');
+  deepEqual(evaluation.result.notes, [
+    'Para completar el refinamiento NSMP falta: grado histologico, receptor de estrogeno.',
+    'La clase molecular no reemplaza el estadio FIGO ni define por si sola un tratamiento.'
+  ]);
+});
+
+test('ProMisE preserves the ten-percent ER boundary and high-grade override in NSMP', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{ promise_grade: 'low', promise_er: 9.9 }, 'NSMP alto grado o ER negativo'],
+    [{ promise_grade: 'low', promise_er: 10 }, 'NSMP bajo grado y ER positivo'],
+    [{ promise_grade: 'high', promise_er: 100 }, 'NSMP alto grado o ER negativo']
+  ];
+  for (const [overrides, expected] of cases) {
+    equal(evaluateCalculator(GYNE_PROMISE_CALCULATOR,
+      promiseInput(overrides)).result.metrics[3]?.value, expected);
+  }
+});
+
+test('RMI I golden zero-ultrasound case preserves multipliers, thresholds and cautions', () => {
+  const evaluation = evaluateCalculator(GYNE_RMI_I_CALCULATOR, rmiInput());
+  deepEqual(evaluation.result, {
+    title: 'RMI I: 0', detail: 'U 0 x M 1 x CA 125 100.',
+    badge: 'debajo de umbral NICE 250', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'RMI I', value: '0' },
+      { label: 'Hallazgos ecograficos', value: 0 },
+      { label: 'Umbral NICE 250', value: 'no alcanzado' },
+      { label: 'Umbral historico 200', value: 'no alcanzado' }
+    ],
+    notes: [
+      'El umbral vigente mostrado es el de NICE; otros sistemas pueden utilizar un punto de corte distinto.',
+      'RMI I es una herramienta de triage preoperatorio y no confirma ni excluye malignidad.'
+    ]
+  });
+});
+
+test('RMI I preserves ultrasound multipliers zero, one and three and menopause multipliers', () => {
+  const none = evaluateCalculator(GYNE_RMI_I_CALCULATOR, rmiInput());
+  equal(none.result.detail, 'U 0 x M 1 x CA 125 100.');
+  const one = evaluateCalculator(GYNE_RMI_I_CALCULATOR,
+    rmiInput({ rmi_multilocular: true }));
+  equal(one.result.detail, 'U 1 x M 1 x CA 125 100.');
+  equal(one.result.metrics[1]?.value, 1);
+  const two = evaluateCalculator(GYNE_RMI_I_CALCULATOR,
+    rmiInput({ rmi_multilocular: true, rmi_solid: true }));
+  equal(two.result.detail, 'U 3 x M 1 x CA 125 100.');
+  equal(two.result.metrics[1]?.value, 2);
+  const twoPost = evaluateCalculator(GYNE_RMI_I_CALCULATOR, rmiInput({
+    rmi_menopause: 'postmenopausal', rmi_multilocular: true, rmi_solid: true,
+  }));
+  equal(twoPost.result.detail, 'U 3 x M 3 x CA 125 100.');
+  equal(twoPost.result.title, 'RMI I: 900');
+  equal(twoPost.result.metrics[1]?.value, 2);
+});
+
+test('RMI I preserves historical 200 and NICE 250 inclusive thresholds', () => {
+  const cases: readonly [number, string, string, string][] = [
+    [199, 'RMI I: 199', 'no alcanzado', 'no alcanzado'],
+    [199.9, 'RMI I: 199,9', 'no alcanzado', 'no alcanzado'],
+    [200, 'RMI I: 200', 'no alcanzado', 'alcanzado'],
+    [249.9, 'RMI I: 249,9', 'no alcanzado', 'alcanzado'],
+    [250, 'RMI I: 250', 'alcanzado', 'alcanzado']
+  ];
+  for (const [ca125, title, nice, historical] of cases) {
+    const evaluation = evaluateCalculator(GYNE_RMI_I_CALCULATOR,
+      rmiInput({ rmi_ca125: ca125, rmi_multilocular: true }));
+    equal(evaluation.result.title, title);
+    equal(evaluation.result.metrics[2]?.value, nice);
+    equal(evaluation.result.metrics[3]?.value, historical);
+  }
+});
+
+test('RMI I accepts CA 125 zero and treats unchecked ultrasound boxes as explicit absence', () => {
+  const evaluation = evaluateCalculator(GYNE_RMI_I_CALCULATOR,
+    rmiInput({ rmi_ca125: 0 }));
+  equal(evaluation.status, 'calculated');
+  equal(evaluation.result.title, 'RMI I: 0');
+  equal(evaluation.result.metrics[1]?.value, 0);
+});
+
+test('ported 40 to 43 enforce declared validation and contain typed text only', () => {
+  deepEqual(evaluateCalculator(GYNE_SEDLIS_CALCULATOR,
+    sedlisInput({ sedlis_size: 0 })).issues.map((issue) => issue.code), ['below-minimum']);
+  deepEqual(evaluateCalculator(GYNE_PETERS_CALCULATOR,
+    petersInput({ peters_node_status: 'unknown' })).issues.map((issue) => issue.code), ['unknown-option']);
+  deepEqual(evaluateCalculator(GYNE_PROMISE_CALCULATOR,
+    promiseInput({ promise_er: 100.1 })).issues.map((issue) => issue.code), ['above-maximum']);
+  deepEqual(evaluateCalculator(GYNE_RMI_I_CALCULATOR,
+    rmiInput({ rmi_ca125: 0.15 })).issues.map((issue) => issue.code), ['step-mismatch']);
+  const results = [
+    evaluateCalculator(GYNE_SEDLIS_CALCULATOR, sedlisInput()).result,
+    evaluateCalculator(GYNE_PETERS_CALCULATOR, petersInput()).result,
+    evaluateCalculator(GYNE_PROMISE_CALCULATOR, promiseInput()).result,
+    evaluateCalculator(GYNE_RMI_I_CALCULATOR, rmiInput()).result
+  ];
+  for (const current of results) assertNoRawMarkup(current.notes);
+});
+
+test('ported 44 to 47 preserve canonical metadata, field order and selector ordering', () => {
+  deepEqual([
+    GYNE_FAGOTTI_CALCULATOR,
+    GYNE_AGO_DESKTOP_CALCULATOR,
+    THORAX_BROCK_CALCULATOR,
+    THORAX_MAYO_HERDER_CALCULATOR
+  ].map((definition) => ({
+    id: definition.id,
+    title: definition.title,
+    category: definition.category,
+    subtitle: definition.subtitle,
+    source: definition.source,
+    fieldIds: definition.fields.map((field) => field.id)
+  })), [
+    {
+      id: 'gyne-fagotti', title: 'Ovario — Fagotti PIV clásico', category: 'ginecologia',
+      subtitle: 'Siete parámetros laparoscópicos del modelo de 2006.',
+      source: 'Fagotti 2006 - PIV clasico',
+      fieldIds: ['fagotti_section', 'fagotti_peritoneal', 'fagotti_diaphragm',
+        'fagotti_mesentery', 'fagotti_omentum', 'fagotti_bowel', 'fagotti_stomach',
+        'fagotti_liver']
+    },
+    {
+      id: 'gyne-ago-desktop', title: 'Ovario recurrente — AGO / DESKTOP III',
+      category: 'ginecologia',
+      subtitle: 'Selección reproducible de la población del ensayo DESKTOP III.',
+      source: 'AGO score - DESKTOP III',
+      fieldIds: ['ago_population_section', 'ago_first_relapse', 'ago_platinum_interval',
+        'ago_score_section', 'ago_ecog', 'ago_ascites', 'ago_initial_resection']
+    },
+    {
+      id: 'thorax_brock', title: 'Brock / PanCan — nódulo pulmonar', category: 'pulmon',
+      subtitle: 'Probabilidad de malignidad por datos clínicos y TC.',
+      source: 'McWilliams et al., NEJM 2013 - modelo Brock completo',
+      fieldIds: ['brock_patient_section', 'brock_age', 'brock_sex', 'brock_family_history',
+        'brock_emphysema', 'brock_nodule_section', 'brock_diameter', 'brock_type',
+        'brock_upper_lobe', 'brock_nodule_count', 'brock_spiculation']
+    },
+    {
+      id: 'thorax_mayo_herder', title: 'Mayo-Herder con PET-FDG', category: 'pulmon',
+      subtitle: 'Probabilidad pretest Mayo refinada por captación PET.',
+      source: 'Swensen 1997; Herder et al., Chest 2005',
+      fieldIds: ['herder_patient_section', 'herder_age', 'herder_smoker',
+        'herder_prior_cancer', 'herder_nodule_section', 'herder_diameter',
+        'herder_spiculation', 'herder_upper_lobe', 'herder_pet']
+    }
+  ]);
+  const agoFirst = GYNE_AGO_DESKTOP_CALCULATOR.fields.find((field) => field.id === 'ago_first_relapse');
+  const agoResection = GYNE_AGO_DESKTOP_CALCULATOR.fields.find((field) => field.id === 'ago_initial_resection');
+  const brockFamily = THORAX_BROCK_CALCULATOR.fields.find((field) => field.id === 'brock_family_history');
+  deepEqual(agoFirst?.kind === 'select' ? agoFirst.options.map((item) => item.value) : [], ['yes', 'no']);
+  deepEqual(agoResection?.kind === 'select' ? agoResection.options.map((item) => item.value) : [], ['', 'yes', 'no']);
+  deepEqual(brockFamily?.kind === 'select' ? brockFamily.options.map((item) => item.value) : [], ['no', 'yes']);
+});
+
+test('ported 44 to 47 open blank and preserve only the canonical thorax examples', () => {
+  deepEqual(evaluateCalculator(GYNE_FAGOTTI_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['fagotti_liver']);
+  deepEqual(evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['ago_first_relapse', 'ago_platinum_interval']);
+  deepEqual(evaluateCalculator(THORAX_BROCK_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['brock_age', 'brock_sex', 'brock_family_history', 'brock_emphysema',
+      'brock_diameter', 'brock_type', 'brock_upper_lobe', 'brock_nodule_count', 'brock_spiculation']);
+  deepEqual(evaluateCalculator(THORAX_MAYO_HERDER_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['herder_age', 'herder_smoker', 'herder_prior_cancer', 'herder_diameter',
+      'herder_spiculation', 'herder_upper_lobe', 'herder_pet']);
+  const examples = (definition: typeof THORAX_BROCK_CALCULATOR | typeof THORAX_MAYO_HERDER_CALCULATOR) =>
+    Object.fromEntries(definition.fields.filter((field) => field.kind === 'number')
+      .map((field) => [field.id, field.kind === 'number' ? field.exampleValue : undefined]));
+  deepEqual(examples(THORAX_BROCK_CALCULATOR), {
+    brock_age: 62, brock_diameter: 8, brock_nodule_count: 1
+  });
+  deepEqual(examples(THORAX_MAYO_HERDER_CALCULATOR), {
+    herder_age: 65, herder_diameter: 12
+  });
+  for (const definition of [GYNE_FAGOTTI_CALCULATOR, GYNE_AGO_DESKTOP_CALCULATOR]) {
+    for (const field of definition.fields) {
+      if (field.kind === 'number' || field.kind === 'select') equal(field.initialValue, '');
+      if (field.kind === 'number') equal(field.exampleValue, undefined);
+      if (field.kind === 'checkbox') equal(field.initialValue, false);
+    }
+  }
+});
+
+test('Fagotti golden zero treats every unchecked definition as explicit absence', () => {
+  const evaluation = evaluateCalculator(GYNE_FAGOTTI_CALCULATOR, fagottiInput());
+  deepEqual(evaluation.result, {
+    title: 'Fagotti PIV: 0 / 14',
+    detail: 'No alcanza el umbral historico PIV >=8.',
+    badge: 'PIV <8', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'Puntaje', value: '0 / 14' },
+      { label: 'Parametros con 2 puntos', value: 0 },
+      { label: 'Lesion hepatica', value: '0 cm' },
+      { label: 'Umbral clasico', value: 'no alcanzado' }
+    ],
+    notes: [
+      'El umbral historico predice riesgo de citorreduccion suboptima segun la definicion de residuo >1 cm.',
+      'El resultado no equivale a irresecabilidad ni reemplaza la evaluacion de un centro experto.'
+    ]
+  });
+});
+
+test('Fagotti gives two points to each independent definition and reaches fourteen', () => {
+  const fields = ['fagotti_peritoneal', 'fagotti_diaphragm', 'fagotti_mesentery',
+    'fagotti_omentum', 'fagotti_bowel', 'fagotti_stomach'];
+  for (const fieldId of fields) {
+    const evaluation = evaluateCalculator(GYNE_FAGOTTI_CALCULATOR,
+      fagottiInput({ [fieldId]: true }));
+    equal(evaluation.result.title, 'Fagotti PIV: 2 / 14');
+    equal(evaluation.result.metrics[1]?.value, 1);
+  }
+  const maximum = evaluateCalculator(GYNE_FAGOTTI_CALCULATOR,
+    fagottiInput(Object.fromEntries([...fields.map((id) => [id, true]), ['fagotti_liver', 2.1]])));
+  equal(maximum.result.title, 'Fagotti PIV: 14 / 14');
+  equal(maximum.result.metrics[1]?.value, 7);
+});
+
+test('Fagotti preserves strict liver greater-than-two and inclusive score-eight borders', () => {
+  const base = { fagotti_peritoneal: true, fagotti_diaphragm: true, fagotti_mesentery: true };
+  const atTwo = evaluateCalculator(GYNE_FAGOTTI_CALCULATOR,
+    fagottiInput({ ...base, fagotti_liver: 2 }));
+  equal(atTwo.result.title, 'Fagotti PIV: 6 / 14');
+  equal(atTwo.result.badge, 'PIV <8');
+  const aboveTwo = evaluateCalculator(GYNE_FAGOTTI_CALCULATOR,
+    fagottiInput({ ...base, fagotti_liver: 2.1 }));
+  equal(aboveTwo.result.title, 'Fagotti PIV: 8 / 14');
+  equal(aboveTwo.result.badge, 'PIV >=8');
+  equal(aboveTwo.result.metrics[2]?.value, '2,1 cm');
+});
+
+test('Fagotti enforces declared liver minimum and decimal increment', () => {
+  deepEqual(evaluateCalculator(GYNE_FAGOTTI_CALCULATOR,
+    fagottiInput({ fagotti_liver: -0.1 })).issues.map((issue) => issue.code), ['below-minimum']);
+  deepEqual(evaluateCalculator(GYNE_FAGOTTI_CALCULATOR,
+    fagottiInput({ fagotti_liver: 2.15 })).issues.map((issue) => issue.code), ['step-mismatch']);
+});
+
+test('AGO short-circuits outside DESKTOP III at first relapse and six-month boundaries', () => {
+  const both = evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR,
+    { ago_first_relapse: 'no', ago_platinum_interval: 5.9 });
+  deepEqual(both.result, {
+    title: 'Fuera de la poblacion DESKTOP III',
+    detail: 'no corresponde a la primera recaida y intervalo libre de platino <6 meses',
+    badge: 'AGO no aplicable', score: 0, showScore: false, severity: 'warn', metrics: [],
+    notes: ['No se extrapola el AGO score fuera del contexto en que se valido.']
+  });
+  equal(evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR,
+    { ago_first_relapse: 'no', ago_platinum_interval: 6 }).result.detail,
+  'no corresponde a la primera recaida');
+  equal(evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR,
+    { ago_first_relapse: 'yes', ago_platinum_interval: 5.9 }).result.detail,
+  'intervalo libre de platino <6 meses');
+});
+
+test('AGO dynamically requires all three score components only in the applicable population', () => {
+  const evaluation = evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR,
+    { ago_first_relapse: 'yes', ago_platinum_interval: 6 });
+  equal(evaluation.status, 'calculated');
+  deepEqual(evaluation.result, {
+    title: 'No calculable con los datos actuales',
+    detail: 'Falta completar: ECOG, volumen de ascitis, reseccion completa inicial.',
+    badge: 'datos incompletos', score: 0, showScore: false, severity: 'warn', metrics: [],
+    notes: ['Los campos ausentes no se interpretan automaticamente como hallazgos negativos.']
+  });
+});
+
+test('AGO golden positive case preserves simultaneous components and output', () => {
+  const evaluation = evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR, agoInput());
+  deepEqual(evaluation.result, {
+    title: 'AGO score positivo',
+    detail: 'Se cumplen simultaneamente los tres componentes publicados.',
+    badge: 'AGO positivo', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'ECOG 0', value: 'si' },
+      { label: 'Ascitis <500 ml', value: 'si' },
+      { label: 'Reseccion inicial completa', value: 'si' },
+      { label: 'Intervalo libre de platino', value: '6 meses' }
+    ],
+    notes: [
+      'Un AGO positivo identifica mayor probabilidad de reseccion completa; no garantiza resecabilidad ni beneficio individual.',
+      'El score no indica automaticamente cirugia ni sustituye imagenes, resecabilidad tecnica y evaluacion multidisciplinaria.'
+    ]
+  });
+});
+
+test('AGO preserves strict ascites below-five-hundred and every negative component', () => {
+  equal(evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR,
+    agoInput({ ago_ascites: 499 })).result.title, 'AGO score positivo');
+  const cases: readonly Readonly<Record<string, unknown>>[] = [
+    { ago_ecog: '1' }, { ago_ascites: 500 }, { ago_initial_resection: 'no' }
+  ];
+  for (const overrides of cases) {
+    const evaluation = evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR, agoInput(overrides));
+    equal(evaluation.result.title, 'AGO score negativo');
+    equal(evaluation.result.detail, 'No se cumplen simultaneamente los tres componentes publicados.');
+  }
+});
+
+test('AGO preserves global declarative validation of visible optional fields outside population', () => {
+  const invalidOptional = evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR, {
+    ago_first_relapse: 'no', ago_platinum_interval: 5.9, ago_ecog: '5'
+  });
+  equal(invalidOptional.status, 'invalid');
+  deepEqual(invalidOptional.issues.map((issue) => issue.code), ['unknown-option']);
+  deepEqual(evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR,
+    agoInput({ ago_platinum_interval: 6.05 })).issues.map((issue) => issue.code), ['step-mismatch']);
+  deepEqual(evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR,
+    agoInput({ ago_ascites: 499.5 })).issues.map((issue) => issue.code), ['step-mismatch']);
+});
+
+test('Brock golden base case preserves the complete PanCan formula and output', () => {
+  const evaluation = evaluateCalculator(THORAX_BROCK_CALCULATOR, brockInput());
+  deepEqual(evaluation.result, {
+    title: '1.7%',
+    detail: 'Probabilidad modelada de malignidad para el nodulo evaluado.',
+    badge: 'Brock completo', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'Probabilidad', value: '1.72%' },
+      { label: 'Predictor lineal', value: '-4.0480' },
+      { label: 'Diametro', value: '8.0 mm' },
+      { label: 'Tipo', value: 'solid' }
+    ],
+    notes: [
+      'Modelo de screening: su calibracion puede cambiar en nodulos incidentales o poblaciones con otra prevalencia.',
+      'La probabilidad no equivale a confirmacion histologica ni compara alternativas de manejo.'
+    ]
+  });
+});
+
+test('Brock preserves nodule-type and every independent predictor coefficient', () => {
+  const linearPredictors: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{ brock_type: 'solid' }, '-4.0480'],
+    [{ brock_type: 'part_solid' }, '-3.6710'],
+    [{ brock_type: 'ground_glass' }, '-4.1756'],
+    [{ brock_sex: 'female' }, '-3.4469'],
+    [{ brock_family_history: 'yes' }, '-3.7519'],
+    [{ brock_emphysema: 'yes' }, '-3.7527'],
+    [{ brock_upper_lobe: 'yes' }, '-3.3899'],
+    [{ brock_spiculation: 'yes' }, '-3.2751'],
+    [{ brock_nodule_count: 4 }, '-4.2952']
+  ];
+  for (const [overrides, expected] of linearPredictors) {
+    equal(evaluateCalculator(THORAX_BROCK_CALCULATOR,
+      brockInput(overrides)).result.metrics[1]?.value, expected);
+  }
+  equal(evaluateCalculator(THORAX_BROCK_CALCULATOR,
+    brockInput({ brock_nodule_count: 100 })).status, 'calculated');
+});
+
+test('Brock preserves the 50-to-75 development-cohort warning without blocking extrapolation', () => {
+  for (const age of [49, 76]) {
+    const evaluation = evaluateCalculator(THORAX_BROCK_CALCULATOR, brockInput({ brock_age: age }));
+    equal(evaluation.status, 'calculated');
+    equal(evaluation.result.notes.at(-1),
+      'Edad fuera del rango 50-75 anos de la cohorte de desarrollo PanCan');
+  }
+  for (const age of [50, 75]) {
+    equal(evaluateCalculator(THORAX_BROCK_CALCULATOR,
+      brockInput({ brock_age: age })).result.notes.length, 2);
+  }
+  deepEqual(evaluateCalculator(THORAX_BROCK_CALCULATOR,
+    brockInput({ brock_diameter: 30.1 })).issues.map((issue) => issue.code), ['above-maximum']);
+  deepEqual(evaluateCalculator(THORAX_BROCK_CALCULATOR,
+    brockInput({ brock_nodule_count: 1.5 })).issues.map((issue) => issue.code), ['step-mismatch']);
+});
+
+test('Mayo-Herder golden base case uses Mayo as a decimal and preserves output', () => {
+  const evaluation = evaluateCalculator(THORAX_MAYO_HERDER_CALCULATOR, mayoHerderInput());
+  deepEqual(evaluation.result, {
+    title: '1.1%',
+    detail: 'Probabilidad Herder posterior a incorporar la categoria visual de PET-FDG.',
+    badge: 'Mayo-Herder', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'Mayo pretest', value: '5.97%' },
+      { label: 'Herder con PET', value: '1.08%' },
+      { label: 'Captacion', value: 'absent' },
+      { label: 'Coeficiente PET', value: '0.000' }
+    ],
+    notes: [
+      'Herder utiliza la probabilidad Mayo como decimal entre 0 y 1, no como porcentaje.',
+      'La escala PET es visual; procesos inflamatorios y granulomatosos pueden alterar la especificidad.',
+      'Resultado probabilistico, no diagnostico ni recomendacion de tratamiento.'
+    ]
+  });
+});
+
+test('Mayo-Herder preserves all four PET coefficients and probability oracles', () => {
+  const cases: readonly [string, string, string][] = [
+    ['absent', '0.000', '1.08%'],
+    ['faint', '2.322', '10.01%'],
+    ['moderate', '4.617', '52.46%'],
+    ['intense', '4.771', '56.28%']
+  ];
+  for (const [pet, coefficient, probability] of cases) {
+    const evaluation = evaluateCalculator(THORAX_MAYO_HERDER_CALCULATOR,
+      mayoHerderInput({ herder_pet: pet }));
+    equal(evaluation.result.metrics[1]?.value, probability);
+    equal(evaluation.result.metrics[3]?.value, coefficient);
+  }
+});
+
+test('Mayo preserves each clinical factor and the inclusive ten-millimeter PET warning', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{ herder_smoker: 'yes' }, '12.29%'],
+    [{ herder_prior_cancer: 'yes' }, '19.50%'],
+    [{ herder_spiculation: 'yes' }, '15.24%'],
+    [{ herder_upper_lobe: 'yes' }, '12.21%']
+  ];
+  for (const [overrides, expectedMayo] of cases) {
+    equal(evaluateCalculator(THORAX_MAYO_HERDER_CALCULATOR,
+      mayoHerderInput(overrides)).result.metrics[0]?.value, expectedMayo);
+  }
+  equal(evaluateCalculator(THORAX_MAYO_HERDER_CALCULATOR,
+    mayoHerderInput({ herder_diameter: 10 })).result.notes.at(-1),
+  'La sensibilidad de PET-FDG puede ser menor en nodulos de 10 mm o menos');
+  equal(evaluateCalculator(THORAX_MAYO_HERDER_CALCULATOR,
+    mayoHerderInput({ herder_diameter: 10.1 })).result.notes.length, 3);
+});
+
+test('ported 44 to 47 enforce safe selectors, physical limits and typed text-only results', () => {
+  deepEqual(evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR,
+    agoInput({ ago_first_relapse: 'unknown' })).issues.map((issue) => issue.code), ['unknown-option']);
+  deepEqual(evaluateCalculator(THORAX_BROCK_CALCULATOR,
+    brockInput({ brock_type: 'unknown' })).issues.map((issue) => issue.code), ['unknown-option']);
+  deepEqual(evaluateCalculator(THORAX_MAYO_HERDER_CALCULATOR,
+    mayoHerderInput({ herder_diameter: 3.9 })).issues.map((issue) => issue.code), ['below-minimum']);
+  deepEqual(evaluateCalculator(THORAX_MAYO_HERDER_CALCULATOR,
+    mayoHerderInput({ herder_pet: 'unknown' })).issues.map((issue) => issue.code), ['unknown-option']);
+  const results = [
+    evaluateCalculator(GYNE_FAGOTTI_CALCULATOR, fagottiInput()).result,
+    evaluateCalculator(GYNE_AGO_DESKTOP_CALCULATOR, agoInput()).result,
+    evaluateCalculator(THORAX_BROCK_CALCULATOR, brockInput()).result,
+    evaluateCalculator(THORAX_MAYO_HERDER_CALCULATOR, mayoHerderInput()).result
+  ];
+  for (const current of results) assertNoRawMarkup(current.notes);
+});
+
+test('ported 48 to 51 preserve canonical metadata and complete field order', () => {
+  deepEqual([
+    THORAX_LUNG_GPA_2022_CALCULATOR,
+    THORAX_LIPI_CALCULATOR,
+    DIGESTIVE_ALBI_CALCULATOR,
+    DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR
+  ].map((definition) => ({
+    id: definition.id,
+    title: definition.title,
+    category: definition.category,
+    subtitle: definition.subtitle,
+    source: definition.source,
+    fieldIds: definition.fields.map((field) => field.id)
+  })), [
+    {
+      id: 'thorax_lung_gpa_2022', title: 'Lung GPA 2022', category: 'pulmon',
+      subtitle: 'Pronóstico en metástasis cerebrales de cáncer pulmonar.',
+      source: 'Sperduto et al., Int J Radiat Oncol Biol Phys 2022',
+      fieldIds: ['scenario', 'lung_gpa_common_section', 'lung_gpa_age', 'lung_gpa_kps',
+        'lung_gpa_brain_count', 'lung_gpa_ecm', 'lung_gpa_biomarker_section',
+        'lung_gpa_egfr', 'lung_gpa_alk', 'lung_gpa_pdl1']
+    },
+    {
+      id: 'thorax_lipi', title: 'LIPI', category: 'pulmon',
+      subtitle: 'Índice pronóstico pulmonar por dNLR y LDH.',
+      source: 'Mezquita et al., JAMA Oncology 2018',
+      fieldIds: ['lipi_labs_section', 'lipi_wbc', 'lipi_anc', 'lipi_ldh', 'lipi_ldh_uln']
+    },
+    {
+      id: 'digestive_albi', title: 'ALBI / mALBI', category: 'digestivo',
+      subtitle: 'Reserva hepática objetiva por albúmina y bilirrubina.',
+      source: 'Johnson et al., Journal of Clinical Oncology 2015',
+      fieldIds: ['albi_labs_section', 'albi_bilirubin', 'albi_bilirubin_unit',
+        'albi_albumin', 'albi_albumin_unit']
+    },
+    {
+      id: 'digestive_french_afp_hcc', title: 'AFP francés para trasplante en HCC',
+      category: 'digestivo',
+      subtitle: 'Carga tumoral y AFP en candidatos con hepatocarcinoma.',
+      source: 'Duvoux et al., Gastroenterology 2012',
+      fieldIds: ['afp_hcc_section', 'afp_hcc_diameter', 'afp_hcc_nodules', 'afp_hcc_value']
+    }
+  ]);
+});
+
+test('ported 48 to 51 preserve real defaults separately from numeric examples', () => {
+  const lungBlank = evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR);
+  equal(lungBlank.values['scenario'], 'adenocarcinoma');
+  deepEqual(lungBlank.issues.map((issue) => issue.fieldId), [
+    'lung_gpa_age', 'lung_gpa_kps', 'lung_gpa_brain_count', 'lung_gpa_ecm',
+    'lung_gpa_egfr', 'lung_gpa_alk', 'lung_gpa_pdl1'
+  ]);
+  deepEqual(evaluateCalculator(THORAX_LIPI_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['lipi_wbc', 'lipi_anc', 'lipi_ldh', 'lipi_ldh_uln']);
+  const albiBlank = evaluateCalculator(DIGESTIVE_ALBI_CALCULATOR);
+  deepEqual(albiBlank.issues.map((issue) => issue.fieldId), ['albi_bilirubin', 'albi_albumin']);
+  equal(albiBlank.values['albi_bilirubin_unit'], 'mg/dL');
+  equal(albiBlank.values['albi_albumin_unit'], 'g/dL');
+  deepEqual(evaluateCalculator(DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['afp_hcc_diameter', 'afp_hcc_nodules', 'afp_hcc_value']);
+  const numericExamples = (definition: typeof THORAX_LIPI_CALCULATOR
+    | typeof DIGESTIVE_ALBI_CALCULATOR | typeof DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR) =>
+    definition.fields.filter((field) => field.kind === 'number')
+      .map((field) => field.kind === 'number' ? field.exampleValue : undefined);
+  deepEqual(numericExamples(THORAX_LIPI_CALCULATOR), [7, 4, 200, 250]);
+  deepEqual(numericExamples(DIGESTIVE_ALBI_CALCULATOR), [1, 4]);
+  deepEqual(numericExamples(DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR), [3, 1, 100]);
+});
+
+test('Lung GPA adenocarcinoma golden maximum preserves cohort output', () => {
+  const evaluation = evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR, lungGpaAdenoInput());
+  deepEqual(evaluation.result, {
+    title: 'Lung GPA 4.0',
+    detail: 'NSCLC adenocarcinoma - banda 3.5-4.0.',
+    badge: 'pronostico 2022', score: 0, showScore: false, severity: 'good',
+    metrics: [
+      { label: 'Puntaje', value: '4.0' },
+      { label: 'Banda', value: '3.5-4.0' },
+      { label: 'Mediana OS de cohorte', value: '52 meses' },
+      { label: 'Rango intercuartil', value: '25-69 meses' }
+    ],
+    notes: [
+      'Las supervivencias corresponden a cohortes y no son una prediccion individual exacta.',
+      'Aplicable al diagnostico inicial de metastasis cerebrales; la cohorte excluyo recurrencia cerebral y carcinomatosis leptomeningea.',
+      'Es un indice pronostico y no compara eficacia entre tratamientos.'
+    ]
+  });
+});
+
+test('Lung GPA adenocarcinoma preserves every component and strict border', () => {
+  const neutral = {
+    scenario: 'adenocarcinoma', lung_gpa_age: 70, lung_gpa_kps: '70',
+    lung_gpa_brain_count: 5, lung_gpa_ecm: 'yes', lung_gpa_egfr: 'negative',
+    lung_gpa_alk: 'negative', lung_gpa_pdl1: 'negative'
+  };
+  const cases: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{ lung_gpa_kps: '70' }, '0.0'], [{ lung_gpa_kps: '80' }, '0.5'],
+    [{ lung_gpa_kps: '90' }, '1.0'], [{ lung_gpa_age: 69 }, '0.5'],
+    [{ lung_gpa_age: 70 }, '0.0'], [{ lung_gpa_brain_count: 4 }, '0.5'],
+    [{ lung_gpa_brain_count: 5 }, '0.0'], [{ lung_gpa_ecm: 'no' }, '1.0'],
+    [{ lung_gpa_egfr: 'positive' }, '0.5'], [{ lung_gpa_alk: 'positive' }, '0.5'],
+    [{ lung_gpa_egfr: 'positive', lung_gpa_alk: 'positive' }, '0.5'],
+    [{ lung_gpa_pdl1: 'positive' }, '0.5'], [{ lung_gpa_pdl1: 'unknown' }, '0.0']
+  ];
+  for (const [overrides, expected] of cases) {
+    equal(evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR,
+      { ...neutral, ...overrides }).result.metrics[0]?.value, expected);
+  }
+});
+
+test('Lung GPA non-adenocarcinoma preserves KPS, age, count and extracranial borders', () => {
+  const neutral = {
+    scenario: 'non_adenocarcinoma', lung_gpa_age: 70, lung_gpa_kps: '60',
+    lung_gpa_brain_count: 5, lung_gpa_ecm: 'yes'
+  };
+  const cases: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{ lung_gpa_kps: '60' }, '0.0'], [{ lung_gpa_kps: '70' }, '1.0'],
+    [{ lung_gpa_kps: '80' }, '1.5'], [{ lung_gpa_kps: '90' }, '2.0'],
+    [{ lung_gpa_age: 69 }, '0.5'], [{ lung_gpa_age: 70 }, '0.0'],
+    [{ lung_gpa_brain_count: 4 }, '0.5'], [{ lung_gpa_brain_count: 5 }, '0.0'],
+    [{ lung_gpa_ecm: 'no' }, '1.0']
+  ];
+  for (const [overrides, expected] of cases) {
+    equal(evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR,
+      { ...neutral, ...overrides }).result.metrics[0]?.value, expected);
+  }
+});
+
+test('Lung GPA SCLC preserves its distinct KPS, age, brain-count and ECM borders', () => {
+  const neutral = {
+    scenario: 'sclc', lung_gpa_age: 75, lung_gpa_kps: '60',
+    lung_gpa_brain_count: 8, lung_gpa_ecm: 'yes'
+  };
+  const cases: readonly [Readonly<Record<string, unknown>>, string][] = [
+    [{ lung_gpa_kps: '60' }, '0.0'], [{ lung_gpa_kps: '70' }, '0.5'],
+    [{ lung_gpa_kps: '80' }, '1.0'], [{ lung_gpa_kps: '90' }, '1.5'],
+    [{ lung_gpa_kps: '100' }, '2.0'], [{ lung_gpa_age: 74 }, '0.5'],
+    [{ lung_gpa_age: 75 }, '0.0'], [{ lung_gpa_brain_count: 3 }, '1.0'],
+    [{ lung_gpa_brain_count: 4 }, '0.5'], [{ lung_gpa_brain_count: 7 }, '0.5'],
+    [{ lung_gpa_brain_count: 8 }, '0.0'], [{ lung_gpa_ecm: 'no' }, '0.5']
+  ];
+  for (const [overrides, expected] of cases) {
+    equal(evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR,
+      { ...neutral, ...overrides }).result.metrics[0]?.value, expected);
+  }
+});
+
+test('Lung GPA preserves every histology-specific survival band and IQR', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, readonly [string, string, string, string]][] = [
+    [lungGpaAdenoInput({ lung_gpa_kps: '70', lung_gpa_age: 70, lung_gpa_brain_count: 5,
+      lung_gpa_ecm: 'yes', lung_gpa_egfr: 'negative', lung_gpa_alk: 'negative',
+      lung_gpa_pdl1: 'negative' }), ['0-1.0', '6 meses', '2-13 meses', 'bad']],
+    [lungGpaAdenoInput({ lung_gpa_kps: '80', lung_gpa_ecm: 'yes',
+      lung_gpa_egfr: 'negative', lung_gpa_alk: 'negative', lung_gpa_pdl1: 'negative' }),
+    ['1.5-2.0', '15 meses', '5-38 meses', 'warn']],
+    [lungGpaAdenoInput({ lung_gpa_pdl1: 'negative', lung_gpa_egfr: 'negative',
+      lung_gpa_alk: 'negative' }), ['2.5-3.0', '30 meses', '12-no alcanzado meses', 'good']],
+    [lungGpaAdenoInput(), ['3.5-4.0', '52 meses', '25-69 meses', 'good']],
+    [lungGpaNonAdenoInput({ lung_gpa_kps: '60', lung_gpa_age: 70,
+      lung_gpa_brain_count: 5, lung_gpa_ecm: 'yes' }), ['0-1.0', '2 meses', '1-4 meses', 'bad']],
+    [lungGpaNonAdenoInput({ lung_gpa_kps: '70', lung_gpa_age: 69,
+      lung_gpa_brain_count: 5, lung_gpa_ecm: 'yes' }), ['1.5-2.0', '5 meses', '3-12 meses', 'warn']],
+    [lungGpaNonAdenoInput({ lung_gpa_kps: '80', lung_gpa_age: 70,
+      lung_gpa_brain_count: 5, lung_gpa_ecm: 'no' }), ['2.5-3.0', '10 meses', '4-21 meses', 'good']],
+    [lungGpaNonAdenoInput(), ['3.5-4.0', '19 meses', '8-33 meses', 'good']],
+    [lungGpaSclcInput({ lung_gpa_kps: '60', lung_gpa_age: 75,
+      lung_gpa_brain_count: 8, lung_gpa_ecm: 'yes' }), ['0-1.0', '4 meses', '2-8 meses', 'bad']],
+    [lungGpaSclcInput({ lung_gpa_kps: '70', lung_gpa_age: 75,
+      lung_gpa_brain_count: 3, lung_gpa_ecm: 'yes' }), ['1.5-2.0', '8 meses', '4-15 meses', 'warn']],
+    [lungGpaSclcInput({ lung_gpa_kps: '80', lung_gpa_age: 74,
+      lung_gpa_brain_count: 3, lung_gpa_ecm: 'yes' }), ['2.5-3.0', '13 meses', '7-23 meses', 'good']],
+    [lungGpaSclcInput(), ['3.5-4.0', '23 meses', '11-no alcanzado meses', 'good']]
+  ];
+  for (const [input, expected] of cases) {
+    const resultValue = evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR, input).result;
+    deepEqual([resultValue.metrics[1]?.value, resultValue.metrics[2]?.value,
+      resultValue.metrics[3]?.value, resultValue.severity], expected);
+  }
+});
+
+test('Lung GPA activates biomarkers only for adenocarcinoma and ignores hidden invalid values', () => {
+  const nonAdeno = evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR,
+    lungGpaNonAdenoInput({ lung_gpa_egfr: 'invalid', lung_gpa_alk: 'invalid',
+      lung_gpa_pdl1: 'invalid' }));
+  equal(nonAdeno.status, 'calculated');
+  equal(nonAdeno.result.detail, 'NSCLC no adenocarcinoma - banda 3.5-4.0.');
+  const sclc = evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR,
+    lungGpaSclcInput({ lung_gpa_egfr: 'invalid' }));
+  equal(sclc.status, 'calculated');
+  const adeno = evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR, {
+    scenario: 'adenocarcinoma', lung_gpa_age: 65, lung_gpa_kps: '90',
+    lung_gpa_brain_count: 1, lung_gpa_ecm: 'no'
+  });
+  deepEqual(adeno.issues.map((issue) => issue.fieldId),
+    ['lung_gpa_egfr', 'lung_gpa_alk', 'lung_gpa_pdl1']);
+});
+
+test('Lung GPA enforces scenario, age, KPS and integer brain-count constraints', () => {
+  deepEqual(evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR,
+    lungGpaAdenoInput({ scenario: 'unknown' })).issues.map((issue) => issue.code), ['unknown-option']);
+  deepEqual(evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR,
+    lungGpaAdenoInput({ lung_gpa_age: 121 })).issues.map((issue) => issue.code), ['above-maximum']);
+  deepEqual(evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR,
+    lungGpaAdenoInput({ lung_gpa_kps: '85' })).issues.map((issue) => issue.code), ['unknown-option']);
+  deepEqual(evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR,
+    lungGpaAdenoInput({ lung_gpa_brain_count: 1.5 })).issues.map((issue) => issue.code), ['step-mismatch']);
+});
+
+test('LIPI golden zero case preserves formula, output and warnings', () => {
+  const evaluation = evaluateCalculator(THORAX_LIPI_CALCULATOR, lipiInput());
+  deepEqual(evaluation.result, {
+    title: 'LIPI 0 - bueno',
+    detail: 'Indice pronostico compuesto por dNLR mayor de 3 y LDH por encima del limite normal.',
+    badge: 'LIPI', score: 0, showScore: false, severity: 'good',
+    metrics: [
+      { label: 'Puntaje', value: 0 },
+      { label: 'dNLR', value: '1.33' },
+      { label: 'dNLR >3', value: 'No' },
+      { label: 'LDH >LSN', value: 'No' }
+    ],
+    notes: [
+      'Infeccion, inflamacion aguda, corticoides o factores estimulantes pueden modificar los componentes.',
+      'No usar el LIPI como prueba aislada de respuesta ni como selector de tratamiento.',
+      'Indice pronostico; no predice por si solo el beneficio de un tratamiento'
+    ]
+  });
+});
+
+test('LIPI preserves strict dNLR and LDH borders and all three categories', () => {
+  const dnlrBelow = evaluateCalculator(THORAX_LIPI_CALCULATOR,
+    lipiInput({ lipi_wbc: 4.001, lipi_anc: 3, lipi_ldh: 250.001, lipi_ldh_uln: 250.001 }));
+  equal(dnlrBelow.result.title, 'LIPI 0 - bueno');
+  equal(dnlrBelow.result.metrics[1]?.value, '3.00');
+  const dnlrAbove = evaluateCalculator(THORAX_LIPI_CALCULATOR,
+    lipiInput({ lipi_wbc: 4.001, lipi_anc: 3.01, lipi_ldh: 250.001, lipi_ldh_uln: 250.001 }));
+  equal(dnlrAbove.result.title, 'LIPI 1 - intermedio');
+  equal(dnlrAbove.result.metrics[1]?.value, '3.04');
+  equal(dnlrAbove.result.metrics[2]?.value, 'Si');
+  const ldhEqual = evaluateCalculator(THORAX_LIPI_CALCULATOR,
+    lipiInput({ lipi_ldh: 250.001, lipi_ldh_uln: 250.001 }));
+  equal(ldhEqual.result.metrics[3]?.value, 'No');
+  const ldhAbove = evaluateCalculator(THORAX_LIPI_CALCULATOR,
+    lipiInput({ lipi_ldh: 250.101, lipi_ldh_uln: 250.001 }));
+  equal(ldhAbove.result.title, 'LIPI 1 - intermedio');
+  equal(ldhAbove.result.metrics[3]?.value, 'Si');
+  const poor = evaluateCalculator(THORAX_LIPI_CALCULATOR,
+    lipiInput({ lipi_wbc: 4.001, lipi_anc: 3.01, lipi_ldh: 250.101, lipi_ldh_uln: 250.001 }));
+  equal(poor.result.title, 'LIPI 2 - pobre');
+  equal(poor.result.severity, 'bad');
+});
+
+test('LIPI rejects a zero dNLR denominator and preserves the rule-level error', () => {
+  const evaluation = evaluateCalculator(THORAX_LIPI_CALCULATOR,
+    lipiInput({ lipi_wbc: 4.001, lipi_anc: 4.01 }));
+  equal(evaluation.status, 'calculated');
+  deepEqual(evaluation.result, {
+    title: 'LIPI: no calculable',
+    detail: 'absoluteNeutrophils debe ser menor que whiteBloodCells',
+    badge: 'datos invalidos', score: 0, showScore: false, severity: 'warn', metrics: [], notes: []
+  });
+});
+
+test('LIPI preserves displaced min-step grids and unbounded positive laboratory values', () => {
+  const canonicalExamples = evaluateCalculator(THORAX_LIPI_CALCULATOR, {
+    lipi_wbc: 7, lipi_anc: 4, lipi_ldh: 200, lipi_ldh_uln: 250
+  });
+  deepEqual(canonicalExamples.issues.map((issue) => [issue.fieldId, issue.code]), [
+    ['lipi_wbc', 'step-mismatch'], ['lipi_ldh', 'step-mismatch'], ['lipi_ldh_uln', 'step-mismatch']
+  ]);
+  equal(evaluateCalculator(THORAX_LIPI_CALCULATOR, lipiInput({
+    lipi_wbc: 10000.001, lipi_anc: 1, lipi_ldh: 100000.001, lipi_ldh_uln: 1.001
+  })).status, 'calculated');
+});
+
+test('ALBI golden converted-unit case preserves score, grade and mALBI', () => {
+  const evaluation = evaluateCalculator(DIGESTIVE_ALBI_CALCULATOR, albiInput());
+  deepEqual(evaluation.result, {
+    title: 'ALBI grado 2',
+    detail: 'Puntaje continuo -2.587.',
+    badge: 'funcion hepatica', score: 0, showScore: false, severity: 'warn',
+    metrics: [
+      { label: 'ALBI', value: '-2.587' },
+      { label: 'Grado', value: 2 },
+      { label: 'mALBI', value: '2a' },
+      { label: 'Bilirrubina usada', value: '17.12 umol/L' },
+      { label: 'Albumina usada', value: '40.01 g/L' }
+    ],
+    notes: [
+      'ALBI: grado 1 ≤-2,60; grado 2 >-2,60 a ≤-1,39; grado 3 >-1,39. mALBI divide grado 2 en 2a ≤-2,27 y 2b >-2,27.',
+      'No incorpora ascitis, encefalopatia, hipertension portal ni volumen hepatico remanente.',
+      'Describe reserva hepatica; no determina por si solo una conducta oncologica.'
+    ]
+  });
+});
+
+test('ALBI preserves public grade and mALBI borders on the declared input grid', () => {
+  const cases: readonly [number, string, string][] = [
+    [16.341, 'ALBI grado 1', '1'],
+    [16.351, 'ALBI grado 2', '2a'],
+    [51.681, 'ALBI grado 2', '2a'],
+    [51.691, 'ALBI grado 2', '2b'],
+    [1113.631, 'ALBI grado 2', '2b'],
+    [1113.641, 'ALBI grado 3', '3']
+  ];
+  for (const [bilirubin, title, modified] of cases) {
+    const evaluation = evaluateCalculator(DIGESTIVE_ALBI_CALCULATOR, albiInput({
+      albi_bilirubin: bilirubin, albi_bilirubin_unit: 'umol/L'
+    }));
+    equal(evaluation.result.title, title);
+    equal(evaluation.result.metrics[2]?.value, modified);
+  }
+});
+
+test('ALBI applies its inherited tolerance at all three exact score cutoffs', () => {
+  const atGradeOne = albiResultAtScore(-2.60);
+  equal(atGradeOne.title, 'ALBI grado 1');
+  equal(atGradeOne.metrics[2]?.value, '1');
+  const aboveGradeOne = albiResultAtScore(-2.60 + 2e-12);
+  equal(aboveGradeOne.title, 'ALBI grado 2');
+  equal(aboveGradeOne.metrics[2]?.value, '2a');
+  equal(albiResultAtScore(-2.27).metrics[2]?.value, '2a');
+  equal(albiResultAtScore(-2.27 + 2e-12).metrics[2]?.value, '2b');
+  equal(albiResultAtScore(-1.39).title, 'ALBI grado 2');
+  equal(albiResultAtScore(-1.39).metrics[2]?.value, '2b');
+  equal(albiResultAtScore(-1.39 + 2e-12).title, 'ALBI grado 3');
+});
+
+test('ALBI preserves default units, alternate units and displaced numeric grids', () => {
+  const alternate = evaluateCalculator(DIGESTIVE_ALBI_CALCULATOR, {
+    albi_bilirubin: 17.101, albi_bilirubin_unit: 'umol/L',
+    albi_albumin: 40.001, albi_albumin_unit: 'g/L'
+  });
+  equal(alternate.status, 'calculated');
+  equal(alternate.result.metrics[3]?.value, '17.10 umol/L');
+  equal(alternate.result.metrics[4]?.value, '40.00 g/L');
+  const examples = evaluateCalculator(DIGESTIVE_ALBI_CALCULATOR, {
+    albi_bilirubin: 1, albi_albumin: 4
+  });
+  deepEqual(examples.issues.map((issue) => [issue.fieldId, issue.code]), [
+    ['albi_bilirubin', 'step-mismatch'], ['albi_albumin', 'step-mismatch']
+  ]);
+  deepEqual(evaluateCalculator(DIGESTIVE_ALBI_CALCULATOR,
+    albiInput({ albi_bilirubin_unit: 'mg/L' })).issues.map((issue) => issue.code), ['unknown-option']);
+});
+
+test('French AFP HCC golden canonical values preserve exact low-risk output', () => {
+  const value = DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR.calculate({
+    afp_hcc_section: '', afp_hcc_diameter: 3, afp_hcc_nodules: 1, afp_hcc_value: 100
+  });
+  deepEqual(value, {
+    title: 'AFP score 0', detail: 'menor riesgo segun el modelo',
+    badge: 'HCC pretrasplante', score: 0, showScore: false, severity: 'good',
+    metrics: [
+      { label: 'Puntaje total', value: 0 },
+      { label: 'Diametro', value: 0 },
+      { label: 'Numero de nodulos', value: 0 },
+      { label: 'AFP', value: 0 }
+    ],
+    notes: [
+      'El umbral publicado separa puntaje menor o igual a 2 de puntaje mayor de 2.',
+      'Es un modelo de recurrencia postrasplante y no una estadificacion general del HCC.',
+      'No incorpora por si solo invasion macrovascular, enfermedad extrahepatica ni criterios administrativos locales.'
+    ]
+  });
+});
+
+test('French AFP HCC preserves every inclusive component boundary', () => {
+  const cases: readonly [number, number, number, readonly [number, number, number, number]][] = [
+    [3, 3, 100, [0, 0, 0, 0]],
+    [3.0001, 3, 100, [1, 0, 0, 1]],
+    [6, 3, 100, [1, 0, 0, 1]],
+    [6.0001, 3, 100, [4, 0, 0, 4]],
+    [3, 4, 100, [0, 2, 0, 2]],
+    [3, 3, 100.1, [0, 0, 2, 2]],
+    [3, 3, 1000, [0, 0, 2, 2]],
+    [3, 3, 1000.1, [0, 0, 3, 3]],
+    [6.0001, 4, 1000.1, [4, 2, 3, 9]]
+  ];
+  for (const [diameter, nodules, afp, expected] of cases) {
+    const value = DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR.calculate({
+      afp_hcc_section: '', afp_hcc_diameter: diameter,
+      afp_hcc_nodules: nodules, afp_hcc_value: afp
+    });
+    deepEqual([value.metrics[1]?.value, value.metrics[2]?.value,
+      value.metrics[3]?.value, value.metrics[0]?.value], expected);
+  }
+});
+
+test('French AFP HCC preserves score-two/three category and its displaced diameter grid', () => {
+  const low = evaluateCalculator(DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR,
+    afpHccInput({ afp_hcc_value: 1000 }));
+  equal(low.result.title, 'AFP score 2');
+  equal(low.result.severity, 'good');
+  const high = evaluateCalculator(DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR,
+    afpHccInput({ afp_hcc_value: 1000.1 }));
+  equal(high.result.title, 'AFP score 3');
+  equal(high.result.severity, 'bad');
+  const validGridCases: readonly [number, number][] = [[2.91, 0], [3.01, 1], [5.91, 1], [6.01, 4]];
+  for (const [diameter, expectedPoints] of validGridCases) {
+    equal(evaluateCalculator(DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR,
+      afpHccInput({ afp_hcc_diameter: diameter })).result.metrics[1]?.value, expectedPoints);
+  }
+  deepEqual(evaluateCalculator(DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR,
+    afpHccInput({ afp_hcc_diameter: 3 })).issues.map((issue) => issue.code), ['step-mismatch']);
+});
+
+test('ported 48 to 51 enforce safe inputs and return typed text-only notes', () => {
+  deepEqual(evaluateCalculator(THORAX_LIPI_CALCULATOR,
+    lipiInput({ lipi_anc: 4.005 })).issues.map((issue) => issue.code), ['step-mismatch']);
+  deepEqual(evaluateCalculator(DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR,
+    afpHccInput({ afp_hcc_nodules: 1.5 })).issues.map((issue) => issue.code), ['step-mismatch']);
+  deepEqual(evaluateCalculator(DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR,
+    afpHccInput({ afp_hcc_value: -0.1 })).issues.map((issue) => issue.code), ['below-minimum']);
+  const results = [
+    evaluateCalculator(THORAX_LUNG_GPA_2022_CALCULATOR, lungGpaAdenoInput()).result,
+    evaluateCalculator(THORAX_LIPI_CALCULATOR, lipiInput()).result,
+    evaluateCalculator(DIGESTIVE_ALBI_CALCULATOR, albiInput()).result,
+    evaluateCalculator(DIGESTIVE_FRENCH_AFP_HCC_CALCULATOR, afpHccInput()).result
+  ];
+  for (const current of results) assertNoRawMarkup(current.notes);
+});
+
+test('ported 52 to 57 preserve canonical metadata and complete field order', () => {
+  deepEqual([
+    DIGESTIVE_GAME_CALCULATOR,
+    DIGESTIVE_PCI_CALCULATOR,
+    RT_DOSE_PER_FRACTION_TARGET_CALCULATOR,
+    RT_FRACTIONS_TARGET_CALCULATOR,
+    RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR,
+    RT_SIMULTANEOUS_3_VOLUMES_CALCULATOR
+  ].map((definition) => ({
+    id: definition.id,
+    title: definition.title,
+    shortTitle: definition.shortTitle,
+    category: definition.category,
+    subtitle: definition.subtitle,
+    source: definition.source,
+    fieldIds: definition.fields.map((field) => field.id)
+  })), [
+    {
+      id: 'digestive_game', title: 'GAME — metástasis hepáticas colorrectales',
+      shortTitle: undefined, category: 'digestivo',
+      subtitle: 'Evaluación genética y morfológica preoperatoria.',
+      source: 'Margonis, Sasaki et al., British Journal of Surgery 2018',
+      fieldIds: ['game_biology_section', 'game_kras', 'game_cea', 'game_node_positive',
+        'game_burden_section', 'game_largest_met', 'game_met_count', 'game_extrahepatic']
+    },
+    {
+      id: 'digestive_pci', title: 'Índice de cáncer peritoneal (PCI)',
+      shortTitle: undefined, category: 'digestivo',
+      subtitle: 'Carga peritoneal por 13 regiones de Sugarbaker.',
+      source: 'Jacquet y Sugarbaker, 1996',
+      fieldIds: ['pci_abdominopelvic_section', ...Array.from({ length: 9 }, (_, index) => `pci_region_${index}`),
+        'pci_small_bowel_section', ...Array.from({ length: 4 }, (_, index) => `pci_region_${index + 9}`)]
+    },
+    {
+      id: 'rt-dose-per-fraction-target', title: 'Dosis por fracción desde BED o EQD2',
+      shortTitle: 'Dosis/fracción · BED o EQD2', category: 'radioterapia',
+      subtitle: 'Resuelve la dosis por fracción para un efecto biológico objetivo.',
+      source: 'Modelo LQ · Pangea',
+      fieldIds: ['rt_dpf_scope', 'scenario', 'rt_dpf_target', 'rt_dpf_fractions', 'rt_dpf_alpha_beta']
+    },
+    {
+      id: 'rt-fractions-target', title: 'Número de fracciones desde BED o EQD2',
+      shortTitle: 'N.º de fracciones · BED o EQD2', category: 'radioterapia',
+      subtitle: 'Muestra el resultado teórico y recalcula los enteros vecinos.',
+      source: 'Modelo LQ · Pangea',
+      fieldIds: ['rt_n_scope', 'scenario', 'rt_n_target', 'rt_n_dose', 'rt_n_alpha_beta']
+    },
+    {
+      id: 'rt-simultaneous-2-volumes', title: 'Fraccionamiento simultáneo · 2 volúmenes',
+      shortTitle: 'SIB · 2 volúmenes', category: 'radioterapia',
+      subtitle: 'Esquemas con un número común de fracciones para 2 niveles de dosis.',
+      source: 'Modelo LQ · Pangea',
+      fieldIds: ['rt_sib2_scope', 'scenario', 'rt_sib2_target_1', 'rt_sib2_tolerance_1',
+        'rt_sib2_target_2', 'rt_sib2_tolerance_2', 'rt_sib2_delivery',
+        'rt_sib2_alpha_beta', 'rt_sib2_min_dose', 'rt_sib2_max_dose', 'rt_sib2_resolution']
+    },
+    {
+      id: 'rt-simultaneous-3-volumes', title: 'Fraccionamiento simultáneo · 3 volúmenes',
+      shortTitle: 'SIB · 3 volúmenes', category: 'radioterapia',
+      subtitle: 'Esquemas con un número común de fracciones para 3 niveles de dosis.',
+      source: 'Modelo LQ · Pangea',
+      fieldIds: ['rt_sib3_scope', 'scenario', 'rt_sib3_target_1', 'rt_sib3_tolerance_1',
+        'rt_sib3_target_2', 'rt_sib3_tolerance_2', 'rt_sib3_target_3', 'rt_sib3_tolerance_3',
+        'rt_sib3_delivery', 'rt_sib3_alpha_beta', 'rt_sib3_min_dose', 'rt_sib3_max_dose',
+        'rt_sib3_resolution']
+    }
+  ]);
+});
+
+test('ported 52 to 57 preserve blank numbers and only canonical select defaults', () => {
+  deepEqual(evaluateCalculator(DIGESTIVE_GAME_CALCULATOR).issues.map((issue) => issue.fieldId),
+    ['game_kras', 'game_cea', 'game_node_positive', 'game_largest_met',
+      'game_met_count', 'game_extrahepatic']);
+  deepEqual(evaluateCalculator(DIGESTIVE_PCI_CALCULATOR).issues.map((issue) => issue.fieldId),
+    Array.from({ length: 13 }, (_, index) => `pci_region_${index}`));
+  const dpfBlank = evaluateCalculator(RT_DOSE_PER_FRACTION_TARGET_CALCULATOR);
+  equal(dpfBlank.values['scenario'], 'eqd2');
+  deepEqual(dpfBlank.issues.map((issue) => issue.fieldId),
+    ['rt_dpf_target', 'rt_dpf_fractions', 'rt_dpf_alpha_beta']);
+  const fractionsBlank = evaluateCalculator(RT_FRACTIONS_TARGET_CALCULATOR);
+  equal(fractionsBlank.values['scenario'], 'eqd2');
+  deepEqual(fractionsBlank.issues.map((issue) => issue.fieldId),
+    ['rt_n_target', 'rt_n_dose', 'rt_n_alpha_beta']);
+  const sib2Blank = evaluateCalculator(RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR);
+  equal(sib2Blank.values['scenario'], 'physical');
+  equal(sib2Blank.values['rt_sib2_resolution'], '0.01');
+  deepEqual(sib2Blank.issues.map((issue) => issue.fieldId),
+    ['rt_sib2_target_1', 'rt_sib2_tolerance_1', 'rt_sib2_target_2', 'rt_sib2_tolerance_2',
+      'rt_sib2_alpha_beta', 'rt_sib2_min_dose', 'rt_sib2_max_dose']);
+  const sib3Blank = evaluateCalculator(RT_SIMULTANEOUS_3_VOLUMES_CALCULATOR);
+  equal(sib3Blank.values['scenario'], 'physical');
+  equal(sib3Blank.values['rt_sib3_resolution'], '0.01');
+  deepEqual(sib3Blank.issues.map((issue) => issue.fieldId),
+    ['rt_sib3_target_1', 'rt_sib3_tolerance_1', 'rt_sib3_target_2', 'rt_sib3_tolerance_2',
+      'rt_sib3_target_3', 'rt_sib3_tolerance_3', 'rt_sib3_alpha_beta',
+      'rt_sib3_min_dose', 'rt_sib3_max_dose']);
+});
+
+test('GAME golden low case preserves TBS, output and limitations', () => {
+  const evaluation = evaluateCalculator(DIGESTIVE_GAME_CALCULATOR, gameInput());
+  deepEqual(evaluation.result, {
+    title: 'GAME 0 - bajo', detail: 'Estrato pronostico preoperatorio del modelo GAME.',
+    badge: 'CRLM', score: 0, showScore: false, severity: 'good',
+    metrics: [
+      { label: 'Puntaje', value: 0 },
+      { label: 'TBS', value: '2.25' },
+      { label: 'KRAS', value: 0 },
+      { label: 'Extrahepatica', value: 0 }
+    ],
+    notes: [
+      'Grupos publicados: 0-1 bajo, 2-3 intermedio y 4 o mas alto.',
+      'El modelo utiliza KRAS especificamente; no sustituirlo automaticamente por un resultado RAS agregado.',
+      'El puntaje describe pronostico y no define resecabilidad ni tratamiento.'
+    ]
+  });
+});
+
+test('GAME preserves every independent component and inclusive CEA threshold', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, number][] = [
+    [{ game_kras: 'mutated' }, 1],
+    [{ game_cea: 19.9 }, 0], [{ game_cea: 20 }, 1],
+    [{ game_node_positive: 'yes' }, 1],
+    [{ game_extrahepatic: 'yes' }, 2]
+  ];
+  for (const [overrides, total] of cases) {
+    equal(evaluateCalculator(DIGESTIVE_GAME_CALCULATOR,
+      gameInput(overrides)).result.metrics[0]?.value, total);
+  }
+});
+
+test('GAME preserves exact TBS three and nine borders without tolerance', () => {
+  const atThree = gameDirectResult({ game_largest_met: Math.sqrt(8), game_met_count: 1 });
+  equal(atThree.metrics[0]?.value, 1);
+  equal(atThree.metrics[1]?.value, '3.00');
+  equal(gameDirectResult({ game_largest_met: Math.sqrt(8) - 1e-9,
+    game_met_count: 1 }).metrics[0]?.value, 0);
+  const atNine = gameDirectResult({ game_largest_met: Math.sqrt(80), game_met_count: 1 });
+  equal(atNine.metrics[0]?.value, 2);
+  equal(atNine.metrics[1]?.value, '9.00');
+  equal(gameDirectResult({ game_largest_met: Math.sqrt(80) - 1e-9,
+    game_met_count: 1 }).metrics[0]?.value, 1);
+});
+
+test('GAME preserves category borders one, two, three, four and maximum seven', () => {
+  const cases: readonly [Readonly<Record<string, unknown>>, string, string][] = [
+    [{ game_kras: 'mutated' }, 'GAME 1 - bajo', 'good'],
+    [{ game_extrahepatic: 'yes' }, 'GAME 2 - intermedio', 'warn'],
+    [{ game_extrahepatic: 'yes', game_kras: 'mutated' }, 'GAME 3 - intermedio', 'warn'],
+    [{ game_extrahepatic: 'yes', game_kras: 'mutated', game_cea: 20 }, 'GAME 4 - alto', 'bad'],
+    [{ game_extrahepatic: 'yes', game_kras: 'mutated', game_cea: 20,
+      game_node_positive: 'yes', game_largest_met: 9.01 }, 'GAME 7 - alto', 'bad']
+  ];
+  for (const [overrides, title, severity] of cases) {
+    const evaluation = evaluateCalculator(DIGESTIVE_GAME_CALCULATOR, gameInput(overrides));
+    equal(evaluation.result.title, title);
+    equal(evaluation.result.severity, severity as 'good' | 'warn' | 'bad');
+  }
+});
+
+test('GAME preserves its displaced metastasis-size grid and unbounded count', () => {
+  deepEqual(evaluateCalculator(DIGESTIVE_GAME_CALCULATOR,
+    gameInput({ game_largest_met: 2 })).issues.map((issue) => issue.code), ['step-mismatch']);
+  equal(evaluateCalculator(DIGESTIVE_GAME_CALCULATOR,
+    gameInput({ game_met_count: 1000 })).status, 'calculated');
+});
+
+test('PCI golden zero case preserves all thirteen explicit negative regions', () => {
+  const evaluation = evaluateCalculator(DIGESTIVE_PCI_CALCULATOR, pciInput());
+  deepEqual(evaluation.result, {
+    title: 'PCI 0 / 39', detail: 'Suma de los puntajes LS0-LS3 de las 13 regiones.',
+    badge: 'Sugarbaker PCI', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'PCI', value: '0/39' },
+      { label: 'Regiones comprometidas', value: 0 },
+      { label: 'Regiones LS3', value: 0 },
+      { label: 'Regiones evaluadas', value: 13 }
+    ],
+    notes: [
+      'No se registraron implantes visibles en las 13 regiones.',
+      'El PCI cuantifica carga peritoneal; no existe un corte universal aplicable a todas las histologias o centros.',
+      'La estimacion radiologica puede diferir de la evaluacion laparoscopica o intraoperatoria.'
+    ]
+  });
+});
+
+test('PCI preserves every region label, LS score and ascending note order', () => {
+  const labels = ['Central', 'Superior derecha', 'Epigastrio', 'Superior izquierda',
+    'Flanco izquierdo', 'Inferior izquierda', 'Pelvis', 'Inferior derecha',
+    'Flanco derecho', 'Yeyuno superior', 'Yeyuno inferior', 'Ileon superior', 'Ileon inferior'];
+  for (let index = 0; index < labels.length; index += 1) {
+    const evaluation = evaluateCalculator(DIGESTIVE_PCI_CALCULATOR,
+      pciInput({ [`pci_region_${index}`]: String((index % 3) + 1) }));
+    equal(evaluation.result.metrics[0]?.value, `${(index % 3) + 1}/39`);
+    equal(evaluation.result.notes[0],
+      `Compromiso registrado: ${index} ${labels[index]} (LS${(index % 3) + 1}).`);
+  }
+  const ordered = evaluateCalculator(DIGESTIVE_PCI_CALCULATOR,
+    pciInput({ pci_region_1: '2', pci_region_9: '1', pci_region_12: '3' }));
+  equal(ordered.result.notes[0],
+    'Compromiso registrado: 1 Superior derecha (LS2); 9 Yeyuno superior (LS1); 12 Ileon inferior (LS3).');
+});
+
+test('PCI maximum reaches thirty-nine and rejects unknown LS categories', () => {
+  const maximum = evaluateCalculator(DIGESTIVE_PCI_CALCULATOR,
+    pciInput(Object.fromEntries(Array.from({ length: 13 }, (_, index) => [`pci_region_${index}`, '3']))));
+  equal(maximum.result.title, 'PCI 39 / 39');
+  deepEqual(maximum.result.metrics.map((metric) => metric.value), ['39/39', 13, 13, 13]);
+  deepEqual(evaluateCalculator(DIGESTIVE_PCI_CALCULATOR,
+    pciInput({ pci_region_5: '4' })).issues.map((issue) => issue.code), ['unknown-option']);
+});
+
+test('radiotherapy tools preserve canonical factory examples and selector order', () => {
+  const numberExamples = (definition: CalculatorDefinition) =>
+    definition.fields.filter((field) => field.kind === 'number')
+      .map((field) => [field.id, field.exampleValue]);
+  deepEqual(numberExamples(RT_DOSE_PER_FRACTION_TARGET_CALCULATOR), [
+    ['rt_dpf_target', 60], ['rt_dpf_fractions', 30], ['rt_dpf_alpha_beta', 10]
+  ]);
+  deepEqual(numberExamples(RT_FRACTIONS_TARGET_CALCULATOR), [
+    ['rt_n_target', 60], ['rt_n_dose', 3], ['rt_n_alpha_beta', 10]
+  ]);
+  deepEqual(RT_DOSE_PER_FRACTION_TARGET_CALCULATOR.fields[1]?.kind === 'select'
+    ? RT_DOSE_PER_FRACTION_TARGET_CALCULATOR.fields[1].options : [], [
+    { value: 'eqd2', label: 'EQD2 objetivo' }, { value: 'bed', label: 'BED objetivo' }
+  ]);
+  for (const definition of [RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR,
+    RT_SIMULTANEOUS_3_VOLUMES_CALCULATOR]) {
+    const scenario = definition.fields.find((field) => field.id === 'scenario');
+    deepEqual(scenario?.kind === 'select' ? scenario.options : [], [
+      { value: 'physical', label: 'Dosis física total' }, { value: 'eqd2', label: 'EQD2' }
+    ]);
+    const resolution = definition.fields.find((field) => field.id.endsWith('_resolution'));
+    deepEqual(resolution?.kind === 'select' ? resolution.options : [], [
+      { value: '0.01', label: '0,01 Gy' }, { value: '0.05', label: '0,05 Gy' },
+      { value: '0.1', label: '0,10 Gy' }
+    ]);
+  }
+});
+
+test('dose per fraction golden EQD2 case preserves inverse LQ output', () => {
+  const evaluation = evaluateCalculator(RT_DOSE_PER_FRACTION_TARGET_CALCULATOR,
+    rtDoseInput());
+  deepEqual(evaluation.result, {
+    title: '2,000 Gy por fracción', detail: '30 fracciones entregan 60,00 Gy físicos.',
+    badge: 'EQD2 objetivo', score: 0, showScore: false, severity: 'info',
+    metrics: [
+      { label: 'Dosis por fracción', value: '2,000 Gy' },
+      { label: 'Dosis total', value: '60,00 Gy' },
+      { label: 'BED', value: '72,00 Gy (α/β 10,0)' },
+      { label: 'EQD2', value: '60,00 Gy (α/β 10,0)' }
+    ],
+    notes: lqGoldenNotes(false)
+  });
+});
+
+test('dose per fraction preserves BED equivalence and strict five-Gy warning', () => {
+  const bed = evaluateCalculator(RT_DOSE_PER_FRACTION_TARGET_CALCULATOR,
+    rtDoseInput({ scenario: 'bed', rt_dpf_target: 72 }));
+  equal(bed.result.title, '2,000 Gy por fracción');
+  equal(bed.result.badge, 'BED objetivo');
+  const exactFive = evaluateCalculator(RT_DOSE_PER_FRACTION_TARGET_CALCULATOR,
+    rtDoseInput({ scenario: 'bed', rt_dpf_target: 7.5, rt_dpf_fractions: 1 }));
+  equal(exactFive.result.title, '5,000 Gy por fracción');
+  equal(exactFive.result.severity, 'info');
+  const aboveFive = evaluateCalculator(RT_DOSE_PER_FRACTION_TARGET_CALCULATOR,
+    rtDoseInput({ scenario: 'bed', rt_dpf_target: 7.52, rt_dpf_fractions: 1 }));
+  equal(aboveFive.result.title, '5,010 Gy por fracción');
+  equal(aboveFive.result.severity, 'warn');
+  equal(aboveFive.result.notes[0], lqGoldenNotes(true)[0]);
+  deepEqual(evaluateCalculator(RT_DOSE_PER_FRACTION_TARGET_CALCULATOR,
+    rtDoseInput({ rt_dpf_fractions: 1.5 })).issues.map((issue) => issue.code), ['step-mismatch']);
+});
+
+test('fraction-count golden case preserves theoretical result and both integer neighbors', () => {
+  const evaluation = evaluateCalculator(RT_FRACTIONS_TARGET_CALCULATOR,
+    rtFractionsInput());
+  deepEqual(evaluation.result, {
+    title: '18,462 fracciones teóricas',
+    detail: 'Las fracciones deben ser enteras; compará el efecto de ambos esquemas adyacentes.',
+    badge: 'EQD2 objetivo', score: 0, showScore: false, severity: 'warn',
+    metrics: [
+      { label: 'Fracciones teóricas', value: '18,462' },
+      { label: 'Dosis por fracción', value: '3,00 Gy' },
+      { label: 'Objetivo', value: '60,00 Gy (α/β 10,0)' },
+      { label: 'α/β', value: '10,0 Gy' }
+    ],
+    notes: [
+      tableNote('Comparación de fracciones enteras',
+        ['Fracciones', 'Dosis total', 'BED', 'EQD2', 'Δ EQD2'], [
+          [18, '54,00 Gy', '70,20 Gy (α/β 10,0)', '58,50 Gy (α/β 10,0)', '−1,50'],
+          [19, '57,00 Gy', '74,10 Gy (α/β 10,0)', '61,75 Gy (α/β 10,0)', '+1,75']
+        ]),
+      'La tabla compara los enteros matemáticamente adyacentes; no señala uno como preferido.',
+      ...lqGoldenNotes(false)
+    ]
+  });
+});
+
+test('fraction-count preserves integer epsilon, one-neighbor edge and strict high-dose warning', () => {
+  const integer = evaluateCalculator(RT_FRACTIONS_TARGET_CALCULATOR,
+    rtFractionsInput({ rt_n_dose: 2 }));
+  equal(integer.result.title, '30 fracciones');
+  equal(integer.result.severity, 'info');
+  deepEqual(tableAt(integer.result).rows.map((row) => row[0]), [30]);
+  equal(rtFractionsDirect(60 + 1e-9).title, '30 fracciones');
+  equal(rtFractionsDirect(60 + 4e-9).title.endsWith('fracciones teóricas'), true);
+  const lessThanOne = evaluateCalculator(RT_FRACTIONS_TARGET_CALCULATOR,
+    rtFractionsInput({ rt_n_target: 1 }));
+  deepEqual(tableAt(lessThanOne.result).rows.map((row) => row[0]), [1]);
+  equal(evaluateCalculator(RT_FRACTIONS_TARGET_CALCULATOR,
+    rtFractionsInput({ rt_n_dose: 5 })).result.notes[2], lqGoldenNotes(false)[0]);
+  equal(evaluateCalculator(RT_FRACTIONS_TARGET_CALCULATOR,
+    rtFractionsInput({ rt_n_dose: 5.01 })).result.notes[2], lqGoldenNotes(true)[0]);
+});
+
+test('SIB two-volume physical golden case preserves count, order and first row', () => {
+  const evaluation = evaluateCalculator(RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR,
+    rtSib2Input());
+  deepEqual(evaluation.result.metrics, [
+    { label: 'Candidatos', value: 9 }, { label: 'Rango de fracciones', value: '24–35' },
+    { label: 'Resolución', value: '0,01 Gy' }, { label: 'α/β', value: '10,0 Gy' }
+  ]);
+  const table = tableAt(evaluation.result);
+  equal(table.title, 'Dosis física objetivo · se muestran 9 de 9 candidatos.');
+  deepEqual(table.rows.map((row) => row[0]), [
+    '28 fracciones comunes', '35 fracciones comunes', '25 fracciones comunes',
+    '32 fracciones comunes', '33 fracciones comunes', '34 fracciones comunes',
+    '24 fracciones comunes', '26 fracciones comunes', '30 fracciones comunes'
+  ]);
+  deepEqual(table.rows[0], [
+    '28 fracciones comunes',
+    '2,50 Gy/fracción · D 70,00 Gy · EQD2 72,92 · Δ +0,00',
+    '2,00 Gy/fracción · D 56,00 Gy · EQD2 56,00 · Δ +0,00'
+  ]);
+});
+
+test('SIB three-volume physical golden case preserves all shared-fraction candidates', () => {
+  const evaluation = evaluateCalculator(RT_SIMULTANEOUS_3_VOLUMES_CALCULATOR,
+    rtSib3Input());
+  equal(evaluation.result.title, '8 esquemas matemáticos compatibles');
+  deepEqual(evaluation.result.metrics.map((metric) => metric.value), [8, '25–35', '0,01 Gy', '10,0 Gy']);
+  const table = tableAt(evaluation.result);
+  deepEqual(table.columns, ['Fracciones', 'Volumen alto', 'Volumen medio', 'Volumen bajo']);
+  deepEqual(table.rows.map((row) => row[0]), [
+    '28 fracciones comunes', '35 fracciones comunes', '25 fracciones comunes',
+    '32 fracciones comunes', '33 fracciones comunes', '30 fracciones comunes',
+    '34 fracciones comunes', '26 fracciones comunes'
+  ]);
+  deepEqual(table.rows[0], [
+    '28 fracciones comunes',
+    '2,50 Gy/fracción · D 70,00 Gy · EQD2 72,92 · Δ +0,00',
+    '2,25 Gy/fracción · D 63,00 Gy · EQD2 64,31 · Δ +0,00',
+    '2,00 Gy/fracción · D 56,00 Gy · EQD2 56,00 · Δ +0,00'
+  ]);
+});
+
+test('SIB EQD2 mode preserves radiobiological solve and mathematical sorting', () => {
+  const evaluation = evaluateCalculator(RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR,
+    rtSib2Input({ scenario: 'eqd2' }));
+  equal(evaluation.result.detail, 'EQD2 como objetivo, resolución 0,01 Gy y α/β 10,0 Gy.');
+  deepEqual(evaluation.result.metrics.map((metric) => metric.value), [8, '22–39', '0,01 Gy', '10,0 Gy']);
+  const table = tableAt(evaluation.result);
+  equal(table.title, 'EQD2 objetivo · se muestran 8 de 8 candidatos.');
+  deepEqual(table.rows.map((row) => row[0]), [
+    '26 fracciones comunes', '34 fracciones comunes', '35 fracciones comunes',
+    '22 fracciones comunes', '32 fracciones comunes', '39 fracciones comunes',
+    '31 fracciones comunes', '36 fracciones comunes'
+  ]);
+});
+
+test('SIB dose resolution changes candidate enumeration exactly', () => {
+  const sib2At005 = evaluateCalculator(RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR,
+    rtSib2Input({ rt_sib2_resolution: '0.05' }));
+  deepEqual(tableAt(sib2At005.result).rows.map((row) => row[0]),
+    ['28 fracciones comunes', '35 fracciones comunes']);
+  const sib2At01 = evaluateCalculator(RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR,
+    rtSib2Input({ rt_sib2_resolution: '0.1' }));
+  deepEqual(tableAt(sib2At01.result).rows.map((row) => row[0]),
+    ['28 fracciones comunes', '35 fracciones comunes']);
+  const sib3At005 = evaluateCalculator(RT_SIMULTANEOUS_3_VOLUMES_CALCULATOR,
+    rtSib3Input({ rt_sib3_resolution: '0.05' }));
+  deepEqual(tableAt(sib3At005.result).rows.map((row) => row[0]),
+    ['28 fracciones comunes', '35 fracciones comunes']);
+  const sib3At01 = evaluateCalculator(RT_SIMULTANEOUS_3_VOLUMES_CALCULATOR,
+    rtSib3Input({ rt_sib3_resolution: '0.1' }));
+  deepEqual(tableAt(sib3At01.result).rows.map((row) => row[0]), ['35 fracciones comunes']);
+});
+
+test('SIB no-candidate state preserves the complete searched range and guidance', () => {
+  const evaluation = evaluateCalculator(RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR,
+    rtSib2Input({ rt_sib2_tolerance_1: 0, rt_sib2_tolerance_2: 0,
+      rt_sib2_min_dose: 3, rt_sib2_max_dose: 3 }));
+  deepEqual(evaluation.result, {
+    title: 'No hay esquemas dentro de esos límites',
+    detail: 'La combinación de objetivos, tolerancias, resolución y rango de dosis por fracción no produjo candidatos.',
+    badge: 'SIB 2 volúmenes', score: 0, showScore: false, severity: 'warn',
+    metrics: [
+      { label: 'Fracciones exploradas', value: '1–200' },
+      { label: 'Resolución', value: '0,01 Gy' }, { label: 'α/β', value: '10,0 Gy' }
+    ],
+    notes: [
+      'Revisá que los objetivos correspondan a la magnitud seleccionada y que la dosis mínima no supere la máxima.',
+      'Si corresponde clínicamente, podés ampliar la tolerancia o el rango de dosis por fracción y volver a calcular.',
+      ...lqGoldenNotes(false)
+    ]
+  });
+});
+
+test('SIB preserves inclusive tolerance, strict high-dose warning and safe range validation', () => {
+  const highDose = evaluateCalculator(RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR,
+    rtSib2Input({ rt_sib2_target_1: 12, rt_sib2_target_2: 10,
+      rt_sib2_min_dose: 5, rt_sib2_max_dose: 6 }));
+  equal(highDose.result.title, '1 esquema matemático compatible');
+  equal(highDose.result.severity, 'warn');
+  deepEqual(tableAt(highDose.result).rows[0], [
+    '2 fracciones comunes',
+    '6,00 Gy/fracción · D 12,00 Gy · EQD2 16,00 · Δ +0,00',
+    '5,00 Gy/fracción · D 10,00 Gy · EQD2 12,50 · Δ +0,00'
+  ]);
+  equal(highDose.result.notes[2], lqGoldenNotes(true)[0]);
+  const reversed = evaluateCalculator(RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR,
+    rtSib2Input({ rt_sib2_min_dose: 3, rt_sib2_max_dose: 2 }));
+  equal(reversed.result.detail, 'Revisar: rango de dosis por fracción ordenado.');
+  deepEqual(evaluateCalculator(RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR,
+    rtSib2Input({ rt_sib2_resolution: '0.02' })).issues.map((issue) => issue.code),
+  ['unknown-option']);
+});
+
+test('SIB deliberately rejects the latent legacy BED branch that its UI never exposed', () => {
+  const latentBed = RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR.calculate({
+    rt_sib2_scope: '', scenario: 'bed', rt_sib2_target_1: 70, rt_sib2_tolerance_1: 0.1,
+    rt_sib2_target_2: 56, rt_sib2_tolerance_2: 0.1, rt_sib2_delivery: '',
+    rt_sib2_alpha_beta: 10, rt_sib2_min_dose: 1.5, rt_sib2_max_dose: 3,
+    rt_sib2_resolution: '0.01'
+  });
+  equal(latentBed.title, 'Datos incompletos o incompatibles');
+  equal(latentBed.detail, 'Revisar: tipo de objetivo.');
+});
+
+test('SIB candidate table deliberately limits display to twelve ordered rows', () => {
+  const evaluation = evaluateCalculator(RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR,
+    rtSib2Input({ rt_sib2_tolerance_1: 0.5, rt_sib2_tolerance_2: 0.5 }));
+  equal(evaluation.result.title, '14 esquemas matemáticos compatibles');
+  const table = tableAt(evaluation.result);
+  equal(table.title, 'Dosis física objetivo · se muestran 12 de 14 candidatos.');
+  equal(table.rows.length, 12);
+});
+
+test('ported 52 to 57 expose only typed safe notes without legacy raw markup', () => {
+  const results = [
+    evaluateCalculator(DIGESTIVE_GAME_CALCULATOR, gameInput()).result,
+    evaluateCalculator(DIGESTIVE_PCI_CALCULATOR, pciInput()).result,
+    evaluateCalculator(RT_DOSE_PER_FRACTION_TARGET_CALCULATOR, rtDoseInput()).result,
+    evaluateCalculator(RT_FRACTIONS_TARGET_CALCULATOR, rtFractionsInput()).result,
+    evaluateCalculator(RT_SIMULTANEOUS_2_VOLUMES_CALCULATOR, rtSib2Input()).result,
+    evaluateCalculator(RT_SIMULTANEOUS_3_VOLUMES_CALCULATOR, rtSib3Input()).result
+  ];
+  for (const current of results) assertNoRawMarkup(current.notes);
+});
+
+test('structured note factories reject unsafe links and malformed tables', () => {
+  throws(() => externalLink('inseguro', 'http://example.test'), 'El enlace externo debe usar HTTPS');
+  throws(() => tableNote('invalida', ['una'], [['a', 'b']]), 'cantidad de celdas invalida');
+});
+
+function g8Input(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    g8_food: '2', g8_weight: '3', g8_mobility: '2', g8_neuro: '2',
+    g8_bmi: '3', g8_meds: '1', g8_health: '1', g8_age: '2',
+    ...overrides
+  };
+}
+
+function damicoInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return { psa: 9, gg: '1', ct: 't1', n: 'n0', m: 'm0', ...overrides };
+}
+
+function capraPreInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'pre', age: 64, psa: 8, capraPrimary: '3', capraSecondary: '4',
+    ct: 't2a', positiveCores: 3, totalCores: 12, ...overrides
+  };
+}
+
+function capraPostInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'post', capraSpsa: 8, capraSPrimary: '3', capraSSecondary: '4',
+    margin: false, ece: false, svi: false, lni: false, ...overrides
+  };
+}
+
+function mskccPreInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'pre',
+    msk_pre_no_hormone: 'no',
+    msk_pre_no_radiation: 'no',
+    msk_pre_age: 65,
+    msk_pre_psa: 8.01,
+    msk_pre_gleason_primary: '3',
+    msk_pre_gleason_secondary: '4',
+    msk_pre_stage: 't2a',
+    ...overrides
+  };
+}
+
+function pbcgInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    psa: 7,
+    age: 65,
+    dre: false,
+    family: false,
+    african: false,
+    priorNegative: false,
+    ...overrides
+  };
+}
+
+function psaKineticsInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    psa: 6,
+    volume: 40,
+    psaSeries: '01/01/2025; 1,0\n01/07/2025; 2,0\n01/01/2026; 4,0',
+    context: 'intact',
+    nadir: '',
+    confirmed: false,
+    ...overrides
+  };
+}
+
+function nmibcEauInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'eau', eauPrimary: 'yes', eauAge: 70, eauCount: 1, eauSize: 2,
+    eauStage: 'ta', eauCis: false, eauPureCis: false, eauSystem: 'who2004',
+    eauGrade: 'low', eauLvi: false, eauProstaticCis: false, eauVariant: false,
+    ...overrides
+  };
+}
+
+function nmibcEortcInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'eortc', number: '0', size: '0', prior: '0', t1: false, cis: false, grade: '0',
+    ...overrides
+  };
+}
+
+function nmibcCuetoInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'cueto', cuetoSex: 'male', cuetoAge: 65, cuetoMoreThree: false,
+    cuetoRecurrent: false, cuetoT1: false, cuetoCis: false, cuetoGrade: 'g1',
+    cuetoConfirmed: false, ...overrides
+  };
+}
+
+function cystectomyInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    m: 'm0', pt: '2', pn: 'n0', margin: false, perioperative: 'none', cisStatus: 'eligible',
+    ...overrides
+  };
+}
+
+function cisplatinInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    ecog: '1', renalMethod: 'measured_gfr', gfr: 65, hearing: '0', neuro: '0',
+    nyha: '1', severeComorbidity: false, ...overrides
+  };
+}
+
+function utucInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    utucM: 'm0', size: 1.5, focality: 'unifocal', cytology: 'negative', biopsy: 'low',
+    ctAssessment: 'noninvasive', hydro: false, variant: false, ...overrides
+  };
+}
+
+function renalInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'renal', renalSize: 3.2, renalExo: '1', renalNear: '1', renalAp: 'x',
+    renalLocation: '1', renalHilar: false, ...overrides
+  };
+}
+
+function paduaInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'padua', paduaSize: 3.2, paduaLong: '1', paduaExo: '1', paduaRim: '1',
+    paduaSinus: '1', paduaCollecting: '1', paduaAp: 'x', ...overrides
+  };
+}
+
+function leibovichInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'leibovich', leibPt: 'pt1a', leibPn: false, leibSize: 5,
+    leibGrade: '1', leibNecrosis: false, ...overrides
+  };
+}
+
+function uissInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'uiss', uissPt: 'pt1a', uissN: 'n0', uissM: 'm0', uissGrade: '2',
+    uissEcog: '0', ...overrides
+  };
+}
+
+function igcccgInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    histology: 'nonseminoma', primary: 'testis', nonPulmonary: false, afp: 120,
+    afpUpperLimit: 10, hcg: 800, ldhRatio: 1.1, ...overrides
+  };
+}
+
+function renalOncologyInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    renal_age: 65, renal_sex: 'female', renal_weight: 65, renal_creatinine: 1,
+    renal_cystatin: '', renal_bsa: '', ...overrides
+  };
+}
+
+function ancInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return { anc_wbc: 3, anc_segmented: 40, anc_bands: 0, ...overrides };
+}
+
+function khoranaInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    khorana_site: 'other', khorana_platelets: 250, khorana_hgb: 12, khorana_wbc: 7,
+    khorana_bmi: 25, khorana_esa: false, ...overrides
+  };
+}
+
+function masccInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    mascc_burden: '5', mascc_no_hypotension: false, mascc_no_copd: false,
+    mascc_tumor_fungal: false, mascc_no_dehydration: false, mascc_outpatient: false,
+    mascc_age_under_60: false, ...overrides
+  };
+}
+
+function cisneInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    cisne_glucose: 100, cisne_diabetes_steroids: false, cisne_ecog: false,
+    cisne_copd: false, cisne_cardiovascular: false, cisne_mucositis: false,
+    cisne_monocytes: false, ...overrides
+  };
+}
+
+function ppiInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    ppi_pps: '50', ppi_oral: 'normal', ppi_edema: false, ppi_dyspnea: false,
+    ppi_delirium: false, ...overrides
+  };
+}
+
+function bedInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return { bed_fractions: 25, bed_dose_fraction: 2, bed_alpha_beta: 10, ...overrides };
+}
+
+function qtcInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    qtc_qt: 400, qtc_hr: 70, qtc_sex: 'female', qtc_baseline: '', ...overrides
+  };
+}
+
+function npiInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return { npi_size: 2, npi_grade: '2', npi_nodes: 0, ...overrides };
+}
+
+function rcbInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    rcb_d1: 20, rcb_d2: 15, rcb_cellularity: 10, rcb_in_situ: 0,
+    rcb_nodes: 0, rcb_largest_met: 0, ...overrides
+  };
+}
+
+function pepiInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    pepi_pt: 'pt1', pepi_nodes: 'no', pepi_ki67: 2, pepi_er_allred: 8,
+    ...overrides
+  };
+}
+
+function cts5Input(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return { cts5_age: 60, cts5_size: 20, cts5_grade: '2', cts5_nodes: 0, ...overrides };
+}
+
+function monarcheInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    monarche_hr_positive: false, monarche_her2_negative: false, monarche_early: false,
+    monarche_nodes: 1, monarche_size: 30, monarche_grade: '2', ...overrides
+  };
+}
+
+function olympiaNeoHrInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'neo_hr', olympia_gbrca: true, olympia_her2_negative: true,
+    olympia_residual: true, olympia_c_stage: 'iib_iiia', olympia_p_stage: 'iia_iiib',
+    olympia_er: 'negative', olympia_nuclear_grade: '2', ...overrides
+  };
+}
+
+function olympiaAdjTnbcInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'adj_tnbc', olympia_gbrca: true, olympia_her2_negative: true,
+    olympia_residual: false, olympia_nodes_tnbc: 0, olympia_size: 2.01, ...overrides
+  };
+}
+
+function ipiInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    ipi_age: 60, ipi_stage: '2', ipi_ldh: false, ipi_ecog: '1',
+    ipi_extranodal: 0, ...overrides
+  };
+}
+
+function r2IssInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    r2iss_beta2: 3, r2iss_albumin: 4, r2iss_del17p: false, r2iss_high_ldh: false,
+    r2iss_t414: false, r2iss_1q: false, ...overrides
+  };
+}
+
+function sedlisInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    sedlis_node_status: 'negative', sedlis_margin_status: 'negative',
+    sedlis_parametrium: 'no', sedlis_lvsi: 'no', sedlis_stromal: 'superficial',
+    sedlis_size: 1, sedlis_size_method: '', ...overrides
+  };
+}
+
+function petersInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    peters_node_status: 'negative', peters_margin_status: 'negative',
+    peters_parametrium: 'no', ...overrides
+  };
+}
+
+function promiseInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    promise_pole: 'non_pathogenic', promise_mmr: 'proficient',
+    promise_p53: 'wild_type', promise_grade: 'low', promise_er: 10, ...overrides
+  };
+}
+
+function rmiInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    rmi_ca125: 100, rmi_menopause: 'premenopausal', rmi_multilocular: false,
+    rmi_solid: false, rmi_metastases: false, rmi_ascites: false,
+    rmi_bilateral: false, ...overrides
+  };
+}
+
+function fagottiInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    fagotti_peritoneal: false, fagotti_diaphragm: false, fagotti_mesentery: false,
+    fagotti_omentum: false, fagotti_bowel: false, fagotti_stomach: false,
+    fagotti_liver: 0, ...overrides
+  };
+}
+
+function agoInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    ago_first_relapse: 'yes', ago_platinum_interval: 6, ago_ecog: '0',
+    ago_ascites: 499, ago_initial_resection: 'yes', ...overrides
+  };
+}
+
+function brockInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    brock_age: 62, brock_sex: 'male', brock_family_history: 'no',
+    brock_emphysema: 'no', brock_diameter: 8, brock_type: 'solid',
+    brock_upper_lobe: 'no', brock_nodule_count: 1, brock_spiculation: 'no',
+    ...overrides
+  };
+}
+
+function mayoHerderInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    herder_age: 65, herder_smoker: 'no', herder_prior_cancer: 'no',
+    herder_diameter: 12, herder_spiculation: 'no', herder_upper_lobe: 'no',
+    herder_pet: 'absent', ...overrides
+  };
+}
+
+function lungGpaAdenoInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'adenocarcinoma', lung_gpa_age: 65, lung_gpa_kps: '90',
+    lung_gpa_brain_count: 1, lung_gpa_ecm: 'no', lung_gpa_egfr: 'positive',
+    lung_gpa_alk: 'negative', lung_gpa_pdl1: 'positive', ...overrides
+  };
+}
+
+function lungGpaNonAdenoInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'non_adenocarcinoma', lung_gpa_age: 65, lung_gpa_kps: '80',
+    lung_gpa_brain_count: 1, lung_gpa_ecm: 'no', ...overrides
+  };
+}
+
+function lungGpaSclcInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'sclc', lung_gpa_age: 74, lung_gpa_kps: '90',
+    lung_gpa_brain_count: 3, lung_gpa_ecm: 'no', ...overrides
+  };
+}
+
+function lipiInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    lipi_wbc: 7.001, lipi_anc: 4, lipi_ldh: 200.001, lipi_ldh_uln: 250.001,
+    ...overrides
+  };
+}
+
+function albiInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    albi_bilirubin: 1.001, albi_bilirubin_unit: 'mg/dL',
+    albi_albumin: 4.001, albi_albumin_unit: 'g/dL', ...overrides
+  };
+}
+
+function albiResultAtScore(score: number) {
+  return DIGESTIVE_ALBI_CALCULATOR.calculate({
+    albi_labs_section: '', albi_bilirubin: 1, albi_bilirubin_unit: 'umol/L',
+    albi_albumin: -score / 0.085, albi_albumin_unit: 'g/L'
+  });
+}
+
+function afpHccInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    afp_hcc_diameter: 2.91, afp_hcc_nodules: 1, afp_hcc_value: 100,
+    ...overrides
+  };
+}
+
+function gameInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    game_kras: 'wild_type', game_cea: 10, game_node_positive: 'no',
+    game_largest_met: 2.01, game_met_count: 1, game_extrahepatic: 'no',
+    ...overrides
+  };
+}
+
+function gameDirectResult(overrides: Readonly<Record<string, unknown>> = {}) {
+  return DIGESTIVE_GAME_CALCULATOR.calculate({
+    game_biology_section: '', game_burden_section: '', ...gameInput(), ...overrides
+  });
+}
+
+function pciInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    ...Object.fromEntries(Array.from({ length: 13 }, (_, index) => [`pci_region_${index}`, '0'])),
+    ...overrides
+  };
+}
+
+function rtDoseInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'eqd2', rt_dpf_target: 60, rt_dpf_fractions: 30, rt_dpf_alpha_beta: 10,
+    ...overrides
+  };
+}
+
+function rtFractionsInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'eqd2', rt_n_target: 60, rt_n_dose: 3, rt_n_alpha_beta: 10,
+    ...overrides
+  };
+}
+
+function rtFractionsDirect(targetValue: number): CalculatorResult {
+  return RT_FRACTIONS_TARGET_CALCULATOR.calculate({
+    rt_n_scope: '', scenario: 'eqd2', rt_n_target: targetValue,
+    rt_n_dose: 2, rt_n_alpha_beta: 10
+  });
+}
+
+function rtSib2Input(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'physical', rt_sib2_target_1: 70, rt_sib2_tolerance_1: 0.1,
+    rt_sib2_target_2: 56, rt_sib2_tolerance_2: 0.1, rt_sib2_alpha_beta: 10,
+    rt_sib2_min_dose: 1.5, rt_sib2_max_dose: 3, rt_sib2_resolution: '0.01',
+    ...overrides
+  };
+}
+
+function rtSib3Input(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    scenario: 'physical', rt_sib3_target_1: 70, rt_sib3_tolerance_1: 0.1,
+    rt_sib3_target_2: 63, rt_sib3_tolerance_2: 0.1,
+    rt_sib3_target_3: 56, rt_sib3_tolerance_3: 0.1, rt_sib3_alpha_beta: 10,
+    rt_sib3_min_dose: 1.5, rt_sib3_max_dose: 3, rt_sib3_resolution: '0.01',
+    ...overrides
+  };
+}
+
+function lqGoldenNotes(highDose: boolean): readonly string[] {
+  return [
+    highDose
+      ? 'Dosis por fracción >5 Gy: el modelo LQ sigue siendo una estimación y su extrapolación es especialmente incierta en hipofraccionamiento extremo.'
+      : 'El modelo LQ es una aproximación; la incertidumbre aumenta al alejarse del fraccionamiento convencional.',
+    'No incorpora tiempo total, repoblación, reparación incompleta, heterogeneidad de dosis, recuperación tisular ni reirradiación.',
+    'Usar la dosis realmente recibida por el tejido analizado. El resultado no constituye una prescripción ni un límite automático de órgano a riesgo.'
+  ];
+}
+
+function tableAt(resultValue: CalculatorResult, index = 0): CalculatorTableNote {
+  const note = resultValue.notes[index];
+  if (!note || typeof note === 'string' || note.kind !== 'table') {
+    throw new Error(`Se esperaba una nota tabular en la posición ${index}.`);
+  }
+  return note;
+}
+
+function assertNoRawMarkup(value: unknown): void {
+  const serialized = JSON.stringify(value);
+  equal(serialized.includes('<'), false);
+  equal(serialized.includes('href='), false);
+}
+
+function ipssShimInput(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    ipss_emptying: '1', ipss_frequency: '1', ipss_intermittency: '1', ipss_urgency: '1',
+    ipss_stream: '1', ipss_straining: '1', ipss_nocturia: '2', ipss_qol: '2',
+    shim_not_evaluable: false, shim_confidence: '4', shim_hardness: '4',
+    shim_maintenance: '4', shim_completion: '3', shim_satisfaction: '3',
+    ...overrides
+  };
+}
+
+function ipssAnswers(values: readonly string[]): Record<string, unknown> {
+  const ids = [
+    'ipss_emptying', 'ipss_frequency', 'ipss_intermittency', 'ipss_urgency',
+    'ipss_stream', 'ipss_straining', 'ipss_nocturia'
+  ];
+  return Object.fromEntries(ids.map((id, index) => [id, values[index]]));
+}
+
+function shimAnswers(values: readonly string[]): Record<string, unknown> {
+  const ids = ['shim_confidence', 'shim_hardness', 'shim_maintenance', 'shim_completion', 'shim_satisfaction'];
+  return Object.fromEntries(ids.map((id, index) => [id, values[index]]));
+}
+
+run();
+
+function run(): void {
+  const failures: string[] = [];
+  for (const current of tests) {
+    try {
+      current.run();
+    } catch (failure) {
+      failures.push(`${current.name}: ${failure instanceof Error ? failure.message : String(failure)}`);
+    }
+  }
+  if (failures.length) throw new Error(`Fallaron ${failures.length}/${tests.length} pruebas doradas:\n${failures.join('\n')}`);
+  console.log(`OK · ${tests.length} pruebas doradas de calculadoras`);
+}
+
+function equal<T>(actual: T, expected: T): void {
+  if (!Object.is(actual, expected)) throw new Error(`Esperado ${print(expected)}; recibido ${print(actual)}.`);
+}
+
+function deepEqual(actual: unknown, expected: unknown): void {
+  const actualText = JSON.stringify(actual);
+  const expectedText = JSON.stringify(expected);
+  if (actualText !== expectedText) throw new Error(`Esperado ${expectedText}; recibido ${actualText}.`);
+}
+
+function print(value: unknown): string {
+  return typeof value === 'string' ? JSON.stringify(value) : String(value);
+}
+
+function throws(run: () => void, expectedMessage: string): void {
+  try {
+    run();
+  } catch (failure) {
+    if (failure instanceof Error && failure.message.includes(expectedMessage)) return;
+    throw new Error('Error inesperado: ' + String(failure));
+  }
+  throw new Error('Se esperaba una excepcion que contuviera ' + JSON.stringify(expectedMessage) + '.');
+}

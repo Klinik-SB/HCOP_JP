@@ -1,7 +1,8 @@
 # Diccionario de datos
 
-Este documento describe las 34 tablas creadas por Flyway. La fuente ejecutable
-es `src/main/resources/db/migration`; nunca se cambia una migración que ya fue
+Este documento describe las 34 tablas creadas por las 12 migraciones Flyway
+actuales (`V001` a `V012`). La fuente ejecutable es
+`src/main/resources/db/migration`; nunca se cambia una migración que ya fue
 aplicada: se agrega una nueva versión.
 
 ## Convenciones
@@ -65,11 +66,31 @@ Identidad maestra. PK `source_id`. Campos indexados para DNI, número de histori
 apellido y nombre. Incluye cobertura y número de afiliado. `identity_json`
 conserva datos adicionales y `local_only` identifica altas propias de HCOP JP.
 
+`identity_json.seedKey` está reservado para seeds repetibles del sistema. La
+ficha demostrativa usa `hcop-default-test-savatierra-v1`; el índice único
+parcial `uq_patients_identity_seed_key`, agregado por `V012`, garantiza que una
+clave no vacía identifique como máximo un paciente. No se usa para pacientes
+reales ni reemplaza DNI, historia clínica o `source_id`.
+
 ### 9. `hcop_patient_documents`
 
 Una hoja clínica por paciente. PK/FK `patient_id`. `document_json` contiene el
 documento visual completo; `revision` evita pisar cambios. Conserva autores y
 fechas.
+
+En la ficha demostrativa, `document_json.meta.demo=true` y
+`document_json.meta.demoSeedKey` permiten reconocer su origen sintético.
+`document_json.meta.demoContentVersion` identifica la edición del recurso y
+`document_json.meta.demoManagedRevision` guarda la revisión de la hoja escrita
+por última vez por el bootstrap. Una versión nueva sólo puede refrescar el
+documento cuando `revision == demoManagedRevision`; después de una edición
+humana esa igualdad deja de cumplirse. La misma versión es un no-op. El recurso
+actual usa `demoContentVersion=3`.
+
+El recurso bootstrap es un caso compuesto ficticio de colon y melanoma creado
+desde cero; no deriva de material real anonimizado o pseudonimizado. Su creación
+o actualización no modifica el paciente activo de ninguna fila de
+`local_sessions`. Una omisión best-effort tampoco modifica estas tablas.
 
 Rutas principales del JSON:
 
@@ -85,15 +106,21 @@ Rutas principales del JSON:
 | `exam.weightKg` | peso en kg |
 | `exam.heightM` | talla normalizada; la UI edita y muestra cm |
 | `oncology.diagnosisRecords` | diagnósticos SNOMED, CIE-10, AJCC, TNM y estadio |
-| `oncology.systemicTreatments` | representación narrativa de tratamientos |
-| `oncology.surgeries` | cirugías oncológicas |
+| `treatments` | tratamientos estructurados del documento; la vista los combina con la fuente relacional y los clasifica como sistémicos, radioterápicos o quirúrgicos |
+| `oncology.systemicTreatments` | representación narrativa histórica compatible, cuando existe |
+| `oncology.surgeries` | colección histórica compatible de cirugías, cuando existe |
 | `studies` | estudios, orden, metadatos y vínculos a archivos |
-| `evolutions` | evoluciones clínicas inmutables/append-only |
+| `evolutions` | evoluciones clínicas inmutables/append-only; una categoría explícita o `sourceRef.kind = oncological-treatment` también puede proyectar un tratamiento histórico |
 | `researchRecords` | formularios de investigación |
 | `meta` | revisión, auditoría visual y compatibilidad |
 
 Los diagnósticos y evoluciones no viven en tablas llamadas
 `patient_diagnoses` o `clinical_evolutions`: esas tablas no existen.
+
+La respuesta del workspace agrega `workspace.treatments.oncology`, construida
+desde `clinical_treatments`, como fuente operativa primaria. Angular la une con
+las colecciones anteriores usando referencias con dominio, sin reescribir el
+documento clínico ni confundir identificadores numéricos de tablas distintas.
 
 ### 10. `patient_records`
 

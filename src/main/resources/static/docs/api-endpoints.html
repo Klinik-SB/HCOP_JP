@@ -18,7 +18,7 @@
   </header>
   <main class="doc-main" style="max-width:1500px;margin:0 auto;min-height:calc(100vh - 64px)">
     <section class="doc-hero">
-      <span class="doc-kicker">OpenAPI 1.0.0 · 111 operaciones</span>
+      <span class="doc-kicker">OpenAPI 1.0.0 · 115 operaciones</span>
       <h1>Todos los endpoints, permisos y controladores</h1>
       <p>Referencia generada desde el servidor Java. Swagger permite ejecutar las rutas con la misma cookie de sesión del sistema; nunca evita permisos ni validaciones clínicas.</p>
       <div class="doc-meta"><span class="doc-tag">Spring MVC</span><span class="doc-tag">Cookie HttpOnly</span><span class="doc-tag">RBAC</span><span class="doc-tag">OpenAPI 3</span></div>
@@ -31,6 +31,29 @@
           <thead><tr><th>Método</th><th>Ruta</th><th>Finalidad</th><th>Módulo</th><th>Permiso</th><th>Controller</th></tr></thead>
           <tbody id="endpointRows">
               <tr data-filter-item>
+                <td><code>GET</code></td>
+                <td class="path"><code>/api/clinical/research/forms</code></td>
+                <td><strong>Listar formularios activos de investigaci&#243;n</strong><small>Devuelve exclusivamente formularios activos para la secci&#243;n Investigaci&#243;n. No expone
+versiones inactivas ni habilita operaciones administrativas de Configuraci&#243;n.
+</small></td>
+                <td>Investigaci&#243;n</td>
+                <td><code>section.research.view</code></td>
+                <td><code>ResearchFormCatalogController</code></td>
+              </tr>              <tr data-filter-item>
+                <td><code>GET</code></td>
+                <td class="path"><code>/api/clinical/trial-screening/me</code></td>
+                <td><strong>Consultar preferencia personal de investigaci&#243;n</strong><small>Devuelve &#250;nicamente la preferencia del usuario autenticado y la combina con la pol&#237;tica institucional vigente. proactiveActive indica que ambas preferencias permiten un modo programado o en tiempo real; effective exige adem&#225;s que el motor est&#233; disponible. En este corte engineReady y effective son false porque el matching todav&#237;a no est&#225; implementado.</small></td>
+                <td>Investigaci&#243;n</td>
+                <td><code>section.research.view</code></td>
+                <td><code>TrialScreeningPreferenceController</code></td>
+              </tr>              <tr data-filter-item>
+                <td><code>PUT</code></td>
+                <td class="path"><code>/api/clinical/trial-screening/me</code></td>
+                <td><strong>Guardar preferencia personal de investigaci&#243;n</strong><small>Acepta exclusivamente researchActive y expectedRevision, aplica control optimista y nunca admite un userId enviado por el cliente. Desactivar esta preferencia s&#243;lo limita la evaluaci&#243;n proactiva futura; la consulta manual futura seguir&#225; disponible.</small></td>
+                <td>Investigaci&#243;n</td>
+                <td><code>section.research.view</code></td>
+                <td><code>TrialScreeningPreferenceController</code></td>
+              </tr>              <tr data-filter-item>
                 <td><code>PUT</code></td>
                 <td class="path"><code>/api/auth/active-patient</code></td>
                 <td><strong>Cambiar paciente activo</strong><small>Asocia o limpia el paciente activo &#250;nicamente para la sesi&#243;n actual.</small></td>
@@ -82,7 +105,7 @@
               </tr>              <tr data-filter-item>
                 <td><code>POST</code></td>
                 <td class="path"><code>/api/clinical/patients/{patientId}/activate</code></td>
-                <td><strong>Activar paciente y abrir espacio cl&#237;nico</strong><small>Asocia el paciente a la sesi&#243;n y devuelve identidad, historia, tratamientos, turnos y conteos en una respuesta.</small></td>
+                <td><strong>Activar paciente y abrir espacio cl&#237;nico</strong><small>Asocia el paciente a la sesi&#243;n y devuelve identidad, historia, tratamientos, turnos y conteos, omitiendo secciones sin permiso.</small></td>
                 <td>Pacientes e historia</td>
                 <td><code>section.history.view</code></td>
                 <td><code>PatientWorkspaceController</code></td>
@@ -103,7 +126,7 @@
               </tr>              <tr data-filter-item>
                 <td><code>GET</code></td>
                 <td class="path"><code>/api/clinical/patients/{patientId}/workspace</code></td>
-                <td><strong>Abrir espacio cl&#237;nico del paciente</strong><small>Devuelve el agregado de trabajo del paciente sin cambiar otra sesi&#243;n.</small></td>
+                <td><strong>Abrir espacio cl&#237;nico del paciente</strong><small>Devuelve el agregado de trabajo del paciente sin cambiar otra sesi&#243;n y aplica la misma proyecci&#243;n por permisos.</small></td>
                 <td>Pacientes e historia</td>
                 <td><code>section.history.view</code></td>
                 <td><code>PatientWorkspaceController</code></td>
@@ -117,16 +140,16 @@
               </tr>              <tr data-filter-item>
                 <td><code>GET</code></td>
                 <td class="path"><code>/api/hc</code></td>
-                <td><strong>Leer historia cl&#237;nica</strong><small>Recupera la hoja del paciente activo o la plantilla en blanco.</small></td>
+                <td><strong>Leer historia cl&#237;nica</strong><small>Recupera la hoja del paciente activo o la plantilla en blanco; requiere acceso a Historia, omite prescriptions sin permiso de lectura de Prescripci&#243;n y omite studies/externalStudies sin permiso de lectura de Estudios.</small></td>
                 <td>Pacientes e historia</td>
-                <td><code>authenticated</code></td>
+                <td><code>section.history.view</code></td>
                 <td><code>ClinicalDocumentController</code></td>
               </tr>              <tr data-filter-item>
                 <td><code>PUT</code></td>
                 <td class="path"><code>/api/hc</code></td>
-                <td><strong>Guardar historia cl&#237;nica</strong><small>Guarda con control optimista de revisi&#243;n para evitar pisar cambios concurrentes.</small></td>
+                <td><strong>Guardar historia cl&#237;nica</strong><small>Guarda con control optimista de revisi&#243;n y devuelve el estado can&#243;nico confirmado. Si prescriptions cambia exige edici&#243;n de Prescripci&#243;n; si studies o externalStudies cambian exige edici&#243;n de Estudios; si esos campos fueron ocultados, conserva sus valores existentes. Los cambios de narrative.chiefComplaint, narrative.currentIllness, narrative.backgroundClinical, narrative.currentMedication, narrative.familyOncology, narrative.gynecology, narrative.physicalExam, narrative.summary y narrative.plan deben ser texto de hasta 50.000 caracteres; exam.weightKg acepta 0.01 a 500 kg y exam.heightM conserva 0.3 a 2.5 metros aunque la UI muestre cent&#237;metros; valores legacy at&#237;picos que no cambian se preservan. Java genera actor, fecha, versi&#243;n y auditor&#237;a de Motivo de consulta, Antecedentes de enfermedad actual, Antecedentes personales, Examen f&#237;sico y Conclusi&#243;n / resumen usando la sesi&#243;n y no conf&#237;a en esos metadatos enviados por el cliente. La validaci&#243;n 400 de Motivo de consulta usa CLINICAL_CHIEF_COMPLAINT_INVALID, CLINICAL_CHIEF_COMPLAINT_TOO_LONG, CLINICAL_CHIEF_COMPLAINT_EMPTY, CLINICAL_CHIEF_COMPLAINT_REASON_REQUIRED, CLINICAL_CHIEF_COMPLAINT_REASON_INVALID o CLINICAL_CHIEF_COMPLAINT_REASON_TOO_LONG. Antecedentes de enfermedad actual usa CLINICAL_CURRENT_ILLNESS_INVALID, CLINICAL_CURRENT_ILLNESS_TOO_LONG, CLINICAL_CURRENT_ILLNESS_EMPTY, CLINICAL_CURRENT_ILLNESS_REASON_REQUIRED, CLINICAL_CURRENT_ILLNESS_REASON_INVALID o CLINICAL_CURRENT_ILLNESS_REASON_TOO_LONG. Antecedentes personales usa CLINICAL_PERSONAL_HISTORY_BACKGROUND_CLINICAL_INVALID, CLINICAL_PERSONAL_HISTORY_BACKGROUND_CLINICAL_TOO_LONG, CLINICAL_PERSONAL_HISTORY_CURRENT_MEDICATION_INVALID, CLINICAL_PERSONAL_HISTORY_CURRENT_MEDICATION_TOO_LONG, CLINICAL_PERSONAL_HISTORY_FAMILY_ONCOLOGY_INVALID, CLINICAL_PERSONAL_HISTORY_FAMILY_ONCOLOGY_TOO_LONG, CLINICAL_PERSONAL_HISTORY_GYNECOLOGY_INVALID, CLINICAL_PERSONAL_HISTORY_GYNECOLOGY_TOO_LONG, CLINICAL_PERSONAL_HISTORY_EMPTY, CLINICAL_PERSONAL_HISTORY_REASON_REQUIRED, CLINICAL_PERSONAL_HISTORY_REASON_INVALID o CLINICAL_PERSONAL_HISTORY_REASON_TOO_LONG. Examen f&#237;sico usa CLINICAL_PHYSICAL_EXAM_WEIGHT_INVALID, CLINICAL_PHYSICAL_EXAM_WEIGHT_OUT_OF_RANGE, CLINICAL_PHYSICAL_EXAM_HEIGHT_INVALID, CLINICAL_PHYSICAL_EXAM_HEIGHT_OUT_OF_RANGE, CLINICAL_PHYSICAL_EXAM_TEXT_INVALID, CLINICAL_PHYSICAL_EXAM_TEXT_TOO_LONG, CLINICAL_PHYSICAL_EXAM_EMPTY, CLINICAL_PHYSICAL_EXAM_REASON_REQUIRED, CLINICAL_PHYSICAL_EXAM_REASON_INVALID o CLINICAL_PHYSICAL_EXAM_REASON_TOO_LONG. La validaci&#243;n de Conclusi&#243;n / resumen usa CLINICAL_SUMMARY_INVALID, CLINICAL_SUMMARY_TOO_LONG, CLINICAL_PLAN_INVALID, CLINICAL_PLAN_TOO_LONG, CLINICAL_SUMMARY_PLAN_EMPTY, CLINICAL_SUMMARY_PLAN_REASON_REQUIRED, CLINICAL_SUMMARY_PLAN_REASON_INVALID o CLINICAL_SUMMARY_PLAN_REASON_TOO_LONG. Los conflictos 409 usan ACTIVE_PATIENT_REQUIRED, CLINICAL_REVISION_REQUIRED, CLINICAL_PATIENT_MISMATCH o VERSION_CONFLICT.</small></td>
                 <td>Pacientes e historia</td>
-                <td><code>section.history.edit</code></td>
+                <td><code>section.history.edit + permiso espec&#237;fico de edici&#243;n si prescriptions, studies o externalStudies cambian</code></td>
                 <td><code>ClinicalDocumentController</code></td>
               </tr>              <tr data-filter-item>
                 <td><code>POST</code></td>
@@ -145,7 +168,7 @@
               </tr>              <tr data-filter-item>
                 <td><code>POST</code></td>
                 <td class="path"><code>/api/lira/patients/{patientId}/import</code></td>
-                <td><strong>Abrir paciente local</strong><small>Activa una historia ya consolidada en PostgreSQL; no consulta Lira.</small></td>
+                <td><strong>Abrir paciente local</strong><small>Activa una historia ya consolidada en PostgreSQL; no consulta Lira y proyecta las secciones seg&#250;n permisos.</small></td>
                 <td>Pacientes e historia</td>
                 <td><code>section.history.view</code></td>
                 <td><code>PatientController</code></td>
@@ -159,7 +182,7 @@
               </tr>              <tr data-filter-item>
                 <td><code>POST</code></td>
                 <td class="path"><code>/api/lira/patients/{patientId}/refresh</code></td>
-                <td><strong>Abrir paciente local</strong><small>Activa una historia ya consolidada en PostgreSQL; no consulta Lira.</small></td>
+                <td><strong>Abrir paciente local</strong><small>Activa una historia ya consolidada en PostgreSQL; no consulta Lira y proyecta las secciones seg&#250;n permisos.</small></td>
                 <td>Pacientes e historia</td>
                 <td><code>section.history.view</code></td>
                 <td><code>PatientController</code></td>
@@ -460,21 +483,21 @@ expl&#237;cita y documentada cuando a&#250;n no existe inventario electr&#243;ni
               </tr>              <tr data-filter-item>
                 <td><code>GET</code></td>
                 <td class="path"><code>/api/clinical/configuration/{kind}</code></td>
-                <td><strong>Listar configuraci&#243;n</strong><small>Lista elementos activos o hist&#243;ricos de un tipo permitido.</small></td>
+                <td><strong>Listar configuraci&#243;n</strong><small>Lista elementos activos o hist&#243;ricos de un tipo permitido. trial-source describe fuentes oficiales de ensayos y trial-screening-settings conserva la pol&#237;tica de ejecuci&#243;n local.</small></td>
                 <td>Configuraci&#243;n</td>
                 <td><code>section.configuration.view</code></td>
                 <td><code>ConfigurationController</code></td>
               </tr>              <tr data-filter-item>
                 <td><code>POST</code></td>
                 <td class="path"><code>/api/clinical/configuration/{kind}</code></td>
-                <td><strong>Crear configuraci&#243;n</strong><small>Crea una definici&#243;n versionada de gu&#237;a, c&#225;lculo, formulario o par&#225;metro.</small></td>
+                <td><strong>Crear configuraci&#243;n</strong><small>Crea una definici&#243;n versionada de gu&#237;a, c&#225;lculo, formulario o par&#225;metro. Para repositorios de ensayos rechaza secretos, endpoints arbitrarios y cualquier configuraci&#243;n que permita enviar PHI.</small></td>
                 <td>Configuraci&#243;n</td>
                 <td><code>section.configuration.manage</code></td>
                 <td><code>ConfigurationController</code></td>
               </tr>              <tr data-filter-item>
                 <td><code>PUT</code></td>
                 <td class="path"><code>/api/clinical/configuration/{kind}/{id}</code></td>
-                <td><strong>Modificar configuraci&#243;n</strong><small>Actualiza con revisi&#243;n optimista y conserva la versi&#243;n anterior.</small></td>
+                <td><strong>Modificar configuraci&#243;n</strong><small>Actualiza con revisi&#243;n optimista y conserva la versi&#243;n anterior. La pol&#237;tica de evaluaci&#243;n admite ejecuci&#243;n manual, programada cada 24 horas o en tiempo real, con un m&#225;ximo de un modal y de una a tres preguntas por aviso.</small></td>
                 <td>Configuraci&#243;n</td>
                 <td><code>section.configuration.manage</code></td>
                 <td><code>ConfigurationController</code></td>
@@ -546,21 +569,21 @@ expl&#237;cita y documentada cuando a&#250;n no existe inventario electr&#243;ni
                 <td class="path"><code>/api/ajcc8</code></td>
                 <td><strong>Listar sitios AJCC 8</strong><small>Devuelve los sitios tumorales y variables de estadificaci&#243;n disponibles en el cat&#225;logo local.</small></td>
                 <td>Cat&#225;logos</td>
-                <td><code>authenticated</code></td>
+                <td><code>section.tools.view</code></td>
                 <td><code>AjccCatalogController</code></td>
               </tr>              <tr data-filter-item>
                 <td><code>GET</code></td>
                 <td class="path"><code>/api/ajcc8/detail</code></td>
                 <td><strong>Abrir definici&#243;n AJCC 8</strong><small>Devuelve TNM, factores espec&#237;ficos y reglas del sitio AJCC seleccionado.</small></td>
                 <td>Cat&#225;logos</td>
-                <td><code>authenticated</code></td>
+                <td><code>section.tools.view</code></td>
                 <td><code>AjccCatalogController</code></td>
               </tr>              <tr data-filter-item>
                 <td><code>POST</code></td>
                 <td class="path"><code>/api/ajcc8/stage</code></td>
                 <td><strong>Calcular estadio AJCC 8</strong><small>Calcula el grupo de estadio de forma determin&#237;stica a partir del sitio y los valores TNM/factores.</small></td>
                 <td>Cat&#225;logos</td>
-                <td><code>authenticated</code></td>
+                <td><code>section.tools.use</code></td>
                 <td><code>AjccCatalogController</code></td>
               </tr>              <tr data-filter-item>
                 <td><code>GET</code></td>
@@ -576,6 +599,13 @@ expl&#237;cita y documentada cuando a&#250;n no existe inventario electr&#243;ni
                 <td>Cat&#225;logos</td>
                 <td><code>authenticated</code></td>
                 <td><code>LegacyCatalogController</code></td>
+              </tr>              <tr data-filter-item>
+                <td><code>GET</code></td>
+                <td class="path"><code>/api/clinical/tools/calculators</code></td>
+                <td><strong>Listar calculadoras operativas</strong><small>Devuelve &#250;nicamente las calculadoras activas y los ajustes institucionales necesarios para ejecutarlas desde Herramientas, sin exponer administraci&#243;n ni historial.</small></td>
+                <td>Cat&#225;logos</td>
+                <td><code>section.tools.use</code></td>
+                <td><code>CalculatorCatalogController</code></td>
               </tr>              <tr data-filter-item>
                 <td><code>GET</code></td>
                 <td class="path"><code>/api/guides</code></td>
@@ -600,23 +630,23 @@ expl&#237;cita y documentada cuando a&#250;n no existe inventario electr&#243;ni
               </tr>              <tr data-filter-item>
                 <td><code>GET</code></td>
                 <td class="path"><code>/api/medications/search</code></td>
-                <td><strong>Buscar medicamentos</strong><small>Busca por gen&#233;rico, marca o presentaci&#243;n en el cat&#225;logo local de drogas.</small></td>
+                <td><strong>Buscar medicamentos</strong><small>Busca por gen&#233;rico, marca o presentaci&#243;n en el cat&#225;logo local de drogas. Requiere permiso de lectura de Prescripci&#243;n.</small></td>
                 <td>Cat&#225;logos</td>
-                <td><code>authenticated</code></td>
+                <td><code>section.prescriptions.view</code></td>
                 <td><code>LegacyCatalogController</code></td>
               </tr>              <tr data-filter-item>
                 <td><code>GET</code></td>
                 <td class="path"><code>/api/protocols</code></td>
                 <td><strong>Listar protocolos compatibles</strong><small>Mantiene el contrato hist&#243;rico de la interfaz y responde desde los cat&#225;logos locales.</small></td>
                 <td>Cat&#225;logos</td>
-                <td><code>authenticated</code></td>
+                <td><code>section.protocols.view</code></td>
                 <td><code>LegacyCatalogController</code></td>
               </tr>              <tr data-filter-item>
                 <td><code>GET</code></td>
                 <td class="path"><code>/api/protocols/detail</code></td>
                 <td><strong>Abrir protocolo compatible</strong><small>Devuelve el detalle local de un protocolo COIR o personalizado usando el contrato hist&#243;rico.</small></td>
                 <td>Cat&#225;logos</td>
-                <td><code>authenticated</code></td>
+                <td><code>section.protocols.view</code></td>
                 <td><code>LegacyCatalogController</code></td>
               </tr>              <tr data-filter-item>
                 <td><code>GET</code></td>
@@ -754,7 +784,7 @@ expl&#237;cita y documentada cuando a&#250;n no existe inventario electr&#243;ni
               </tr>              <tr data-filter-item>
                 <td><code>POST</code></td>
                 <td class="path"><code>/api/agent/chat</code></td>
-                <td><strong>Consultar agente cl&#237;nico</strong><small>Responde sobre el contexto entregado y diferencia hechos de inferencias.</small></td>
+                <td><strong>Consultar agente cl&#237;nico</strong><small>Requiere section.agent.view. Acepta una consulta de hasta 8000 caracteres y env&#237;a s&#243;lo los &#250;ltimos 12 mensajes no vac&#237;os del historial, con hasta 8000 caracteres cada uno. Solicita JSON estructurado com&#250;n a proveedores OpenAI compatibles y Ollama, valida tablas, gr&#225;ficos, seguimientos y resaltados, y conserva como respuesta textual cualquier salida tradicional o JSON incompleto. Si el &#250;ltimo mensaje user repite la consulta actual, se elimina del historial antes de llamar al LLM. timelineEvents y consultAgents se aceptan por compatibilidad pero no se incorporan al prompt en esta versi&#243;n.</small></td>
                 <td>Integraciones</td>
                 <td><code>section.agent.view</code></td>
                 <td><code>LlmController</code></td>
@@ -789,7 +819,7 @@ expl&#237;cita y documentada cuando a&#250;n no existe inventario electr&#243;ni
               </tr>              <tr data-filter-item>
                 <td><code>GET</code></td>
                 <td class="path"><code>/api/llm/status</code></td>
-                <td><strong>Consultar estado LLM</strong><small>Informa si la integraci&#243;n est&#225; habilitada y configurada.</small></td>
+                <td><strong>Consultar estado LLM</strong><small>Requiere section.agent.view e informa proveedor, modelo y si la integraci&#243;n est&#225; habilitada y posee endpoint configurado. No prueba conectividad ni expone secretos.</small></td>
                 <td>Integraciones</td>
                 <td><code>section.agent.view</code></td>
                 <td><code>LlmController</code></td>

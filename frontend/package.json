@@ -1,0 +1,34 @@
+{
+  "name": "hcop-jp-angular",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "ng build",
+    "start": "ng serve",
+    "test": "npm run test:clinical",
+    "test:clinical": "node scripts/run-clinical-tests.mjs",
+    "test:e2e:conflict": "playwright test --config=e2e/playwright.config.ts"
+  },
+  "engines": {
+    "node": ">=22.22.3 || >=24.15.0"
+  },
+  "dependencies": {
+    "@angular/common": "^22.1.0",
+    "@angular/compiler": "^22.1.0",
+    "@angular/core": "^22.1.0",
+    "@angular/forms": "^22.1.0",
+    "@angular/platform-browser": "^22.1.0",
+    "@angular/router": "^22.1.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0",
+    "zone.js": "^0.16.2"
+  },
+  "devDependencies": {
+    "@angular/build": "^22.1.2",
+    "@angular/cli": "^22.1.2",
+    "@angular/compiler-cli": "^22.1.0",
+    "@playwright/test": "^1.62.1",
+    "esbuild": "0.28.1",
+    "typescript": "~6.0.2"
+  }
+}

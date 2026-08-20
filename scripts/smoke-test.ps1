@@ -50,9 +50,12 @@ if ($slotMinutes -notin @(5, 10, 15, 20, 30)) {
 }
 
 $pages = @(
-  @{ Path = "/configuration/"; Marker = "Centro de configuracion"; Name = "Centro de configuracion" },
-  @{ Path = "/protocol-admin/"; Marker = "Administrador de protocolos"; Name = "Administrador de protocolos" },
-  @{ Path = "/herramientas/"; Marker = "tool-list"; Name = "Herramientas clinicas" }
+  @{ Path = "/"; Marker = "<app-root"; Name = "Entrada principal Angular" },
+  @{ Path = "/index.html"; Marker = "<app-root"; Name = "Alias index Angular" },
+  @{ Path = "/app/"; Marker = "<app-root"; Name = "Aplicacion Angular" },
+  @{ Path = "/configuration/"; Marker = "<app-root"; Name = "Configuracion Angular" },
+  @{ Path = "/protocol-admin/"; Marker = "<app-root"; Name = "Protocolos en Configuracion Angular" },
+  @{ Path = "/herramientas/"; Marker = "<app-root"; Name = "Herramientas en Angular" }
 )
 foreach ($page in $pages) {
   $response = Invoke-WebRequest -UseBasicParsing -Uri "$baseUrl$($page.Path)" -Method Get -WebSession $session
@@ -61,9 +64,29 @@ foreach ($page in $pages) {
   }
 }
 
+$legacyExecutablePaths = @(
+  "/app.js",
+  "/configuration/configuration.js",
+  "/protocol-admin/protocol-admin.js",
+  "/herramientas/js/app.js",
+  "/herramientas/pages/01-ecog-karnofsky.html",
+  "/help/help.js"
+)
+foreach ($path in $legacyExecutablePaths) {
+  try {
+    $legacyResponse = Invoke-WebRequest -UseBasicParsing -Uri "$baseUrl$path" -Method Get -WebSession $session
+    throw "El recurso legacy $path sigue publicado con estado $($legacyResponse.StatusCode)."
+  } catch {
+    $statusCode = if ($_.Exception.Response) { [int]$_.Exception.Response.StatusCode } else { 0 }
+    if ($statusCode -ne 404) {
+      throw
+    }
+  }
+}
+
 $openApi = Invoke-RestMethod -Uri "$baseUrl/v3/api-docs" -Method Get -WebSession $session
 if ([string]::IsNullOrWhiteSpace([string]$openApi.openapi) -or $null -eq $openApi.paths) {
   throw "La documentacion OpenAPI no esta disponible."
 }
 
-Write-Host "HCOP JP operativo: salud, autenticacion, nucleo clinico, configuracion y OpenAPI verificados."
+Write-Host "HCOP JP operativo: Angular exclusivo, salud, autenticacion, nucleo clinico, configuracion y OpenAPI verificados."

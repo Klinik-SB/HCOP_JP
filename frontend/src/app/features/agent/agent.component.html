@@ -1,0 +1,158 @@
+<section class="right-tab-panel active" data-right-panel="agent">
+  <section class="clinical-agent" aria-label="Agente clínico">
+    <header class="clinical-agent-head">
+      <div>
+        <span class="agent-status-dot" [class.is-ready]="status()?.enabled && status()?.configured" [class.is-offline]="status() && (!status()?.enabled || !status()?.configured)" [title]="statusText()"></span>
+        <div><strong>Agente clínico</strong><small>{{ statusText() }}</small></div>
+      </div>
+      <button class="icon-button" type="button" title="Limpiar conversación" aria-label="Limpiar conversación" (click)="clearConversation()">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 15H6L5 6M10 11v6M14 11v6"/></svg>
+      </button>
+    </header>
+
+    <div class="agent-suggestions" aria-label="Consultas sugeridas">
+      <button type="button" [disabled]="busy() || !workspace.workspace()" (click)="useSuggestion('Resumí la evolución oncológica y la respuesta al tratamiento.')">Resumen dirigido</button>
+      <button type="button" [disabled]="busy() || !workspace.workspace()" (click)="useSuggestion('Armá una tabla cronológica de tratamientos y respuesta.')">Tabla de tratamientos</button>
+      <button type="button" [disabled]="busy() || !workspace.workspace()" (click)="useSuggestion('Graficá todos los valores de marcadores tumorales por fecha.')">Gráfico de marcadores</button>
+      <button type="button" [disabled]="busy() || !workspace.workspace()" (click)="useSuggestion('Buscá y resaltá todos los hallazgos patológicos relevantes de la historia clínica y la línea de tiempo, incluyendo laboratorio, anatomía patológica, imágenes, examen clínico, evoluciones, complicaciones y toxicidades.')">Resaltar hallazgos</button>
+    </div>
+
+    <div class="agent-chat-messages" #messages aria-live="polite" aria-relevant="additions text">
+      @for (message of conversation(); track message.id) {
+        <article class="agent-message" [class.agent-message--assistant]="message.role === 'assistant'" [class.agent-message--user]="message.role === 'user'" [class.agent-message--error]="message.error">
+          <div class="agent-avatar" aria-hidden="true">
+            @if (message.role === 'assistant') { <svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M9 11h.01M15 11h.01M9 15h6M12 3v4"/></svg> }
+            @else { <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg> }
+          </div>
+          <div class="agent-message-content">
+            @for (block of answerBlocksFor(message); track $index; let blockIndex = $index) {
+              @if (block.kind === 'heading') {
+                @switch (block.level) {
+                  @case (1) { <h3 class="agent-response-heading agent-response-heading--1 agent-answer-block"><app-agent-inline [text]="block.text" /></h3> }
+                  @case (2) { <h4 class="agent-response-heading agent-response-heading--2 agent-answer-block"><app-agent-inline [text]="block.text" /></h4> }
+                  @default { <h5 class="agent-response-heading agent-response-heading--minor agent-answer-block"><app-agent-inline [text]="block.text" /></h5> }
+                }
+              } @else if (block.kind === 'list') {
+                @if (block.ordered) {
+                  <ol class="agent-response-list agent-response-list--ordered agent-answer-block" [attr.start]="block.start && block.start !== 1 ? block.start : null">
+                    @for (item of block.items; track $index; let itemIndex = $index) {
+                      @let itemKey = message.id + ':answer:' + blockIndex + ':item:' + itemIndex;
+                      <li tabindex="0" title="Ubicar en la historia" [class.is-selected]="selectedTarget() === itemKey" [attr.aria-current]="selectedTarget() === itemKey ? 'true' : null" (click)="selectAndNavigate(itemKey, item)" (keydown.enter)="selectAndNavigate(itemKey, item)" (keydown.space)="$event.preventDefault(); selectAndNavigate(itemKey, item)"><app-agent-inline [text]="item" /></li>
+                    }
+                  </ol>
+                } @else {
+                  <ul class="agent-response-list agent-answer-block">
+                    @for (item of block.items; track $index; let itemIndex = $index) {
+                      @let itemKey = message.id + ':answer:' + blockIndex + ':item:' + itemIndex;
+                      <li tabindex="0" title="Ubicar en la historia" [class.is-selected]="selectedTarget() === itemKey" [attr.aria-current]="selectedTarget() === itemKey ? 'true' : null" (click)="selectAndNavigate(itemKey, item)" (keydown.enter)="selectAndNavigate(itemKey, item)" (keydown.space)="$event.preventDefault(); selectAndNavigate(itemKey, item)"><app-agent-inline [text]="item" /></li>
+                    }
+                  </ul>
+                }
+              } @else if (block.kind === 'table') {
+                <div class="agent-table-wrap agent-markdown-table-wrap agent-answer-block">
+                  <table class="agent-table agent-markdown-table">
+                    <thead><tr>@for (column of block.columns; track $index) { <th scope="col"><app-agent-inline [text]="column" /></th> }</tr></thead>
+                    <tbody>
+                      @for (row of block.rows; track $index; let rowIndex = $index) {
+                        @let rowKey = message.id + ':answer:' + blockIndex + ':row:' + rowIndex;
+                        <tr tabindex="0" title="Ubicar en la historia" [class.is-selected]="selectedTarget() === rowKey" [attr.aria-current]="selectedTarget() === rowKey ? 'true' : null" (click)="selectAndNavigate(rowKey, row.join(' '))" (keydown.enter)="selectAndNavigate(rowKey, row.join(' '))" (keydown.space)="$event.preventDefault(); selectAndNavigate(rowKey, row.join(' '))">
+                          @for (cell of row; track $index) { <td><app-agent-inline [text]="cell" /></td> }
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              } @else if (block.kind === 'code') {
+                <pre class="agent-response-code agent-answer-block"><code>{{ block.text }}</code></pre>
+              } @else {
+                <p class="agent-answer-block"><app-agent-inline [text]="block.text" /></p>
+              }
+            }
+            @for (artifact of message.artifacts; track $index; let artifactIndex = $index) {
+              @if (isTable(artifact)) {
+                <section class="agent-artifact">
+                  <h4><app-agent-inline [text]="artifact.title || 'Tabla clínica'" /></h4>
+                  <div class="agent-table-wrap">
+                    <table class="agent-table">
+                      <thead><tr>@for (column of artifact.columns; track $index) { <th scope="col"><app-agent-inline [text]="column" /></th> }</tr></thead>
+                      <tbody>
+                        @for (row of artifact.rows; track $index; let rowIndex = $index) {
+                          @let rowKey = message.id + ':artifact:' + artifactIndex + ':row:' + rowIndex;
+                          <tr tabindex="0" title="Ubicar en la historia" [class.is-selected]="selectedTarget() === rowKey" [attr.aria-current]="selectedTarget() === rowKey ? 'true' : null" (click)="selectAndNavigate(rowKey, row.join(' '))" (keydown.enter)="selectAndNavigate(rowKey, row.join(' '))" (keydown.space)="$event.preventDefault(); selectAndNavigate(rowKey, row.join(' '))">
+                            @for (cell of row; track $index) { <td><app-agent-inline [text]="cell" /></td> }
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              } @else if (isChart(artifact)) {
+                @let view = chartView(artifact);
+                @let chartKey = message.id + ':chart:' + artifactIndex;
+                @if (view) {
+                  <section class="agent-artifact">
+                    <h4><app-agent-inline [text]="artifact.title || 'Gráfico clínico'" /></h4>
+                    <div class="agent-chart" (pointerleave)="hideChartTooltip(chartKey)">
+                      @if (view.kind === 'cartesian') {
+                        <svg [attr.viewBox]="'0 0 ' + view.width + ' ' + view.height" role="group" [attr.aria-label]="artifact.title || 'Gráfico clínico'">
+                          <g class="agent-chart-grid" aria-hidden="true">
+                            @for (tick of view.yTicks; track $index) {
+                              <line [attr.x1]="view.plot.left" [attr.y1]="tick.y" [attr.x2]="view.plot.left + view.plot.width" [attr.y2]="tick.y" />
+                              <text [attr.x]="view.plot.left - 7" [attr.y]="(tick.y || 0) + 3" text-anchor="end">{{ tick.label }}</text>
+                            }
+                          </g>
+                          <line class="agent-chart-baseline" [attr.x1]="view.plot.left" [attr.y1]="view.baselineY" [attr.x2]="view.plot.left + view.plot.width" [attr.y2]="view.baselineY" />
+                          @for (series of view.series; track $index; let seriesIndex = $index) {
+                            @if (view.chartType === 'line') {
+                              <polyline class="agent-chart-line" fill="none" [attr.stroke]="series.color" [attr.points]="series.line" />
+                            }
+                            @for (point of series.points; track $index; let pointIndex = $index) {
+                              @let pointKey = chartKey + ':series:' + seriesIndex + ':point:' + pointIndex;
+                              @if (point.bar; as bar) {
+                                <rect class="agent-chart-mark agent-chart-bar" role="button" [class.is-selected]="selectedTarget() === pointKey" [attr.x]="bar.x" [attr.y]="bar.y" [attr.width]="bar.width" [attr.height]="bar.height" rx="2" [attr.fill]="point.color" [attr.data-chart-tooltip]="point.tooltip" [attr.aria-label]="point.tooltip" [attr.aria-pressed]="selectedTarget() === pointKey" [attr.aria-describedby]="chartTooltip()?.targetKey === pointKey ? chartKey + '-tooltip' : null" tabindex="0" (pointerenter)="showChartTooltip($event, chartKey, pointKey, point.tooltip)" (pointermove)="showChartTooltip($event, chartKey, pointKey, point.tooltip)" (focus)="showChartTooltip($event, chartKey, pointKey, point.tooltip)" (blur)="hideChartTooltip(chartKey)" (click)="selectAndNavigate(pointKey, point.navigationText, point.navigationDate)" (keydown.enter)="selectAndNavigate(pointKey, point.navigationText, point.navigationDate)" (keydown.space)="$event.preventDefault(); selectAndNavigate(pointKey, point.navigationText, point.navigationDate)"><title>{{ point.tooltip }}</title></rect>
+                              } @else {
+                                <circle class="agent-chart-mark agent-chart-point" role="button" [class.is-selected]="selectedTarget() === pointKey" [attr.cx]="point.x" [attr.cy]="point.y" [attr.r]="selectedTarget() === pointKey ? 5.5 : 4" fill="#fff" [attr.stroke]="point.color" stroke-width="2" [attr.data-chart-tooltip]="point.tooltip" [attr.aria-label]="point.tooltip" [attr.aria-pressed]="selectedTarget() === pointKey" [attr.aria-describedby]="chartTooltip()?.targetKey === pointKey ? chartKey + '-tooltip' : null" tabindex="0" (pointerenter)="showChartTooltip($event, chartKey, pointKey, point.tooltip)" (pointermove)="showChartTooltip($event, chartKey, pointKey, point.tooltip)" (focus)="showChartTooltip($event, chartKey, pointKey, point.tooltip)" (blur)="hideChartTooltip(chartKey)" (click)="selectAndNavigate(pointKey, point.navigationText, point.navigationDate)" (keydown.enter)="selectAndNavigate(pointKey, point.navigationText, point.navigationDate)" (keydown.space)="$event.preventDefault(); selectAndNavigate(pointKey, point.navigationText, point.navigationDate)"><title>{{ point.tooltip }}</title></circle>
+                              }
+                            }
+                          }
+                          <g class="agent-chart-x-labels" aria-hidden="true">
+                            @for (tick of view.xTicks; track $index) { <text [attr.x]="tick.x" [attr.y]="view.plot.top + view.plot.height + 17" text-anchor="middle">{{ tick.label }}</text> }
+                            @if (view.xLabel) { <text class="agent-chart-axis-title" [attr.x]="view.plot.left + view.plot.width / 2" [attr.y]="view.height - 4" text-anchor="middle">{{ view.xLabel }}</text> }
+                          </g>
+                        </svg>
+                        <div class="agent-chart-legend">@for (series of view.series; track $index) { <span [style.--legend-color]="series.color">{{ series.name }}</span> }</div>
+                      } @else {
+                        <svg class="agent-chart-pie" [attr.viewBox]="'0 0 ' + view.width + ' ' + view.height" role="group" [attr.aria-label]="artifact.title || 'Gráfico circular clínico'">
+                          @for (slice of view.slices; track $index; let sliceIndex = $index) {
+                            @let sliceKey = chartKey + ':slice:' + sliceIndex;
+                            <path class="agent-chart-mark" role="button" [class.is-selected]="selectedTarget() === sliceKey" [attr.d]="slice.path" [attr.fill]="slice.color" [attr.data-chart-tooltip]="slice.tooltip" [attr.aria-label]="slice.tooltip" [attr.aria-pressed]="selectedTarget() === sliceKey" [attr.aria-describedby]="chartTooltip()?.targetKey === sliceKey ? chartKey + '-tooltip' : null" tabindex="0" (pointerenter)="showChartTooltip($event, chartKey, sliceKey, slice.tooltip)" (pointermove)="showChartTooltip($event, chartKey, sliceKey, slice.tooltip)" (focus)="showChartTooltip($event, chartKey, sliceKey, slice.tooltip)" (blur)="hideChartTooltip(chartKey)" (click)="selectAndNavigate(sliceKey, slice.navigationText, slice.navigationDate)" (keydown.enter)="selectAndNavigate(sliceKey, slice.navigationText, slice.navigationDate)" (keydown.space)="$event.preventDefault(); selectAndNavigate(sliceKey, slice.navigationText, slice.navigationDate)"><title>{{ slice.tooltip }}</title></path>
+                          }
+                        </svg>
+                        <div class="agent-chart-legend agent-chart-legend--pie">@for (slice of view.slices; track $index) { <span [style.--legend-color]="slice.color">{{ slice.legend }}</span> }</div>
+                      }
+                      @if (chartTooltip(); as tooltip) {
+                        @if (tooltip.chartKey === chartKey) {
+                          <div class="agent-chart-tooltip show" role="tooltip" [id]="chartKey + '-tooltip'" [style.left.px]="tooltip.left" [style.top.px]="tooltip.top">{{ tooltip.text }}</div>
+                        }
+                      }
+                    </div>
+                  </section>
+                }
+              }
+            }
+            @if (message.followUps.length) { <div class="agent-followups">@for (prompt of message.followUps; track prompt) { <button type="button" (click)="useFollowUp(prompt)">{{ prompt }}</button> }</div> }
+            @if (!message.greeting) { <div class="agent-message-meta"><span>{{ time(message.createdAt) }}</span>@if (message.model) { <span>{{ message.model }}</span> }</div> }
+          </div>
+        </article>
+      }
+      @if (busy()) {
+        <article class="agent-message agent-message--assistant" role="status" aria-label="El Agente está respondiendo"><div class="agent-avatar" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M9 11h.01M15 11h.01M9 15h6M12 3v4"/></svg></div><div class="agent-message-content"><span class="agent-typing"><span></span><span></span><span></span></span></div></article>
+      }
+    </div>
+
+    <form class="agent-composer" (submit)="$event.preventDefault(); send()">
+      <textarea #agentInput rows="2" [ngModel]="input()" (ngModelChange)="input.set($event)" name="agentInput" [disabled]="busy() || !workspace.workspace()" [placeholder]="workspace.workspace() ? 'Pregunta sobre la historia clínica…' : 'Abra un paciente para consultar…'" autocomplete="off" maxlength="4000" (keydown)="onComposerKeydown($event)"></textarea>
+      <button class="agent-send-button" type="submit" [disabled]="busy() || !workspace.workspace() || !input().trim()" title="Enviar consulta" aria-label="Enviar consulta"><svg class="agent-send-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 19.2 21 12 17.3 4.8 21 12 2.5Z"></path></svg></button>
+    </form>
+  </section>
+</section>

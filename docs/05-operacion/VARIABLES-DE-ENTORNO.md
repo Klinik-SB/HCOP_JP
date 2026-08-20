@@ -40,9 +40,22 @@ existente. Primero haga un backup, cree el destino y restaure.
 | `HCOP_BOOTSTRAP_USERNAME` | `marcolyto` | Usuario administrador inicial. |
 | `HCOP_BOOTSTRAP_PASSWORD` | obligatorio, mínimo 10 caracteres | Contraseña inicial. |
 | `HCOP_BOOTSTRAP_SECOND_USERNAME` | `marcolyto2` | Segunda cuenta clínica para probar flujos. |
+| `HCOP_SEED_EXAMPLE_PATIENT` | `true` | Crea una sola ficha sintética y actualiza de forma versionada únicamente su hoja intacta; `false` impide crearla, repararla o refrescarla. |
 
 Estas variables crean cuentas faltantes; no reemplazan silenciosamente la
 contraseña de una cuenta ya persistida. Cambie las claves desde la interfaz.
+
+`HCOP_SEED_EXAMPLE_PATIENT` no activa la ficha en ninguna sesión y tampoco
+elimina una ficha existente cuando cambia a `false`. La identidad y la historia
+incluidas con la aplicación son inventadas; este recurso nunca debe contener
+datos reales ni utilizarse como ficha asistencial. Una edición humana incrementa
+la revisión y bloquea definitivamente la actualización automática del contenido
+demostrativo. La versión distribuida es `meta.demoContentVersion=3` y representa
+un caso compuesto de colon y melanoma creado completamente desde cero, no una
+historia anonimizada o pseudonimizada. El seed es best-effort: colisiones de
+DNI/HC, ausencia del actor de auditoría o una concurrencia no resoluble generan
+warning y omisión, nunca una caída del servicio. Un recurso empaquetado inválido
+es un defecto de release que debe detectarse antes de publicar la imagen.
 
 ## Secretos
 
@@ -68,6 +81,7 @@ HCOP_DB_PASSWORD=una-clave-larga-y-unica
 HCOP_BOOTSTRAP_USERNAME=administrador
 HCOP_BOOTSTRAP_PASSWORD=otra-clave-larga-y-unica
 HCOP_BOOTSTRAP_SECOND_USERNAME=medico2
+HCOP_SEED_EXAMPLE_PATIENT=false
 HCOP_QR_SECRET=secreto-aleatorio-de-al-menos-32-caracteres
 HCOP_ENCRYPTION_SECRET=otro-secreto-aleatorio-independiente
 HCOP_PUBLIC_BASE_URL=https://hcop.institucion.example

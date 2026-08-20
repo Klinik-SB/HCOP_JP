@@ -1,0 +1,13 @@
+{
+  "extends": "../../../../../tsconfig.app.json",
+  "compilerOptions": {
+    "outDir": "../../../../../out-tsc/catalogs",
+    "types": []
+  },
+  "files": [
+    "configuration-catalogs.component.ts",
+    "configuration-catalogs.service.ts",
+    "configuration-catalogs.models.ts",
+    "configuration-catalogs.normalizers.ts"
+  ]
+}

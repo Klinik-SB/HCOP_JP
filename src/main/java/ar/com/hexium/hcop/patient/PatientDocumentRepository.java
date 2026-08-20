@@ -51,6 +51,23 @@ public class PatientDocumentRepository {
         java.sql.Timestamp.from(now), java.sql.Timestamp.from(now));
   }
 
+  public Optional<StoredDocument> insertIfMissing(
+      long patientId,
+      JsonNode document,
+      long actorId,
+      boolean imported) {
+    Instant now = clock.instant();
+    return jdbc.query("""
+        INSERT INTO hcop_patient_documents
+          (patient_id, document_json, revision, imported_at, created_by, updated_by, created_at, updated_at)
+        VALUES (?, CAST(? AS jsonb), 1, ?, ?, ?, ?, ?)
+        ON CONFLICT (patient_id) DO NOTHING
+        RETURNING patient_id, document_json::text, revision, imported_at, created_at, updated_at
+        """, this::map, patientId, document.toString(),
+        imported ? java.sql.Timestamp.from(now) : null, actorId, actorId,
+        java.sql.Timestamp.from(now), java.sql.Timestamp.from(now)).stream().findFirst();
+  }
+
   public Optional<StoredDocument> update(
       long patientId,
       JsonNode document,

@@ -1,0 +1,27 @@
+/* El CSS histórico se carga desde index.html para preservar las métricas visuales.
+   Aquí sólo se definen garantías propias del host Angular. */
+app-root { display: block; height: 100%; }
+
+::highlight(hcop-agent-study) { background-color: #dce6f2; color: #344f73; }
+::highlight(hcop-agent-pathology),
+::highlight(hcop-agent-chemotherapy) { background-color: #eadff2; color: #65437d; }
+::highlight(hcop-agent-evolution),
+::highlight(hcop-agent-hormone),
+::highlight(hcop-agent-systemic) { background-color: #d8ebe7; color: #285f57; }
+::highlight(hcop-agent-radiotherapy) { background-color: #f7d9d3; color: #8f372a; }
+::highlight(hcop-agent-surgery) { background-color: #f3e5c9; color: #7b5317; }
+::highlight(hcop-agent-immunotherapy) { background-color: #d8ecf4; color: #245f78; }
+::highlight(hcop-agent-targeted) { background-color: #f0dce8; color: #7c4564; }
+
+/* Compatibilidad segura: destaca el bloque sin reemplazar nodos que pertenecen a Angular. */
+.agent-highlight-fallback { border-radius: 3px; box-shadow: inset 3px 0 #0e9aef; }
+.agent-highlight-fallback--study { background: #dce6f2; color: #344f73; }
+.agent-highlight-fallback--pathology,
+.agent-highlight-fallback--chemotherapy { background: #eadff2; color: #65437d; }
+.agent-highlight-fallback--evolution,
+.agent-highlight-fallback--hormone,
+.agent-highlight-fallback--systemic { background: #d8ebe7; color: #285f57; }
+.agent-highlight-fallback--radiotherapy { background: #f7d9d3; color: #8f372a; }
+.agent-highlight-fallback--surgery { background: #f3e5c9; color: #7b5317; }
+.agent-highlight-fallback--immunotherapy { background: #d8ecf4; color: #245f78; }
+.agent-highlight-fallback--targeted { background: #f0dce8; color: #7c4564; }

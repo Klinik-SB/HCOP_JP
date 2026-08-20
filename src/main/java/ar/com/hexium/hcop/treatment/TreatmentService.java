@@ -11,6 +11,7 @@ import ar.com.hexium.hcop.patient.PatientService;
 import ar.com.hexium.hcop.infusion.InfusionService;
 import ar.com.hexium.hcop.treatment.TreatmentRepository.NewTreatment;
 import ar.com.hexium.hcop.treatment.TreatmentRepository.Treatment;
+import ar.com.hexium.hcop.treatment.TreatmentRepository.WorkflowState;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.Period;
@@ -21,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -70,7 +72,11 @@ public class TreatmentService {
 
   public List<Map<String, Object>> list(long patientId) {
     patients.require(patientId);
-    return treatments.list(patientId).stream().map(this::view).toList();
+    Map<String, WorkflowState> workflowStates = Optional
+        .ofNullable(treatments.workflowStates(patientId)).orElse(Map.of());
+    return treatments.list(patientId).stream()
+        .map(treatment -> view(treatment, workflowStates.get(treatment.id())))
+        .toList();
   }
 
   public Map<String, Object> options(long patientId) {
@@ -254,6 +260,10 @@ public class TreatmentService {
   }
 
   public Map<String, Object> view(Treatment treatment) {
+    return view(treatment, null);
+  }
+
+  private Map<String, Object> view(Treatment treatment, WorkflowState workflow) {
     Map<String, Object> result = new LinkedHashMap<>();
     Integer duration = resolvedDuration(treatment);
     result.put("id", treatment.id());
@@ -299,6 +309,25 @@ public class TreatmentService {
     result.put("createdAt", treatment.createdAt().toString());
     result.put("updatedAt", treatment.updatedAt().toString());
     treatment.payload().properties().forEach(entry -> result.putIfAbsent(entry.getKey(), jsonValue(entry.getValue())));
+    if (workflow != null) {
+      int effectiveCycle = workflow.effectiveFromCycle() == null
+          ? treatment.initialCycle() : workflow.effectiveFromCycle();
+      result.put("workflowStatus", workflow.continuityStatus());
+      result.put("continuityState", workflow.continuityStatus());
+      result.put("courseState", workflow.continuityStatus());
+      result.put("effectiveFromCycle", effectiveCycle);
+      result.put("reactivationCycle", effectiveCycle);
+      result.put("suspensionReason", workflow.suspensionReason());
+      result.put("resumeDate", workflow.resumeDate() == null ? null : workflow.resumeDate().toString());
+      result.put("prescriptionRequired", workflow.prescriptionRequired());
+      result.put("managementRevision", workflow.managementRevision());
+      result.put("prescriptionStates", workflow.prescriptionStates());
+      result.put("prescriptionWorkflowState",
+          workflow.prescriptionStates().getOrDefault(effectiveCycle, "required"));
+      result.put("pendingRequestIdsByCycle", workflow.pendingRequestIdsByCycle());
+      result.put("pendingRequestIds",
+          workflow.pendingRequestIdsByCycle().getOrDefault(effectiveCycle, Map.of()));
+    }
     return result;
   }
 

@@ -1,0 +1,12 @@
+<main class="angular-login-page">
+  <form class="angular-login-card" (submit)="$event.preventDefault(); submit()" novalidate>
+    <div class="brand-block">
+      <div class="brand-mark">HC</div>
+      <div><h1>HCOP Centro Oncologico</h1><p>Historia y Hospital de Día</p></div>
+    </div>
+    <label><span>Usuario</span><input [formControl]="username" autocomplete="username" autofocus></label>
+    <label><span>Contraseña</span><input type="password" [formControl]="password" autocomplete="current-password"></label>
+    @if (error()) { <p class="login-error" role="alert">{{ error() }}</p> }
+    <button class="tool-button primary" type="submit" [disabled]="submitting()"><span>{{ submitting() ? 'Ingresando…' : 'Ingresar' }}</span></button>
+  </form>
+</main>

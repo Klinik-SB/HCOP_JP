@@ -5,7 +5,7 @@
 - Especificación: `GET /v3/api-docs/hcop-jp-completa`
 - Swagger UI: `GET /swagger-ui.html`
 - Versión declarada: `1.0.0`
-- Operaciones documentadas: **111**
+- Operaciones documentadas: **115**
 - Autenticación: cookie HttpOnly `HCOP_SESSION`; las operaciones públicas se identifican expresamente.
 
 Los permisos se validan en el servidor. `authenticated` significa que la ruta exige una sesión activa pero no aplica un permiso granular adicional en el controlador.
@@ -50,7 +50,7 @@ Revoca la sesión actual y elimina su cookie.
 Devuelve el usuario, roles, permisos y paciente activo; no expone el token.
 
 - **Controlador MVC:** `AuthController`
-- **Operación Java/OpenAPI:** `me`
+- **Operación Java/OpenAPI:** `me_1`
 - **Acceso requerido:** `public`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** Sin cuerpo.
@@ -93,7 +93,7 @@ Crea un paciente local, su hoja clínica en blanco y lo deja activo.
 
 ### `POST /api/clinical/patients/{patientId}/activate` - Activar paciente y abrir espacio clínico
 
-Asocia el paciente a la sesión y devuelve identidad, historia, tratamientos, turnos y conteos en una respuesta.
+Asocia el paciente a la sesión y devuelve identidad, historia, tratamientos, turnos y conteos, omitiendo secciones sin permiso.
 
 - **Controlador MVC:** `PatientWorkspaceController`
 - **Operación Java/OpenAPI:** `activate`
@@ -126,7 +126,7 @@ Confirma que el diagnóstico seleccionado pertenece a la historia del paciente.
 
 ### `GET /api/clinical/patients/{patientId}/workspace` - Abrir espacio clínico del paciente
 
-Devuelve el agregado de trabajo del paciente sin cambiar otra sesión.
+Devuelve el agregado de trabajo del paciente sin cambiar otra sesión y aplica la misma proyección por permisos.
 
 - **Controlador MVC:** `PatientWorkspaceController`
 - **Operación Java/OpenAPI:** `workspace`
@@ -148,22 +148,22 @@ Filtra el catálogo diagnóstico local por sistema, texto y límite de resultado
 
 ### `GET /api/hc` - Leer historia clínica
 
-Recupera la hoja del paciente activo o la plantilla en blanco.
+Recupera la hoja del paciente activo o la plantilla en blanco; requiere acceso a Historia, omite prescriptions sin permiso de lectura de Prescripción y omite studies/externalStudies sin permiso de lectura de Estudios.
 
 - **Controlador MVC:** `ClinicalDocumentController`
 - **Operación Java/OpenAPI:** `get`
-- **Acceso requerido:** `authenticated`
+- **Acceso requerido:** `section.history.view`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** Sin cuerpo.
 - **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `PUT /api/hc` - Guardar historia clínica
 
-Guarda con control optimista de revisión para evitar pisar cambios concurrentes.
+Guarda con control optimista de revisión y devuelve el estado canónico confirmado. Si prescriptions cambia exige edición de Prescripción; si studies o externalStudies cambian exige edición de Estudios; si esos campos fueron ocultados, conserva sus valores existentes. Los cambios de narrative.chiefComplaint, narrative.currentIllness, narrative.backgroundClinical, narrative.currentMedication, narrative.familyOncology, narrative.gynecology, narrative.physicalExam, narrative.summary y narrative.plan deben ser texto de hasta 50.000 caracteres; exam.weightKg acepta 0.01 a 500 kg y exam.heightM conserva 0.3 a 2.5 metros aunque la UI muestre centímetros; valores legacy atípicos que no cambian se preservan. Java genera actor, fecha, versión y auditoría de Motivo de consulta, Antecedentes de enfermedad actual, Antecedentes personales, Examen físico y Conclusión / resumen usando la sesión y no confía en esos metadatos enviados por el cliente. La validación 400 de Motivo de consulta usa CLINICAL_CHIEF_COMPLAINT_INVALID, CLINICAL_CHIEF_COMPLAINT_TOO_LONG, CLINICAL_CHIEF_COMPLAINT_EMPTY, CLINICAL_CHIEF_COMPLAINT_REASON_REQUIRED, CLINICAL_CHIEF_COMPLAINT_REASON_INVALID o CLINICAL_CHIEF_COMPLAINT_REASON_TOO_LONG. Antecedentes de enfermedad actual usa CLINICAL_CURRENT_ILLNESS_INVALID, CLINICAL_CURRENT_ILLNESS_TOO_LONG, CLINICAL_CURRENT_ILLNESS_EMPTY, CLINICAL_CURRENT_ILLNESS_REASON_REQUIRED, CLINICAL_CURRENT_ILLNESS_REASON_INVALID o CLINICAL_CURRENT_ILLNESS_REASON_TOO_LONG. Antecedentes personales usa CLINICAL_PERSONAL_HISTORY_BACKGROUND_CLINICAL_INVALID, CLINICAL_PERSONAL_HISTORY_BACKGROUND_CLINICAL_TOO_LONG, CLINICAL_PERSONAL_HISTORY_CURRENT_MEDICATION_INVALID, CLINICAL_PERSONAL_HISTORY_CURRENT_MEDICATION_TOO_LONG, CLINICAL_PERSONAL_HISTORY_FAMILY_ONCOLOGY_INVALID, CLINICAL_PERSONAL_HISTORY_FAMILY_ONCOLOGY_TOO_LONG, CLINICAL_PERSONAL_HISTORY_GYNECOLOGY_INVALID, CLINICAL_PERSONAL_HISTORY_GYNECOLOGY_TOO_LONG, CLINICAL_PERSONAL_HISTORY_EMPTY, CLINICAL_PERSONAL_HISTORY_REASON_REQUIRED, CLINICAL_PERSONAL_HISTORY_REASON_INVALID o CLINICAL_PERSONAL_HISTORY_REASON_TOO_LONG. Examen físico usa CLINICAL_PHYSICAL_EXAM_WEIGHT_INVALID, CLINICAL_PHYSICAL_EXAM_WEIGHT_OUT_OF_RANGE, CLINICAL_PHYSICAL_EXAM_HEIGHT_INVALID, CLINICAL_PHYSICAL_EXAM_HEIGHT_OUT_OF_RANGE, CLINICAL_PHYSICAL_EXAM_TEXT_INVALID, CLINICAL_PHYSICAL_EXAM_TEXT_TOO_LONG, CLINICAL_PHYSICAL_EXAM_EMPTY, CLINICAL_PHYSICAL_EXAM_REASON_REQUIRED, CLINICAL_PHYSICAL_EXAM_REASON_INVALID o CLINICAL_PHYSICAL_EXAM_REASON_TOO_LONG. La validación de Conclusión / resumen usa CLINICAL_SUMMARY_INVALID, CLINICAL_SUMMARY_TOO_LONG, CLINICAL_PLAN_INVALID, CLINICAL_PLAN_TOO_LONG, CLINICAL_SUMMARY_PLAN_EMPTY, CLINICAL_SUMMARY_PLAN_REASON_REQUIRED, CLINICAL_SUMMARY_PLAN_REASON_INVALID o CLINICAL_SUMMARY_PLAN_REASON_TOO_LONG. Los conflictos 409 usan ACTIVE_PATIENT_REQUIRED, CLINICAL_REVISION_REQUIRED, CLINICAL_PATIENT_MISMATCH o VERSION_CONFLICT.
 
 - **Controlador MVC:** `ClinicalDocumentController`
 - **Operación Java/OpenAPI:** `put`
-- **Acceso requerido:** `section.history.edit`
+- **Acceso requerido:** `section.history.edit + permiso específico de edición si prescriptions, studies o externalStudies cambian`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
 - **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
@@ -192,7 +192,7 @@ Sin consulta devuelve los pacientes recientes; con texto filtra por nombre, apel
 
 ### `POST /api/lira/patients/{patientId}/import` - Abrir paciente local
 
-Activa una historia ya consolidada en PostgreSQL; no consulta Lira.
+Activa una historia ya consolidada en PostgreSQL; no consulta Lira y proyecta las secciones según permisos.
 
 - **Controlador MVC:** `PatientController`
 - **Operación Java/OpenAPI:** `importPatient_1`
@@ -214,7 +214,7 @@ Resume disponibilidad y cantidad de registros antes de abrir la historia.
 
 ### `POST /api/lira/patients/{patientId}/refresh` - Abrir paciente local
 
-Activa una historia ya consolidada en PostgreSQL; no consulta Lira.
+Activa una historia ya consolidada en PostgreSQL; no consulta Lira y proyecta las secciones según permisos.
 
 - **Controlador MVC:** `PatientController`
 - **Operación Java/OpenAPI:** `importPatient`
@@ -344,7 +344,7 @@ Devuelve una fila por ciclo y día real con medicación. `pharmacy` permite filt
 fecha de hoy y se ordenan por hora del turno y sillón.
 
 - **Controlador MVC:** `InfusionApplicationWorkflowController`
-- **Operación Java/OpenAPI:** `list_8`
+- **Operación Java/OpenAPI:** `list_10`
 - **Acceso requerido:** `section.day-hospital.view`
 - **Parámetros:** `queue` (query, opcional): pharmacy, triage, preparation o administration.; `date` (query, opcional): Fecha ISO. En triaje/preparación/administración omitirla equivale a hoy.; `q` (query, opcional): Busca por paciente, DNI, esquema, diagnóstico o droga.; `medicationSource` (query, opcional): Fuente/custodia; use patient_to_bring para quienes deben traer medicación.
 - **Cuerpo:** Sin cuerpo.
@@ -546,7 +546,7 @@ Reserva el bloque de un ciclo y día de aplicación concretos; PostgreSQL rechaz
 Mueve, cancela o avanza un turno usando control de versión.
 
 - **Controlador MVC:** `InfusionController`
-- **Operación Java/OpenAPI:** `update_3`
+- **Operación Java/OpenAPI:** `update_4`
 - **Acceso requerido:** `application.schedule.manage`
 - **Parámetros:** `id` (path, obligatorio): Identificador del recurso solicitado.
 - **Cuerpo:** `application/json`
@@ -668,34 +668,34 @@ Expone esquemas COIR, duración y periodicidad para vinculación.
 
 ### `GET /api/clinical/configuration/{kind}` - Listar configuración
 
-Lista elementos activos o históricos de un tipo permitido.
+Lista elementos activos o históricos de un tipo permitido. trial-source describe fuentes oficiales de ensayos y trial-screening-settings conserva la política de ejecución local.
 
 - **Controlador MVC:** `ConfigurationController`
 - **Operación Java/OpenAPI:** `list_5`
 - **Acceso requerido:** `section.configuration.view`
-- **Parámetros:** `kind` (path, obligatorio): Tipo de configuración permitido por el servicio.; `includeInactive` (query, opcional): Use 1 para incluir elementos archivados; 0 devuelve sólo activos.
+- **Parámetros:** `kind` (path, obligatorio): Tipo permitido: guide, study-template, diagnosis-setting, diagnosis-equivalence, calculator, tool-settings, day-hospital-settings, research-form, protocol, trial-source o trial-screening-settings.; `includeInactive` (query, opcional): Use 1 para incluir elementos archivados; 0 devuelve sólo activos.
 - **Cuerpo:** Sin cuerpo.
 - **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `POST /api/clinical/configuration/{kind}` - Crear configuración
 
-Crea una definición versionada de guía, cálculo, formulario o parámetro.
+Crea una definición versionada de guía, cálculo, formulario o parámetro. Para repositorios de ensayos rechaza secretos, endpoints arbitrarios y cualquier configuración que permita enviar PHI.
 
 - **Controlador MVC:** `ConfigurationController`
 - **Operación Java/OpenAPI:** `create_6`
 - **Acceso requerido:** `section.configuration.manage`
-- **Parámetros:** `kind` (path, obligatorio): Tipo de configuración permitido por el servicio.
+- **Parámetros:** `kind` (path, obligatorio): Tipo permitido: guide, study-template, diagnosis-setting, diagnosis-equivalence, calculator, tool-settings, day-hospital-settings, research-form, protocol, trial-source o trial-screening-settings.
 - **Cuerpo:** `application/json`
 - **Respuestas:** `201` Recurso creado correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `PUT /api/clinical/configuration/{kind}/{id}` - Modificar configuración
 
-Actualiza con revisión optimista y conserva la versión anterior.
+Actualiza con revisión optimista y conserva la versión anterior. La política de evaluación admite ejecución manual, programada cada 24 horas o en tiempo real, con un máximo de un modal y de una a tres preguntas por aviso.
 
 - **Controlador MVC:** `ConfigurationController`
-- **Operación Java/OpenAPI:** `update_1`
+- **Operación Java/OpenAPI:** `update_2`
 - **Acceso requerido:** `section.configuration.manage`
-- **Parámetros:** `kind` (path, obligatorio): Tipo de configuración permitido por el servicio.; `id` (path, obligatorio): Identificador del recurso solicitado.
+- **Parámetros:** `kind` (path, obligatorio): Tipo permitido: guide, study-template, diagnosis-setting, diagnosis-equivalence, calculator, tool-settings, day-hospital-settings, research-form, protocol, trial-source o trial-screening-settings.; `id` (path, obligatorio): Identificador del recurso solicitado.
 - **Cuerpo:** `application/json`
 - **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
@@ -706,7 +706,7 @@ Desactiva el elemento sin borrar su historial.
 - **Controlador MVC:** `ConfigurationController`
 - **Operación Java/OpenAPI:** `archive_1`
 - **Acceso requerido:** `section.configuration.manage`
-- **Parámetros:** `kind` (path, obligatorio): Tipo de configuración permitido por el servicio.; `id` (path, obligatorio): Identificador del recurso solicitado.
+- **Parámetros:** `kind` (path, obligatorio): Tipo permitido: guide, study-template, diagnosis-setting, diagnosis-equivalence, calculator, tool-settings, day-hospital-settings, research-form, protocol, trial-source o trial-screening-settings.; `id` (path, obligatorio): Identificador del recurso solicitado.
 - **Cuerpo:** Sin cuerpo.
 - **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
 
@@ -717,7 +717,7 @@ Devuelve el historial auditable del elemento.
 - **Controlador MVC:** `ConfigurationController`
 - **Operación Java/OpenAPI:** `versions`
 - **Acceso requerido:** `section.configuration.view`
-- **Parámetros:** `kind` (path, obligatorio): Tipo de configuración permitido por el servicio.; `id` (path, obligatorio): Identificador del recurso solicitado.
+- **Parámetros:** `kind` (path, obligatorio): Tipo permitido: guide, study-template, diagnosis-setting, diagnosis-equivalence, calculator, tool-settings, day-hospital-settings, research-form, protocol, trial-source o trial-screening-settings.; `id` (path, obligatorio): Identificador del recurso solicitado.
 - **Cuerpo:** Sin cuerpo.
 - **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
@@ -728,7 +728,7 @@ Recupera una revisión histórica exacta.
 - **Controlador MVC:** `ConfigurationController`
 - **Operación Java/OpenAPI:** `version`
 - **Acceso requerido:** `section.configuration.view`
-- **Parámetros:** `kind` (path, obligatorio): Tipo de configuración permitido por el servicio.; `id` (path, obligatorio): Identificador del recurso solicitado.; `revision` (path, obligatorio): Revisión histórica exacta del recurso.
+- **Parámetros:** `kind` (path, obligatorio): Tipo permitido: guide, study-template, diagnosis-setting, diagnosis-equivalence, calculator, tool-settings, day-hospital-settings, research-form, protocol, trial-source o trial-screening-settings.; `id` (path, obligatorio): Identificador del recurso solicitado.; `revision` (path, obligatorio): Revisión histórica exacta del recurso.
 - **Cuerpo:** Sin cuerpo.
 - **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
@@ -781,7 +781,7 @@ Devuelve componentes, duración, periodicidad y vínculos a drogas.
 Edita componentes, preparación, tiempo y periodicidad con versionado.
 
 - **Controlador MVC:** `ProtocolController`
-- **Operación Java/OpenAPI:** `update`
+- **Operación Java/OpenAPI:** `update_1`
 - **Acceso requerido:** `section.protocols.edit`
 - **Parámetros:** `id` (path, obligatorio): Identificador del recurso solicitado.
 - **Cuerpo:** `application/json`
@@ -805,8 +805,8 @@ Retira un protocolo de nuevas prescripciones sin romper tratamientos existentes.
 Devuelve los sitios tumorales y variables de estadificación disponibles en el catálogo local.
 
 - **Controlador MVC:** `AjccCatalogController`
-- **Operación Java/OpenAPI:** `list_9`
-- **Acceso requerido:** `authenticated`
+- **Operación Java/OpenAPI:** `list_11`
+- **Acceso requerido:** `section.tools.view`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** Sin cuerpo.
 - **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
@@ -817,7 +817,7 @@ Devuelve TNM, factores específicos y reglas del sitio AJCC seleccionado.
 
 - **Controlador MVC:** `AjccCatalogController`
 - **Operación Java/OpenAPI:** `detail_2`
-- **Acceso requerido:** `authenticated`
+- **Acceso requerido:** `section.tools.view`
 - **Parámetros:** `id` (query, obligatorio): Identificador del recurso solicitado.
 - **Cuerpo:** Sin cuerpo.
 - **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
@@ -828,7 +828,7 @@ Calcula el grupo de estadio de forma determinística a partir del sitio y los va
 
 - **Controlador MVC:** `AjccCatalogController`
 - **Operación Java/OpenAPI:** `stage`
-- **Acceso requerido:** `authenticated`
+- **Acceso requerido:** `section.tools.use`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
 - **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
@@ -849,11 +849,22 @@ Informa disponibilidad y cantidad de protocolos y esquemas TNM locales.
 Confirma que los catálogos empaquetados ya están disponibles y versionados.
 
 - **Controlador MVC:** `LegacyCatalogController`
-- **Operación Java/OpenAPI:** `update_2`
+- **Operación Java/OpenAPI:** `update_3`
 - **Acceso requerido:** `authenticated`
 - **Parámetros:** Ninguno.
 - **Cuerpo:** `application/json`
 - **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `500` Error interno sin exposición de detalles sensibles.
+
+### `GET /api/clinical/tools/calculators` - Listar calculadoras operativas
+
+Devuelve únicamente las calculadoras activas y los ajustes institucionales necesarios para ejecutarlas desde Herramientas, sin exponer administración ni historial.
+
+- **Controlador MVC:** `CalculatorCatalogController`
+- **Operación Java/OpenAPI:** `list_8`
+- **Acceso requerido:** `section.tools.use`
+- **Parámetros:** Ninguno.
+- **Cuerpo:** Sin cuerpo.
+- **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
 
 ### `GET /api/guides` - Listar guías clínicas
 
@@ -890,11 +901,11 @@ Guarda un PDF institucional y actualiza el catálogo de guías.
 
 ### `GET /api/medications/search` - Buscar medicamentos
 
-Busca por genérico, marca o presentación en el catálogo local de drogas.
+Busca por genérico, marca o presentación en el catálogo local de drogas. Requiere permiso de lectura de Prescripción.
 
 - **Controlador MVC:** `LegacyCatalogController`
 - **Operación Java/OpenAPI:** `medicationSearch`
-- **Acceso requerido:** `authenticated`
+- **Acceso requerido:** `section.prescriptions.view`
 - **Parámetros:** `q` (query, opcional): Texto de búsqueda; admite coincidencia parcial.
 - **Cuerpo:** Sin cuerpo.
 - **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
@@ -905,7 +916,7 @@ Mantiene el contrato histórico de la interfaz y responde desde los catálogos l
 
 - **Controlador MVC:** `LegacyCatalogController`
 - **Operación Java/OpenAPI:** `protocols`
-- **Acceso requerido:** `authenticated`
+- **Acceso requerido:** `section.protocols.view`
 - **Parámetros:** `source` (query, opcional): Origen del catálogo compatible; por defecto coir.
 - **Cuerpo:** Sin cuerpo.
 - **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
@@ -916,7 +927,7 @@ Devuelve el detalle local de un protocolo COIR o personalizado usando el contrat
 
 - **Controlador MVC:** `LegacyCatalogController`
 - **Operación Java/OpenAPI:** `protocolDetail`
-- **Acceso requerido:** `authenticated`
+- **Acceso requerido:** `section.protocols.view`
 - **Parámetros:** `id` (query, obligatorio): Identificador del recurso solicitado.; `source` (query, opcional): Origen del catálogo compatible; por defecto coir.
 - **Cuerpo:** Sin cuerpo.
 - **Respuestas:** `200` Solicitud procesada correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `500` Error interno sin exposición de detalles sensibles.
@@ -1029,7 +1040,7 @@ Guarda imagen, metadatos, licencia y confirmación de derechos.
 - **Controlador MVC:** `StudyTemplateController`
 - **Operación Java/OpenAPI:** `create`
 - **Acceso requerido:** `section.configuration.manage`
-- **Parámetros:** `title` (query, obligatorio): Título visible de la plantilla anatómica.; `category` (query, obligatorio): Categoría anatómica usada para ordenar y filtrar la plantilla.; `author` (query, opcional): Autor o institución responsable de la imagen.; `license` (query, opcional): Licencia o condición de uso declarada.; `description` (query, opcional): Descripción clínica y visual de la plantilla.; `sourceUrl` (query, opcional): URL de procedencia declarada; no se descarga automáticamente.; `licenseUrl` (query, opcional): URL donde puede verificarse la licencia.; `rightsConfirmed` (query, opcional): Debe valer 1 para confirmar que se poseen derechos de uso.; `name` (query, opcional): Nombre seguro del archivo o recurso.
+- **Parámetros:** `title` (query, obligatorio): Título visible de la plantilla anatómica.; `category` (query, obligatorio): Categoría anatómica usada para ordenar y filtrar la plantilla.; `tags` (query, opcional): Etiquetas separadas por comas para facilitar la búsqueda y clasificación.; `author` (query, opcional): Autor o institución responsable de la imagen.; `attribution` (query, opcional): Texto de atribución requerido por el autor o la licencia.; `license` (query, opcional): Licencia o condición de uso declarada.; `description` (query, opcional): Descripción clínica y visual de la plantilla.; `sourceUrl` (query, opcional): URL de procedencia declarada; no se descarga automáticamente.; `licenseUrl` (query, opcional): URL donde puede verificarse la licencia.; `rightsConfirmed` (query, opcional): Debe valer 1 para confirmar que se poseen derechos de uso.; `name` (query, opcional): Nombre seguro del archivo o recurso.
 - **Cuerpo:** `image/png`, `image/jpeg`, `image/gif`, `image/webp`, `image/bmp`, `image/tiff`
 - **Respuestas:** `201` Recurso creado correctamente.; `400` Parámetros o cuerpo de solicitud inválidos.; `401` Sesión ausente, vencida o revocada.; `403` El usuario no posee el permiso requerido.; `404` Paciente, tratamiento, archivo o recurso inexistente.; `409` Conflicto de revisión, estado, superposición o integridad.; `413` El archivo supera el límite permitido.; `415` El tipo declarado o la firma binaria no están permitidos.; `500` Error interno sin exposición de detalles sensibles.
 
@@ -1138,7 +1149,7 @@ Lista usuarios habilitados para una capacidad de flujo.
 
 ### `POST /api/agent/chat` - Consultar agente clínico
 
-Responde sobre el contexto entregado y diferencia hechos de inferencias.
+Requiere section.agent.view. Acepta una consulta de hasta 8000 caracteres y envía sólo los últimos 12 mensajes no vacíos del historial, con hasta 8000 caracteres cada uno. Solicita JSON estructurado común a proveedores OpenAI compatibles y Ollama, valida tablas, gráficos, seguimientos y resaltados, y conserva como respuesta textual cualquier salida tradicional o JSON incompleto. Si el último mensaje user repite la consulta actual, se elimina del historial antes de llamar al LLM. timelineEvents y consultAgents se aceptan por compatibilidad pero no se incorporan al prompt en esta versión.
 
 - **Controlador MVC:** `LlmController`
 - **Operación Java/OpenAPI:** `agent`
@@ -1193,7 +1204,7 @@ Extrae únicamente campos configurados como asistidos por LLM.
 
 ### `GET /api/llm/status` - Consultar estado LLM
 
-Informa si la integración está habilitada y configurada.
+Requiere section.agent.view e informa proveedor, modelo y si la integración está habilitada y posee endpoint configurado. No prueba conectividad ni expone secretos.
 
 - **Controlador MVC:** `LlmController`
 - **Operación Java/OpenAPI:** `status`

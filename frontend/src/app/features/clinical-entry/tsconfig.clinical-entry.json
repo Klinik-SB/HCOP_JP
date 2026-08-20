@@ -1,0 +1,21 @@
+{
+  "extends": "../../../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../../../../runtime/clinical-entry-ngc",
+    "rootDir": "../../../..",
+    "types": []
+  },
+  "files": [
+    "clinical-entry.models.ts",
+    "clinical-entry.normalizers.ts",
+    "clinical-entry.service.ts",
+    "evolution-entry-modal.component.ts",
+    "diagnosis-entry-modal.component.ts",
+    "index.ts"
+  ],
+  "angularCompilerOptions": {
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
+  }
+}

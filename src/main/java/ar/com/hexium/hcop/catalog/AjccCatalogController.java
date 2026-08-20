@@ -1,5 +1,7 @@
 package ar.com.hexium.hcop.catalog;
 
+import ar.com.hexium.hcop.auth.AuthContext;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,13 +16,16 @@ import java.util.Map;
 @RequestMapping("/api/ajcc8")
 public class AjccCatalogController {
     private final AjccCatalogService catalog;
+    private final AuthContext auth;
 
-    public AjccCatalogController(AjccCatalogService catalog) {
+    public AjccCatalogController(AjccCatalogService catalog, AuthContext auth) {
         this.catalog = catalog;
+        this.auth = auth;
     }
 
     @GetMapping
-    public Map<String, Object> list() {
+    public Map<String, Object> list(HttpServletRequest request) {
+        auth.requirePermission(request, "section.tools.view");
         var sites = catalog.list();
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("ok", true);
@@ -33,12 +38,18 @@ public class AjccCatalogController {
     }
 
     @GetMapping("/detail")
-    public Map<String, Object> detail(@RequestParam String id) {
+    public Map<String, Object> detail(
+        @RequestParam String id,
+        HttpServletRequest request) {
+        auth.requirePermission(request, "section.tools.view");
         return catalog.detail(id);
     }
 
     @PostMapping("/stage")
-    public Map<String, Object> stage(@RequestBody Map<String, Object> body) {
+    public Map<String, Object> stage(
+        @RequestBody Map<String, Object> body,
+        HttpServletRequest request) {
+        auth.requirePermission(request, "section.tools.use");
         @SuppressWarnings("unchecked")
         Map<String, Object> values = body.get("values") instanceof Map<?, ?> map
             ? (Map<String, Object>) map : Map.of();
